@@ -17,6 +17,7 @@ from . import converters
 from swh.model.git import GitType
 from swh.storage import get_storage
 
+from .cache import SimpleCache
 from .queue import QueuePerSizeAndNbUniqueElements
 from .queue import QueuePerNbUniqueElements
 from .queue import QueuePerNbElements
@@ -65,30 +66,32 @@ class SWHLoader(config.SWHConfig):
 
         self.log = logging.getLogger(logging_class)
 
+        self.max_content_size = config['content_packet_size_bytes']
+
         self.contents = QueuePerSizeAndNbUniqueElements(
             key='sha1',
             max_nb_elements=self.config['content_packet_size'],
             max_size=self.config['content_packet_block_size_bytes'])
 
-        self.contents_seen = set()
+        self.contents_seen = SimpleCache()
 
         self.directories = QueuePerNbUniqueElements(
             key='id',
             max_nb_elements=self.config['directory_packet_size'])
 
-        self.directories_seen = set()
+        self.directories_seen = SimpleCache()
 
         self.revisions = QueuePerNbUniqueElements(
             key='id',
             max_nb_elements=self.config['revision_packet_size'])
 
-        self.revisions_seen = set()
+        self.revisions_seen = SimpleCache()
 
         self.releases = QueuePerNbUniqueElements(
             key='id',
             max_nb_elements=self.config['release_packet_size'])
 
-        self.releases_seen = set()
+        self.releases_seen = SimpleCache()
 
         self.occurrences = QueuePerNbElements(
             self.config['occurrence_packet_size'])
@@ -210,20 +213,22 @@ class SWHLoader(config.SWHConfig):
         """Filter missing blob from swh.
 
         """
-        max_content_size = self.config['content_packet_size_bytes']
         blobs_per_sha1 = {}
         shallow_blobs = []
-        for key, blob in ((b['sha1'], b) for b in blobs
-                          if b['sha1'] not in self.contents_seen):
+        for blob in blobs:
+            key = blob['sha1']
+            if key in self.contents_seen.set():
+                continue
             blobs_per_sha1[key] = blob
             shallow_blobs.append(converters.shallow_blob(blob))
             self.contents_seen.add(key)
 
         for sha1 in self.storage.content_missing(shallow_blobs,
                                                  key_hash='sha1'):
-            yield converters.blob_to_content(blobs_per_sha1[sha1],
-                                             max_content_size=max_content_size,
-                                             origin_id=self.origin_id)
+            yield converters.blob_to_content(
+                blobs_per_sha1[sha1],
+                max_content_size=self.max_content_size,
+                origin_id=self.origin_id)
 
     def bulk_send_blobs(self, blobs):
         """Format blobs as swh contents and send them to the database"""
@@ -238,8 +243,11 @@ class SWHLoader(config.SWHConfig):
         """
         trees_per_sha1 = {}
         shallow_trees = []
-        for key, tree in ((t['sha1_git'], t) for t in trees
-                          if t['sha1_git'] not in self.directories_seen):
+        for tree in trees:
+            key = tree['sha1_git']
+            if key in self.directories_seen.set():
+                continue
+
             trees_per_sha1[key] = tree
             shallow_trees.append(converters.shallow_tree(tree))
             self.directories_seen.add(key)
@@ -261,8 +269,11 @@ class SWHLoader(config.SWHConfig):
         """
         commits_per_sha1 = {}
         shallow_commits = []
-        for key, commit in ((c['id'], c) for c in commits
-                            if c['id'] not in self.revisions_seen):
+        for commit in commits:
+            key = commit['id']
+            if key in self.revisions_seen.set():
+                continue
+
             commits_per_sha1[key] = commit
             shallow_commits.append(converters.shallow_commit(commit))
             self.revisions_seen.add(key)
@@ -287,8 +298,11 @@ class SWHLoader(config.SWHConfig):
         """
         tags_per_sha1 = {}
         shallow_tags = []
-        for key, tag in ((t['id'], t) for t in tags
-                         if t['id'] not in self.releases_seen):
+        for tag in tags:
+            key = tag['id']
+            if key in self.releases_seen.set():
+                continue
+
             tags_per_sha1[key] = tag
             shallow_tags.append(converters.shallow_tag(tag))
             self.releases_seen.add(key)
