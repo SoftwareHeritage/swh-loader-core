@@ -55,3 +55,6 @@ class SimpleCache():
 
     def set(self):
         return self.s
+
+    def __contains__(self, e):
+        return e in self.s

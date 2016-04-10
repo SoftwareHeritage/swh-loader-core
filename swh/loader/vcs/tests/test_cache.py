@@ -31,20 +31,37 @@ class TestSimpleCache(unittest.TestCase):
 
         # when
         self.assertEquals(cache.set(), {1, 2, 3})
+        self.assertTrue(1 in cache)
+        self.assertTrue(2 in cache)
+        self.assertTrue(3 in cache)
+        self.assertTrue(4 not in cache)
         self.assertEquals(cache.count, 3)
 
         cache.add(4)
         cache.add(5)
 
         self.assertEquals(cache.set(), {1, 2, 3, 4, 5})
+        self.assertTrue(1 in cache)
+        self.assertTrue(2 in cache)
+        self.assertTrue(3 in cache)
+        self.assertTrue(4 in cache)
+        self.assertTrue(5 in cache)
         self.assertEquals(cache.count, 5)
 
         cache.add(6)  # we hit max-size, 50% of elements (here 3) are evicted
 
         self.assertEquals(cache.set(), {4, 5, 6})
+        self.assertTrue(4 in cache)
+        self.assertTrue(5 in cache)
+        self.assertTrue(6 in cache)
+        self.assertTrue(1 not in cache)
+        self.assertTrue(2 not in cache)
+        self.assertTrue(3 not in cache)
         self.assertEquals(cache.count, 3)
 
         cache.add(7)
         cache.add(8)
         self.assertEquals(cache.set(), {4, 5, 6, 7, 8})
+        self.assertTrue(7 in cache)
+        self.assertTrue(8 in cache)
         self.assertEquals(cache.count, 5)

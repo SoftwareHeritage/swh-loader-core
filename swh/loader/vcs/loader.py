@@ -217,7 +217,7 @@ class SWHLoader(config.SWHConfig):
         shallow_blobs = []
         for blob in blobs:
             key = blob['sha1']
-            if key in self.contents_seen.set():
+            if key in self.contents_seen:
                 continue
             blobs_per_sha1[key] = blob
             shallow_blobs.append(converters.shallow_blob(blob))
@@ -245,7 +245,7 @@ class SWHLoader(config.SWHConfig):
         shallow_trees = []
         for tree in trees:
             key = tree['sha1_git']
-            if key in self.directories_seen.set():
+            if key in self.directories_seen:
                 continue
 
             trees_per_sha1[key] = tree
@@ -271,7 +271,7 @@ class SWHLoader(config.SWHConfig):
         shallow_commits = []
         for commit in commits:
             key = commit['id']
-            if key in self.revisions_seen.set():
+            if key in self.revisions_seen:
                 continue
 
             commits_per_sha1[key] = commit
@@ -300,7 +300,7 @@ class SWHLoader(config.SWHConfig):
         shallow_tags = []
         for tag in tags:
             key = tag['id']
-            if key in self.releases_seen.set():
+            if key in self.releases_seen:
                 continue
 
             tags_per_sha1[key] = tag
