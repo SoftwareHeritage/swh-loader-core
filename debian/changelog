@@ -1,5 +1,6 @@
-swh-loader-vcs (0.0.1-1) unstable; urgency=low
+swh-loader-core (0.0.1-1~swh1) unstable-swh; urgency=medium
 
-  *
+  * Initial release
+  * v0.0.1
 
- -- AUTHOR-NAME <AUTHOR-EMAIL>  <UTC-DATE>
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 13 Apr 2016 16:54:47 +0200
