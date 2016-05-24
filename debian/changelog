@@ -1,3 +1,10 @@
+swh-loader-core (0.0.2-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.2
+  * Fix: Flush data even when no data is sent to swh-storage
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 24 May 2016 16:41:49 +0200
+
 swh-loader-core (0.0.1-1~swh1) unstable-swh; urgency=medium
 
   * Initial release
