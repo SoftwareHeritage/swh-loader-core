@@ -51,17 +51,44 @@ def retry_loading(error):
 
 
 class SWHLoader(config.SWHConfig):
-    """A svn loader.
+    """This base class is a pattern for loaders.
 
-    This will load the svn repository.
+    The external calling convention is as such:
+      - instantiate the class once (loads storage and the configuration)
+      - for each origin, call process with the origin-specific arguments (for
+        instance, an origin URL).
 
+        Method to implement in subclass:
+        - process(*args, **kwargs)
     """
-    def __init__(self, config, origin_id, logging_class):
-        self.config = config
+    CONFIG_BASE_FILENAME = None
 
-        self.origin_id = origin_id
-        self.storage = get_storage(config['storage_class'],
-                                   config['storage_args'])
+    DEFAULT_CONFIG = {
+        'storage_class': ('str', 'remote_storage'),
+        'storage_args': ('list[str]', ['http://localhost:5000/']),
+
+        'send_contents': ('bool', True),
+        'send_directories': ('bool', True),
+        'send_revisions': ('bool', True),
+        'send_releases': ('bool', True),
+        'send_occurrences': ('bool', True),
+
+        'content_packet_size': ('int', 10000),
+        'content_packet_size_bytes': ('int', 1024 * 1024 * 1024),
+        'directory_packet_size': ('int', 25000),
+        'revision_packet_size': ('int', 100000),
+        'release_packet_size': ('int', 100000),
+        'occurrence_packet_size': ('int', 100000),
+    }
+
+    ADDITIONAL_CONFIG = {}
+
+    def __init__(self, origin_id, logging_class):
+        self.config = self.parse_config_file(
+            additional_configs=[self.ADDITIONAL_CONFIG])
+
+        self.storage = get_storage(self.config['storage_class'],
+                                   self.config['storage_args'])
 
         self.log = logging.getLogger(logging_class)
 
@@ -344,7 +371,7 @@ class SWHLoader(config.SWHConfig):
         if self.config['send_contents']:
             self.bulk_send_blobs(contents)
         else:
-            self.log.info('Not sending contents')
+            self.log.debug('Not sending contents')
 
     def maybe_load_directories(self, trees, objects_per_path):
         """Load directories in swh-storage if need be.
@@ -353,7 +380,7 @@ class SWHLoader(config.SWHConfig):
         if self.config['send_directories']:
             self.bulk_send_trees(objects_per_path, trees)
         else:
-            self.log.info('Not sending directories')
+            self.log.debug('Not sending directories')
 
     def maybe_load_revisions(self, revisions):
         """Load revisions in swh-storage if need be.
@@ -362,7 +389,7 @@ class SWHLoader(config.SWHConfig):
         if self.config['send_revisions']:
             self.bulk_send_commits(revisions)
         else:
-            self.log.info('Not sending revisions')
+            self.log.debug('Not sending revisions')
 
     def maybe_load_releases(self, releases):
         """Load releases in swh-storage if need be.
@@ -371,7 +398,7 @@ class SWHLoader(config.SWHConfig):
         if self.config['send_releases']:
             self.bulk_send_annotated_tags(releases)
         else:
-            self.log.info('Not sending releases')
+            self.log.debug('Not sending releases')
 
     def maybe_load_occurrences(self, occurrences):
         """Load occurrences in swh-storage if need be.
@@ -380,10 +407,10 @@ class SWHLoader(config.SWHConfig):
         if self.config['send_occurrences']:
             self.bulk_send_refs(occurrences)
         else:
-            self.log.info('Not sending occurrences')
+            self.log.debug('Not sending occurrences')
 
     def load(self, objects_per_type, objects_per_path):
-        """Main entry point to load data to swh-storage.
+        """Load all data to swh-storage.
 
         Args:
             objects_per_type: Dictionary of:
@@ -422,3 +449,7 @@ class SWHLoader(config.SWHConfig):
             self.send_occurrences(occurrences)
         if self.config['send_releases']:
             self.send_releases(releases)
+
+    def process(self, *args, **kwargs):
+        """Method to implement in subclass."""
+        raise NotImplementedError
