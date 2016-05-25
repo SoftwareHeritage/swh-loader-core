@@ -1,8 +1,10 @@
-swh-loader-core (0.0.2-1~swh1~bpo9+1) stretch-swh; urgency=medium
+swh-loader-core (0.0.3-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for stretch-backports.
+  * v0.0.3
+  * Improve default configuration
+  * Rename package from swh-loader-vcs to swh-loader
 
- -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 24 May 2016 16:41:49 +0200
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 25 May 2016 11:23:06 +0200
 
 swh-loader-core (0.0.2-1~swh1) unstable-swh; urgency=medium
 
