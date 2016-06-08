@@ -1,5 +1,5 @@
 retrying
 swh-core
-swh-model
+swh-model>=0.0.6
 swh-storage
 vcversioner
