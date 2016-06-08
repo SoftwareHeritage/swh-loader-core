@@ -73,8 +73,13 @@ class SWHLoader(config.SWHConfig):
         'send_releases': ('bool', True),
         'send_occurrences': ('bool', True),
 
+        # Number of contents
         'content_packet_size': ('int', 10000),
+        # If this size threshold is reached, the content is condidered missing
+        # in swh-storage
         'content_packet_size_bytes': ('int', 1024 * 1024 * 1024),
+        # packet of 100Mib contents
+        'content_packet_block_size_bytes': ('int', 100 * 1024 * 1024),
         'directory_packet_size': ('int', 25000),
         'revision_packet_size': ('int', 100000),
         'release_packet_size': ('int', 100000),
@@ -89,6 +94,8 @@ class SWHLoader(config.SWHConfig):
         else:
             self.config = self.parse_config_file(
                 additional_configs=[self.ADDITIONAL_CONFIG])
+
+        self.origin_id = origin_id
 
         self.storage = get_storage(self.config['storage_class'],
                                    self.config['storage_args'])
@@ -274,7 +281,7 @@ class SWHLoader(config.SWHConfig):
         if threshold_reached:
             self.send_contents(self.contents.pop())
 
-    def filter_missing_trees(self, trees, objects):
+    def filter_missing_trees(self, trees):
         """Filter missing tree from swh.
 
         """
@@ -287,14 +294,14 @@ class SWHLoader(config.SWHConfig):
             self.directories_seen.add(key)
 
         for sha in self.storage.directory_missing(shallow_trees):
-            yield converters.tree_to_directory(trees_per_sha1[sha], objects)
+            yield converters.tree_to_directory(trees_per_sha1[sha])
 
-    def bulk_send_trees(self, objects, trees):
+    def bulk_send_trees(self, trees):
         """Format trees as swh directories and send them to the database.
 
         """
         threshold_reached = self.directories.add(
-            self.filter_missing_trees(trees, objects))
+            self.filter_missing_trees(trees))
         if threshold_reached:
             self.send_contents(self.contents.pop())
             self.send_directories(self.directories.pop())
@@ -373,17 +380,13 @@ class SWHLoader(config.SWHConfig):
         """
         if self.config['send_contents']:
             self.bulk_send_blobs(contents)
-        else:
-            self.log.debug('Not sending contents')
 
     def maybe_load_directories(self, trees, objects_per_path):
         """Load directories in swh-storage if need be.
 
         """
         if self.config['send_directories']:
-            self.bulk_send_trees(objects_per_path, trees)
-        else:
-            self.log.debug('Not sending directories')
+            self.bulk_send_trees(trees, objects_per_path)
 
     def maybe_load_revisions(self, revisions):
         """Load revisions in swh-storage if need be.
@@ -391,8 +394,6 @@ class SWHLoader(config.SWHConfig):
         """
         if self.config['send_revisions']:
             self.bulk_send_commits(revisions)
-        else:
-            self.log.debug('Not sending revisions')
 
     def maybe_load_releases(self, releases):
         """Load releases in swh-storage if need be.
@@ -400,8 +401,6 @@ class SWHLoader(config.SWHConfig):
         """
         if self.config['send_releases']:
             self.bulk_send_annotated_tags(releases)
-        else:
-            self.log.debug('Not sending releases')
 
     def maybe_load_occurrences(self, occurrences):
         """Load occurrences in swh-storage if need be.
@@ -409,10 +408,8 @@ class SWHLoader(config.SWHConfig):
         """
         if self.config['send_occurrences']:
             self.bulk_send_refs(occurrences)
-        else:
-            self.log.debug('Not sending occurrences')
 
-    def load(self, objects_per_type, objects_per_path):
+    def load(self, objects_per_type):
         """Load all data to swh-storage.
 
         Args:
@@ -426,8 +423,7 @@ class SWHLoader(config.SWHConfig):
 
         """
         self.maybe_load_contents(objects_per_type[GitType.BLOB])
-        self.maybe_load_directories(objects_per_type[GitType.TREE],
-                                    objects_per_path)
+        self.maybe_load_directories(objects_per_type[GitType.TREE])
         self.maybe_load_revisions(objects_per_type[GitType.COMM])
         self.maybe_load_releases(objects_per_type[GitType.RELE])
         self.maybe_load_occurrences(objects_per_type[GitType.REFS])
