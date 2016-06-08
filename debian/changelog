@@ -1,3 +1,17 @@
+swh-loader-core (0.0.6-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.6
+  * d/control: Bump dependency on swh-model
+  * d/control: Add missing description
+  * Keep the abstraction for all entities
+  * Align parameter definition order
+  * Fix missing option in DEFAULT ones
+  * Decrease verbosity
+  * Fix missing origin_id assignment
+  * d/rules: Add target to run tests during packaging
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 08 Jun 2016 16:00:40 +0200
+
 swh-loader-core (0.0.5-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.5
