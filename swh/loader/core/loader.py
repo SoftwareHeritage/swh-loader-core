@@ -11,10 +11,9 @@ import uuid
 
 from retrying import retry
 
-from swh.core import config
-
 from . import converters
-from swh.model.git import GitType
+
+from swh.core import config
 from swh.storage import get_storage
 
 from .queue import QueuePerSizeAndNbUniqueElements
@@ -51,15 +50,20 @@ def retry_loading(error):
 
 
 class SWHLoader(config.SWHConfig):
-    """This base class is a pattern for loaders.
+    """Mixin base class for loader.
 
-    The external calling convention is as such:
-      - instantiate the class once (loads storage and the configuration)
-      - for each origin, call process with the origin-specific arguments (for
-        instance, an origin URL).
+    The calling convention is as such:
+      - inherit from this class
+      - implement the load function
 
-        Method to implement in subclass:
-        - process(*args, **kwargs)
+    Required steps are:
+    - create an origin
+    - create an origin_visit
+    - create a fetch_history entry
+    - load the data into swh-storage
+    - close the origin_visit
+    - close the fetch_history entry
+
     """
     CONFIG_BASE_FILENAME = None
 
@@ -88,14 +92,12 @@ class SWHLoader(config.SWHConfig):
 
     ADDITIONAL_CONFIG = {}
 
-    def __init__(self, origin_id, logging_class, config=None):
+    def __init__(self, logging_class, config=None):
         if config:
             self.config = config
         else:
             self.config = self.parse_config_file(
                 additional_configs=[self.ADDITIONAL_CONFIG])
-
-        self.origin_id = origin_id
 
         self.storage = get_storage(self.config['storage_class'],
                                    self.config['storage_args'])
@@ -133,6 +135,14 @@ class SWHLoader(config.SWHConfig):
         l = logging.getLogger('requests.packages.urllib3.connectionpool')
         l.setLevel(logging.WARN)
 
+        self.counters = {
+            'contents': 0,
+            'directories': 0,
+            'revisions': 0,
+            'releases': 0,
+            'occurrences': 0,
+        }
+
     @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
     def send_contents(self, content_list):
         """Actually send properly formatted contents to the database.
@@ -149,6 +159,7 @@ class SWHLoader(config.SWHConfig):
                                'swh_id': log_id,
                            })
             self.storage.content_add(content_list)
+            self.counters['contents'] += num_contents
             self.log.debug("Done sending %d contents" % num_contents,
                            extra={
                                'swh_type': 'storage_send_end',
@@ -173,6 +184,7 @@ class SWHLoader(config.SWHConfig):
                                'swh_id': log_id,
                            })
             self.storage.directory_add(directory_list)
+            self.counters['directories'] += num_directories
             self.log.debug("Done sending %d directories" % num_directories,
                            extra={
                                'swh_type': 'storage_send_end',
@@ -197,6 +209,7 @@ class SWHLoader(config.SWHConfig):
                                'swh_id': log_id,
                            })
             self.storage.revision_add(revision_list)
+            self.counters['revisions'] += num_revisions
             self.log.debug("Done sending %d revisions" % num_revisions,
                            extra={
                                'swh_type': 'storage_send_end',
@@ -221,6 +234,7 @@ class SWHLoader(config.SWHConfig):
                                'swh_id': log_id,
                            })
             self.storage.release_add(release_list)
+            self.counters['releases'] += num_releases
             self.log.debug("Done sending %d releases" % num_releases,
                            extra={
                                'swh_type': 'storage_send_end',
@@ -245,6 +259,7 @@ class SWHLoader(config.SWHConfig):
                                'swh_id': log_id,
                            })
             self.storage.occurrence_add(occurrence_list)
+            self.counters['occurrences'] += num_occurrences
             self.log.debug("Done sending %d occurrences" % num_occurrences,
                            extra={
                                'swh_type': 'storage_send_end',
@@ -410,24 +425,30 @@ class SWHLoader(config.SWHConfig):
         if self.config['send_occurrences']:
             self.bulk_send_refs(occurrences)
 
-    def load(self, objects):
-        """Load all data to swh-storage.
+    def open_fetch_history(self):
+        return self.storage.fetch_history_start(self.origin_id)
 
-        Args:
-            objects: Dictionary of:
-            - GitType.BLOB: blob/content,
-            - GitType.TREE: tree/directory
-            - GitType.COMM: commit/revision
-            - GitType.RELE: annotated tag/release
-            - GitType.REFS: reference/occurrence
-            objects_per_path: Dictionary of path, children information.
+    def close_fetch_history_success(self, fetch_history_id):
+        data = {
+            'status': True,
+            'result': self.counters,
+        }
+        return self.storage.fetch_history_end(fetch_history_id, data)
 
-        """
-        self.maybe_load_contents(objects[GitType.BLOB])
-        self.maybe_load_directories(objects[GitType.TREE])
-        self.maybe_load_revisions(objects[GitType.COMM])
-        self.maybe_load_releases(objects[GitType.RELE])
-        self.maybe_load_occurrences(objects[GitType.REFS])
+    def close_fetch_history_failure(self, fetch_history_id):
+        import traceback
+        data = {
+            'status': False,
+            'stderr': traceback.format_exc(),
+        }
+        if self.counters['contents'] > 0 or \
+           self.counters['directories'] or \
+           self.counters['revisions'] > 0 or \
+           self.counters['releases'] > 0 or \
+           self.counters['occurrences'] > 0:
+            data['result'] = self.counters
+
+        return self.storage.fetch_history_end(fetch_history_id, data)
 
     def flush(self):
         """Flush any potential dangling data not sent to swh-storage.
@@ -450,6 +471,6 @@ class SWHLoader(config.SWHConfig):
         if self.config['send_releases']:
             self.send_releases(releases)
 
-    def process(self, *args, **kwargs):
+    def load(self, *args, **kwargs):
         """Method to implement in subclass."""
         raise NotImplementedError
