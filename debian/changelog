@@ -1,3 +1,10 @@
+swh-loader-core (0.0.13-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.13
+  * Improve core loader's interface api
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 22 Feb 2017 13:43:54 +0100
+
 swh-loader-core (0.0.12-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.12
