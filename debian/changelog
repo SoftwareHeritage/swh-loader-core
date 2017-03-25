@@ -1,8 +1,9 @@
-swh-loader-core (0.0.13-1~swh1~bpo9+1) stretch-swh; urgency=medium
+swh-loader-core (0.0.14-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for stretch-backports.
+  * v0.0.14
+  * Add the blake2s256 hash computation
 
- -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 22 Feb 2017 13:43:53 +0100
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Sat, 25 Mar 2017 18:20:52 +0100
 
 swh-loader-core (0.0.13-1~swh1) unstable-swh; urgency=medium
 
