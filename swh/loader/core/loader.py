@@ -54,17 +54,31 @@ def retry_loading(error):
 class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
     """Mixin base class for loader.
 
-    The calling convention is as such:
-      - inherit from this class
-      - implement the load function
+    To use this class, you must:
 
-    Required steps are:
-    - create an origin
-    - create an origin_visit
-    - create a fetch_history entry
-    - load the data into swh-storage
-    - close the origin_visit
-    - close the fetch_history entry
+    - inherit from this class
+
+    - and implement the @abstractmethod methods
+
+    :func:`cleanup`: Last step executed by the loader.
+
+    :func:`prepare`: First step executed by the loader to prepare some state
+                     needed by the `func`:load method.
+
+    :func:`get_origin`: Retrieve the origin that is currently being
+                        loaded.
+
+    :func:`fetch_data`: Fetch the data is actually the method to
+                        implement to compute data to inject in swh
+                        (through the store_data method)
+
+    :func:`store_data`: Store data fetched.
+
+    You can take a look at some example classes:
+
+        :class:BaseSvnLoader
+        :class:TarLoader
+        :class:DirLoader
 
     """
     CONFIG_BASE_FILENAME = None
@@ -170,6 +184,54 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
                        })
 
         return origin_id
+
+    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
+    def send_origin_visit(self, origin_id, visit_date):
+        log_id = str(uuid.uuid4())
+        self.log.debug(
+            'Creating origin_visit for origin %s at time %s' % (
+                origin_id, visit_date),
+            extra={
+                'swh_type': 'storage_send_start',
+                'swh_content_type': 'origin_visit',
+                'swh_num': 1,
+                'swh_id': log_id
+            })
+        origin_visit = self.storage.origin_visit_add(origin_id, visit_date)
+        self.log.debug(
+            'Done Creating origin_visit for origin %s at time %s' % (
+                origin_id, visit_date),
+            extra={
+                'swh_type': 'storage_send_end',
+                'swh_content_type': 'origin_visit',
+                'swh_num': 1,
+                'swh_id': log_id
+            })
+
+        return origin_visit
+
+    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
+    def update_origin_visit(self, origin_id, visit, status):
+        log_id = str(uuid.uuid4())
+        self.log.debug(
+            'Updating origin_visit for origin %s with status %s' % (
+                origin_id, status),
+            extra={
+                'swh_type': 'storage_send_start',
+                'swh_content_type': 'origin_visit',
+                'swh_num': 1,
+                'swh_id': log_id
+            })
+        self.storage.origin_visit_update(origin_id, visit, status)
+        self.log.debug(
+            'Done updating origin_visit for origin %s with status %s' % (
+                origin_id, status),
+            extra={
+                'swh_type': 'storage_send_end',
+                'swh_content_type': 'origin_visit',
+                'swh_num': 1,
+                'swh_id': log_id
+            })
 
     @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
     def send_contents(self, content_list):
@@ -537,12 +599,13 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
 
     def load(self, *args, **kwargs):
         """Loading logic for the loader to follow:
-        1. def prepare(*args, **kwargs): Prepare any eventual state
+
+        1. def prepare(\*args, \**kwargs): Prepare any eventual state
         2. def get_origin(): Get the origin we work with and store
         3. def fetch_data(): Fetch the data to store
         4. def store_data(): Store the data
-        5. def cleanup(): Clean up any eventual state put in place in
-        prepare method.
+        5. def cleanup(): Clean up any eventual state put in place in prepare
+           method.
 
         """
         self.prepare(*args, **kwargs)
@@ -555,7 +618,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
         else:
             visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
 
-        origin_visit = self.storage.origin_visit_add(
+        origin_visit = self.send_origin_visit(
             self.origin_id,
             visit_date)
         self.visit = origin_visit['visit']
@@ -565,12 +628,12 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
             self.store_data()
 
             self.close_fetch_history_success(fetch_history_id)
-            self.storage.origin_visit_update(
+            self.update_origin_visit(
                 self.origin_id, self.visit, status='full')
-        except Exception as e:
-            print('problem: %s' % e)
+        except Exception:
+            self.log.exception('Loading failure, updating to `partial` status')
             self.close_fetch_history_failure(fetch_history_id)
-            self.storage.origin_visit_update(
+            self.update_origin_visit(
                 self.origin_id, self.visit, status='partial')
         finally:
             self.flush()
