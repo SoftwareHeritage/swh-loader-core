@@ -3,6 +3,7 @@ AUTHORS
 LICENSE
 MANIFEST.in
 Makefile
+README.md
 requirements-swh.txt
 requirements.txt
 setup.py
@@ -13,6 +14,12 @@ debian/control
 debian/copyright
 debian/rules
 debian/source/format
+docs/.gitignore
+docs/Makefile
+docs/conf.py
+docs/index.rst
+docs/_static/.placeholder
+docs/_templates/.placeholder
 swh.loader.core.egg-info/PKG-INFO
 swh.loader.core.egg-info/SOURCES.txt
 swh.loader.core.egg-info/dependency_links.txt
