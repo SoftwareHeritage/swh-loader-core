@@ -1,3 +1,12 @@
+swh-loader-core (0.0.15-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.15
+  * docs: Add sphinx apidoc generation skeleton
+  * docs: Add a simple README.md explaining the module's goal
+  * swh.loader.core.loader: Unify origin_visit add/update function call
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Fri, 29 Sep 2017 11:47:37 +0200
+
 swh-loader-core (0.0.14-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.14
