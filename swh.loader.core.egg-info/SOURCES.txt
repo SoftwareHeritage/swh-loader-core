@@ -29,5 +29,6 @@ swh/loader/core/__init__.py
 swh/loader/core/converters.py
 swh/loader/core/loader.py
 swh/loader/core/queue.py
+swh/loader/core/tests/__init__.py
 swh/loader/core/tests/test_converters.py
 swh/loader/core/tests/test_queue.py
