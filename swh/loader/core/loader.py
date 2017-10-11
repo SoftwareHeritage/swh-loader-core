@@ -60,8 +60,6 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
 
     - and implement the @abstractmethod methods
 
-    :func:`cleanup`: Last step executed by the loader.
-
     :func:`prepare`: First step executed by the loader to prepare some state
                      needed by the `func`:load method.
 
@@ -74,11 +72,20 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
 
     :func:`store_data`: Store data fetched.
 
+    :func:`visit_status`: Explicit status of the visit ('partial' or 'full').
+    :func:`load_status`: Explicit status of the loading, for use by the
+      scheduler (eventful/uneventful/temporary failure/permanent failure).
+
+    :func:`cleanup`: Last step executed by the loader.
+
+    The entry point for the resulting loader is :func:`load`.
+
     You can take a look at some example classes:
 
-        :class:BaseSvnLoader
-        :class:TarLoader
-        :class:DirLoader
+        :class:`BaseSvnLoader`
+        :class:`TarLoader`
+        :class:`DirLoader`
+        :class:`DebianLoader`
 
     """
     CONFIG_BASE_FILENAME = None
@@ -579,6 +586,9 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
     def get_origin(self):
         """Get the origin that is currently being loaded.
 
+        Returns:
+          dict: an origin ready to be sent to storage by
+          :func:`origin_add_one`.
         """
         pass
 
@@ -586,23 +596,49 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
     def fetch_data(self):
         """Fetch the data we want to store.
 
+        Returns:
+          a value that is interpreted as a boolean. If True, fetch_data needs
+          to be called again to complete loading.
         """
         pass
 
     @abstractmethod
     def store_data(self):
-        """Store the data we actually fetched.
+        """Store the data we fetched in the database.
 
+        Should call the :func:`maybe_load_xyz` methods, which handle the
+        bundles sent to storage, rather than send directly.
         """
         pass
+
+    def load_status(self):
+        """Detailed loading status.
+
+        Defaults to logging an eventful load.
+
+        Returns: a dictionary that is eventually passed back as the task's
+          result to the scheduler, allowing tuning of the task recurrence
+          mechanism.
+        """
+        return {
+            'status': 'eventful',
+        }
+
+    def visit_status(self):
+        """Detailed visit status.
+
+        Defaults to logging a full visit.
+        """
+        return 'full'
 
     def load(self, *args, **kwargs):
         """Loading logic for the loader to follow:
 
         1. def prepare(\*args, \**kwargs): Prepare any eventual state
         2. def get_origin(): Get the origin we work with and store
-        3. def fetch_data(): Fetch the data to store
-        4. def store_data(): Store the data
+        While True:
+          3. def fetch_data(): Fetch the data to store
+          4. def store_data(): Store the data
         5. def cleanup(): Clean up any eventual state put in place in prepare
            method.
 
@@ -623,17 +659,23 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
         self.visit = origin_visit['visit']
 
         try:
-            self.fetch_data()
-            self.store_data()
+            while True:
+                more_data_to_fetch = self.fetch_data()
+                self.store_data()
+                if not more_data_to_fetch:
+                    break
 
             self.close_fetch_history_success(fetch_history_id)
             self.update_origin_visit(
-                self.origin_id, self.visit, status='full')
+                self.origin_id, self.visit, status=self.visit_status())
         except Exception:
             self.log.exception('Loading failure, updating to `partial` status')
             self.close_fetch_history_failure(fetch_history_id)
             self.update_origin_visit(
                 self.origin_id, self.visit, status='partial')
+            return {'status': 'failed'}
         finally:
             self.flush()
             self.cleanup()
+
+        return self.load_status()
