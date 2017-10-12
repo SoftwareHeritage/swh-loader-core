@@ -1,3 +1,10 @@
+swh-loader-core (0.0.18-1~swh1) unstable-swh; urgency=medium
+
+  * Release swh.loader.core version 0.0.18
+  * Update packaging runes
+
+ -- Nicolas Dandrimont <nicolas@dandrimont.eu>  Thu, 12 Oct 2017 18:07:53 +0200
+
 swh-loader-core (0.0.17-1~swh1) unstable-swh; urgency=medium
 
   * Release swh.loader.core v0.0.17
