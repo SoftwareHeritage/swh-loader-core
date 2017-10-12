@@ -1,8 +1,9 @@
-swh-loader-core (0.0.17-1~swh1~bpo9+1) stretch-swh; urgency=medium
+swh-loader-core (0.0.18-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for stretch-backports.
+  * Release swh.loader.core version 0.0.18
+  * Update packaging runes
 
- -- Nicolas Dandrimont <nicolas@dandrimont.eu>  Wed, 11 Oct 2017 16:38:29 +0200
+ -- Nicolas Dandrimont <nicolas@dandrimont.eu>  Thu, 12 Oct 2017 18:07:53 +0200
 
 swh-loader-core (0.0.17-1~swh1) unstable-swh; urgency=medium
 
