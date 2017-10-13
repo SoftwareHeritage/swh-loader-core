@@ -1,3 +1,10 @@
+swh-loader-core (0.0.19-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.19
+  * Permit to add 'post_load' actions in loaders
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Fri, 13 Oct 2017 14:14:14 +0200
+
 swh-loader-core (0.0.18-1~swh1) unstable-swh; urgency=medium
 
   * Release swh.loader.core version 0.0.18
