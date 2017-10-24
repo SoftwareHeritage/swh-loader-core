@@ -1,3 +1,10 @@
+swh-loader-core (0.0.21-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.21
+  * swh.loader.core: Only send origin if not already sent before
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 24 Oct 2017 16:30:53 +0200
+
 swh-loader-core (0.0.20-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.20
