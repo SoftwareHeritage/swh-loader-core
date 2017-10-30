@@ -1,3 +1,11 @@
+swh-loader-core (0.0.22-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.22
+  * core.loader: Use the global setup set in swh.core.config
+  * core.loader: Properly batch object insertions for big requests
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Mon, 30 Oct 2017 18:50:00 +0100
+
 swh-loader-core (0.0.21-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.21
