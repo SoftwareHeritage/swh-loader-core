@@ -1,3 +1,10 @@
+swh-loader-core (0.0.23-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.23
+  * loader: Fix dangling data flush
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 07 Nov 2017 16:25:20 +0100
+
 swh-loader-core (0.0.22-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.22
