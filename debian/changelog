@@ -1,3 +1,12 @@
+swh-loader-core (0.0.25-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.25
+  * swh.loader.core: Fix to retrieve the provider_id as an actual id
+  * swh.loader.core: Fix log format error
+  * swh.loader.core: Align log message according to conventions
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 29 Nov 2017 12:55:45 +0100
+
 swh-loader-core (0.0.24-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.24
