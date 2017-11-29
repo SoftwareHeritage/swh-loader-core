@@ -240,7 +240,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
     def send_tool(self, tool):
         log_id = str(uuid.uuid4())
         self.log.debug(
-            """Creating tool with name %s version %s configuration %s""" % (
+            'Creating tool with name %s version %s configuration %s' % (
                  tool['tool_name'], tool['tool_version'],
                  tool['tool_configuration']),
             extra={
@@ -254,8 +254,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
         tool_id = tools[0]['id']
 
         self.log.debug(
-            """Done creating tool with name %s version %s and
-               configuration %s""" % (
+            'Done creating tool with name %s version %s and configuration %s' % (  # noqa
                  tool['tool_name'], tool['tool_version'],
                  tool['tool_configuration']),
             extra={
@@ -270,8 +269,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
     def send_provider(self, provider):
         log_id = str(uuid.uuid4())
         self.log.debug(
-            """Creating metadata_provider with name %s type %s url %s and
-               metadata %s""" % (
+            'Creating metadata_provider with name %s type %s url %s' % (
                 provider['provider_name'], provider['provider_type'],
                 provider['provider_url']),
             extra={
@@ -281,16 +279,18 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
                 'swh_id': log_id
             })
         # FIXME: align metadata_provider_add with indexer_configuration_add
-        provider_id = self.storage.metadata_provider_get_by(provider)
-        if not provider_id:
+        provider = self.storage.metadata_provider_get_by(provider)
+        if provider and 'id' in provider:
+            provider_id = provider['id']
+        else:
             provider_id = self.storage.metadata_provider_add(
-                                provider['provider_name'],
-                                provider['provider_type'],
-                                provider['provider_url'],
-                                provider['metadata'])
+                provider['provider_name'],
+                provider['provider_type'],
+                provider['provider_url'],
+                provider['metadata'])
+
         self.log.debug(
-            """Done creating metadata_provider with name %s type %s url %s and
-               metadata %s""" % (
+            'Done creating metadata_provider with name %s type %s url %s' % (
                 provider['provider_name'], provider['provider_type'],
                 provider['provider_url']),
             extra={
@@ -306,8 +306,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
                              tool_id, metadata):
         log_id = str(uuid.uuid4())
         self.log.debug(
-            """Creating origin_metadata for origin %s at time %s with provider_id
-               %s and tool_id %s""" % (
+            'Creating origin_metadata for origin %s at time %s with provider_id %s and tool_id %s' % (  # noqa
                 origin_id, visit_date, provider_id, tool_id),
             extra={
                 'swh_type': 'storage_send_start',
@@ -316,14 +315,10 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
                 'swh_id': log_id
             })
 
-        self.storage.origin_metadata_add(origin_id,
-                                         visit_date,
-                                         provider_id,
-                                         tool_id,
-                                         metadata)
+        self.storage.origin_metadata_add(origin_id, visit_date, provider_id,
+                                         tool_id, metadata)
         self.log.debug(
-            """Done Creating origin_metadata for origin %s at time %s with
-               provider %s and tool %s""" % (
+            'Done Creating origin_metadata for origin %s at time %s with provider %s and tool %s' % (  # noqa
                 origin_id, visit_date, provider_id, tool_id),
             extra={
                 'swh_type': 'storage_send_end',
