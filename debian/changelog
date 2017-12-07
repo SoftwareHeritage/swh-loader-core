@@ -1,8 +1,10 @@
-swh-loader-core (0.0.26-1~swh1~bpo9+1) stretch-swh; urgency=medium
+swh-loader-core (0.0.27-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for stretch-backports.
+  * v0.0.27
+  * Migrate from indexer's indexer_configuration to storage's tool
+    notion.
 
- -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 05 Dec 2017 15:40:57 +0100
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Thu, 07 Dec 2017 10:36:23 +0100
 
 swh-loader-core (0.0.26-1~swh1) unstable-swh; urgency=medium
 
