@@ -1,3 +1,11 @@
+swh-loader-core (0.0.27-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.27
+  * Migrate from indexer's indexer_configuration to storage's tool
+    notion.
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Thu, 07 Dec 2017 10:36:23 +0100
+
 swh-loader-core (0.0.26-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.26
