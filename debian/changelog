@@ -1,3 +1,10 @@
+swh-loader-core (0.0.30-1~swh1) unstable-swh; urgency=medium
+
+  * Release swh.loader.core v0.0.30
+  * Update Debian metadata for snapshot-related breakage
+
+ -- Nicolas Dandrimont <nicolas@dandrimont.eu>  Tue, 06 Feb 2018 14:22:53 +0100
+
 swh-loader-core (0.0.29-1~swh1) unstable-swh; urgency=medium
 
   * Release swh.loader.core v0.0.29
