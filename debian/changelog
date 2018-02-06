@@ -1,3 +1,9 @@
+swh-loader-core (0.0.29-1~swh1~bpo9+1) stretch-swh; urgency=medium
+
+  * Rebuild for stretch-backports.
+
+ -- Nicolas Dandrimont <nicolas@dandrimont.eu>  Tue, 06 Feb 2018 14:13:10 +0100
+
 swh-loader-core (0.0.29-1~swh1) unstable-swh; urgency=medium
 
   * Release swh.loader.core v0.0.29
