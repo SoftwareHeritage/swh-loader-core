@@ -1,3 +1,11 @@
+swh-loader-core (0.0.29-1~swh1) unstable-swh; urgency=medium
+
+  * Release swh.loader.core v0.0.29
+  * Replace occurrences with snapshots
+  * Enhance logging on error cases
+
+ -- Nicolas Dandrimont <nicolas@dandrimont.eu>  Tue, 06 Feb 2018 14:13:11 +0100
+
 swh-loader-core (0.0.28-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.28
