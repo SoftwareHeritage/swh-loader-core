@@ -676,7 +676,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
             'stderr': traceback.format_exc(),
         }
         if self.counters['contents'] > 0 or \
-           self.counters['directories'] or \
+           self.counters['directories'] > 0 or \
            self.counters['revisions'] > 0 or \
            self.counters['releases'] > 0:
             data['result'] = self.counters
@@ -740,22 +740,49 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def prepare_origin_visit(self, *args, **kwargs):
+        """First step executed by the loader to prepare origin and visit
+           references. Set/update self.origin, self.origin_id and
+           optionally self.origin_url, self.visit_date.
+
+        """
+        pass
+
+    def _store_origin_visit(self):
+        """Store origin and visit references. Sets the self.origin_visit and
+           self.visit references.
+
+        """
+        origin_id = self.origin.get('id')
+        if origin_id:
+            self.origin_id = origin_id
+        else:
+            self.origin_id = self.send_origin(self.origin)
+        self.origin['id'] = self.origin_id
+
+        if not self.visit_date:  # now as default visit_date if not provided
+            self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
+        self.origin_visit = self.send_origin_visit(
+            self.origin_id, self.visit_date)
+        self.visit = self.origin_visit['visit']
+
+    @abstractmethod
     def prepare(self, *args, **kwargs):
-        """First step executed by the loader to prepare some state needed by
+        """Second step executed by the loader to prepare some state needed by
            the loader.
 
         """
         pass
 
-    @abstractmethod
     def get_origin(self):
         """Get the origin that is currently being loaded.
+        self.origin should be set in :func:`prepare_origin`
 
         Returns:
           dict: an origin ready to be sent to storage by
           :func:`origin_add_one`.
         """
-        pass
+        return self.origin
 
     @abstractmethod
     def fetch_data(self):
@@ -824,38 +851,27 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
     def load(self, *args, **kwargs):
         """Loading logic for the loader to follow:
 
-        - 1. def prepare(\*args, \**kwargs): Prepare any eventual state
-        - 2. def get_origin(): Get the origin we work with and store
+        - 1. def prepare_origin_visit(\*args, \**kwargs): Prepare the
+            origin and visit we will associate loading data to
+        - 2. Store the actual origin_visit to storage
+        - 3. def prepare(\*args, \**kwargs): Prepare any eventual state
+        - 4. def get_origin(): Get the origin we work with and store
         - while True:
 
-          - 3. def fetch_data(): Fetch the data to store
-          - 4. def store_data(): Store the data
+          - 5. def fetch_data(): Fetch the data to store
+          - 6. def store_data(): Store the data
 
-        - 5. def cleanup(): Clean up any eventual state put in place in prepare
+        - 7. def cleanup(): Clean up any eventual state put in place in prepare
           method.
 
         """
-        self.prepare(*args, **kwargs)
-        origin = self.get_origin()
-        origin_id = self.origin.get('id')
-        if origin_id:   # some loader may need the origin prior to the
-                        # `func`:load call, thus setting it up already
-            self.origin_id = origin_id
-        else:
-            self.origin_id = self.send_origin(origin)
-
+        self.prepare_origin_visit(*args, **kwargs)
+        self._store_origin_visit()
         fetch_history_id = self.open_fetch_history()
-        if self.visit_date:  # overwriting the visit_date if provided
-            visit_date = self.visit_date
-        else:
-            visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
-
-        origin_visit = self.send_origin_visit(
-            self.origin_id,
-            visit_date)
-        self.visit = origin_visit['visit']
 
         try:
+            self.prepare(*args, **kwargs)
+
             while True:
                 more_data_to_fetch = self.fetch_data()
                 self.store_data()
