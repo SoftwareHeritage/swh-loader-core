@@ -1,3 +1,4 @@
+psutil
 retrying
 swh.core
 swh.model>=0.0.18
