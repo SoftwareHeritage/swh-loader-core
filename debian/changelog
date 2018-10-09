@@ -1,3 +1,12 @@
+swh-loader-core (0.0.34-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.34
+  * setup: prepare for PyPI upload
+  * README.md: Simplify module description
+  * core.tests: Install tests fixture for derivative loaders to use
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 09 Oct 2018 14:11:29 +0200
+
 swh-loader-core (0.0.33-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.33
