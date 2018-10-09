@@ -4,3 +4,6 @@ swh.core
 swh.model>=0.0.18
 swh.storage>=0.0.97
 vcversioner
+
+[testing]
+nose
