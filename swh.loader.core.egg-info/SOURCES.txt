@@ -5,6 +5,7 @@ MANIFEST.in
 Makefile
 README.md
 requirements-swh.txt
+requirements-test.txt
 requirements.txt
 setup.py
 version.txt
@@ -34,4 +35,5 @@ swh/loader/core/queue.py
 swh/loader/core/utils.py
 swh/loader/core/tests/__init__.py
 swh/loader/core/tests/test_converters.py
+swh/loader/core/tests/test_loader.py
 swh/loader/core/tests/test_queue.py
