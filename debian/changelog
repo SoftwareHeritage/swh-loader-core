@@ -1,3 +1,11 @@
+swh-loader-core (0.0.35-1~swh1) unstable-swh; urgency=medium
+
+  * v0.0.35
+  * tests: Initialize tox.ini use
+  * tests, debian/*: Migrate to pytest
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 23 Oct 2018 15:47:22 +0200
+
 swh-loader-core (0.0.34-1~swh1) unstable-swh; urgency=medium
 
   * v0.0.34
