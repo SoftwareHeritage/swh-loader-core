@@ -8,6 +8,7 @@ requirements-swh.txt
 requirements-test.txt
 requirements.txt
 setup.py
+tox.ini
 version.txt
 debian/changelog
 debian/compat
