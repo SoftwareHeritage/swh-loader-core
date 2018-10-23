@@ -5,16 +5,13 @@
 
 import unittest
 
-from nose.tools import istest
-
-from swh.loader.core.queue import QueuePerNbElements
-from swh.loader.core.queue import QueuePerNbUniqueElements
-from swh.loader.core.queue import QueuePerSizeAndNbUniqueElements
+from swh.loader.core.queue import (QueuePerNbElements,
+                                   QueuePerNbUniqueElements,
+                                   QueuePerSizeAndNbUniqueElements)
 
 
 class TestQueuePerNbElements(unittest.TestCase):
-    @istest
-    def simple_queue_behavior(self):
+    def test_simple_queue_behavior(self):
         max_nb_elements = 10
         queue = QueuePerNbElements(max_nb_elements=max_nb_elements)
 
@@ -25,21 +22,21 @@ class TestQueuePerNbElements(unittest.TestCase):
 
         # pop returns the content and reset the queue
         actual_elements = queue.pop()
-        self.assertEquals(actual_elements, elements)
-        self.assertEquals(queue.pop(), [])
+        self.assertEqual(actual_elements, elements)
+        self.assertEqual(queue.pop(), [])
 
         # duplicates can be integrated
         new_elements = [1, 1, 3, 4, 9, 20, 30, 40, 12, 14, 2]
         actual_threshold = queue.add(new_elements)
 
         self.assertTrue(actual_threshold)
-        self.assertEquals(queue.pop(), new_elements)
+        self.assertEqual(queue.pop(), new_elements)
 
         # reset is destructive too
         queue.add(new_elements)
         queue.reset()
 
-        self.assertEquals(queue.pop(), [])
+        self.assertEqual(queue.pop(), [])
 
 
 def to_some_objects(elements, key):
@@ -48,8 +45,7 @@ def to_some_objects(elements, key):
 
 
 class TestQueuePerNbUniqueElements(unittest.TestCase):
-    @istest
-    def queue_with_unique_key_behavior(self):
+    def test_queue_with_unique_key_behavior(self):
         max_nb_elements = 5
         queue = QueuePerNbUniqueElements(max_nb_elements=max_nb_elements,
                                          key='id')
@@ -62,9 +58,9 @@ class TestQueuePerNbUniqueElements(unittest.TestCase):
 
         # pop returns the content and reset the queue
         actual_elements = queue.pop()
-        self.assertEquals(actual_elements,
-                          [{'id': 1}, {'id': 3}, {'id': 4}, {'id': 9}])
-        self.assertEquals(queue.pop(), [])
+        self.assertEqual(actual_elements,
+                         [{'id': 1}, {'id': 3}, {'id': 4}, {'id': 9}])
+        self.assertEqual(queue.pop(), [])
 
         new_elements = list(to_some_objects(
             [1, 3, 4, 9, 20],
@@ -77,7 +73,7 @@ class TestQueuePerNbUniqueElements(unittest.TestCase):
         queue.add(new_elements)
         queue.reset()
 
-        self.assertEquals(queue.pop(), [])
+        self.assertEqual(queue.pop(), [])
 
 
 def to_some_complex_objects(elements, key):
@@ -86,8 +82,7 @@ def to_some_complex_objects(elements, key):
 
 
 class TestQueuePerSizeAndNbUniqueElements(unittest.TestCase):
-    @istest
-    def queue_with_unique_key_and_size_behavior(self):
+    def test_queue_with_unique_key_and_size_behavior(self):
         max_nb_elements = 5
         max_size = 100
         queue = QueuePerSizeAndNbUniqueElements(
@@ -107,12 +102,12 @@ class TestQueuePerSizeAndNbUniqueElements(unittest.TestCase):
 
         # pop returns the content and reset the queue
         actual_elements = queue.pop()
-        self.assertEquals(actual_elements,
-                          [{'k': 1, 'length': 10},
-                           {'k': 2, 'length': 20},
-                           {'k': 3, 'length': 30},
-                           {'k': 4, 'length': 100}])
-        self.assertEquals(queue.pop(), [])
+        self.assertEqual(actual_elements,
+                         [{'k': 1, 'length': 10},
+                          {'k': 2, 'length': 20},
+                          {'k': 3, 'length': 30},
+                          {'k': 4, 'length': 100}])
+        self.assertEqual(queue.pop(), [])
 
         # size threshold not reached, nb elements reached, the
         # threshold is considered reached
@@ -138,4 +133,4 @@ class TestQueuePerSizeAndNbUniqueElements(unittest.TestCase):
         queue.add(new_elements)
         queue.reset()
 
-        self.assertEquals(queue.pop(), [])
+        self.assertEqual(queue.pop(), [])
