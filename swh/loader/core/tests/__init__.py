@@ -12,10 +12,157 @@ import tempfile
 from unittest import TestCase
 
 from swh.model import hashutil
+from swh.model.hashutil import hash_to_bytes
+
+
+class BaseLoaderStorageTest:
+    def _assertCountEqual(self, type, expected_length, msg=None):
+        """Check typed 'type' state to have the same expected length.
+
+        """
+        self.storage.refresh_stat_counters()
+        self.assertEqual(self.storage.stat_counters()[type],
+                         expected_length, msg=msg)
+
+    def assertCountContents(self, len_expected_contents, msg=None):
+        self._assertCountEqual('content', len_expected_contents, msg=msg)
+
+    def assertCountDirectories(self, len_expected_directories, msg=None):
+        self._assertCountEqual('directory', len_expected_directories,
+                               msg=msg)
+
+    def assertCountReleases(self, len_expected_releases, msg=None):
+        self._assertCountEqual('release', len_expected_releases, msg=msg)
+
+    def assertCountRevisions(self, len_expected_revisions, msg=None):
+        self._assertCountEqual('revision', len_expected_revisions, msg=msg)
+
+    def assertCountSnapshots(self, len_expected_snapshot, msg=None):
+        self._assertCountEqual('snapshot', len_expected_snapshot, msg=msg)
+
+    def assertContentsContain(self, expected_contents):
+        """Check the provided content are a subset of the stored ones.
+
+        Args:
+            expected_contents ([sha1]): List of content ids"""
+        self._assertCountEqual('content', len(expected_contents))
+        missing = list(self.storage.content_missing(
+            {'sha1': hash_to_bytes(content_hash)}
+            for content_hash in expected_contents))
+        self.assertEqual(missing, [])
+
+    def assertDirectoriesContain(self, expected_directories):
+        """Check the provided directories are a subset of the stored ones.
+
+        Args:
+            expected_directories ([sha1]): List of directory ids."""
+        self._assertCountEqual('directory', len(expected_directories))
+        missing = list(self.storage.directory_missing(
+            hash_to_bytes(dir_) for dir_ in expected_directories))
+        self.assertEqual(missing, [])
+
+    def assertReleasesContain(self, expected_releases):
+        """Check the provided releases are a subset of the stored ones.
+
+        Args:
+            releases (list): list of swh releases' identifiers.
+
+        """
+        self._assertCountEqual('release', len(expected_releases))
+        missing = list(self.storage.release_missing(
+            hash_to_bytes(rel) for rel in expected_releases))
+        self.assertEqual(missing, [])
+
+    def assertRevisionsContain(self, expected_revisions):
+        """Check the provided revisions are a subset of the stored ones.
+
+        Expects self.loader to be instantiated and ready to be
+        inspected (meaning the loading took place).
+
+        Args:
+            expected_revisions (dict): Dict with key revision id,
+            value the targeted directory id.
+
+        """
+        self._assertCountEqual('revision', len(expected_revisions))
+
+        revs = list(self.storage.revision_get(
+            hashutil.hash_to_bytes(rev_id) for rev_id in expected_revisions))
+        self.assertNotIn(None, revs)
+        self.assertEqual(
+            {rev['id']: rev['directory'] for rev in revs},
+            {hash_to_bytes(rev_id): hash_to_bytes(rev_dir)
+             for (rev_id, rev_dir) in expected_revisions.items()})
+
+    def assertSnapshotEqual(self, expected_snapshot, expected_branches=[]):
+        """Check for snapshot match.
+
+        Provide the hashes as hexadecimal, the conversion is done
+        within the method.
+
+        Args:
+
+            expected_snapshot (str/dict): Either the snapshot
+                                          identifier or the full
+                                          snapshot
+            expected_branches (dict): expected branches or nothing is
+                                      the full snapshot is provided
+
+        """
+        if isinstance(expected_snapshot, dict) and not expected_branches:
+            expected_snapshot_id = expected_snapshot['id']
+            expected_branches = expected_snapshot['branches']
+        else:
+            expected_snapshot_id = expected_snapshot
+
+        self._assertCountEqual('snapshot', 1)
+
+        snap = self.storage.snapshot_get(hash_to_bytes(expected_snapshot_id))
+        self.assertIsNotNone(snap)
+
+        def decode_target(target):
+            if not target:
+                return target
+            target_type = target['target_type']
+
+            if target_type == 'alias':
+                decoded_target = target['target'].decode('utf-8')
+            else:
+                decoded_target = hashutil.hash_to_hex(target['target'])
+
+            return {
+                'target': decoded_target,
+                'target_type': target_type
+            }
+
+        branches = {
+            branch.decode('utf-8'): decode_target(target)
+            for branch, target in snap['branches'].items()
+        }
+        self.assertEqual(expected_branches, branches)
+
+    def assertOriginMetadataContains(self, origin_type, origin_url,
+                                     expected_origin_metadata):
+        """Check the storage contains this metadata for the given origin.
+
+        Args:
+
+            origin_type (str): type of origin ('deposit', 'git', 'svn', ...)
+            origin_url (str): URL of the origin
+            expected_origin_metadata (dict):
+                              Extrinsic metadata of the origin
+                              <https://forge.softwareheritage.org/T1344>
+        """
+        origin = self.storage.origin_get(
+                dict(type=origin_type, url=origin_url))
+        results = self.storage.origin_metadata_get_by(origin['id'])
+        self.assertEqual(len(results), 1, results)
+        result = results[0]
+        self.assertEqual(result['metadata'], expected_origin_metadata)
 
 
 @pytest.mark.fs
-class BaseLoaderTest(TestCase):
+class BaseLoaderTest(TestCase, BaseLoaderStorageTest):
     """Mixin base loader test class.
 
     This allows to uncompress archives (mercurial, svn, git,
@@ -49,11 +196,13 @@ class BaseLoaderTest(TestCase):
     def setUp(self, archive_name, *, start_path, filename=None,
               resources_path='resources', prefix_tmp_folder_name='',
               uncompress_archive=True):
+        super().setUp()
         repo_path = os.path.join(start_path, resources_path, archive_name)
         if not uncompress_archive:
             # In that case, simply sets the archive's path
             self.destination_path = repo_path
             self.tmp_root_path = None
+            self.repo_url = 'file://' + repo_path
             return
         tmp_root_path = tempfile.mkdtemp(
             prefix=prefix_tmp_folder_name, suffix='-tests')
@@ -76,210 +225,3 @@ class BaseLoaderTest(TestCase):
         """
         if self.tmp_root_path and os.path.exists(self.tmp_root_path):
             shutil.rmtree(self.tmp_root_path)
-
-    def state(self, _type):
-        return self.loader.state(_type)
-
-    def _assertCountOk(self, type, expected_length, msg=None):
-        """Check typed 'type' state to have the same expected length.
-
-        """
-        self.assertEqual(len(self.state(type)), expected_length, msg=msg)
-
-    def assertCountContents(self, len_expected_contents, msg=None):
-        self._assertCountOk('content', len_expected_contents, msg=msg)
-
-    def assertCountDirectories(self, len_expected_directories, msg=None):
-        self._assertCountOk('directory', len_expected_directories, msg=msg)
-
-    def assertCountReleases(self, len_expected_releases, msg=None):
-        self._assertCountOk('release', len_expected_releases, msg=msg)
-
-    def assertCountRevisions(self, len_expected_revisions, msg=None):
-        self._assertCountOk('revision', len_expected_revisions, msg=msg)
-
-    def assertCountSnapshots(self, len_expected_snapshot, msg=None):
-        self._assertCountOk('snapshot', len_expected_snapshot, msg=msg)
-
-    def assertContentsOk(self, expected_contents):
-        self._assertCountOk('content', len(expected_contents))
-        for content in self.state('content'):
-            content_id = hashutil.hash_to_hex(content['sha1'])
-            self.assertIn(content_id, expected_contents)
-
-    def assertDirectoriesOk(self, expected_directories):
-        self._assertCountOk('directory', len(expected_directories))
-        for _dir in self.state('directory'):
-            _dir_id = hashutil.hash_to_hex(_dir['id'])
-            self.assertIn(_dir_id, expected_directories)
-
-    def assertReleasesOk(self, expected_releases):
-        """Check the loader's releases match the expected releases.
-
-        Args:
-            releases ([dict]): List of dictionaries representing swh releases.
-
-        """
-        self._assertCountOk('release', len(expected_releases))
-        for i, rel in enumerate(self.state('release')):
-            rel_id = hashutil.hash_to_hex(rel['id'])
-            self.assertEqual(expected_releases[i], rel_id)
-
-    def assertRevisionsOk(self, expected_revisions):
-        """Check the loader's revisions match the expected revisions.
-
-        Expects self.loader to be instantiated and ready to be
-        inspected (meaning the loading took place).
-
-        Args:
-            expected_revisions (dict): Dict with key revision id,
-            value the targeted directory id.
-
-        """
-        self._assertCountOk('revision', len(expected_revisions))
-        for rev in self.state('revision'):
-            rev_id = hashutil.hash_to_hex(rev['id'])
-            directory_id = hashutil.hash_to_hex(rev['directory'])
-
-            self.assertEqual(expected_revisions[rev_id], directory_id)
-
-    def assertSnapshotOk(self, expected_snapshot, expected_branches=[]):
-        """Check for snapshot match.
-
-        Provide the hashes as hexadecimal, the conversion is done
-        within the method.
-
-        Args:
-
-            expected_snapshot (str/dict): Either the snapshot
-                                          identifier or the full
-                                          snapshot
-            expected_branches (dict): expected branches or nothing is
-                                      the full snapshot is provided
-
-        """
-        if isinstance(expected_snapshot, dict) and not expected_branches:
-            expected_snapshot_id = expected_snapshot['id']
-            expected_branches = expected_snapshot['branches']
-        else:
-            expected_snapshot_id = expected_snapshot
-
-        snapshots = self.state('snapshot')
-        self.assertEqual(len(snapshots), 1)
-
-        snap = snapshots[0]
-        snap_id = hashutil.hash_to_hex(snap['id'])
-        self.assertEqual(snap_id, expected_snapshot_id)
-
-        def decode_target(target):
-            if not target:
-                return target
-            target_type = target['target_type']
-
-            if target_type == 'alias':
-                decoded_target = target['target'].decode('utf-8')
-            else:
-                decoded_target = hashutil.hash_to_hex(target['target'])
-
-            return {
-                'target': decoded_target,
-                'target_type': target_type
-            }
-
-        branches = {
-            branch.decode('utf-8'): decode_target(target)
-            for branch, target in snap['branches'].items()
-        }
-        self.assertEqual(expected_branches, branches)
-
-
-class LoaderNoStorage:
-    """Mixin class to inhibit the persistence and keep in memory the data
-    sent for storage (for testing purposes).
-
-    This overrides the core loader's behavior to store in a dict the
-    swh objects.
-
-    cf. :class:`HgLoaderNoStorage`, :class:`SvnLoaderNoStorage`, etc...
-
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._state = {
-            'content': [],
-            'directory': [],
-            'revision': [],
-            'release': [],
-            'snapshot': [],
-        }
-
-    def state(self, type):
-        return self._state[type]
-
-    def _add(self, type, l):
-        """Add without duplicates and keeping the insertion order.
-
-        Args:
-            type (str): Type of objects concerned by the action
-            l ([object]): List of 'type' object
-
-        """
-        col = self.state(type)
-        for o in l:
-            if o in col:
-                continue
-            col.append(o)
-
-    def maybe_load_contents(self, all_contents):
-        self._add('content', all_contents)
-
-    def maybe_load_directories(self, all_directories):
-        self._add('directory', all_directories)
-
-    def maybe_load_revisions(self, all_revisions):
-        self._add('revision', all_revisions)
-
-    def maybe_load_releases(self, all_releases):
-        self._add('release', all_releases)
-
-    def maybe_load_snapshot(self, snapshot):
-        self._add('snapshot', [snapshot])
-
-    def send_batch_contents(self, all_contents):
-        self._add('content', all_contents)
-
-    def send_batch_directories(self, all_directories):
-        self._add('directory', all_directories)
-
-    def send_batch_revisions(self, all_revisions):
-        self._add('revision', all_revisions)
-
-    def send_batch_releases(self, all_releases):
-        self._add('release', all_releases)
-
-    def send_snapshot(self, snapshot):
-        self._add('snapshot', [snapshot])
-
-    def _store_origin_visit(self):
-        pass
-
-    def open_fetch_history(self):
-        pass
-
-    def close_fetch_history_success(self, fetch_history_id):
-        pass
-
-    def close_fetch_history_failure(self, fetch_history_id):
-        pass
-
-    def update_origin_visit(self, origin_id, visit, status):
-        pass
-
-    def close_failure(self):
-        pass
-
-    def close_success(self):
-        pass
-
-    def pre_cleanup(self):
-        pass
