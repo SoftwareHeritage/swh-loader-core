@@ -24,8 +24,8 @@ from .queue import QueuePerNbUniqueElements
 
 
 def send_in_packets(objects, sender, packet_size, packet_size_bytes=None):
-    """Send `objects`, using the `sender`, in packets of `packet_size` objects (and
-    of max `packet_size_bytes`).
+    """Send `objects`, using the `sender`, in packets of `packet_size` objects
+    (and of max `packet_size_bytes`).
     """
     formatted_objects = []
     count = 0
@@ -74,7 +74,7 @@ def retry_loading(error):
     return True
 
 
-class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
+class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
     """Mixin base class for loader.
 
     To use this class, you must:
@@ -141,7 +141,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
 
     ADDITIONAL_CONFIG = {}
 
-    def __init__(self, logging_class, config=None):
+    def __init__(self, logging_class=None, config=None):
         if config:
             self.config = config
         else:
@@ -150,6 +150,9 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
 
         self.storage = get_storage(**self.config['storage'])
 
+        if logging_class is None:
+            logging_class = '%s.%s' % (self.__class__.__module__,
+                                       self.__class__.__name__)
         self.log = logging.getLogger(logging_class)
 
         self.contents = QueuePerSizeAndNbUniqueElements(
@@ -280,7 +283,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
                 'swh_id': log_id
             })
 
-        tools = self.storage.tool_add([tool])
+        tools = list(self.storage.tool_add([tool]))
         tool_id = tools[0]['id']
 
         self.log.debug(
@@ -710,7 +713,7 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
 
     def prepare_metadata(self):
         """First step for origin_metadata insertion, resolving the
-        provider_ id and the tool_id by fetching data from the storage
+        provider_id and the tool_id by fetching data from the storage
         or creating tool and provider on the fly if the data isn't available
 
         """
@@ -856,27 +859,28 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
         pass
 
     def load(self, *args, **kwargs):
-        """Loading logic for the loader to follow:
+        r"""Loading logic for the loader to follow:
 
-        - 1. def prepare_origin_visit(\*args, \**kwargs): Prepare the
-            origin and visit we will associate loading data to
-        - 2. Store the actual origin_visit to storage
-        - 3. def prepare(\*args, \**kwargs): Prepare any eventual state
-        - 4. def get_origin(): Get the origin we work with and store
+        - 1. Call :meth:`prepare_origin_visit` to prepare the
+             origin and visit we will associate loading data to
+        - 2. Store the actual ``origin_visit`` to storage
+        - 3. Call :meth:`prepare` to prepare any eventual state
+        - 4. Call :meth:`get_origin` to get the origin we work with and store
+
         - while True:
 
-          - 5. def fetch_data(): Fetch the data to store
-          - 6. def store_data(): Store the data
+          - 5. Call :meth:`fetch_data` to fetch the data to store
+          - 6. Call :meth:`store_data` to store the data
 
-        - 7. def cleanup(): Clean up any eventual state put in place in prepare
-          method.
+        - 7. Call :meth:`cleanup` to clean up any eventual state put in place
+             in :meth:`prepare` method.
 
         """
         try:
             self.pre_cleanup()
         except Exception:
             msg = 'Cleaning up dangling data failed! Continue loading.'
-            self.log.warn(msg)
+            self.log.warning(msg)
 
         self.prepare_origin_visit(*args, **kwargs)
         self._store_origin_visit()
@@ -914,21 +918,21 @@ class SWHLoader(config.SWHConfig, metaclass=ABCMeta):
         return self.load_status()
 
 
-class SWHStatelessLoader(SWHLoader):
-    """This base class is a pattern for stateless loaders.
+class UnbufferedLoader(BufferedLoader):
+    """This base class is a pattern for unbuffered loaders.
 
-    Stateless loaders are able to load all the data in one go. For
+    UnbufferedLoader loaders are able to load all the data in one go. For
     example, the loader defined in swh-loader-git
     :class:`BulkUpdater`.
 
     For other loaders (stateful one, (e.g :class:`SWHSvnLoader`),
-    inherit directly from :class:`SWHLoader`.
+    inherit directly from :class:`BufferedLoader`.
 
     """
     ADDITIONAL_CONFIG = {}
 
     def __init__(self, logging_class=None, config=None):
-        super().__init__(logging_class=logging_class, config=None)
+        super().__init__(logging_class=logging_class, config=config)
         self.visit_date = None  # possibly overridden in self.prepare method
 
     def cleanup(self):
@@ -984,7 +988,7 @@ class SWHStatelessLoader(SWHLoader):
         raise NotImplementedError
 
     def flush(self):
-        """Stateless loader does not flush since it has no state to flush.
+        """Unbuffered loader does not flush since it has no state to flush.
 
         """
         pass
