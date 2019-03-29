@@ -1,8 +1,10 @@
-swh-loader-core (0.0.39-1~swh1~bpo9+1) stretch-swh; urgency=medium
+swh-loader-core (0.0.40-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for stretch-swh
+  * New upstream release 0.0.40     - (tagged by Antoine Lambert
+    <antoine.lambert@inria.fr> on 2019-03-29 10:57:14 +0100)
+  * Upstream changes:     - version 0.0.40
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 30 Jan 2019 10:15:14 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 29 Mar 2019 10:02:37 +0000
 
 swh-loader-core (0.0.39-1~swh1) unstable-swh; urgency=medium
 
