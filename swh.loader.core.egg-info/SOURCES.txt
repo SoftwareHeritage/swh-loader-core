@@ -22,3 +22,4 @@ swh/loader/core/tests/test_converters.py
 swh/loader/core/tests/test_loader.py
 swh/loader/core/tests/test_queue.py
 swh/loader/core/tests/test_tests.py
+swh/loader/core/tests/test_utils.py
