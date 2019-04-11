@@ -1,3 +1,15 @@
+swh-loader-core (0.0.41-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.41     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-04-11 11:46:00
+    +0200)
+  * Upstream changes:     - v0.0.41     - core.loader: Migrate to latest
+    snapshot_add, origin_visit_update api     - core.loader: Count only
+    the effectively new objects ingested     - test_utils: Add coverage
+    on utils module
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 11 Apr 2019 09:52:55 +0000
+
 swh-loader-core (0.0.40-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.40     - (tagged by Antoine Lambert
