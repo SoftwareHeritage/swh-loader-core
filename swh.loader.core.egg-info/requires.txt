@@ -1,7 +1,7 @@
 vcversioner
 retrying
 psutil
-swh.core
+requests
 swh.model>=0.0.18
 swh.storage>=0.0.133
 
