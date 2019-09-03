@@ -1,3 +1,9 @@
+swh-loader-core (0.0.45-1~swh2) unstable-swh; urgency=medium
+
+  * Fix missing build dependency
+
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Tue, 03 Sep 2019 14:12:13 +0200
+
 swh-loader-core (0.0.45-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.45     - (tagged by Antoine R. Dumont
