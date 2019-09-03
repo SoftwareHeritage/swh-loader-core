@@ -1,3 +1,16 @@
+swh-loader-core (0.0.45-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.45     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-09-03 10:38:36
+    +0200)
+  * Upstream changes:     - v0.0.45     - loader: Provide visit type
+    when calling origin_visit_add     - loader: Drop keys 'perms' and
+    'path' from content before sending to the     - storage     -
+    swh.loader.package: Implement GNU loader     - docs: add code of
+    conduct document
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 03 Sep 2019 08:41:49 +0000
+
 swh-loader-core (0.0.44-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.44     - (tagged by Valentin Lorentz
