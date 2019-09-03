@@ -23,3 +23,10 @@ swh/loader/core/tests/test_loader.py
 swh/loader/core/tests/test_queue.py
 swh/loader/core/tests/test_tests.py
 swh/loader/core/tests/test_utils.py
+swh/loader/package/__init__.py
+swh/loader/package/loader.py
+swh/loader/package/tasks.py
+swh/loader/package/tests/__init__.py
+swh/loader/package/tests/common.py
+swh/loader/package/tests/test_loader.py
+swh/loader/package/tests/resources/tarballs/8sync-0.1.0.tar.gz
