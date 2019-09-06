@@ -1,3 +1,15 @@
+swh-loader-core (0.0.46-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.46     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-09-06 18:30:42
+    +0200)
+  * Upstream changes:     - v0.0.46     - pytest.ini: Remove warnings
+    about our custom markers     - pep8: Fix log.warning calls     -
+    core/loader: Fix get_save_data_path implementation     - Fix
+    validation errors in test.
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 06 Sep 2019 16:33:13 +0000
+
 swh-loader-core (0.0.45-1~swh2) unstable-swh; urgency=medium
 
   * Fix missing build dependency
