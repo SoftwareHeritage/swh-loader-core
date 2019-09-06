@@ -1,10 +1,12 @@
-# Copyright (C) 2018  The Software Heritage developers
+# Copyright (C) 2018-2019  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import datetime
+import hashlib
 import logging
+import pytest
 
 from swh.model.hashutil import hash_to_bytes
 
@@ -63,7 +65,9 @@ class DummyUnbufferedLoader(DummyLoader, UnbufferedLoader):
 
 
 class DummyBufferedLoader(DummyLoader, BufferedLoader):
-    pass
+    def __init__(self, *args, save_data_path=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__save_data_path = save_data_path
 
 
 class DummyBaseLoaderTest(BaseLoaderTest):
@@ -74,7 +78,6 @@ class DummyBaseLoaderTest(BaseLoaderTest):
         self.storage = self.loader.storage
         contents = [
             {
-                'id': '34973274ccef6ab4dfaaf86599792fa9c3fe4689',
                 'sha1': '34973274ccef6ab4dfaaf86599792fa9c3fe4689',
                 'sha1_git': b'bar1',
                 'sha256': b'baz1',
@@ -84,7 +87,6 @@ class DummyBaseLoaderTest(BaseLoaderTest):
                 'length': 5,
             },
             {
-                'id': '61c2b3a30496d329e21af70dd2d7e097046d07b7',
                 'sha1': '61c2b3a30496d329e21af70dd2d7e097046d07b7',
                 'sha1_git': b'bar2',
                 'sha256': b'baz2',
@@ -94,12 +96,12 @@ class DummyBaseLoaderTest(BaseLoaderTest):
                 'length': 5,
             },
         ]
-        self.expected_contents = [content['id'] for content in contents]
+        self.expected_contents = [content['sha1'] for content in contents]
         self.in_contents = contents.copy()
         for content in self.in_contents:
             content['sha1'] = hash_to_bytes(content['sha1'])
         self.in_directories = [
-            {'id': hash_to_bytes(id_)}
+            {'id': hash_to_bytes(id_), 'entries': []}
             for id_ in [
                 '44e45d56f88993aae6a0198013efa80716fd8921',
                 '54e45d56f88993aae6a0198013efa80716fd8920',
@@ -111,30 +113,56 @@ class DummyBaseLoaderTest(BaseLoaderTest):
             'email': b'john.doe@institute.org',
             'fullname': b'John Doe <john.doe@institute.org>'
         }
+        rev1_id = b'\x00'*20
+        rev2_id = b'\x01'*20
         self.in_revisions = [
             {
-                'id': b'rev1',
-                'date': None,
+                'id': rev1_id,
+                'type': 'git',
+                'date': 1567591673,
+                'committer_date': 1567591673,
                 'author': person,
-                'committer': person
+                'committer': person,
+                'message': b'msg1',
+                'directory': None,
+                'synthetic': False,
+                'metadata': None,
+                'parents': [],
             },
             {
-                'id': b'rev2',
-                'date': None,
+                'id': rev2_id,
+                'type': 'hg',
+                'date': 1567591673,
+                'committer_date': 1567591673,
                 'author': person,
-                'committer': person
+                'committer': person,
+                'message': b'msg2',
+                'directory': None,
+                'synthetic': False,
+                'metadata': None,
+                'parents': [],
             },
         ]
         self.in_releases = [
             {
-                'id': b'rel1',
+                'name': b'rel1',
+                'id': b'\x02'*20,
                 'date': None,
-                'author': person
+                'author': person,
+                'target_type': 'revision',
+                'target': rev1_id,
+                'message': None,
+                'synthetic': False,
             },
             {
-                'id': b'rel2',
+                'name': b'rel2',
+                'id': b'\x03'*20,
                 'date': None,
-                'author': person
+                'author': person,
+                'target_type': 'revision',
+                'target': rev2_id,
+                'message': None,
+                'synthetic': False,
             },
         ]
         self.in_origin = {
@@ -320,3 +348,24 @@ def test_loader_logger_with_name():
     assert isinstance(loader.log, logging.Logger)
     assert loader.log.name == \
         'some.logger.name'
+
+
+@pytest.mark.fs
+def test_loader_save_data_path(tmp_path):
+    loader = DummyBufferedLoader('some.logger.name.1')
+    url = 'http://bitbucket.org/something'
+    loader.origin = {
+        'url': url,
+    }
+    loader.visit_date = datetime.datetime(year=2019, month=10, day=1)
+    loader.config = {
+        'save_data_path': tmp_path,
+    }
+
+    hash_url = hashlib.sha1(url.encode('utf-8')).hexdigest()
+    expected_save_path = '%s/sha1:%s/%s/2019' % (
+        str(tmp_path), hash_url[0:2], hash_url
+    )
+
+    save_path = loader.get_save_data_path()
+    assert save_path == expected_save_path
