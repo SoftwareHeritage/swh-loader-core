@@ -1,3 +1,12 @@
+swh-loader-core (0.0.48-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.48     - (tagged by Stefano Zacchiroli
+    <zack@upsilon.cc> on 2019-10-01 16:49:39 +0200)
+  * Upstream changes:     - v0.0.48     - * typing: minimal changes to
+    make a no-op mypy run pass
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 01 Oct 2019 14:52:59 +0000
+
 swh-loader-core (0.0.47-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.47     - (tagged by Antoine Lambert
