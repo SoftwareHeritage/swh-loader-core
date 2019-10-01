@@ -15,6 +15,7 @@ swh/loader/__init__.py
 swh/loader/core/__init__.py
 swh/loader/core/converters.py
 swh/loader/core/loader.py
+swh/loader/core/py.typed
 swh/loader/core/queue.py
 swh/loader/core/utils.py
 swh/loader/core/tests/__init__.py
