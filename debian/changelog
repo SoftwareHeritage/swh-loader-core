@@ -1,8 +1,11 @@
-swh-loader-core (0.0.46-1~swh1~bpo9+1) stretch-swh; urgency=medium
+swh-loader-core (0.0.47-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for stretch-swh
+  * New upstream release 0.0.47     - (tagged by Antoine Lambert
+    <antoine.lambert@inria.fr> on 2019-10-01 11:32:50 +0200)
+  * Upstream changes:     - version 0.0.47: Workaround HashCollision
+    errors
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 06 Sep 2019 16:34:25 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 01 Oct 2019 09:35:38 +0000
 
 swh-loader-core (0.0.46-1~swh1) unstable-swh; urgency=medium
 
