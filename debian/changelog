@@ -1,3 +1,9 @@
+swh-loader-core (0.0.49-1~swh2) unstable-swh; urgency=medium
+
+  * Update dependencies
+
+ -- Antoine R. Dumont <antoine.romain.dumont@gmail.com>  Fri, 08 Nov 2019 14:07:20 +0100
+
 swh-loader-core (0.0.49-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.49     - (tagged by Antoine R. Dumont
