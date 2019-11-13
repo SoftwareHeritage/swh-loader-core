@@ -38,7 +38,7 @@ def test_deposit_loading_failure_to_fetch_metadata(swh_config):
     loader = DepositLoader(url, unknown_deposit_id)  # does not exist
 
     actual_load_status = loader.load()
-    assert actual_load_status['status'] == 'failed'
+    assert actual_load_status == {'status': 'failed'}
 
     stats = get_stats(loader.storage)
 
@@ -56,6 +56,7 @@ def test_deposit_loading_failure_to_fetch_metadata(swh_config):
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'partial'
+    assert origin_visit['type'] == 'deposit'
 
 
 requests_mock_datadir_missing_one = requests_mock_datadir_factory(ignore_urls=[
@@ -76,6 +77,7 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
     assert loader.archive_url
     actual_load_status = loader.load()
     assert actual_load_status['status'] == 'uneventful'
+    assert actual_load_status['snapshot_id'] is not None
 
     stats = get_stats(loader.storage)
     assert {
@@ -92,6 +94,7 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'partial'
+    assert origin_visit['type'] == 'deposit'
 
 
 def test_revision_metadata_structure(swh_config, requests_mock_datadir):
@@ -105,6 +108,7 @@ def test_revision_metadata_structure(swh_config, requests_mock_datadir):
     assert loader.archive_url
     actual_load_status = loader.load()
     assert actual_load_status['status'] == 'eventful'
+    assert actual_load_status['snapshot_id'] is not None
 
     expected_revision_id = hash_to_bytes(
         '9471c606239bccb1f269564c9ea114e1eeab9eb4')
@@ -136,7 +140,11 @@ def test_deposit_loading_ok(swh_config, requests_mock_datadir):
 
     assert loader.archive_url
     actual_load_status = loader.load()
-    assert actual_load_status['status'] == 'eventful'
+    expected_snapshot_id = '453f455d0efb69586143cd6b6e5897f9906b53a7'
+    assert actual_load_status == {
+        'status': 'eventful',
+        'snapshot_id': expected_snapshot_id,
+    }
 
     stats = get_stats(loader.storage)
     assert {
@@ -153,6 +161,7 @@ def test_deposit_loading_ok(swh_config, requests_mock_datadir):
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'full'
+    assert origin_visit['type'] == 'deposit'
 
     expected_branches = {
         'HEAD': {
@@ -162,7 +171,7 @@ def test_deposit_loading_ok(swh_config, requests_mock_datadir):
     }
 
     expected_snapshot = {
-        'id': '453f455d0efb69586143cd6b6e5897f9906b53a7',
+        'id': expected_snapshot_id,
         'branches': expected_branches,
     }
     check_snapshot(expected_snapshot, storage=loader.storage)
