@@ -198,6 +198,7 @@ def test_no_release_artifact(swh_config, requests_mock_datadir_missing_all):
 
     actual_load_status = loader.load()
     assert actual_load_status['status'] == 'uneventful'
+    assert actual_load_status['snapshot_id'] is not None
 
     stats = get_stats(loader.storage)
     assert {
@@ -214,6 +215,7 @@ def test_no_release_artifact(swh_config, requests_mock_datadir_missing_all):
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'partial'
+    assert origin_visit['type'] == 'pypi'
 
 
 # problem during loading:
@@ -227,7 +229,7 @@ def test_release_with_traceback(swh_config):
         loader = PyPILoader(url)
 
         actual_load_status = loader.load()
-        assert actual_load_status['status'] == 'failed'
+        assert actual_load_status == {'status': 'failed'}
 
         stats = get_stats(loader.storage)
 
@@ -245,6 +247,7 @@ def test_release_with_traceback(swh_config):
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'partial'
+    assert origin_visit['type'] == 'pypi'
 
 
 # problem during loading: failure early enough in between swh contents...
@@ -272,6 +275,7 @@ def test_revision_metadata_structure(swh_config, requests_mock_datadir):
 
     actual_load_status = loader.load()
     assert actual_load_status['status'] == 'eventful'
+    assert actual_load_status['snapshot_id'] is not None
 
     expected_revision_id = hash_to_bytes(
         'e445da4da22b31bfebb6ffc4383dbf839a074d21')
@@ -305,7 +309,11 @@ def test_visit_with_missing_artifact(
     loader = PyPILoader(url)
 
     actual_load_status = loader.load()
-    assert actual_load_status['status'] == 'eventful'
+    expected_snapshot_id = 'dd0e4201a232b1c104433741dbf45895b8ac9355'
+    assert actual_load_status == {
+        'status': 'eventful',
+        'snapshot_id': expected_snapshot_id
+    }
 
     stats = get_stats(loader.storage)
 
@@ -355,13 +363,14 @@ def test_visit_with_missing_artifact(
     }
 
     expected_snapshot = {
-        'id': 'dd0e4201a232b1c104433741dbf45895b8ac9355',
+        'id': expected_snapshot_id,
         'branches': expected_branches,
     }
     check_snapshot(expected_snapshot, storage=loader.storage)
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'partial'
+    assert origin_visit['type'] == 'pypi'
 
 
 def test_visit_with_1_release_artifact(swh_config, requests_mock_datadir):
@@ -372,7 +381,11 @@ def test_visit_with_1_release_artifact(swh_config, requests_mock_datadir):
     loader = PyPILoader(url)
 
     actual_load_status = loader.load()
-    assert actual_load_status['status'] == 'eventful'
+    expected_snapshot_id = 'ba6e158ada75d0b3cfb209ffdf6daa4ed34a227a'
+    assert actual_load_status == {
+        'status': 'eventful',
+        'snapshot_id': expected_snapshot_id
+    }
 
     stats = get_stats(loader.storage)
     assert {
@@ -431,13 +444,14 @@ def test_visit_with_1_release_artifact(swh_config, requests_mock_datadir):
     }
 
     expected_snapshot = {
-        'id': 'ba6e158ada75d0b3cfb209ffdf6daa4ed34a227a',
+        'id': expected_snapshot_id,
         'branches': expected_branches,
     }
     check_snapshot(expected_snapshot, loader.storage)
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'full'
+    assert origin_visit['type'] == 'pypi'
 
 
 def test_multiple_visits_with_no_change(swh_config, requests_mock_datadir):
@@ -448,7 +462,11 @@ def test_multiple_visits_with_no_change(swh_config, requests_mock_datadir):
     loader = PyPILoader(url)
 
     actual_load_status = loader.load()
-    assert actual_load_status['status'] == 'eventful'
+    snapshot_id = 'ba6e158ada75d0b3cfb209ffdf6daa4ed34a227a'
+    assert actual_load_status == {
+        'status': 'eventful',
+        'snapshot_id': snapshot_id,
+    }
 
     stats = get_stats(loader.storage)
 
@@ -479,7 +497,6 @@ def test_multiple_visits_with_no_change(swh_config, requests_mock_datadir):
         },
     }
 
-    snapshot_id = 'ba6e158ada75d0b3cfb209ffdf6daa4ed34a227a'
     expected_snapshot = {
         'id': snapshot_id,
         'branches': expected_branches,
@@ -488,9 +505,13 @@ def test_multiple_visits_with_no_change(swh_config, requests_mock_datadir):
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'full'
+    assert origin_visit['type'] == 'pypi'
 
     actual_load_status2 = loader.load()
-    assert actual_load_status2['status'] == 'uneventful'
+    assert actual_load_status2 == {
+        'status': 'uneventful',
+        'snapshot_id': actual_load_status2['snapshot_id']
+    }
 
     stats2 = get_stats(loader.storage)
     expected_stats2 = stats.copy()
@@ -511,9 +532,15 @@ def test_incremental_visit(swh_config, requests_mock_datadir_visits):
 
     visit1_actual_load_status = loader.load()
     visit1_stats = get_stats(loader.storage)
-    assert visit1_actual_load_status['status'] == 'eventful'
+    expected_snapshot_id = 'ba6e158ada75d0b3cfb209ffdf6daa4ed34a227a'
+    assert visit1_actual_load_status == {
+        'status': 'eventful',
+        'snapshot_id': expected_snapshot_id
+    }
+
     origin_visit1 = next(loader.storage.origin_visit_get(url))
     assert origin_visit1['status'] == 'full'
+    assert origin_visit1['type'] == 'pypi'
 
     assert {
         'content': 6,
@@ -534,9 +561,16 @@ def test_incremental_visit(swh_config, requests_mock_datadir_visits):
     visit2_stats = get_stats(loader.storage)
 
     assert visit2_actual_load_status['status'] == 'eventful'
+    expected_snapshot_id2 = '2e5149a7b0725d18231a37b342e9b7c4e121f283'
+    assert visit2_actual_load_status == {
+        'status': 'eventful',
+        'snapshot_id': expected_snapshot_id2
+    }
+
     visits = list(loader.storage.origin_visit_get(url))
     assert len(visits) == 2
     assert visits[1]['status'] == 'full'
+    assert visits[1]['type'] == 'pypi'
 
     assert {
         'content': 6 + 1,     # 1 more content
@@ -603,7 +637,7 @@ def test_incremental_visit(swh_config, requests_mock_datadir_visits):
         },
     }
     expected_snapshot = {
-        'id': '2e5149a7b0725d18231a37b342e9b7c4e121f283',
+        'id': expected_snapshot_id2,
         'branches': expected_branches,
     }
 
@@ -611,6 +645,7 @@ def test_incremental_visit(swh_config, requests_mock_datadir_visits):
 
     origin_visit = list(loader.storage.origin_visit_get(url))[-1]
     assert origin_visit['status'] == 'full'
+    assert origin_visit['type'] == 'pypi'
 
     urls = [
         m.url for m in requests_mock_datadir_visits.request_history
@@ -638,7 +673,11 @@ def test_visit_1_release_with_2_artifacts(swh_config, requests_mock_datadir):
     loader = PyPILoader(url)
 
     actual_load_status = loader.load()
-    assert actual_load_status['status'] == 'eventful'
+    expected_snapshot_id = 'a27e638a4dad6fbfa273c6ebec1c4bf320fb84c6'
+    assert actual_load_status == {
+        'status': 'eventful',
+        'snapshot_id': expected_snapshot_id,
+    }
 
     expected_branches = {
         'releases/1.1.0/nexter-1.1.0.zip': {
@@ -652,10 +691,11 @@ def test_visit_1_release_with_2_artifacts(swh_config, requests_mock_datadir):
     }
 
     expected_snapshot = {
-        'id': 'a27e638a4dad6fbfa273c6ebec1c4bf320fb84c6',
+        'id': expected_snapshot_id,
         'branches': expected_branches,
     }
     check_snapshot(expected_snapshot, loader.storage)
 
     origin_visit = next(loader.storage.origin_visit_get(url))
     assert origin_visit['status'] == 'full'
+    assert origin_visit['type'] == 'pypi'
