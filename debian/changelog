@@ -1,3 +1,11 @@
+swh-loader-core (0.0.51-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.51     - (tagged by David Douard
+    <david.douard@sdfa3.org> on 2019-11-18 17:05:17 +0100)
+  * Upstream changes:     - v0.0.51
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 18 Nov 2019 16:09:44 +0000
+
 swh-loader-core (0.0.50-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.50     - (tagged by Antoine R. Dumont
