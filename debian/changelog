@@ -1,8 +1,10 @@
-swh-loader-core (0.0.50-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.51-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.51     - (tagged by David Douard
+    <david.douard@sdfa3.org> on 2019-11-18 17:05:17 +0100)
+  * Upstream changes:     - v0.0.51
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 13 Nov 2019 15:06:06 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 18 Nov 2019 16:09:44 +0000
 
 swh-loader-core (0.0.50-1~swh1) unstable-swh; urgency=medium
 
