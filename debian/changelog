@@ -1,3 +1,15 @@
+swh-loader-core (0.0.52-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.52     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-19 15:15:40
+    +0100)
+  * Upstream changes:     - v0.0.52     - Ensure BufferedLoader and
+    UnbufferedLoader do flush their storage     - loader.package:
+    Register loader package tasks     - package.tasks: Rename debian
+    task to load_deb
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 19 Nov 2019 14:18:41 +0000
+
 swh-loader-core (0.0.51-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.51     - (tagged by David Douard
