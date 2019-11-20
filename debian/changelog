@@ -1,3 +1,13 @@
+swh-loader-core (0.0.53-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.53     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-20 14:26:36
+    +0100)
+  * Upstream changes:     - v0.0.53     - loader.package.tasks: Document
+    tasks     - Define correctly the setup.py's entry_points
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 20 Nov 2019 13:30:10 +0000
+
 swh-loader-core (0.0.52-1~swh3) unstable-swh; urgency=medium
 
   * Update dh-python version constraint
