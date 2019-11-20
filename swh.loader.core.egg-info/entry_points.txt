@@ -1,0 +1,4 @@
+
+        [swh.workers]
+        loader.package=swh.loader.package:register
+    
