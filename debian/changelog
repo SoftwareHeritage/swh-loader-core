@@ -1,8 +1,8 @@
-swh-loader-core (0.0.52-1~swh2~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.52-1~swh3) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * Update dh-python version constraint
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 20 Nov 2019 10:50:35 +0000
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 20 Nov 2019 12:03:00 +0100
 
 swh-loader-core (0.0.52-1~swh2) unstable-swh; urgency=medium
 
