@@ -1,8 +1,8 @@
-swh-loader-core (0.0.52-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.52-1~swh2) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * Add egg-info to pybuild.testfiles.
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 19 Nov 2019 14:20:38 +0000
+ -- Antoine R. Dumont (@ardumont) <antoine.romain.dumont@gmail.com>  Wed, 20 Nov 2019 11:42:42 +0100
 
 swh-loader-core (0.0.52-1~swh1) unstable-swh; urgency=medium
 
