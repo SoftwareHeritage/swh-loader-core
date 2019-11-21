@@ -1,3 +1,14 @@
+swh-loader-core (0.0.55-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.55     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-21 13:51:03
+    +0100)
+  * Upstream changes:     - v0.0.55     - package.tasks: Rename
+    load_archive into load_archive_files     - Migrate tox.ini to extras
+    = xxx instead of deps = .[testing]     - Merge tox test environments
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 21 Nov 2019 12:56:07 +0000
+
 swh-loader-core (0.0.54-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.54     - (tagged by Antoine R. Dumont
