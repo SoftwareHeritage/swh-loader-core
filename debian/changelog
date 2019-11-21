@@ -1,3 +1,14 @@
+swh-loader-core (0.0.56-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.56     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-21 16:12:46
+    +0100)
+  * Upstream changes:     - v0.0.56     - package.tasks: Rename
+    appropriately load_deb_package task type name     - Fix typos
+    reported by codespell     - Add a pre-commit config file
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 21 Nov 2019 15:16:23 +0000
+
 swh-loader-core (0.0.55-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.55     - (tagged by Antoine R. Dumont
