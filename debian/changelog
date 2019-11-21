@@ -1,3 +1,14 @@
+swh-loader-core (0.0.54-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.54     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-21 11:29:20
+    +0100)
+  * Upstream changes:     - v0.0.54     - loader.package.deposit: Drop
+    swh.deposit.client requirement     - Include all requirements in
+    MANIFEST.in
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 21 Nov 2019 10:32:23 +0000
+
 swh-loader-core (0.0.53-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.53     - (tagged by Antoine R. Dumont
