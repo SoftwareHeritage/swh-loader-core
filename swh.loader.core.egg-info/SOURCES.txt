@@ -74,11 +74,14 @@ swh/loader/package/tests/data/https_ftp.gnu.org/gnu_8sync_8sync-0.2.0.tar.gz
 swh/loader/package/tests/data/https_pypi.org/pypi_0805nexter_json
 swh/loader/package/tests/data/https_pypi.org/pypi_0805nexter_json_visit1
 swh/loader/package/tests/data/https_pypi.org/pypi_nexter_json
+swh/loader/package/tests/data/https_registry.npmjs.org/@aller_shared_-_shared-0.1.0.tgz
+swh/loader/package/tests/data/https_registry.npmjs.org/@aller_shared_-_shared-0.1.1-alpha.14.tgz
 swh/loader/package/tests/data/https_registry.npmjs.org/org_-_org-0.0.2.tgz
 swh/loader/package/tests/data/https_registry.npmjs.org/org_-_org-0.0.3.tgz
 swh/loader/package/tests/data/https_registry.npmjs.org/org_-_org-0.0.4.tgz
 swh/loader/package/tests/data/https_registry.npmjs.org/org_-_org-0.0.5.tgz
 swh/loader/package/tests/data/https_registry.npmjs.org/org_-_org-0.1.0.tgz
 swh/loader/package/tests/data/https_registry.npmjs.org/org_-_org-0.2.0.tgz
+swh/loader/package/tests/data/https_replicate.npmjs.com/@aller_shared
 swh/loader/package/tests/data/https_replicate.npmjs.com/org
 swh/loader/package/tests/data/https_replicate.npmjs.com/org_visit1
