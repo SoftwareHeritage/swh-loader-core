@@ -1,8 +1,12 @@
-swh-loader-core (0.0.57-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.58-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.58     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-22 12:08:10
+    +0100)
+  * Upstream changes:     - v0.0.58     - package.pypi: Filter out non-
+    sdist package type
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 22 Nov 2019 10:33:07 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 22 Nov 2019 11:11:56 +0000
 
 swh-loader-core (0.0.57-1~swh1) unstable-swh; urgency=medium
 
