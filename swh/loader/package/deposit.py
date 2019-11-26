@@ -5,6 +5,7 @@
 
 import logging
 import requests
+import types
 
 from typing import (
     Any, Dict, Generator, List, Mapping, Optional, Sequence, Tuple, Union
@@ -84,6 +85,8 @@ class DepositLoader(PackageLoader):
         revision['committer'] = parse_author(revision['committer'])
         revision['message'] = revision['message'].encode('utf-8')
         revision['type'] = 'tar'
+        parents = revision.get('parents', [])
+        revision['parents'] = [hash_to_bytes(p) for p in parents]
 
         return revision
 
@@ -126,7 +129,11 @@ class DepositLoader(PackageLoader):
                 return r
             rev_id = branches[b'HEAD']['target']
 
-            revision = next(self.storage.revision_get([rev_id]))
+            revisions = self.storage.revision_get([rev_id])
+            # FIXME: inconsistency between tests and production code
+            if isinstance(revisions, types.GeneratorType):
+                revisions = list(revisions)
+            revision = revisions[0]
 
             # Retrieve the revision identifier
             dir_id = revision['directory']
@@ -214,7 +221,7 @@ class ApiClient:
            identifiers result of the loading.
 
         """
-        url = f'/{self.base_url}/{deposit_id}/update/'
+        url = f'{self.base_url}/{deposit_id}/update/'
         payload = {'status': status}
         if revision_id:
             payload['revision_id'] = revision_id
