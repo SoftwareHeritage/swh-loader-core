@@ -1,6 +1,7 @@
 MANIFEST.in
 Makefile
 README.md
+conftest.py
 requirements-swh.txt
 requirements-test.txt
 requirements.txt
