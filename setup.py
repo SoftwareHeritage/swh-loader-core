@@ -52,7 +52,11 @@ setup(
     include_package_data=True,
     entry_points='''
         [swh.workers]
-        loader.package=swh.loader.package:register
+        loader.archive=swh.loader.package.archive:register
+        loader.debian=swh.loader.package.debian:register
+        loader.deposit=swh.loader.package.deposit:register
+        loader.npm=swh.loader.package.npm:register
+        loader.pypi=swh.loader.package.pypi:register
     ''',
     classifiers=[
         "Programming Language :: Python :: 3",
