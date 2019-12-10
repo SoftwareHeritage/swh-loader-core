@@ -8,9 +8,12 @@ python-debian
 swh.core>=0.0.75
 swh.model>=0.0.18
 swh.storage>=0.0.153
+swh.scheduler
 
 [testing]
 pytest
+pytest-mock
+pytest-postgresql>=2.1.0
 requests_mock
 swh-core[testing]
 swh-scheduler[testing]
