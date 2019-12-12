@@ -1,8 +1,11 @@
-swh-loader-core (0.0.65-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.66-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.66     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-12-12 12:01:14
+    +0100)
+  * Upstream changes:     - v0.0.66     - Drop deprecated behavior
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 12 Dec 2019 10:52:59 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 12 Dec 2019 11:05:17 +0000
 
 swh-loader-core (0.0.65-1~swh1) unstable-swh; urgency=medium
 
