@@ -6,7 +6,7 @@
 import pytest
 
 
-from swh.loader.cli import run, get_loader, SUPPORTED_LOADERS
+from swh.loader.cli import run, list, get_loader, SUPPORTED_LOADERS
 from swh.loader.package.loader import PackageLoader
 
 from click.testing import CliRunner
@@ -52,28 +52,23 @@ def test_get_loader(swh_config):
         assert isinstance(loader, PackageLoader)
 
 
-help_msg = """Usage: run [OPTIONS] [OPTIONS]...
-
-  Loader cli tools
-
-  Load an origin from its url with loader <name>
-
-Options:
-  -t, --type [archive|debian|deposit|npm|pypi]
-                                  Loader to run
-  -u, --url TEXT                  Origin url to load
-  -h, --help                      Show this message and exit.
-"""
-
-
 def test_run_help(swh_config):
     """Help message should be ok
 
     """
     runner = CliRunner()
     result = runner.invoke(run, ['-h'])
+
     assert result.exit_code == 0
-    assert result.output.startswith(help_msg)
+    expected_help_msg = """Usage: run [OPTIONS] [archive|debian|deposit|npm|pypi] URL [OPTIONS]...
+
+  Ingest with loader <type> the origin located at <url>
+
+Options:
+  -h, --help  Show this message and exit.
+"""  # noqa
+
+    assert result.output.startswith(expected_help_msg)
 
 
 def test_run_pypi(mocker, swh_config):
@@ -82,9 +77,36 @@ def test_run_pypi(mocker, swh_config):
     """
     mock_loader = mocker.patch('swh.loader.package.pypi.loader.PyPILoader')
     runner = CliRunner()
-    result = runner.invoke(run, [
-        '--type', 'pypi',
-        '--url', 'https://some-url'
-    ])
+    result = runner.invoke(run, ['pypi', 'https://some-url'])
     assert result.exit_code == 0
     mock_loader.assert_called_once_with(url='https://some-url')  # constructor
+
+
+def test_list_help(mocker, swh_config):
+    """Triggering a load should be ok
+
+    """
+    runner = CliRunner()
+    result = runner.invoke(list, ['--help'])
+    assert result.exit_code == 0
+    expected_help_msg = """Usage: list [OPTIONS] [[all|archive|debian|deposit|npm|pypi]]
+
+  List supported loaders and optionally their arguments
+
+Options:
+  -h, --help  Show this message and exit.
+"""  # noqa
+    assert result.output.startswith(expected_help_msg)
+
+
+def test_list_help_npm(mocker, swh_config):
+    """Triggering a load should be ok
+
+    """
+    runner = CliRunner()
+    result = runner.invoke(list, ['npm'])
+    assert result.exit_code == 0
+    expected_help_msg = '''Loader: Load npm origin's artifact releases into swh archive.
+signature: (url: str)
+'''  # noqa
+    assert result.output.startswith(expected_help_msg)
