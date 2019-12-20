@@ -1,3 +1,13 @@
+swh-loader-core (0.0.70-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.70     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-12-20 11:32:09
+    +0100)
+  * Upstream changes:     - v0.0.70     - debian.loader: Improve and fix
+    revision resolution's corner cases
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 20 Dec 2019 10:39:34 +0000
+
 swh-loader-core (0.0.69-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.69     - (tagged by Antoine R. Dumont
