@@ -5,6 +5,7 @@ requests
 iso8601
 pkginfo
 python-debian
+python-dateutil
 swh.core>=0.0.75
 swh.model>=0.0.18
 swh.scheduler
