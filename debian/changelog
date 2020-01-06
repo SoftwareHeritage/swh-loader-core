@@ -1,8 +1,13 @@
-swh-loader-core (0.0.71-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.72-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.72     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-01-06 16:37:58
+    +0100)
+  * Upstream changes:     - v0.0.72     - package.loader: Fail fast when
+    unable to create origin/origin_visit     - cran.loader: Add
+    implementation
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 20 Dec 2019 13:28:08 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 06 Jan 2020 15:50:08 +0000
 
 swh-loader-core (0.0.71-1~swh1) unstable-swh; urgency=medium
 
