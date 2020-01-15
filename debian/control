@@ -13,12 +13,11 @@ Build-Depends: debhelper (>= 9),
                python3-pytest-mock,
                python3-pytest-postgresql,
                python3-psutil,
-               python3-retrying,
                python3-requests-mock,
                python3-setuptools,
                python3-swh.core,
                python3-swh.model (>= 0.0.18~),
-               python3-swh.storage (>= 0.0.133~),
+               python3-swh.storage (>= 0.0.163~),
                python3-swh.scheduler,
                python3-vcversioner
 Standards-Version: 3.9.6
@@ -28,7 +27,7 @@ Package: python3-swh.loader.core
 Architecture: all
 Depends: python3-swh.core,
          python3-swh.model (>= 0.0.18~),
-         python3-swh.storage (>= 0.0.133~),
+         python3-swh.storage (>= 0.0.163~),
          ${misc:Depends},
          ${python3:Depends}
 Breaks: python3-swh.deposit.loader (<< 0.0.48~),

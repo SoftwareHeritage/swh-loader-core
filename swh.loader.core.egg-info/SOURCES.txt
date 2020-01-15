@@ -43,6 +43,8 @@ swh/loader/package/cran/tasks.py
 swh/loader/package/cran/tests/__init__.py
 swh/loader/package/cran/tests/test_cran.py
 swh/loader/package/cran/tests/test_tasks.py
+swh/loader/package/cran/tests/data/description/KnownBR
+swh/loader/package/cran/tests/data/description/acepack
 swh/loader/package/cran/tests/data/https_cran.r-project.org/src_contrib_1.4.0_Recommended_KernSmooth_2.22-6.tar.gz
 swh/loader/package/debian/__init__.py
 swh/loader/package/debian/loader.py

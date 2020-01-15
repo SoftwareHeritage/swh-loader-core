@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019  The Software Heritage developers
+# Copyright (C) 2015-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -7,50 +7,16 @@ import datetime
 import hashlib
 import logging
 import os
-import psycopg2
-import requests
-import traceback
-import uuid
 
 from abc import ABCMeta, abstractmethod
-from retrying import retry
-from typing import Any, Dict, Iterable, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 from swh.core import config
-from swh.storage import get_storage, HashCollision
+from swh.storage import get_storage
 from swh.loader.core.converters import content_for_storage
 
 
-def retry_loading(error):
-    """Retry policy when the database raises an integrity error"""
-    exception_classes = [
-        # raised when two parallel insertions insert the same data.
-        psycopg2.IntegrityError,
-        HashCollision,
-        # raised when uWSGI restarts and hungs up on the worker.
-        requests.exceptions.ConnectionError,
-    ]
-
-    if not any(isinstance(error, exc) for exc in exception_classes):
-        return False
-
-    logger = logging.getLogger('swh.loader')
-
-    error_name = error.__module__ + '.' + error.__class__.__name__
-    logger.warning('Retry loading a batch', exc_info=False, extra={
-        'swh_type': 'storage_retry',
-        'swh_exception_type': error_name,
-        'swh_exception': traceback.format_exception(
-            error.__class__,
-            error,
-            error.__traceback__,
-        ),
-    })
-
-    return True
-
-
-class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
+class BaseLoader(config.SWHConfig, metaclass=ABCMeta):
     """Mixin base class for loader.
 
     To use this class, you must:
@@ -119,12 +85,6 @@ class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
         _log = logging.getLogger('requests.packages.urllib3.connectionpool')
         _log.setLevel(logging.WARN)
 
-        self.counters = {
-            'contents': 0,
-            'directories': 0,
-            'revisions': 0,
-            'releases': 0,
-        }
         self.max_content_size = self.config['max_content_size']
 
         # possibly overridden in self.prepare method
@@ -169,283 +129,6 @@ class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
 
         return self.__save_data_path
 
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_origin(self, origin: Dict[str, Any]) -> None:
-        log_id = str(uuid.uuid4())
-        self.log.debug('Creating origin for %s' % origin['url'],
-                       extra={
-                           'swh_type': 'storage_send_start',
-                           'swh_content_type': 'origin',
-                           'swh_num': 1,
-                           'swh_id': log_id
-                       })
-        self.storage.origin_add_one(origin)
-        self.log.debug('Done creating origin for %s' % origin['url'],
-                       extra={
-                           'swh_type': 'storage_send_end',
-                           'swh_content_type': 'origin',
-                           'swh_num': 1,
-                           'swh_id': log_id
-                       })
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_origin_visit(self, visit_date: Union[str, datetime.datetime],
-                          visit_type: str) -> Dict[str, Any]:
-        log_id = str(uuid.uuid4())
-        self.log.debug(
-            'Creating origin_visit for origin %s at time %s' % (
-                self.origin['url'], visit_date),
-            extra={
-                'swh_type': 'storage_send_start',
-                'swh_content_type': 'origin_visit',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-        origin_visit = self.storage.origin_visit_add(
-            self.origin['url'], visit_date, visit_type)
-        self.log.debug(
-            'Done Creating %s origin_visit for origin %s at time %s' % (
-                visit_type, self.origin['url'], visit_date),
-            extra={
-                'swh_type': 'storage_send_end',
-                'swh_content_type': 'origin_visit',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-
-        return origin_visit
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_tool(self, tool: Dict[str, Any]) -> None:
-        log_id = str(uuid.uuid4())
-        self.log.debug(
-            'Creating tool with name %s version %s configuration %s' % (
-                 tool['name'], tool['version'], tool['configuration']),
-            extra={
-                'swh_type': 'storage_send_start',
-                'swh_content_type': 'tool',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-
-        tools = self.storage.tool_add([tool])
-        tool_id = tools[0]['id']
-
-        self.log.debug(
-            'Done creating tool with name %s version %s and configuration %s' % (  # noqa
-                 tool['name'], tool['version'], tool['configuration']),
-            extra={
-                'swh_type': 'storage_send_end',
-                'swh_content_type': 'tool',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-        return tool_id
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_provider(self, provider: Dict[str, Any]) -> None:
-        log_id = str(uuid.uuid4())
-        self.log.debug(
-            'Creating metadata_provider with name %s type %s url %s' % (
-                provider['provider_name'], provider['provider_type'],
-                provider['provider_url']),
-            extra={
-                'swh_type': 'storage_send_start',
-                'swh_content_type': 'metadata_provider',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-        # FIXME: align metadata_provider_add with indexer_configuration_add
-        _provider = self.storage.metadata_provider_get_by(provider)
-        if _provider and 'id' in _provider:
-            provider_id = _provider['id']
-        else:
-            provider_id = self.storage.metadata_provider_add(
-                provider['provider_name'],
-                provider['provider_type'],
-                provider['provider_url'],
-                provider['metadata'])
-
-        self.log.debug(
-            'Done creating metadata_provider with name %s type %s url %s' % (
-                provider['provider_name'], provider['provider_type'],
-                provider['provider_url']),
-            extra={
-                'swh_type': 'storage_send_end',
-                'swh_content_type': 'metadata_provider',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-        return provider_id
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_origin_metadata(self, visit_date, provider_id,
-                             tool_id, metadata):
-        log_id = str(uuid.uuid4())
-        self.log.debug(
-            'Creating origin_metadata for origin %s at time %s with provider_id %s and tool_id %s' % (  # noqa
-                self.origin['url'], visit_date, provider_id, tool_id),
-            extra={
-                'swh_type': 'storage_send_start',
-                'swh_content_type': 'origin_metadata',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-
-        self.storage.origin_metadata_add(
-            self.origin['url'], visit_date, provider_id, tool_id, metadata)
-        self.log.debug(
-            'Done Creating origin_metadata for origin %s at time %s with provider %s and tool %s' % (  # noqa
-                self.origin['url'], visit_date, provider_id, tool_id),
-            extra={
-                'swh_type': 'storage_send_end',
-                'swh_content_type': 'origin_metadata',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def update_origin_visit(self, status: str) -> None:
-        log_id = str(uuid.uuid4())
-        self.log.debug(
-            'Updating origin_visit for origin %s with status %s' % (
-                self.origin['url'], status),
-            extra={
-                'swh_type': 'storage_send_start',
-                'swh_content_type': 'origin_visit',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-        self.storage.origin_visit_update(
-            self.origin['url'], self.visit, status)
-        self.log.debug(
-            'Done updating origin_visit for origin %s with status %s' % (
-                self.origin['url'], status),
-            extra={
-                'swh_type': 'storage_send_end',
-                'swh_content_type': 'origin_visit',
-                'swh_num': 1,
-                'swh_id': log_id
-            })
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_contents(self, contents: Iterable[Mapping[str, Any]]) -> None:
-        """Actually send properly formatted contents to the database.
-
-        """
-        contents = list(contents)
-        num_contents = len(contents)
-        if num_contents > 0:
-            log_id = str(uuid.uuid4())
-            self.log.debug("Sending %d contents" % num_contents,
-                           extra={
-                               'swh_type': 'storage_send_start',
-                               'swh_content_type': 'content',
-                               'swh_num': num_contents,
-                               'swh_id': log_id,
-                           })
-            # FIXME: deal with this in model at some point
-            result = self.storage.content_add([
-                content_for_storage(
-                    c, max_content_size=self.max_content_size,
-                    origin_url=self.origin['url'])
-                for c in contents
-            ])
-            self.counters['contents'] += result.get('content:add', 0)
-            self.log.debug("Done sending %d contents" % num_contents,
-                           extra={
-                               'swh_type': 'storage_send_end',
-                               'swh_content_type': 'content',
-                               'swh_num': num_contents,
-                               'swh_id': log_id,
-                           })
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_directories(self,
-                         directories: Iterable[Mapping[str, Any]]) -> None:
-        """Actually send properly formatted directories to the database.
-
-        """
-        directories = list(directories)
-        num_directories = len(directories)
-        if num_directories > 0:
-            log_id = str(uuid.uuid4())
-            self.log.debug("Sending %d directories" % num_directories,
-                           extra={
-                               'swh_type': 'storage_send_start',
-                               'swh_content_type': 'directory',
-                               'swh_num': num_directories,
-                               'swh_id': log_id,
-                           })
-            result = self.storage.directory_add(directories)
-            self.counters['directories'] += result.get('directory:add', 0)
-            self.log.debug("Done sending %d directories" % num_directories,
-                           extra={
-                               'swh_type': 'storage_send_end',
-                               'swh_content_type': 'directory',
-                               'swh_num': num_directories,
-                               'swh_id': log_id,
-                           })
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_revisions(self, revisions: Iterable[Mapping[str, Any]]) -> None:
-        """Actually send properly formatted revisions to the database.
-
-        """
-        revisions = list(revisions)
-        num_revisions = len(revisions)
-        if num_revisions > 0:
-            log_id = str(uuid.uuid4())
-            self.log.debug("Sending %d revisions" % num_revisions,
-                           extra={
-                               'swh_type': 'storage_send_start',
-                               'swh_content_type': 'revision',
-                               'swh_num': num_revisions,
-                               'swh_id': log_id,
-                           })
-            result = self.storage.revision_add(revisions)
-            self.counters['revisions'] += result.get('revision:add', 0)
-            self.log.debug("Done sending %d revisions" % num_revisions,
-                           extra={
-                               'swh_type': 'storage_send_end',
-                               'swh_content_type': 'revision',
-                               'swh_num': num_revisions,
-                               'swh_id': log_id,
-                           })
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_releases(self, releases: Iterable[Mapping[str, Any]]) -> None:
-        """Actually send properly formatted releases to the database.
-
-        """
-        releases = list(releases)
-        num_releases = len(releases)
-        if num_releases > 0:
-            log_id = str(uuid.uuid4())
-            self.log.debug("Sending %d releases" % num_releases,
-                           extra={
-                               'swh_type': 'storage_send_start',
-                               'swh_content_type': 'release',
-                               'swh_num': num_releases,
-                               'swh_id': log_id,
-                           })
-            result = self.storage.release_add(releases)
-            self.counters['releases'] += result.get('release:add', 0)
-            self.log.debug("Done sending %d releases" % num_releases,
-                           extra={
-                               'swh_type': 'storage_send_end',
-                               'swh_content_type': 'release',
-                               'swh_num': num_releases,
-                               'swh_id': log_id,
-                           })
-
-    @retry(retry_on_exception=retry_loading, stop_max_attempt_number=3)
-    def send_snapshot(self, snapshot: Mapping[str, Any]) -> None:
-        self.flush()  # to ensure the snapshot targets existing objects
-        self.storage.snapshot_add([snapshot])
-        self.storage.origin_visit_update(
-            self.origin['url'], self.visit, snapshot=snapshot['id'])
-
     def flush(self) -> None:
         """Flush any potential dangling data not sent to swh-storage.
 
@@ -456,30 +139,6 @@ class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
         """
         if hasattr(self.storage, 'flush'):
             self.storage.flush()
-
-    def prepare_metadata(self) -> None:
-        """First step for origin_metadata insertion, resolving the
-        provider_id and the tool_id by fetching data from the storage
-        or creating tool and provider on the fly if the data isn't available
-
-        """
-        origin_metadata = self.origin_metadata
-
-        tool = origin_metadata['tool']
-        try:
-            tool_id = self.send_tool(tool)
-            self.origin_metadata['tool']['tool_id'] = tool_id
-        except Exception:
-            self.log.exception('Problem when storing new tool')
-            raise
-
-        provider = origin_metadata['provider']
-        try:
-            provider_id = self.send_provider(provider)
-            self.origin_metadata['provider']['provider_id'] = provider_id
-        except Exception:
-            self.log.exception('Problem when storing new provider')
-            raise
 
     @abstractmethod
     def cleanup(self) -> None:
@@ -503,12 +162,12 @@ class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
 
         """
         origin = self.origin.copy()
-        self.send_origin(origin)
+        self.storage.origin_add_one(origin)
 
         if not self.visit_date:  # now as default visit_date if not provided
             self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
-        self.origin_visit = self.send_origin_visit(
-            self.visit_date, self.visit_type)
+        self.origin_visit = self.storage.origin_visit_add(
+            origin['url'], self.visit_date, self.visit_type)
         self.visit = self.origin_visit['visit']
 
     @abstractmethod
@@ -637,7 +296,9 @@ class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
                     break
 
             self.store_metadata()
-            self.update_origin_visit(status=self.visit_status())
+            self.storage.origin_visit_update(
+                self.origin['url'], self.visit, self.visit_status()
+            )
             self.post_load()
         except Exception:
             self.log.exception('Loading failure, updating to `partial` status',
@@ -645,7 +306,9 @@ class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
                                    'swh_task_args': args,
                                    'swh_task_kwargs': kwargs,
                                })
-            self.update_origin_visit(status='partial')
+            self.storage.origin_visit_update(
+                self.origin['url'], self.visit, 'partial'
+            )
             self.post_load(success=False)
             return {'status': 'failed'}
         finally:
@@ -655,15 +318,18 @@ class BufferedLoader(config.SWHConfig, metaclass=ABCMeta):
         return self.load_status()
 
 
-class UnbufferedLoader(BufferedLoader):
-    """This base class is a pattern for unbuffered loaders.
+# retro-compatibility
+BufferedLoader = BaseLoader
 
-    UnbufferedLoader loaders are able to load all the data in one go. For
-    example, the loader defined in swh-loader-git
-    :class:`BulkUpdater`.
+
+class DVCSLoader(BaseLoader):
+    """This base class is a pattern for dvcs loaders (e.g. git, mercurial).
+
+    Those loaders are able to load all the data in one go. For example, the
+    loader defined in swh-loader-git :class:`BulkUpdater`.
 
     For other loaders (stateful one, (e.g :class:`SWHSvnLoader`),
-    inherit directly from :class:`BufferedLoader`.
+    inherit directly from :class:`BaseLoader`.
 
     """
     ADDITIONAL_CONFIG = {}  # type: Dict[str, Tuple[str, Any]]
@@ -717,12 +383,25 @@ class UnbufferedLoader(BufferedLoader):
             self.save_data()
 
         if self.has_contents():
-            self.send_contents(self.get_contents())
+            self.storage.content_add([
+                content_for_storage(
+                    c, max_content_size=self.max_content_size,
+                    origin_url=self.origin['url'])
+                for c in self.get_contents()
+            ])
         if self.has_directories():
-            self.send_directories(self.get_directories())
+            self.storage.directory_add(self.get_directories())
         if self.has_revisions():
-            self.send_revisions(self.get_revisions())
+            self.storage.revision_add(self.get_revisions())
         if self.has_releases():
-            self.send_releases(self.get_releases())
-        self.send_snapshot(self.get_snapshot())
+            self.storage.release_add(self.get_releases())
+        self.flush()  # to ensure the snapshot targets existing objects
+        snapshot = self.get_snapshot()
+        self.storage.snapshot_add([snapshot])
+        self.storage.origin_visit_update(
+            self.origin['url'], self.visit, snapshot=snapshot['id'])
         self.flush()
+
+
+# Deprecated name
+UnbufferedLoader = DVCSLoader

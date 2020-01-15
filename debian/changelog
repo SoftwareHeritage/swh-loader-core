@@ -1,8 +1,15 @@
-swh-loader-core (0.0.73-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.74-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.74     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-01-15 15:30:13
+    +0100)
+  * Upstream changes:     - v0.0.74     - Drop no longer used retrying
+    dependency     - core.loader: Clean up indirection and retry
+    behavior     - tests: Use retry proxy storage in loaders     -
+    core.loader: Drop dead code     - cran.loader: Fix parsing
+    description file error
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 09 Jan 2020 09:07:10 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 15 Jan 2020 14:33:57 +0000
 
 swh-loader-core (0.0.73-1~swh1) unstable-swh; urgency=medium
 
