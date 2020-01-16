@@ -1,3 +1,13 @@
+swh-loader-core (0.0.75-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.75     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-01-16 14:14:29
+    +0100)
+  * Upstream changes:     - v0.0.75     - cran.loader: Align cran loader
+    with other package loaders
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 16 Jan 2020 13:17:30 +0000
+
 swh-loader-core (0.0.74-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.74     - (tagged by Antoine R. Dumont
