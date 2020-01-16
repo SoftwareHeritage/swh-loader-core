@@ -1,8 +1,12 @@
-swh-loader-core (0.0.74-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.75-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.75     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-01-16 14:14:29
+    +0100)
+  * Upstream changes:     - v0.0.75     - cran.loader: Align cran loader
+    with other package loaders
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 15 Jan 2020 14:36:01 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 16 Jan 2020 13:17:30 +0000
 
 swh-loader-core (0.0.74-1~swh1) unstable-swh; urgency=medium
 
