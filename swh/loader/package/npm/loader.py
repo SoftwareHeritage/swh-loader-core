@@ -77,6 +77,8 @@ class NpmLoader(PackageLoader):
     def build_revision(
             self, a_metadata: Dict, uncompressed_path: str) -> Dict:
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
+        if not i_metadata:
+            return {}
         # from intrinsic metadata
         author = extract_npm_package_author(i_metadata)
         message = i_metadata['version'].encode('ascii')
@@ -119,7 +121,7 @@ def artifact_to_revision_id(
 
     The following code allows to deal with 2 metadata formats:
 
-    - old format sample:
+    - old format sample::
 
         {
             'package_source': {
@@ -127,12 +129,12 @@ def artifact_to_revision_id(
             }
         }
 
-    - new format sample:
+    - new format sample::
 
         {
             'original_artifact': [{
                 'checksums': {
-                    'sha256': "6975816f2c5ad4046acc676ba112f2fff945b01522d63948531f11f11e0892ec",  # noqa
+                    'sha256': '6975816f2c5ad4046acc676ba112f2fff945b01522d63948531f11f11e0892ec', # noqa
                     ...
                 },
             }],
