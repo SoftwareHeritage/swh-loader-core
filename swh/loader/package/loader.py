@@ -313,24 +313,29 @@ class PackageLoader:
                             # memory
                             objects = directory.collect()
 
-                            contents = objects['content'].values()
+                            contents = list(
+                                objects.get('content', {}).values())
                             logger.debug('Number of contents: %s',
                                          len(contents))
-
                             self.storage.content_add(
                                 [content_for_storage(x) for x in contents])
 
                             status_load = 'eventful'
-                            directories = list(objects['directory'].values())
 
+                            directories = list(
+                                objects.get('directory', {}).values())
                             logger.debug('Number of directories: %s',
                                          len(directories))
-
                             self.storage.directory_add(directories)
 
                             # FIXME: This should be release. cf. D409
                             revision = self.build_revision(
                                 p_info['raw'], uncompressed_path)
+                            if not revision:
+                                # Some artifacts are missing intrinsic metadata
+                                # skipping those
+                                continue
+
                             revision.update({
                                 'synthetic': True,
                                 'directory': directory.hash,

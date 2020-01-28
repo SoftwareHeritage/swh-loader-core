@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: swh.loader.core
-Version: 0.0.75
+Version: 0.0.76
 Summary: Software Heritage Base Loader
 Home-page: https://forge.softwareheritage.org/diffusion/DLDBASE
 Author: Software Heritage developers
@@ -16,8 +16,9 @@ Description: SWH-loader-core
         helpers used by other loaders.
         
         The main entry points are classes:
-        - :class:`swh.loader.core.loader.SWHLoader` for stateful loaders
-        - :class:`swh.loader.core.loader.SWHStatelessLoader` for stateless loaders
+        - :class:`swh.loader.core.loader.BaseLoader` for loaders (e.g. svn)
+        - :class:`swh.loader.core.loader.DVCSLoader` for DVCS loaders (e.g. hg, git, ...)
+        - :class:`swh.loader.package.loader.PackageLoader` for Package loaders (e.g. PyPI, Npm, ...)
         
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3

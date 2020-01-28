@@ -74,6 +74,8 @@ class PyPILoader(PackageLoader):
     def build_revision(
             self, a_metadata: Dict, uncompressed_path: str) -> Dict:
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
+        if not i_metadata:
+            return {}
 
         # from intrinsic metadata
         name = i_metadata['version']
@@ -114,22 +116,22 @@ def artifact_to_revision_id(
     The following code allows to deal with 2 metadata formats (column metadata
     in 'revision')
 
-    - old format sample:
+    - old format sample::
 
         {
             'original_artifact': {
-                'sha256': "6975816f2c5ad4046acc676ba112f2fff945b01522d63948531f11f11e0892ec",  # noqa
+                'sha256': '6975816f2c5ad4046acc676ba112f2fff945b01522d63948531f11f11e0892ec',  # noqa
                 ...
             },
             ...
         }
 
-    - new format sample:
+    - new format sample::
 
         {
             'original_artifact': [{
                 'checksums': {
-                    'sha256': "6975816f2c5ad4046acc676ba112f2fff945b01522d63948531f11f11e0892ec",  # noqa
+                    'sha256': '6975816f2c5ad4046acc676ba112f2fff945b01522d63948531f11f11e0892ec',  # noqa
                     ...
                 },
             }],
