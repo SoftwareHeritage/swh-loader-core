@@ -1,3 +1,18 @@
+swh-loader-core (0.0.76-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.76     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-01-28 13:07:30
+    +0100)
+  * Upstream changes:     - v0.0.76     - npm.loader: Skip artifacts
+    with no intrinsic metadata     - pypi.loader: Skip artifacts with no
+    intrinsic metadata     - package.loader: Fix edge case when some
+    listing returns no content     - core.loader: Drop retro-
+    compatibility class names     - loader.tests: Add filter and buffer
+    proxy storage     - docs: Fix sphinx warnings     - README: Update
+    class names
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 28 Jan 2020 12:11:07 +0000
+
 swh-loader-core (0.0.75-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.75     - (tagged by Antoine R. Dumont
