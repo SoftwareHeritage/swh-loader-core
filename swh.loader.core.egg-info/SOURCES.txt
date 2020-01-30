@@ -73,6 +73,7 @@ swh/loader/package/npm/tests/test_npm.py
 swh/loader/package/npm/tests/test_tasks.py
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/@aller_shared_-_shared-0.1.0.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/@aller_shared_-_shared-0.1.1-alpha.14.tgz
+swh/loader/package/npm/tests/data/https_registry.npmjs.org/jammit-express_-_jammit-express-0.0.1.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/nativescript-telerik-analytics_-_nativescript-telerik-analytics-1.0.0.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.2.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.3.tgz
@@ -81,6 +82,8 @@ swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.5.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.1.0.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.2.0.tgz
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/@aller_shared
+swh/loader/package/npm/tests/data/https_replicate.npmjs.com/jammit-express
+swh/loader/package/npm/tests/data/https_replicate.npmjs.com/jammit-no-time
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/nativescript-telerik-analytics
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/org
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/org_visit1
