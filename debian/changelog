@@ -1,8 +1,15 @@
-swh-loader-core (0.0.77-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.78-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.78     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-02-06 15:28:11
+    +0100)
+  * Upstream changes:     - v0.0.78     - tests: Use new get_storage
+    signature     - loader.core.converters: Prefer the with open pattern
+    to read file     - test_converters: Add coverage on prepare_contents
+    method     - test_converters: Migrate to pytest     -
+    loader.core/package: Call storage's (skipped_)content_add endpoints
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 30 Jan 2020 09:39:59 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 06 Feb 2020 15:09:05 +0000
 
 swh-loader-core (0.0.77-1~swh1) unstable-swh; urgency=medium
 
