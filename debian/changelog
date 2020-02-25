@@ -1,3 +1,15 @@
+swh-loader-core (0.0.79-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.79     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-02-25 11:40:05
+    +0100)
+  * Upstream changes:     - v0.0.79     - Move revision loading logic to
+    its own function.     - Use swh-storage validation proxy earlier in
+    the pipeline.     - Use swh-storage validation proxy.     - Add
+    missing __init__.py and fix tests.
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 25 Feb 2020 10:48:07 +0000
+
 swh-loader-core (0.0.78-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.78     - (tagged by Antoine R. Dumont
