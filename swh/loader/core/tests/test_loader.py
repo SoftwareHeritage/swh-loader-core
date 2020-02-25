@@ -45,6 +45,9 @@ class DummyDVCSLoader(DummyLoader, DVCSLoader):
                 'cls': 'pipeline',
                 'steps': [
                     {
+                        'cls': 'validate',
+                    },
+                    {
                         'cls': 'retry',
                     },
                     {
@@ -68,6 +71,9 @@ class DummyBaseLoader(DummyLoader, BaseLoader):
             'storage': {
                 'cls': 'pipeline',
                 'steps': [
+                    {
+                        'cls': 'validate',
+                    },
                     {
                         'cls': 'retry',
                     },
