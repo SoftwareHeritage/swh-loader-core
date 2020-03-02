@@ -1,8 +1,11 @@
-swh-loader-core (0.0.79-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.80-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.80     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2020-02-28 17:05:14 +0100)
+  * Upstream changes:     - v0.0.80     - * use swh-model objects
+    instead of dicts.
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 25 Feb 2020 10:50:17 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 28 Feb 2020 16:10:06 +0000
 
 swh-loader-core (0.0.79-1~swh1) unstable-swh; urgency=medium
 
