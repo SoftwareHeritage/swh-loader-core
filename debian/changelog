@@ -1,3 +1,14 @@
+swh-loader-core (0.0.81-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.81     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-03-16 13:14:33
+    +0100)
+  * Upstream changes:     - v0.0.81     - Migrate to latest
+    storage.origin_visit_add api change     - Move Person parsing to swh-
+    model.
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 16 Mar 2020 12:17:43 +0000
+
 swh-loader-core (0.0.80-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.80     - (tagged by Valentin Lorentz
