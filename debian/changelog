@@ -1,3 +1,13 @@
+swh-loader-core (0.0.82-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.82     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-03-18 11:55:48
+    +0100)
+  * Upstream changes:     - v0.0.82     - functional.loader: Add loader
+    - package.loader: ignore non tarball source
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 18 Mar 2020 10:59:38 +0000
+
 swh-loader-core (0.0.81-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.81     - (tagged by Antoine R. Dumont
