@@ -1,8 +1,16 @@
-swh-loader-core (0.0.82-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.83-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.83     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-03-23 15:16:14
+    +0100)
+  * Upstream changes:     - v0.0.83     - Make the swh.loader.package
+    exception handling more granular     - package.loader: Reference a
+    snapshot on partial visit     - package.loader: Extract a
+    _load_snapshot method     - functional: create a branch named
+    evaluation pointing to the evaluation commit     - package.loader:
+    add extra_branches method
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 18 Mar 2020 11:01:49 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 23 Mar 2020 14:19:43 +0000
 
 swh-loader-core (0.0.82-1~swh1) unstable-swh; urgency=medium
 
