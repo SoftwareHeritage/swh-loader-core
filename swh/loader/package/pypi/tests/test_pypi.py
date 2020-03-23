@@ -1,4 +1,4 @@
-# Copyright (C) 2019 The Software Heritage developers
+# Copyright (C) 2019-2020 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -233,10 +233,10 @@ def test_no_release_artifact(swh_config, requests_mock_datadir_missing_all):
 # {visit: partial, status: uneventful, no snapshot}
 
 
-def test_release_with_traceback(swh_config):
+def test_release_with_traceback(swh_config, requests_mock_datadir):
     url = 'https://pypi.org/project/0805nexter'
-    with patch('swh.loader.package.pypi.loader.PyPILoader.get_default_version',
-               side_effect=ValueError('Problem')):
+    with patch('swh.loader.package.pypi.loader.PyPILoader.last_snapshot',
+               side_effect=ValueError('Fake problem to fail the visit')):
         loader = PyPILoader(url)
 
         actual_load_status = loader.load()

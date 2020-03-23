@@ -13,6 +13,7 @@ from typing import (
 )
 
 import attr
+import sentry_sdk
 
 from swh.core.tarball import uncompress
 from swh.core.config import SWHConfig
@@ -210,6 +211,13 @@ class PackageLoader:
             uncompress(a_path, dest=uncompressed_path)
         return uncompressed_path
 
+    def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
+        """Return an extra dict of branches that are used to update the set of
+        branches.
+
+        """
+        return {}
+
     def load(self) -> Dict:
         """Load for a specific origin the associated contents.
 
@@ -257,14 +265,37 @@ class PackageLoader:
         tmp_revisions = {}  # type: Dict[str, List]
         snapshot = None
 
+        def finalize_visit() -> Dict[str, Any]:
+            """Finalize the visit:
+
+            - flush eventual unflushed data to storage
+            - update origin visit's status
+            - return the task's status
+
+            """
+            if hasattr(self.storage, 'flush'):
+                self.storage.flush()
+            self.storage.origin_visit_update(
+                origin=self.url, visit_id=visit.visit, status=status_visit,
+                snapshot=snapshot and snapshot.id)
+
+            result: Dict[str, Any] = {
+                'status': status_load,
+            }
+            if snapshot:
+                result['snapshot_id'] = hash_to_hex(snapshot.id)
+            return result
+
         # Prepare origin and origin_visit
         origin = Origin(url=self.url)
         try:
             self.storage.origin_add_one(origin)
             visit = self.storage.origin_visit_add(
                 self.url, date=self.visit_date, type=self.visit_type)
-        except Exception:
-            logger.exception('Failed to create origin/origin_visit:')
+        except Exception as e:
+            logger.exception('Failed to initialize origin_visit for %s',
+                             self.url)
+            sentry_sdk.capture_exception(e)
             return {'status': 'failed'}
 
         try:
@@ -272,102 +303,85 @@ class PackageLoader:
             logger.debug('last snapshot: %s', last_snapshot)
             known_artifacts = self.known_artifacts(last_snapshot)
             logger.debug('known artifacts: %s', known_artifacts)
+        except Exception as e:
+            logger.exception('Failed to get previous state for %s', self.url)
+            sentry_sdk.capture_exception(e)
+            status_visit = 'partial'
+            status_load = 'failed'
+            return finalize_visit()
 
+        load_exceptions = []
+
+        for version in self.get_versions():  # for each
+            logger.debug('version: %s', version)
+            tmp_revisions[version] = []
+            # `p_` stands for `package_`
+            for branch_name, p_info in self.get_package_info(version):
+                logger.debug('package_info: %s', p_info)
+                revision_id = self.resolve_revision_from(
+                    known_artifacts, p_info['raw'])
+                if revision_id is None:
+                    try:
+                        revision_id = self._load_revision(p_info, origin)
+                        status_load = 'eventful'
+                    except Exception as e:
+                        load_exceptions.append(e)
+                        sentry_sdk.capture_exception(e)
+                        logger.exception('Failed loading branch %s for %s',
+                                         branch_name, self.url)
+                        continue
+
+                    if revision_id is None:
+                        continue
+
+                tmp_revisions[version].append((branch_name, revision_id))
+
+        if load_exceptions:
+            status_visit = 'partial'
+
+        if not tmp_revisions:
+            # We could not load any revisions; fail completely
+            status_visit = 'failed'
+            status_load = 'failed'
+            return finalize_visit()
+
+        try:
             # Retrieve the default release version (the "latest" one)
             default_version = self.get_default_version()
             logger.debug('default version: %s', default_version)
+            # Retrieve extra branches
+            extra_branches = self.extra_branches()
+            logger.debug('extra branches: %s', extra_branches)
 
-            for version in self.get_versions():  # for each
-                logger.debug('version: %s', version)
-                tmp_revisions[version] = []
-                # `p_` stands for `package_`
-                for branch_name, p_info in self.get_package_info(version):
-                    logger.debug('package_info: %s', p_info)
-                    revision_id = self.resolve_revision_from(
-                        known_artifacts, p_info['raw'])
-                    if revision_id is None:
-                        (revision_id, loaded) = \
-                            self._load_revision(p_info, origin)
-                        if loaded:
-                            status_load = 'eventful'
-                        else:
-                            status_visit = 'partial'
-                        if revision_id is None:
-                            continue
+            snapshot = self._load_snapshot(default_version, tmp_revisions,
+                                           extra_branches)
 
-                    tmp_revisions[version].append((branch_name, revision_id))
-
-            logger.debug('tmp_revisions: %s', tmp_revisions)
-            # Build and load the snapshot
-            branches = {}  # type: Dict[bytes, Mapping[str, Any]]
-            for version, branch_name_revisions in tmp_revisions.items():
-                if version == default_version and \
-                   len(branch_name_revisions) == 1:
-                    # only 1 branch (no ambiguity), we can create an alias
-                    # branch 'HEAD'
-                    branch_name, _ = branch_name_revisions[0]
-                    # except for some corner case (deposit)
-                    if branch_name != 'HEAD':
-                        branches[b'HEAD'] = {
-                            'target_type': 'alias',
-                            'target': branch_name.encode('utf-8'),
-                        }
-
-                for branch_name, target in branch_name_revisions:
-                    branches[branch_name.encode('utf-8')] = {
-                        'target_type': 'revision',
-                        'target': target,
-                    }
-
-            snapshot_data = {
-                'branches': branches
-            }
-            logger.debug('snapshot: %s', snapshot_data)
-
-            snapshot = Snapshot.from_dict(snapshot_data)
-
-            logger.debug('snapshot: %s', snapshot)
-            self.storage.snapshot_add([snapshot])
-            if hasattr(self.storage, 'flush'):
-                self.storage.flush()
-        except Exception:
-            logger.exception('Fail to load %s' % self.url)
+        except Exception as e:
+            logger.exception('Failed to build snapshot for origin %s',
+                             self.url)
+            sentry_sdk.capture_exception(e)
             status_visit = 'partial'
             status_load = 'failed'
-        finally:
-            self.storage.origin_visit_update(
-                origin=self.url, visit_id=visit.visit, status=status_visit,
-                snapshot=snapshot and snapshot.id)
-        result = {
-            'status': status_load,
-        }  # type: Dict[str, Any]
-        if snapshot:
-            result['snapshot_id'] = hash_to_hex(snapshot.id)
-        return result
 
-    def _load_revision(self, p_info, origin) -> Tuple[Optional[Sha1Git], bool]:
+        return finalize_visit()
+
+    def _load_revision(self, p_info, origin) -> Optional[Sha1Git]:
         """Does all the loading of a revision itself:
 
         * downloads a package and uncompresses it
         * loads it from disk
         * adds contents, directories, and revision to self.storage
         * returns (revision_id, loaded)
+
+        Raises
+            exception when unable to download or uncompress artifacts
+
         """
         with tempfile.TemporaryDirectory() as tmpdir:
-            try:
-                dl_artifacts = self.download_package(p_info, tmpdir)
-            except Exception:
-                logger.exception('Unable to retrieve %s',
-                                 p_info)
-                return (None, False)
+            dl_artifacts = self.download_package(p_info, tmpdir)
 
-            try:
-                uncompressed_path = self.uncompress(dl_artifacts, dest=tmpdir)
-                logger.debug('uncompressed_path: %s', uncompressed_path)
-            except ValueError:
-                logger.exception('Fail to uncompress %s',
-                                 p_info['url'])
-                return (None, False)
+            uncompressed_path = self.uncompress(dl_artifacts, dest=tmpdir)
+            logger.debug('uncompressed_path: %s', uncompressed_path)
 
             directory = from_disk.Directory.from_disk(
                 path=uncompressed_path.encode('utf-8'),
@@ -407,7 +421,7 @@ class PackageLoader:
             if not revision:
                 # Some artifacts are missing intrinsic metadata
                 # skipping those
-                return (None, True)
+                return None
 
         metadata = revision.metadata or {}
         metadata.update({
@@ -421,4 +435,53 @@ class PackageLoader:
 
         self.storage.revision_add([revision])
 
-        return (revision.id, True)
+        return revision.id
+
+    def _load_snapshot(
+            self, default_version: str,
+            revisions: Dict[str, List[Tuple[str, bytes]]],
+            extra_branches: Dict[bytes, Mapping[str, Any]]
+    ) -> Optional[Snapshot]:
+        """Build snapshot out of the current revisions stored and extra branches.
+           Then load it in the storage.
+
+        """
+        logger.debug('revisions: %s', revisions)
+        # Build and load the snapshot
+        branches = {}  # type: Dict[bytes, Mapping[str, Any]]
+        for version, branch_name_revisions in revisions.items():
+            if version == default_version and \
+               len(branch_name_revisions) == 1:
+                # only 1 branch (no ambiguity), we can create an alias
+                # branch 'HEAD'
+                branch_name, _ = branch_name_revisions[0]
+                # except for some corner case (deposit)
+                if branch_name != 'HEAD':
+                    branches[b'HEAD'] = {
+                        'target_type': 'alias',
+                        'target': branch_name.encode('utf-8'),
+                    }
+
+            for branch_name, target in branch_name_revisions:
+                branches[branch_name.encode('utf-8')] = {
+                    'target_type': 'revision',
+                    'target': target,
+                }
+
+        # Deal with extra-branches
+        for name, branch_target in extra_branches.items():
+            if name in branches:
+                logger.error("Extra branch '%s' has been ignored",
+                             name)
+            else:
+                branches[name] = branch_target
+
+        snapshot_data = {
+            'branches': branches
+        }
+        logger.debug('snapshot: %s', snapshot_data)
+        snapshot = Snapshot.from_dict(snapshot_data)
+        logger.debug('snapshot: %s', snapshot)
+        self.storage.snapshot_add([snapshot])
+
+        return snapshot
