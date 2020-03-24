@@ -1,4 +1,4 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -339,7 +339,7 @@ def test_npm_loader_incremental_visit(
     actual_load_status = loader.load()
     assert actual_load_status['status'] == 'eventful'
     assert actual_load_status['status'] is not None
-    origin_visit = list(loader.storage.origin_visit_get(url))[-1]
+    origin_visit = loader.storage.origin_visit_get_latest(url)
     assert origin_visit['status'] == 'full'
     assert origin_visit['type'] == 'npm'
 
@@ -364,7 +364,7 @@ def test_npm_loader_incremental_visit(
     assert snap_id2 is not None
     assert snap_id2 != actual_load_status['snapshot_id']
 
-    origin_visit2 = list(loader.storage.origin_visit_get(url))[-1]
+    origin_visit2 = loader.storage.origin_visit_get_latest(url)
     assert origin_visit2['status'] == 'full'
     assert origin_visit2['type'] == 'npm'
 
@@ -398,7 +398,7 @@ def test_npm_loader_version_divergence(swh_config):
     actual_load_status = loader.load()
     assert actual_load_status['status'] == 'eventful'
     assert actual_load_status['status'] is not None
-    origin_visit = list(loader.storage.origin_visit_get(url))[-1]
+    origin_visit = loader.storage.origin_visit_get_latest(url)
     assert origin_visit['status'] == 'full'
     assert origin_visit['type'] == 'npm'
 
@@ -531,7 +531,7 @@ def test_npm_artifact_with_no_intrinsic_metadata(
     }
     check_snapshot(expected_snapshot, loader.storage)
 
-    origin_visit = list(loader.storage.origin_visit_get(url))[-1]
+    origin_visit = loader.storage.origin_visit_get_latest(url)
     assert origin_visit['status'] == 'full'
     assert origin_visit['type'] == 'npm'
 
@@ -554,7 +554,7 @@ def test_npm_artifact_with_no_upload_time(swh_config, requests_mock_datadir):
     }
     check_snapshot(expected_snapshot, loader.storage)
 
-    origin_visit = list(loader.storage.origin_visit_get(url))[-1]
+    origin_visit = loader.storage.origin_visit_get_latest(url)
     assert origin_visit['status'] == 'partial'
     assert origin_visit['type'] == 'npm'
 
@@ -586,6 +586,23 @@ def test_npm_artifact_use_mtime_if_no_time(swh_config, requests_mock_datadir):
     }
     check_snapshot(expected_snapshot, loader.storage)
 
-    origin_visit = list(loader.storage.origin_visit_get(url))[-1]
+    origin_visit = loader.storage.origin_visit_get_latest(url)
     assert origin_visit['status'] == 'full'
+    assert origin_visit['type'] == 'npm'
+
+
+def test_npm_no_artifact(swh_config, requests_mock_datadir):
+    """If no artifacts at all is found for origin, the visit fails completely
+
+    """
+    package = 'catify'
+    url = package_url(package)
+    loader = NpmLoader(url)
+    actual_load_status = loader.load()
+    assert actual_load_status == {
+        'status': 'failed',
+    }
+
+    origin_visit = loader.storage.origin_visit_get_latest(url)
+    assert origin_visit['status'] == 'partial'
     assert origin_visit['type'] == 'npm'

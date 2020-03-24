@@ -72,8 +72,10 @@ swh/loader/package/functional/__init__.py
 swh/loader/package/functional/loader.py
 swh/loader/package/functional/tasks.py
 swh/loader/package/functional/tests/data/https_example.com/file.txt
+swh/loader/package/functional/tests/data/https_fail.com/truncated-archive.tgz
 swh/loader/package/functional/tests/data/https_github.com/owner-1_repository-1_revision-1.tgz
 swh/loader/package/functional/tests/data/https_github.com/owner-2_repository-1_revision-1.tgz
+swh/loader/package/functional/tests/data/https_nix-community.github.io/nixpkgs-swh_sources-EOFError.json
 swh/loader/package/functional/tests/data/https_nix-community.github.io/nixpkgs-swh_sources.json
 swh/loader/package/functional/tests/data/https_nix-community.github.io/nixpkgs-swh_sources.json_visit1
 swh/loader/package/npm/__init__.py
@@ -93,6 +95,7 @@ swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.5.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.1.0.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.2.0.tgz
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/@aller_shared
+swh/loader/package/npm/tests/data/https_replicate.npmjs.com/catify
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/jammit-express
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/jammit-no-time
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/nativescript-telerik-analytics
