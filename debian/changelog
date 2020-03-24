@@ -1,3 +1,15 @@
+swh-loader-core (0.0.84-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.84     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-03-24 11:29:49
+    +0100)
+  * Upstream changes:     - v0.0.84     - test: Use storage endpoint to
+    check latest origin visit status     - package.loader: Fix status
+    visit to 'partial'     - package.loader: add a test to reproduce
+    EOFError error
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 24 Mar 2020 10:32:55 +0000
+
 swh-loader-core (0.0.83-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.83     - (tagged by Antoine R. Dumont
