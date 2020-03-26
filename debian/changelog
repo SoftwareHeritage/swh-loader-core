@@ -1,8 +1,12 @@
-swh-loader-core (0.0.85-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.86-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.86     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-03-26 16:15:24
+    +0100)
+  * Upstream changes:     - v0.0.86     - core.loader: Remove
+    origin_visit_update call from DVCSLoader class
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 26 Mar 2020 14:45:28 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 26 Mar 2020 15:19:29 +0000
 
 swh-loader-core (0.0.85-1~swh1) unstable-swh; urgency=medium
 
