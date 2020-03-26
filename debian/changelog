@@ -1,8 +1,13 @@
-swh-loader-core (0.0.84-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.85-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.85     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-03-26 15:36:58
+    +0100)
+  * Upstream changes:     - v0.0.85     - core.loader: Allow core loader
+    to update origin_visit in one call     - Rename the functional
+    loader to nixguix loader
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 24 Mar 2020 10:34:59 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 26 Mar 2020 14:43:17 +0000
 
 swh-loader-core (0.0.84-1~swh1) unstable-swh; urgency=medium
 
