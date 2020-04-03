@@ -1,8 +1,12 @@
-swh-loader-core (0.0.87-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.88-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.88     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-04-03 15:52:07
+    +0200)
+  * Upstream changes:     - v0.0.88     - v0.0.88 nixguix: validate and
+    clean sources.json structure
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 02 Apr 2020 12:42:13 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 03 Apr 2020 13:54:24 +0000
 
 swh-loader-core (0.0.87-1~swh1) unstable-swh; urgency=medium
 
