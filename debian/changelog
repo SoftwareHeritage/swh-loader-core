@@ -1,8 +1,16 @@
-swh-loader-core (0.0.88-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.89-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.89     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-04-14 15:48:15
+    +0200)
+  * Upstream changes:     - v0.0.89     - package.utils: Define a
+    timeout on download connections     - package.loader: Clear proxy
+    buffer state when failing to load revision     - Fix a couple of
+    storage args deprecation warnings     - cli: Sort loaders list and
+    fix some tests     - Add a pyproject.toml file to target py37 for
+    black     - Enable black
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 03 Apr 2020 13:56:38 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 14 Apr 2020 15:30:08 +0000
 
 swh-loader-core (0.0.88-1~swh1) unstable-swh; urgency=medium
 

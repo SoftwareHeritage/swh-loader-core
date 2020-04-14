@@ -2,9 +2,11 @@ MANIFEST.in
 Makefile
 README.md
 conftest.py
+pyproject.toml
 requirements-swh.txt
 requirements-test.txt
 requirements.txt
+setup.cfg
 setup.py
 version.txt
 swh/__init__.py
