@@ -1,8 +1,11 @@
-swh-loader-core (0.0.89-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.90-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.90     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-04-15 14:27:01
+    +0200)
+  * Upstream changes:     - v0.0.90     - Improve exception handling
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 14 Apr 2020 15:31:53 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 15 Apr 2020 12:30:07 +0000
 
 swh-loader-core (0.0.89-1~swh1) unstable-swh; urgency=medium
 
