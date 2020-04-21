@@ -68,8 +68,11 @@ swh/loader/package/deposit/tests/test_deposit.py
 swh/loader/package/deposit/tests/test_tasks.py
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_666_meta
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_666_raw
+swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_777_meta
+swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_777_raw
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello-2.10.zip
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.10.json
+swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.11.json
 swh/loader/package/nixguix/__init__.py
 swh/loader/package/nixguix/loader.py
 swh/loader/package/nixguix/tasks.py
