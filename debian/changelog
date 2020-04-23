@@ -1,3 +1,16 @@
+swh-loader-core (0.0.92-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.0.92     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-04-23 11:49:30
+    +0200)
+  * Upstream changes:     - v0.0.92     - deposit.loader: Fix revision
+    metadata redundancy in deposit metadata     - loader.deposit:
+    Clarify FIXME intent     - test_nixguix: Remove the incorrect fixme
+    - test_nixguix: Add a fixme note on test_loader_two_visits     -
+    package.nixguix: Ensure the revisions are structurally sound
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 23 Apr 2020 09:52:18 +0000
+
 swh-loader-core (0.0.91-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.91     - (tagged by Antoine R. Dumont
