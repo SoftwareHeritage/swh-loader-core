@@ -1,8 +1,15 @@
-swh-loader-core (0.0.91-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.92-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.92     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-04-23 11:49:30
+    +0200)
+  * Upstream changes:     - v0.0.92     - deposit.loader: Fix revision
+    metadata redundancy in deposit metadata     - loader.deposit:
+    Clarify FIXME intent     - test_nixguix: Remove the incorrect fixme
+    - test_nixguix: Add a fixme note on test_loader_two_visits     -
+    package.nixguix: Ensure the revisions are structurally sound
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 21 Apr 2020 14:04:39 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 23 Apr 2020 09:52:18 +0000
 
 swh-loader-core (0.0.91-1~swh1) unstable-swh; urgency=medium
 
