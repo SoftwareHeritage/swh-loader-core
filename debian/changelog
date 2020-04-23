@@ -1,8 +1,12 @@
-swh-loader-core (0.0.92-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.0.93-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.93     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-04-23 16:43:16
+    +0200)
+  * Upstream changes:     - v0.0.93     - deposit.loader: Build revision
+    out of the deposit api read metadata
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 23 Apr 2020 09:54:06 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 23 Apr 2020 14:46:48 +0000
 
 swh-loader-core (0.0.92-1~swh1) unstable-swh; urgency=medium
 
