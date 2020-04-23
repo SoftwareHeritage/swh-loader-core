@@ -71,9 +71,10 @@ class DepositLoader(PackageLoader):
     def build_revision(
         self, a_metadata: Dict, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Revision]:
+        # FIXME: the deposit read api should no longer need to build the revision entry
+        # as this would avoid unnecessary indirection. This would also align with what
+        # other package loaders do
         revision_data = a_metadata.pop("revision")
-
-        # FIXME: the deposit no longer needs to build the revision
 
         # Note:
         # `date` and `committer_date` are always transmitted by the deposit read api
@@ -84,16 +85,6 @@ class DepositLoader(PackageLoader):
         date = TimestampWithTimezone.from_dict(revision_data["date"])
         # commit_date: codemeta:datePublished if any, deposit completed_date otherwise
         commit_date = TimestampWithTimezone.from_dict(revision_data["committer_date"])
-        metadata = revision_data["metadata"]
-        metadata.update(
-            {
-                "extrinsic": {
-                    "provider": self.client.metadata_url(self.deposit_id),
-                    "when": self.visit_date.isoformat(),
-                    "raw": a_metadata,
-                },
-            }
-        )
 
         return Revision(
             type=RevisionType.TAR,
@@ -105,7 +96,13 @@ class DepositLoader(PackageLoader):
             parents=[hash_to_bytes(p) for p in revision_data.get("parents", [])],
             directory=directory,
             synthetic=True,
-            metadata=metadata,
+            metadata={
+                "extrinsic": {
+                    "provider": self.client.metadata_url(self.deposit_id),
+                    "when": self.visit_date.isoformat(),
+                    "raw": a_metadata,
+                },
+            },
         )
 
     def load(self) -> Dict:
