@@ -10,11 +10,16 @@ import requests
 from typing import Dict, Optional, Any, Mapping
 
 from swh.model import hashutil
-
-from swh.model.model import Sha1Git, Revision, RevisionType
+from swh.model.model import (
+    Revision,
+    RevisionType,
+    TargetType,
+    Snapshot,
+    BaseModel,
+    Sha1Git,
+)
 
 from swh.loader.package.utils import EMPTY_AUTHOR
-
 from swh.loader.package.loader import PackageLoader
 
 
@@ -62,14 +67,57 @@ class NixGuixLoader(PackageLoader):
         integrity = self._integrityByUrl[url]
         yield url, {"url": url, "raw": {"url": url, "integrity": integrity}}
 
+    def known_artifacts(self, snapshot: Optional[Snapshot]) -> Dict[Sha1Git, BaseModel]:
+        """Almost same implementation as the default one except it filters out the extra
+        "evaluation" branch which does not have the right metadata structure.
+
+        """
+        if not snapshot:
+            return {}
+
+        # Skip evaluation revision which has no metadata
+        revs = [
+            rev.target
+            for branch_name, rev in snapshot.branches.items()
+            if (
+                rev
+                and rev.target_type == TargetType.REVISION
+                and branch_name != b"evaluation"
+            )
+        ]
+        known_revisions = self.storage.revision_get(revs)
+
+        ret = {}
+        for revision in known_revisions:
+            if not revision:  # revision_get can return None
+                continue
+            ret[revision["id"]] = revision["metadata"]
+        return ret
+
     def resolve_revision_from(
         self, known_artifacts: Dict, artifact_metadata: Dict
     ) -> Optional[bytes]:
-
         for rev_id, known_artifact in known_artifacts.items():
-            known_integrity = known_artifact["extrinsic"]["raw"]["integrity"]
-            if artifact_metadata["integrity"] == known_integrity:
-                return rev_id
+            try:
+                known_integrity = known_artifact["extrinsic"]["raw"]["integrity"]
+            except KeyError as e:
+                logger.exception(
+                    "Unexpected metadata revision structure detected: %(context)s",
+                    {
+                        "context": {
+                            "revision": hashutil.hash_to_hex(rev_id),
+                            "reason": str(e),
+                            "known_artifact": known_artifact,
+                        }
+                    },
+                )
+                # metadata field for the revision is not as expected by the loader
+                # nixguix. We consider this not the right revision and continue checking
+                # the other revisions
+                continue
+            else:
+                if artifact_metadata["integrity"] == known_integrity:
+                    return rev_id
         return None
 
     def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
