@@ -1,3 +1,14 @@
+swh-loader-core (0.1.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.1.0     - (tagged by Nicolas Dandrimont
+    <nicolas@dandrimont.eu> on 2020-05-29 16:01:11 +0200)
+  * Upstream changes:     - Release swh.loader.core v0.1.0     - Make
+    sure partial visits don't reference unloaded snapshots     - Ensure
+    proper behavior when loading into partial archives (e.g. staging)
+    - Improve test coverage
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 29 May 2020 14:05:36 +0000
+
 swh-loader-core (0.0.97-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.0.97     - (tagged by Antoine R. Dumont
