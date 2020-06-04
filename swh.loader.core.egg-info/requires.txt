@@ -6,7 +6,7 @@ pkginfo
 python-debian
 python-dateutil
 swh.core>=0.0.75
-swh.model>=0.0.60
+swh.model>=0.3.0
 swh.scheduler
 swh.storage>=0.0.189
 
