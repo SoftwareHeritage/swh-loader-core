@@ -27,8 +27,11 @@ from swh.model.model import (
     TargetType,
     Snapshot,
     Origin,
+    OriginVisit,
+    OriginVisitStatus,
 )
 from swh.storage import get_storage
+from swh.storage.utils import now
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 
 from swh.loader.package.utils import download
@@ -280,18 +283,24 @@ class PackageLoader:
 
             """
             self.storage.flush()
-            self.storage.origin_visit_update(
-                origin=self.url,
-                visit_id=visit.visit,
-                status=status_visit,
-                snapshot=snapshot and snapshot.id,
-            )
 
+            snapshot_id: Optional[bytes] = None
+            if snapshot and snapshot.id:  # to prevent the snapshot.id to b""
+                snapshot_id = snapshot.id
+            assert visit.visit
+            visit_status = OriginVisitStatus(
+                origin=self.url,
+                visit=visit.visit,
+                date=now(),
+                status=status_visit,
+                snapshot=snapshot_id,
+            )
+            self.storage.origin_visit_status_add([visit_status])
             result: Dict[str, Any] = {
                 "status": status_load,
             }
-            if snapshot:
-                result["snapshot_id"] = hash_to_hex(snapshot.id)
+            if snapshot_id:
+                result["snapshot_id"] = hash_to_hex(snapshot_id)
             return result
 
         # Prepare origin and origin_visit
@@ -299,8 +308,16 @@ class PackageLoader:
         try:
             self.storage.origin_add_one(origin)
             visit = self.storage.origin_visit_add(
-                self.url, date=self.visit_date, type=self.visit_type
-            )
+                [
+                    OriginVisit(
+                        origin=self.url,
+                        date=self.visit_date,
+                        type=self.visit_type,
+                        status="ongoing",
+                        snapshot=None,
+                    )
+                ]
+            )[0]
         except Exception as e:
             logger.exception("Failed to initialize origin_visit for %s", self.url)
             sentry_sdk.capture_exception(e)
