@@ -9,7 +9,7 @@ import logging
 import os
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from swh.core import config
 from swh.model.model import (
@@ -18,12 +18,15 @@ from swh.model.model import (
     SkippedContent,
     Directory,
     Origin,
+    OriginVisit,
+    OriginVisitStatus,
     Revision,
     Release,
     Sha1Git,
     Snapshot,
 )
 from swh.storage import get_storage
+from swh.storage.utils import now
 
 
 class BaseLoader(config.SWHConfig, metaclass=ABCMeta):
@@ -96,7 +99,7 @@ class BaseLoader(config.SWHConfig, metaclass=ABCMeta):
         self.max_content_size = self.config["max_content_size"]
 
         # possibly overridden in self.prepare method
-        self.visit_date: Optional[Union[str, datetime.datetime]] = None
+        self.visit_date: Optional[datetime.datetime] = None
 
         self.origin: Optional[Origin] = None
 
@@ -171,9 +174,19 @@ class BaseLoader(config.SWHConfig, metaclass=ABCMeta):
 
         if not self.visit_date:  # now as default visit_date if not provided
             self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
+        assert isinstance(self.visit_date, datetime.datetime)
+        assert isinstance(self.visit_type, str)
         self.visit = self.storage.origin_visit_add(
-            self.origin.url, self.visit_date, self.visit_type
-        )
+            [
+                OriginVisit(
+                    origin=self.origin.url,
+                    date=self.visit_date,
+                    type=self.visit_type,
+                    status="ongoing",
+                    snapshot=None,
+                )
+            ]
+        )[0]
 
     @abstractmethod
     def prepare(self, *args, **kwargs) -> None:
@@ -304,24 +317,28 @@ class BaseLoader(config.SWHConfig, metaclass=ABCMeta):
                     break
 
             self.store_metadata()
-            self.storage.origin_visit_update(
-                self.origin.url,
-                self.visit.visit,
-                self.visit_status(),
+            visit_status = OriginVisitStatus(
+                origin=self.origin.url,
+                visit=self.visit.visit,
+                date=now(),
+                status=self.visit_status(),
                 snapshot=self.loaded_snapshot_id,
             )
+            self.storage.origin_visit_status_add([visit_status])
             self.post_load()
         except Exception:
             self.log.exception(
                 "Loading failure, updating to `partial` status",
                 extra={"swh_task_args": args, "swh_task_kwargs": kwargs,},
             )
-            self.storage.origin_visit_update(
-                self.origin.url,
-                self.visit.visit,
-                "partial",
+            visit_status = OriginVisitStatus(
+                origin=self.origin.url,
+                visit=self.visit.visit,
+                date=now(),
+                status="partial",
                 snapshot=self.loaded_snapshot_id,
             )
+            self.storage.origin_visit_status_add([visit_status])
             self.post_load(success=False)
             return {"status": "failed"}
         finally:
