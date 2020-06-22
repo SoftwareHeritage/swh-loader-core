@@ -1,8 +1,12 @@
-swh-loader-core (0.3.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.3.2-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.3.2     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-06-22 15:13:05
+    +0200)
+  * Upstream changes:     - v0.3.2     - Add helper function to ensure
+    loader visit are as expected
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 12 Jun 2020 14:49:34 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 22 Jun 2020 13:15:41 +0000
 
 swh-loader-core (0.3.1-1~swh1) unstable-swh; urgency=medium
 
