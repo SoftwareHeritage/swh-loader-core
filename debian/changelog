@@ -1,8 +1,12 @@
-swh-loader-core (0.4.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.5.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.5.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-06-29 13:18:41
+    +0200)
+  * Upstream changes:     - v0.5.0     - loader*: Drop obsolete origin
+    visit fields
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 23 Jun 2020 13:16:14 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 29 Jun 2020 11:20:59 +0000
 
 swh-loader-core (0.4.0-1~swh1) unstable-swh; urgency=medium
 
