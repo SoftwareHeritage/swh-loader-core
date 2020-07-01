@@ -1,3 +1,14 @@
+swh-loader-core (0.5.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.5.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-07-01 12:32:54
+    +0200)
+  * Upstream changes:     - v0.5.1     - Use origin_add instead of
+    deprecated origin_add_one endpoint     - Migrate to use object's
+    "object_type" field when computing objects
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 01 Jul 2020 10:34:59 +0000
+
 swh-loader-core (0.5.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.5.0     - (tagged by Antoine R. Dumont
