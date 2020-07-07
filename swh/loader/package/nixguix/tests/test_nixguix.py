@@ -22,14 +22,15 @@ from swh.loader.package.nixguix.loader import (
     clean_sources,
 )
 
-from swh.loader.package.tests.common import (
-    get_stats,
-    check_snapshot,
-)
 from swh.loader.package.utils import download
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.storage.exc import HashCollision
-from swh.loader.tests.common import assert_last_visit_matches
+
+from swh.loader.tests import (
+    assert_last_visit_matches,
+    get_stats,
+    check_snapshot,
+)
 
 
 sources_url = "https://nix-community.github.io/nixpkgs-swh/sources.json"
@@ -58,12 +59,16 @@ def test_clean_sources_invalid_schema(swh_config, requests_mock_datadir):
 
 
 def test_clean_sources_invalid_version(swh_config, requests_mock_datadir):
-    sources = {"version": 2, "sources": [], "revision": "my-revision"}
+    for version_ok in [1, "1"]:  # Check those versions are fine
+        clean_sources({"version": version_ok, "sources": [], "revision": "my-revision"})
 
-    with pytest.raises(
-        ValueError, match="sources structure version .* is not supported"
-    ):
-        clean_sources(sources)
+    for version_ko in [0, "0", 2, "2"]:  # Check version != 1 raise an error
+        with pytest.raises(
+            ValueError, match="sources structure version .* is not supported"
+        ):
+            clean_sources(
+                {"version": version_ko, "sources": [], "revision": "my-revision"}
+            )
 
 
 def test_clean_sources_invalid_sources(swh_config, requests_mock_datadir):
@@ -78,6 +83,8 @@ def test_clean_sources_invalid_sources(swh_config, requests_mock_datadir):
             {"type": "url", "urls": "my-url", "integrity": "my-integrity"},
             # type is not url
             {"type": "git", "urls": ["my-url"], "integrity": "my-integrity"},
+            # missing fields which got double-checked nonetheless...
+            {"integrity": "my-integrity"},
         ],
         "revision": "my-revision",
     }
