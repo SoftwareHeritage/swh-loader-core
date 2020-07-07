@@ -1,3 +1,18 @@
+swh-loader-core (0.5.2-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.5.2     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-07-07 12:29:17
+    +0200)
+  * Upstream changes:     - v0.5.2     - nixguix/loader: Check further
+    the source entry only if it's valid     - nixguix/loader: Allow
+    version both as string or integer     - Move remaining common test
+    utility functions to top-level arborescence     - Move common test
+    utility function to the top-level arborescence     - Define common
+    test helper function     - Reuse swh.model.from_disk.iter_directory
+    function
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 07 Jul 2020 10:31:36 +0000
+
 swh-loader-core (0.5.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.5.1     - (tagged by Antoine R. Dumont
