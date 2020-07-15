@@ -10,11 +10,12 @@ import logging
 import pytest
 
 from json.decoder import JSONDecodeError
-from typing import Dict, Optional, Tuple
+from swh.storage.interface import StorageInterface
+from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 from unittest.mock import patch
 
-from swh.model.model import Snapshot
+from swh.model.model import Snapshot, TargetType
 from swh.loader.package.archive.loader import ArchiveLoader
 from swh.loader.package.nixguix.loader import (
     NixGuixLoader,
@@ -29,11 +30,21 @@ from swh.storage.exc import HashCollision
 from swh.loader.tests import (
     assert_last_visit_matches,
     get_stats,
-    check_snapshot,
+    check_snapshot as check_snapshot_full,
 )
 
 
 sources_url = "https://nix-community.github.io/nixpkgs-swh/sources.json"
+
+
+def check_snapshot(
+    snapshot: Union[Dict[str, Any], Snapshot],
+    storage: StorageInterface,
+    allowed_empty: Iterable[Tuple[TargetType, bytes]] = [
+        (TargetType.REVISION, b"evaluation")
+    ],
+):
+    return check_snapshot_full(snapshot, storage, allowed_empty)
 
 
 def test_retrieve_sources(swh_config, requests_mock_datadir):
@@ -177,12 +188,12 @@ def test_loader_incremental(swh_config, requests_mock_datadir):
     )
 
     expected_branches = {
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
+        b"evaluation": {
+            "target": hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             "target_type": "revision",
         },
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
+        b"https://github.com/owner-1/repository-1/revision-1.tgz": {
+            "target": hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
             "target_type": "revision",
         },
     }
@@ -223,12 +234,12 @@ def test_loader_two_visits(swh_config, requests_mock_datadir_visits):
     )
 
     expected_branches = {
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
+        b"evaluation": {
+            "target": hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             "target_type": "revision",
         },
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
+        b"https://github.com/owner-1/repository-1/revision-1.tgz": {
+            "target": hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
             "target_type": "revision",
         },
     }
@@ -266,16 +277,16 @@ def test_loader_two_visits(swh_config, requests_mock_datadir_visits):
     # second time an url, because of the requests_mock_datadir_visits
     # fixture, the file has to end with `_visit1`.
     expected_branches = {
-        "evaluation": {
-            "target": "602140776b2ce6c9159bcf52ada73a297c063d5e",
+        b"evaluation": {
+            "target": hash_to_bytes("602140776b2ce6c9159bcf52ada73a297c063d5e"),
             "target_type": "revision",
         },
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
+        b"https://github.com/owner-1/repository-1/revision-1.tgz": {
+            "target": hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
             "target_type": "revision",
         },
-        "https://github.com/owner-2/repository-1/revision-1.tgz": {
-            "target": "85e0bad74e33e390aaeb74f139853ae3863ee544",
+        b"https://github.com/owner-2/repository-1/revision-1.tgz": {
+            "target": hash_to_bytes("85e0bad74e33e390aaeb74f139853ae3863ee544"),
             "target_type": "revision",
         },
     }
@@ -325,12 +336,12 @@ def test_evaluation_branch(swh_config, requests_mock_datadir):
     )
 
     expected_branches = {
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
+        b"https://github.com/owner-1/repository-1/revision-1.tgz": {
+            "target": hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
             "target_type": "revision",
         },
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
+        b"evaluation": {
+            "target": hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             "target_type": "revision",
         },
     }
@@ -357,8 +368,8 @@ def test_eoferror(swh_config, requests_mock_datadir):
     loader.load()
 
     expected_branches = {
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
+        b"evaluation": {
+            "target": hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             "target_type": "revision",
         },
     }
@@ -405,12 +416,12 @@ def test_raise_exception(swh_config, requests_mock_datadir, mocker):
     }
 
     expected_branches = {
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
+        b"https://github.com/owner-1/repository-1/revision-1.tgz": {
+            "target": hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
             "target_type": "revision",
         },
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
+        b"evaluation": {
+            "target": hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             "target_type": "revision",
         },
     }
@@ -511,7 +522,7 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
         # mutate snapshot to create a clash
         snapshot["branches"][artifact_url.encode("utf-8")] = {
             "target_type": "revision",
-            "target": old_revision["id"],
+            "target": hash_to_bytes(old_revision["id"]),
         }
 
         # modify snapshot to actually change revision metadata structure so we simulate
