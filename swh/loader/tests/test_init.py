@@ -9,19 +9,33 @@ import pytest
 import os
 import subprocess
 
-from swh.loader.tests import prepare_repository_from_archive, assert_last_visit_matches
+from swh.model.from_disk import DentryPerms
 from swh.model.model import (
+    Content,
+    Directory,
+    DirectoryEntry,
+    ObjectType,
     OriginVisit,
     OriginVisitStatus,
+    Person,
+    Release,
+    Revision,
+    RevisionType,
     Snapshot,
     SnapshotBranch,
     TargetType,
+    Timestamp,
+    TimestampWithTimezone,
 )
 from swh.model.hashutil import hash_to_bytes
 
 from swh.loader.tests import (
-    decode_target,
+    assert_last_visit_matches,
+    encode_target,
     check_snapshot,
+    prepare_repository_from_archive,
+    InconsistentAliasBranchError,
+    InexistentObjectsError,
 )
 
 
@@ -43,6 +57,109 @@ ORIGIN_VISIT_STATUS = OriginVisitStatus(
     status="full",
     snapshot=hash_to_bytes("d81cc0710eb6cf9efd5b920a8453e1e07157b6cd"),
     metadata=None,
+)
+
+
+CONTENT = Content(
+    data=b"42\n",
+    length=3,
+    sha1=hash_to_bytes("34973274ccef6ab4dfaaf86599792fa9c3fe4689"),
+    sha1_git=hash_to_bytes("d81cc0710eb6cf9efd5b920a8453e1e07157b6cd"),
+    sha256=hash_to_bytes(
+        "673650f936cb3b0a2f93ce09d81be10748b1b203c19e8176b4eefc1964a0cf3a"
+    ),
+    blake2s256=hash_to_bytes(
+        "d5fe1939576527e42cfd76a9455a2432fe7f56669564577dd93c4280e76d661d"
+    ),
+    status="visible",
+)
+
+
+DIRECTORY = Directory(
+    id=hash_to_bytes("34f335a750111ca0a8b64d8034faec9eedc396be"),
+    entries=tuple(
+        [
+            DirectoryEntry(
+                name=b"foo",
+                type="file",
+                target=CONTENT.sha1_git,
+                perms=DentryPerms.content,
+            )
+        ]
+    ),
+)
+
+
+REVISION = Revision(
+    id=hash_to_bytes("066b1b62dbfa033362092af468bf6cfabec230e7"),
+    message=b"hello",
+    author=Person(
+        name=b"Nicolas Dandrimont",
+        email=b"nicolas@example.com",
+        fullname=b"Nicolas Dandrimont <nicolas@example.com> ",
+    ),
+    date=TimestampWithTimezone(
+        timestamp=Timestamp(seconds=1234567890, microseconds=0),
+        offset=120,
+        negative_utc=False,
+    ),
+    committer=Person(
+        name=b"St\xc3fano Zacchiroli",
+        email=b"stefano@example.com",
+        fullname=b"St\xc3fano Zacchiroli <stefano@example.com>",
+    ),
+    committer_date=TimestampWithTimezone(
+        timestamp=Timestamp(seconds=1123456789, microseconds=0),
+        offset=0,
+        negative_utc=True,
+    ),
+    parents=(),
+    type=RevisionType.GIT,
+    directory=DIRECTORY.id,
+    metadata={
+        "checksums": {"sha1": "tarball-sha1", "sha256": "tarball-sha256",},
+        "signed-off-by": "some-dude",
+    },
+    extra_headers=(
+        (b"gpgsig", b"test123"),
+        (b"mergetag", b"foo\\bar"),
+        (b"mergetag", b"\x22\xaf\x89\x80\x01\x00"),
+    ),
+    synthetic=True,
+)
+
+
+RELEASE = Release(
+    id=hash_to_bytes("3e9050196aa288264f2a9d279d6abab8b158448b"),
+    name=b"v0.0.2",
+    author=Person(
+        name=b"tony", email=b"tony@ardumont.fr", fullname=b"tony <tony@ardumont.fr>",
+    ),
+    date=TimestampWithTimezone(
+        timestamp=Timestamp(seconds=1634336813, microseconds=0),
+        offset=0,
+        negative_utc=False,
+    ),
+    target=REVISION.id,
+    target_type=ObjectType.REVISION,
+    message=b"yet another synthetic release",
+    synthetic=True,
+)
+
+
+SNAPSHOT = Snapshot(
+    id=hash_to_bytes("2498dbf535f882bc7f9a18fb16c9ad27fda7bab7"),
+    branches={
+        b"release/0.1.0": SnapshotBranch(
+            target=RELEASE.id, target_type=TargetType.RELEASE,
+        ),
+        b"HEAD": SnapshotBranch(target=REVISION.id, target_type=TargetType.REVISION,),
+        b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+        b"evaluation": SnapshotBranch(  # branch dedicated to not exist in storage
+            target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
+            target_type=TargetType.REVISION,
+        ),
+    },
 )
 
 
@@ -172,56 +289,88 @@ def test_prepare_repository_from_archive_no_filename(datadir, tmp_path):
     assert os.path.exists(expected_uncompressed_archive_path)
 
 
-def test_decode_target_edge():
-    assert not decode_target(None)
+def test_encode_target():
+    assert encode_target(None) is None
 
+    for target_alias in ["something", b"something"]:
+        target = {
+            "target_type": "alias",
+            "target": target_alias,
+        }
+        actual_alias_encode_target = encode_target(target)
+        assert actual_alias_encode_target == {
+            "target_type": "alias",
+            "target": b"something",
+        }
 
-def test_decode_target():
-    actual_alias_decode_target = decode_target(
-        {"target_type": "alias", "target": b"something",}
-    )
-
-    assert actual_alias_decode_target == {
-        "target_type": "alias",
-        "target": "something",
-    }
-
-    actual_decode_target = decode_target(
-        {"target_type": "revision", "target": hash_to_bytes(hash_hex),}
-    )
-
-    assert actual_decode_target == {
-        "target_type": "revision",
-        "target": hash_hex,
-    }
+    for hash_ in [hash_hex, hash_to_bytes(hash_hex)]:
+        target = {"target_type": "revision", "target": hash_}
+        actual_encode_target = encode_target(target)
+        assert actual_encode_target == {
+            "target_type": "revision",
+            "target": hash_to_bytes(hash_hex),
+        }
 
 
 def test_check_snapshot(swh_storage):
-    snap_id = "2498dbf535f882bc7f9a18fb16c9ad27fda7bab7"
-    snapshot = Snapshot(
-        id=hash_to_bytes(snap_id),
-        branches={
-            b"master": SnapshotBranch(
-                target=hash_to_bytes(hash_hex), target_type=TargetType.REVISION,
-            ),
-        },
-    )
+    """Everything should be fine when snapshot is found and the snapshot reference up to the
+    revision exist in the storage.
 
-    s = swh_storage.snapshot_add([snapshot])
+    """
+    # Create a consistent snapshot arborescence tree in storage
+    found = False
+    for entry in DIRECTORY.entries:
+        if entry.target == CONTENT.sha1_git:
+            found = True
+            break
+    assert found is True
+
+    assert REVISION.directory == DIRECTORY.id
+    assert RELEASE.target == REVISION.id
+
+    for branch, target in SNAPSHOT.branches.items():
+        if branch == b"alias":
+            assert target.target in SNAPSHOT.branches
+        elif branch == b"evaluation":
+            # this one does not exist and we are safelisting its check below
+            continue
+        else:
+            assert target.target in [REVISION.id, RELEASE.id]
+
+    swh_storage.content_add([CONTENT.to_dict()])
+    swh_storage.directory_add([DIRECTORY.to_dict()])
+    swh_storage.revision_add([REVISION.to_dict()])
+    swh_storage.release_add([RELEASE.to_dict()])
+    s = swh_storage.snapshot_add([SNAPSHOT.to_dict()])
     assert s == {
         "snapshot:add": 1,
     }
 
-    expected_snapshot = {
-        "id": snap_id,
-        "branches": {"master": {"target": hash_hex, "target_type": "revision",}},
-    }
-    check_snapshot(expected_snapshot, swh_storage)
+    for snap in [SNAPSHOT, SNAPSHOT.to_dict()]:
+        # all should be fine!
+        check_snapshot(
+            snap, swh_storage, allowed_empty=[(TargetType.REVISION, b"evaluation")]
+        )
 
 
-def test_check_snapshot_failure(swh_storage):
+def test_check_snapshot_failures(swh_storage):
+    """Failure scenarios:
+
+    0. snapshot parameter is not a snapshot
+    1. snapshot id is correct but branches mismatched
+    2. snapshot id is not correct, it's not found in the storage
+    3. snapshot reference an alias which does not exist
+    4. snapshot is found in storage, targeted revision does not exist
+    5. snapshot is found in storage, targeted revision exists but the directory the
+       revision targets does not exist
+    6. snapshot is found in storage, target revision exists, targeted directory by the
+       revision exist. Content targeted by the directory does not exist.
+    7. snapshot is found in storage, targeted release does not exist
+
+    """
+    snap_id_hex = "2498dbf535f882bc7f9a18fb16c9ad27fda7bab7"
     snapshot = Snapshot(
-        id=hash_to_bytes("2498dbf535f882bc7f9a18fb16c9ad27fda7bab7"),
+        id=hash_to_bytes(snap_id_hex),
         branches={
             b"master": SnapshotBranch(
                 target=hash_to_bytes(hash_hex), target_type=TargetType.REVISION,
@@ -237,14 +386,129 @@ def test_check_snapshot_failure(swh_storage):
     unexpected_snapshot = {
         "id": "2498dbf535f882bc7f9a18fb16c9ad27fda7bab7",  # id is correct
         "branches": {
-            "master": {"target": hash_hex, "target_type": "release",}  # wrong branch
+            b"master": {
+                "target": hash_to_bytes(hash_hex),  # wrong branch
+                "target_type": "release",
+            }
         },
     }
 
-    with pytest.raises(AssertionError, match="Differing items"):
-        check_snapshot(unexpected_snapshot, swh_storage)
+    # 0. not a Snapshot object, raise!
+    with pytest.raises(AssertionError, match="variable 'snapshot' must be a snapshot"):
+        check_snapshot(ORIGIN_VISIT, swh_storage)
 
-    # snapshot id which does not exist
-    unexpected_snapshot["id"] = "999666f535f882bc7f9a18fb16c9ad27fda7bab7"
-    with pytest.raises(AssertionError, match="is not found"):
-        check_snapshot(unexpected_snapshot, swh_storage)
+    # 1. snapshot id is correct but branches mismatched
+    for snap_id in [snap_id_hex, snapshot.id]:
+        with pytest.raises(AssertionError, match="Differing attributes"):
+            unexpected_snapshot["id"] = snap_id
+            check_snapshot(unexpected_snapshot, swh_storage)
+
+    # 2. snapshot id is not correct, it's not found in the storage
+    wrong_snap_id_hex = "999666f535f882bc7f9a18fb16c9ad27fda7bab7"
+    for snap_id in [wrong_snap_id_hex, hash_to_bytes(wrong_snap_id_hex)]:
+        unexpected_snapshot["id"] = wrong_snap_id_hex
+        with pytest.raises(AssertionError, match="is not found"):
+            check_snapshot(unexpected_snapshot, swh_storage)
+
+    # 3. snapshot references an inexistent alias
+    snapshot0 = Snapshot(
+        id=hash_to_bytes("123666f535f882bc7f9a18fb16c9ad27fda7bab7"),
+        branches={
+            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+        },
+    )
+    swh_storage.snapshot_add([snapshot0])
+
+    with pytest.raises(InconsistentAliasBranchError, match="Alias branch HEAD"):
+        check_snapshot(snapshot0, swh_storage)
+
+    # 4. snapshot is found in storage, targeted revision does not exist
+
+    rev_not_found = list(swh_storage.revision_missing([REVISION.id]))
+    assert len(rev_not_found) == 1
+
+    snapshot1 = Snapshot(
+        id=hash_to_bytes("456666f535f882bc7f9a18fb16c9ad27fda7bab7"),
+        branches={
+            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"HEAD": SnapshotBranch(
+                target=REVISION.id, target_type=TargetType.REVISION,
+            ),
+        },
+    )
+
+    swh_storage.snapshot_add([snapshot1])
+
+    with pytest.raises(InexistentObjectsError, match="Branch/Revision"):
+        check_snapshot(snapshot1, swh_storage)
+
+    # 5. snapshot is found in storage, targeted revision exists but the directory the
+    # revision targets does not exist
+
+    swh_storage.revision_add([REVISION.to_dict()])
+
+    dir_not_found = list(swh_storage.directory_missing([REVISION.directory]))
+    assert len(dir_not_found) == 1
+
+    snapshot2 = Snapshot(
+        id=hash_to_bytes("987123f535f882bc7f9a18fb16c9ad27fda7bab7"),
+        branches={
+            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"HEAD": SnapshotBranch(
+                target=REVISION.id, target_type=TargetType.REVISION,
+            ),
+        },
+    )
+
+    swh_storage.snapshot_add([snapshot2.to_dict()])
+    with pytest.raises(InexistentObjectsError, match="Missing directories"):
+        check_snapshot(snapshot2, swh_storage)
+
+    assert DIRECTORY.id == REVISION.directory
+    swh_storage.directory_add([DIRECTORY])
+
+    # 6. snapshot is found in storage, target revision exists, targeted directory by the
+    # revision exist. Content targeted by the directory does not exist.
+
+    assert DIRECTORY.entries[0].target == CONTENT.sha1_git
+    not_found = list(swh_storage.content_missing_per_sha1_git([CONTENT.sha1_git]))
+    assert len(not_found) == 1
+
+    swh_storage.directory_add([DIRECTORY.to_dict()])
+
+    snapshot3 = Snapshot(
+        id=hash_to_bytes("091456f535f882bc7f9a18fb16c9ad27fda7bab7"),
+        branches={
+            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"HEAD": SnapshotBranch(
+                target=REVISION.id, target_type=TargetType.REVISION,
+            ),
+        },
+    )
+
+    swh_storage.snapshot_add([snapshot3.to_dict()])
+    with pytest.raises(InexistentObjectsError, match="Missing content(s)"):
+        check_snapshot(snapshot3, swh_storage)
+
+    # 7. snapshot is found in storage, targeted release does not exist
+
+    # release targets the revisions which exists
+    assert RELEASE.target == REVISION.id
+
+    snapshot4 = Snapshot(
+        id=hash_to_bytes("789666f535f882bc7f9a18fb16c9ad27fda7bab7"),
+        branches={
+            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"HEAD": SnapshotBranch(
+                target=REVISION.id, target_type=TargetType.REVISION,
+            ),
+            b"release/0.1.0": SnapshotBranch(
+                target=RELEASE.id, target_type=TargetType.RELEASE,
+            ),
+        },
+    )
+
+    swh_storage.snapshot_add([snapshot4])
+
+    with pytest.raises(InexistentObjectsError, match="Branch/Release"):
+        check_snapshot(snapshot4, swh_storage)
