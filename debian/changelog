@@ -1,3 +1,16 @@
+swh-loader-core (0.5.5-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.5.5     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-07-15 12:34:09
+    +0200)
+  * Upstream changes:     - v0.5.5     - check_snapshot: Check existence
+    down to contents     - Expose a pytest_plugin module so other
+    loaders can reuse for tests     - pytest: Remove no longer needed
+    pytest setup     - Fix branches types in tests     - Small code
+    improvement in package/loader.py
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 15 Jul 2020 10:37:11 +0000
+
 swh-loader-core (0.5.4-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.5.4     - (tagged by Antoine R. Dumont
