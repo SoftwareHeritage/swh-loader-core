@@ -337,11 +337,11 @@ def test_check_snapshot(swh_storage):
         else:
             assert target.target in [REVISION.id, RELEASE.id]
 
-    swh_storage.content_add([CONTENT.to_dict()])
-    swh_storage.directory_add([DIRECTORY.to_dict()])
-    swh_storage.revision_add([REVISION.to_dict()])
-    swh_storage.release_add([RELEASE.to_dict()])
-    s = swh_storage.snapshot_add([SNAPSHOT.to_dict()])
+    swh_storage.content_add([CONTENT])
+    swh_storage.directory_add([DIRECTORY])
+    swh_storage.revision_add([REVISION])
+    swh_storage.release_add([RELEASE])
+    s = swh_storage.snapshot_add([SNAPSHOT])
     assert s == {
         "snapshot:add": 1,
     }
@@ -384,7 +384,8 @@ def test_check_snapshot_failures(swh_storage):
     }
 
     unexpected_snapshot = {
-        "id": "2498dbf535f882bc7f9a18fb16c9ad27fda7bab7",  # id is correct
+        # id is correct
+        "id": hash_to_bytes(snap_id_hex),
         "branches": {
             b"master": {
                 "target": hash_to_bytes(hash_hex),  # wrong branch
@@ -398,17 +399,15 @@ def test_check_snapshot_failures(swh_storage):
         check_snapshot(ORIGIN_VISIT, swh_storage)
 
     # 1. snapshot id is correct but branches mismatched
-    for snap_id in [snap_id_hex, snapshot.id]:
-        with pytest.raises(AssertionError, match="Differing attributes"):
-            unexpected_snapshot["id"] = snap_id
-            check_snapshot(unexpected_snapshot, swh_storage)
+    with pytest.raises(AssertionError, match="Differing attributes"):
+        unexpected_snapshot["id"] = snapshot.id
+        check_snapshot(unexpected_snapshot, swh_storage)
 
     # 2. snapshot id is not correct, it's not found in the storage
-    wrong_snap_id_hex = "999666f535f882bc7f9a18fb16c9ad27fda7bab7"
-    for snap_id in [wrong_snap_id_hex, hash_to_bytes(wrong_snap_id_hex)]:
-        unexpected_snapshot["id"] = wrong_snap_id_hex
-        with pytest.raises(AssertionError, match="is not found"):
-            check_snapshot(unexpected_snapshot, swh_storage)
+    wrong_snap_id = hash_to_bytes("999666f535f882bc7f9a18fb16c9ad27fda7bab7")
+    unexpected_snapshot["id"] = wrong_snap_id
+    with pytest.raises(AssertionError, match="is not found"):
+        check_snapshot(unexpected_snapshot, swh_storage)
 
     # 3. snapshot references an inexistent alias
     snapshot0 = Snapshot(
@@ -445,7 +444,7 @@ def test_check_snapshot_failures(swh_storage):
     # 5. snapshot is found in storage, targeted revision exists but the directory the
     # revision targets does not exist
 
-    swh_storage.revision_add([REVISION.to_dict()])
+    swh_storage.revision_add([REVISION])
 
     dir_not_found = list(swh_storage.directory_missing([REVISION.directory]))
     assert len(dir_not_found) == 1
@@ -460,7 +459,7 @@ def test_check_snapshot_failures(swh_storage):
         },
     )
 
-    swh_storage.snapshot_add([snapshot2.to_dict()])
+    swh_storage.snapshot_add([snapshot2])
     with pytest.raises(InexistentObjectsError, match="Missing directories"):
         check_snapshot(snapshot2, swh_storage)
 
@@ -474,7 +473,7 @@ def test_check_snapshot_failures(swh_storage):
     not_found = list(swh_storage.content_missing_per_sha1_git([CONTENT.sha1_git]))
     assert len(not_found) == 1
 
-    swh_storage.directory_add([DIRECTORY.to_dict()])
+    swh_storage.directory_add([DIRECTORY])
 
     snapshot3 = Snapshot(
         id=hash_to_bytes("091456f535f882bc7f9a18fb16c9ad27fda7bab7"),
@@ -486,7 +485,7 @@ def test_check_snapshot_failures(swh_storage):
         },
     )
 
-    swh_storage.snapshot_add([snapshot3.to_dict()])
+    swh_storage.snapshot_add([snapshot3])
     with pytest.raises(InexistentObjectsError, match="Missing content(s)"):
         check_snapshot(snapshot3, swh_storage)
 
