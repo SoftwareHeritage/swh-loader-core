@@ -1,6 +1,6 @@
 pytest
 pytest-mock
-pytest-postgresql >= 2.1.0
 requests_mock
 swh-core[testing]
-swh-scheduler[testing]
+swh-scheduler[testing] >= 0.5.0
+swh-storage[testing] >= 0.10.6

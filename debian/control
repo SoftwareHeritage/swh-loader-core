@@ -15,19 +15,20 @@ Build-Depends: debhelper (>= 9),
                python3-psutil,
                python3-requests-mock,
                python3-setuptools,
+               python3-setuptools-scm,
                python3-swh.core,
-               python3-swh.model (>= 0.0.60~),
-               python3-swh.storage (>= 0.0.178~),
-               python3-swh.scheduler,
-               python3-vcversioner
+               python3-swh.model (>= 0.5.0~),
+               python3-swh.storage (>= 0.10.1~),
+               python3-swh.scheduler (>= 0.4.0~)
 Standards-Version: 3.9.6
 Homepage: https://forge.softwareheritage.org/diffusion/60/
 
 Package: python3-swh.loader.core
 Architecture: all
 Depends: python3-swh.core,
-         python3-swh.model (>= 0.0.60~),
-         python3-swh.storage (>= 0.0.178~),
+         python3-swh.model (>= 0.5.0~),
+         python3-swh.storage (>= 0.10.1~),
+         python3-swh.scheduler (>= 0.4.0~),
          ${misc:Depends},
          ${python3:Depends}
 Breaks: python3-swh.deposit.loader (<< 0.0.48~),

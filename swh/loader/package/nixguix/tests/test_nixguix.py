@@ -10,11 +10,12 @@ import logging
 import pytest
 
 from json.decoder import JSONDecodeError
+from swh.storage.interface import StorageInterface
 from typing import Dict, Optional, Tuple
 
 from unittest.mock import patch
 
-from swh.model.model import Snapshot
+from swh.model.model import Snapshot, SnapshotBranch, TargetType
 from swh.loader.package.archive.loader import ArchiveLoader
 from swh.loader.package.nixguix.loader import (
     NixGuixLoader,
@@ -29,11 +30,52 @@ from swh.storage.exc import HashCollision
 from swh.loader.tests import (
     assert_last_visit_matches,
     get_stats,
-    check_snapshot,
+    check_snapshot as check_snapshot_full,
 )
 
 
 sources_url = "https://nix-community.github.io/nixpkgs-swh/sources.json"
+
+
+SNAPSHOT1 = Snapshot(
+    id=hash_to_bytes("0c5881c74283793ebe9a09a105a9381e41380383"),
+    branches={
+        b"evaluation": SnapshotBranch(
+            target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
+            target_type=TargetType.REVISION,
+        ),
+        b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
+            target=hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
+            target_type=TargetType.REVISION,
+        ),
+    },
+)
+
+
+def check_snapshot(snapshot: Snapshot, storage: StorageInterface):
+    # The `evaluation` branch is allowed to be unresolvable. It's possible at current
+    # nixguix visit time, it is not yet visited (the git loader is in charge of its
+    # visit for now). For more details, check the
+    # swh.loader.package.nixguix.NixGuixLoader.extra_branches docstring.
+    check_snapshot_full(
+        snapshot, storage, allowed_empty=[(TargetType.REVISION, b"evaluation")]
+    )
+
+    assert isinstance(snapshot, Snapshot)
+    # then ensure the snapshot revisions are structurally as expected
+    revision_ids = []
+    for name, branch in snapshot.branches.items():
+        if name == b"evaluation":
+            continue  # skipping that particular branch (cf. previous comment)
+        if branch.target_type == TargetType.REVISION:
+            revision_ids.append(branch.target)
+
+    revisions = storage.revision_get(revision_ids)
+    for rev in revisions:
+        metadata = rev["metadata"]
+        raw = metadata["extrinsic"]["raw"]
+        assert "url" in raw
+        assert "integrity" in raw
 
 
 def test_retrieve_sources(swh_config, requests_mock_datadir):
@@ -93,25 +135,6 @@ def test_clean_sources_invalid_sources(swh_config, requests_mock_datadir):
     assert len(clean["sources"]) == 1
 
 
-def check_snapshot_revisions_ok(snapshot, storage):
-    """Ensure the snapshot revisions are structurally as expected
-
-    """
-    revision_ids = []
-    for name, branch in snapshot["branches"].items():
-        if name == b"evaluation":
-            continue  # skipping that particular branch
-        if branch["target_type"] == "revision":
-            revision_ids.append(branch["target"])
-
-    revisions = storage.revision_get(revision_ids)
-    for rev in revisions:
-        metadata = rev["metadata"]
-        raw = metadata["extrinsic"]["raw"]
-        assert "url" in raw
-        assert "integrity" in raw
-
-
 def test_loader_one_visit(swh_config, requests_mock_datadir):
     loader = NixGuixLoader(sources_url)
     res = loader.load()
@@ -169,29 +192,17 @@ def test_loader_incremental(swh_config, requests_mock_datadir):
     load_status = loader.load()
 
     loader.load()
-    expected_snapshot_id = "0c5881c74283793ebe9a09a105a9381e41380383"
-    assert load_status == {"status": "eventful", "snapshot_id": expected_snapshot_id}
+    assert load_status == {"status": "eventful", "snapshot_id": SNAPSHOT1.id.hex()}
 
     assert_last_visit_matches(
-        loader.storage, sources_url, status="partial", type="nixguix"
+        loader.storage,
+        sources_url,
+        status="partial",
+        type="nixguix",
+        snapshot=SNAPSHOT1.id,
     )
 
-    expected_branches = {
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
-            "target_type": "revision",
-        },
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
-            "target_type": "revision",
-        },
-    }
-    expected_snapshot = {
-        "id": expected_snapshot_id,
-        "branches": expected_branches,
-    }
-    snapshot = check_snapshot(expected_snapshot, storage=loader.storage)
-    check_snapshot_revisions_ok(snapshot, loader.storage)
+    check_snapshot(SNAPSHOT1, storage=loader.storage)
 
     urls = [
         m.url
@@ -215,30 +226,17 @@ def test_loader_two_visits(swh_config, requests_mock_datadir_visits):
     """
     loader = NixGuixLoader(sources_url)
     load_status = loader.load()
-    expected_snapshot_id = "0c5881c74283793ebe9a09a105a9381e41380383"
-    assert load_status == {"status": "eventful", "snapshot_id": expected_snapshot_id}
+    assert load_status == {"status": "eventful", "snapshot_id": SNAPSHOT1.id.hex()}
 
     assert_last_visit_matches(
-        loader.storage, sources_url, status="partial", type="nixguix"
+        loader.storage,
+        sources_url,
+        status="partial",
+        type="nixguix",
+        snapshot=SNAPSHOT1.id,
     )
 
-    expected_branches = {
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
-            "target_type": "revision",
-        },
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
-            "target_type": "revision",
-        },
-    }
-
-    expected_snapshot = {
-        "id": expected_snapshot_id,
-        "branches": expected_branches,
-    }
-    snapshot = check_snapshot(expected_snapshot, storage=loader.storage)
-    check_snapshot_revisions_ok(snapshot, loader.storage)
+    check_snapshot(SNAPSHOT1, storage=loader.storage)
 
     stats = get_stats(loader.storage)
     assert {
@@ -255,37 +253,42 @@ def test_loader_two_visits(swh_config, requests_mock_datadir_visits):
 
     loader = NixGuixLoader(sources_url)
     load_status = loader.load()
-    expected_snapshot_id = "b0bfa75cbd0cc90aac3b9e95fb0f59c731176d97"
-    assert load_status == {"status": "eventful", "snapshot_id": expected_snapshot_id}
+    expected_snapshot_id_hex = "b0bfa75cbd0cc90aac3b9e95fb0f59c731176d97"
+    expected_snapshot_id = hash_to_bytes(expected_snapshot_id_hex)
+    assert load_status == {
+        "status": "eventful",
+        "snapshot_id": expected_snapshot_id_hex,
+    }
 
     assert_last_visit_matches(
-        loader.storage, sources_url, status="partial", type="nixguix"
+        loader.storage,
+        sources_url,
+        status="partial",
+        type="nixguix",
+        snapshot=expected_snapshot_id,
     )
 
     # This ensures visits are incremental. Indeed, if we request a
     # second time an url, because of the requests_mock_datadir_visits
     # fixture, the file has to end with `_visit1`.
-    expected_branches = {
-        "evaluation": {
-            "target": "602140776b2ce6c9159bcf52ada73a297c063d5e",
-            "target_type": "revision",
+    expected_snapshot = Snapshot(
+        id=expected_snapshot_id,
+        branches={
+            b"evaluation": SnapshotBranch(
+                target=hash_to_bytes("602140776b2ce6c9159bcf52ada73a297c063d5e"),
+                target_type=TargetType.REVISION,
+            ),
+            b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
+                target=hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
+                target_type=TargetType.REVISION,
+            ),
+            b"https://github.com/owner-2/repository-1/revision-1.tgz": SnapshotBranch(
+                target=hash_to_bytes("85e0bad74e33e390aaeb74f139853ae3863ee544"),
+                target_type=TargetType.REVISION,
+            ),
         },
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
-            "target_type": "revision",
-        },
-        "https://github.com/owner-2/repository-1/revision-1.tgz": {
-            "target": "85e0bad74e33e390aaeb74f139853ae3863ee544",
-            "target_type": "revision",
-        },
-    }
-
-    expected_snapshot = {
-        "id": expected_snapshot_id,
-        "branches": expected_branches,
-    }
-    snapshot = check_snapshot(expected_snapshot, storage=loader.storage)
-    check_snapshot_revisions_ok(snapshot, loader.storage)
+    )
+    check_snapshot(expected_snapshot, storage=loader.storage)
 
     stats = get_stats(loader.storage)
     assert {
@@ -321,27 +324,14 @@ def test_evaluation_branch(swh_config, requests_mock_datadir):
     assert res["status"] == "eventful"
 
     assert_last_visit_matches(
-        loader.storage, sources_url, status="partial", type="nixguix"
+        loader.storage,
+        sources_url,
+        status="partial",
+        type="nixguix",
+        snapshot=SNAPSHOT1.id,
     )
 
-    expected_branches = {
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
-            "target_type": "revision",
-        },
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
-            "target_type": "revision",
-        },
-    }
-
-    expected_snapshot = {
-        "id": "0c5881c74283793ebe9a09a105a9381e41380383",
-        "branches": expected_branches,
-    }
-
-    snapshot = check_snapshot(expected_snapshot, storage=loader.storage)
-    check_snapshot_revisions_ok(snapshot, loader.storage)
+    check_snapshot(SNAPSHOT1, storage=loader.storage)
 
 
 def test_eoferror(swh_config, requests_mock_datadir):
@@ -356,19 +346,17 @@ def test_eoferror(swh_config, requests_mock_datadir):
     loader = NixGuixLoader(sources)
     loader.load()
 
-    expected_branches = {
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
-            "target_type": "revision",
+    expected_snapshot = Snapshot(
+        id=hash_to_bytes("4257fa2350168c6bfec726a06452ea27a2c0cb33"),
+        branches={
+            b"evaluation": SnapshotBranch(
+                target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
+                target_type=TargetType.REVISION,
+            ),
         },
-    }
-    expected_snapshot = {
-        "id": "4257fa2350168c6bfec726a06452ea27a2c0cb33",
-        "branches": expected_branches,
-    }
+    )
 
-    snapshot = check_snapshot(expected_snapshot, storage=loader.storage)
-    check_snapshot_revisions_ok(snapshot, loader.storage)
+    check_snapshot(expected_snapshot, storage=loader.storage)
 
 
 def fake_download(
@@ -398,29 +386,12 @@ def test_raise_exception(swh_config, requests_mock_datadir, mocker):
     loader = NixGuixLoader(sources_url)
     res = loader.load()
 
-    expected_snapshot_id = "0c5881c74283793ebe9a09a105a9381e41380383"
     assert res == {
         "status": "eventful",
-        "snapshot_id": expected_snapshot_id,
+        "snapshot_id": SNAPSHOT1.id.hex(),
     }
 
-    expected_branches = {
-        "https://github.com/owner-1/repository-1/revision-1.tgz": {
-            "target": "488ad4e7b8e2511258725063cf43a2b897c503b4",
-            "target_type": "revision",
-        },
-        "evaluation": {
-            "target": "cc4e04c26672dd74e5fd0fecb78b435fb55368f7",
-            "target_type": "revision",
-        },
-    }
-    expected_snapshot = {
-        "id": expected_snapshot_id,
-        "branches": expected_branches,
-    }
-
-    snapshot = check_snapshot(expected_snapshot, storage=loader.storage)
-    check_snapshot_revisions_ok(snapshot, loader.storage)
+    check_snapshot(SNAPSHOT1, storage=loader.storage)
 
     assert len(mock_download.mock_calls) == 2
 
@@ -511,7 +482,7 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
         # mutate snapshot to create a clash
         snapshot["branches"][artifact_url.encode("utf-8")] = {
             "target_type": "revision",
-            "target": old_revision["id"],
+            "target": hash_to_bytes(old_revision["id"]),
         }
 
         # modify snapshot to actually change revision metadata structure so we simulate
