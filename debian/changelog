@@ -1,3 +1,14 @@
+swh-loader-core (0.5.9-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.5.9     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-07-17 11:52:38
+    +0200)
+  * Upstream changes:     - v0.5.9     - test.check_snapshot: Drop
+    accepting using dict for snapshot comparison     - test: Check
+    against snapshot model object
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 17 Jul 2020 09:55:12 +0000
+
 swh-loader-core (0.5.8-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.5.8     - (tagged by Antoine R. Dumont
