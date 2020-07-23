@@ -1,8 +1,14 @@
-swh-loader-core (0.6.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.6.1-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.6.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-07-23 11:12:29
+    +0200)
+  * Upstream changes:     - v0.6.1     - npm.loader: Fix null author
+    parsing corner case     - npm.loader: Fix author parsing corner case
+    - npm.loader: Extract _author_str function + add types, tests     -
+    core.loader: docs: Update origin_add reference
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 20 Jul 2020 11:29:50 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 23 Jul 2020 09:15:41 +0000
 
 swh-loader-core (0.6.0-1~swh1) unstable-swh; urgency=medium
 

@@ -11,6 +11,7 @@ from swh.model.hashutil import hash_to_bytes
 from swh.model.model import Person, Snapshot, SnapshotBranch, TargetType
 
 from swh.loader.package.npm.loader import (
+    _author_str,
     NpmLoader,
     extract_npm_package_author,
     artifact_to_revision_id,
@@ -21,6 +22,33 @@ from swh.loader.tests import (
     check_snapshot,
     get_stats,
 )
+
+
+def test_npm_author_str():
+    for author, expected_author in [
+        ("author", "author"),
+        (
+            ["Al from quantum leap", "hal from 2001 space odyssey"],
+            "Al from quantum leap",
+        ),
+        ([], ""),
+        ({"name": "groot", "email": "groot@galaxy.org",}, "groot <groot@galaxy.org>"),
+        ({"name": "somebody",}, "somebody"),
+        ({"email": "no@one.org"}, " <no@one.org>"),  # note first elt is an extra blank
+        ({"name": "no one", "email": None,}, "no one"),
+        ({"email": None,}, ""),
+        ({"name": None}, ""),
+        ({"name": None, "email": None,}, ""),
+        ({}, ""),
+        (None, None),
+        ({"name": []}, "",),
+        (
+            {"name": ["Susan McSween", "William H. Bonney", "Doc Scurlock",]},
+            "Susan McSween",
+        ),
+        (None, None),
+    ]:
+        assert _author_str(author) == expected_author
 
 
 def test_extract_npm_package_author(datadir):
@@ -68,7 +96,7 @@ def test_extract_npm_package_author(datadir):
         },
         "homepage": "http://wcoder.github.io/highlightjs-line-numbers.js/"
     }"""
-    )  # noqa
+    )
 
     assert extract_npm_package_author(package_json) == Person(
         fullname=b"Yauheni Pakala <evgeniy.pakalo@gmail.com>",
@@ -161,6 +189,17 @@ def test_extract_npm_package_author(datadir):
         fullname=b"xiaohuoni <448627663@qq.com>",
         name=b"xiaohuoni",
         email=b"448627663@qq.com",
+    )
+
+    package_json_no_authors = json.loads(
+        """{
+        "authors": null,
+        "license": "MIT"
+    }"""
+    )
+
+    assert extract_npm_package_author(package_json_no_authors) == Person(
+        fullname=b"", name=None, email=None
     )
 
 
