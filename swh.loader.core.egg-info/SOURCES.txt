@@ -161,6 +161,7 @@ swh/loader/package/tests/common.py
 swh/loader/package/tests/test_common.py
 swh/loader/package/tests/test_conftest.py
 swh/loader/package/tests/test_loader.py
+swh/loader/package/tests/test_loader_metadata.py
 swh/loader/package/tests/test_utils.py
 swh/loader/tests/__init__.py
 swh/loader/tests/conftest.py

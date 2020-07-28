@@ -6,8 +6,9 @@
 import json
 import logging
 import requests
+from typing import Any, Dict, Iterator, Mapping, Optional, Tuple
 
-from typing import Dict, Optional, Any, Mapping
+import attr
 
 from swh.model import hashutil
 from swh.model.model import (
@@ -20,13 +21,31 @@ from swh.model.model import (
 )
 
 from swh.loader.package.utils import EMPTY_AUTHOR
-from swh.loader.package.loader import PackageLoader
+from swh.loader.package.loader import BasePackageInfo, PackageLoader
 
 
 logger = logging.getLogger(__name__)
 
 
-class NixGuixLoader(PackageLoader):
+@attr.s
+class NixGuixPackageInfo(BasePackageInfo):
+    raw_info = attr.ib(type=Dict[str, Any])
+
+    integrity = attr.ib(type=str)
+    """Hash of the archive, formatted as in the Subresource Integrity
+    specification."""
+
+    @classmethod
+    def from_metadata(cls, metadata: Dict[str, Any]) -> "NixGuixPackageInfo":
+        return cls(
+            url=metadata["url"],
+            filename=None,
+            integrity=metadata["integrity"],
+            raw_info=metadata,
+        )
+
+
+class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
     """Load sources from a sources.json file. This loader is used to load
     sources used by functional package manager (eg. Nix and Guix).
 
@@ -59,13 +78,14 @@ class NixGuixLoader(PackageLoader):
 
     # Note: this could be renamed get_artifact_info in the PackageLoader
     # base class.
-    def get_package_info(self, url):
+    def get_package_info(self, url) -> Iterator[Tuple[str, NixGuixPackageInfo]]:
         # TODO: try all mirrors and not only the first one. A source
         # can be fetched from several urls, called mirrors. We
         # currently only use the first one, but if the first one
         # fails, we should try the second one and so on.
         integrity = self._integrityByUrl[url]
-        yield url, {"url": url, "raw": {"url": url, "integrity": integrity}}
+        p_info = NixGuixPackageInfo.from_metadata({"url": url, "integrity": integrity})
+        yield url, p_info
 
     def known_artifacts(self, snapshot: Optional[Snapshot]) -> Dict[Sha1Git, BaseModel]:
         """Almost same implementation as the default one except it filters out the extra
@@ -95,7 +115,7 @@ class NixGuixLoader(PackageLoader):
         return ret
 
     def resolve_revision_from(
-        self, known_artifacts: Dict, artifact_metadata: Dict
+        self, known_artifacts: Dict, p_info: NixGuixPackageInfo,
     ) -> Optional[bytes]:
         for rev_id, known_artifact in known_artifacts.items():
             try:
@@ -116,7 +136,7 @@ class NixGuixLoader(PackageLoader):
                 # the other revisions
                 continue
             else:
-                if artifact_metadata["integrity"] == known_integrity:
+                if p_info.integrity == known_integrity:
                     return rev_id
         return None
 
@@ -144,7 +164,7 @@ class NixGuixLoader(PackageLoader):
         }
 
     def build_revision(
-        self, a_metadata: Dict, uncompressed_path: str, directory: Sha1Git
+        self, p_info: NixGuixPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Revision]:
         return Revision(
             type=RevisionType.TAR,
@@ -160,7 +180,7 @@ class NixGuixLoader(PackageLoader):
                 "extrinsic": {
                     "provider": self.provider_url,
                     "when": self.visit_date.isoformat(),
-                    "raw": a_metadata,
+                    "raw": p_info.raw_info,
                 },
             },
         )
