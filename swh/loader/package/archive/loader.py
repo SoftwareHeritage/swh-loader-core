@@ -3,14 +3,16 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import iso8601
+import datetime
 import logging
-
 from os import path
-from typing import Any, Dict, Generator, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterator, Optional, Sequence, Tuple, Union
 
-from swh.loader.package.loader import PackageLoader
-from swh.loader.package.utils import release_name, artifact_identity
+import attr
+import iso8601
+
+from swh.loader.package.loader import PackageLoader, BasePackageInfo
+from swh.loader.package.utils import release_name
 from swh.model.model import (
     Sha1Git,
     Person,
@@ -29,7 +31,39 @@ SWH_PERSON = Person(
 REVISION_MESSAGE = b"swh-loader-package: synthetic revision message"
 
 
-class ArchiveLoader(PackageLoader):
+@attr.s
+class ArchivePackageInfo(BasePackageInfo):
+    raw_info = attr.ib(type=Dict[str, Any])
+    length = attr.ib(type=int)
+    """Size of the archive file"""
+    time = attr.ib(type=Union[str, datetime.datetime])
+    """Timestamp of the archive file on the server"""
+    version = attr.ib(type=str)
+
+    # default keys for gnu
+    ID_KEYS = ["time", "url", "length", "version"]
+
+    def artifact_identity(self, id_keys=None):
+        if id_keys is None:
+            id_keys = self.ID_KEYS
+        # TODO: use parsed attributes instead of self.raw_info
+        return [self.raw_info.get(k) for k in id_keys]
+
+    @classmethod
+    def from_metadata(cls, a_metadata: Dict[str, Any]) -> "ArchivePackageInfo":
+        url = a_metadata["url"]
+        filename = a_metadata.get("filename")
+        return cls(
+            url=url,
+            filename=filename if filename else path.split(url)[-1],
+            raw_info=a_metadata,
+            length=a_metadata["length"],
+            time=a_metadata["time"],
+            version=a_metadata["version"],
+        )
+
+
+class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
     """Load archive origin's artifact files into swh archive
 
     """
@@ -39,7 +73,7 @@ class ArchiveLoader(PackageLoader):
     def __init__(
         self,
         url: str,
-        artifacts: Sequence[Mapping[str, Any]],
+        artifacts: Sequence[Dict[str, Any]],
         identity_artifact_keys: Optional[Sequence[str]] = None,
     ):
         """Loader constructor.
@@ -65,9 +99,6 @@ class ArchiveLoader(PackageLoader):
         """
         super().__init__(url=url)
         self.artifacts = artifacts  # assume order is enforced in the lister
-        if not identity_artifact_keys:
-            # default keys for gnu
-            identity_artifact_keys = ["time", "url", "length", "version"]
         self.identity_artifact_keys = identity_artifact_keys
 
     def get_versions(self) -> Sequence[str]:
@@ -84,44 +115,40 @@ class ArchiveLoader(PackageLoader):
 
     def get_package_info(
         self, version: str
-    ) -> Generator[Tuple[str, Mapping[str, Any]], None, None]:
+    ) -> Iterator[Tuple[str, ArchivePackageInfo]]:
         for a_metadata in self.artifacts:
-            url = a_metadata["url"]
-            package_version = a_metadata["version"]
-            if version == package_version:
-                filename = a_metadata.get("filename")
-                p_info = {
-                    "url": url,
-                    "filename": filename if filename else path.split(url)[-1],
-                    "raw": a_metadata,
-                }
+            p_info = ArchivePackageInfo.from_metadata(a_metadata)
+            if version == p_info.version:
                 # FIXME: this code assumes we have only 1 artifact per
                 # versioned package
                 yield release_name(version), p_info
 
     def resolve_revision_from(
-        self, known_artifacts: Dict, artifact_metadata: Dict
+        self, known_artifacts: Dict, p_info: ArchivePackageInfo
     ) -> Optional[bytes]:
-        identity = artifact_identity(
-            artifact_metadata, id_keys=self.identity_artifact_keys
-        )
+        identity = p_info.artifact_identity(id_keys=self.identity_artifact_keys)
         for rev_id, known_artifact in known_artifacts.items():
             logging.debug("known_artifact: %s", known_artifact)
             reference_artifact = known_artifact["extrinsic"]["raw"]
-            known_identity = artifact_identity(
-                reference_artifact, id_keys=self.identity_artifact_keys
+            reference_artifact_info = ArchivePackageInfo.from_metadata(
+                reference_artifact
+            )
+            known_identity = reference_artifact_info.artifact_identity(
+                id_keys=self.identity_artifact_keys
             )
             if identity == known_identity:
                 return rev_id
         return None
 
     def build_revision(
-        self, a_metadata: Mapping[str, Any], uncompressed_path: str, directory: Sha1Git
+        self, p_info: ArchivePackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Revision]:
-        time = a_metadata["time"]  # assume it's a timestamp
+        time = p_info.time  # assume it's a timestamp
         if isinstance(time, str):  # otherwise, assume it's a parsable date
-            time = iso8601.parse_date(time)
-        normalized_time = TimestampWithTimezone.from_datetime(time)
+            parsed_time = iso8601.parse_date(time)
+        else:
+            parsed_time = time
+        normalized_time = TimestampWithTimezone.from_datetime(parsed_time)
         return Revision(
             type=RevisionType.TAR,
             message=REVISION_MESSAGE,
@@ -137,7 +164,7 @@ class ArchiveLoader(PackageLoader):
                 "extrinsic": {
                     "provider": self.url,
                     "when": self.visit_date.isoformat(),
-                    "raw": a_metadata,
+                    "raw": p_info.raw_info,
                 },
             },
         )
