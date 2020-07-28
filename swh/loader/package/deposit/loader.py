@@ -3,12 +3,14 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import datetime
 import json
 import logging
 import requests
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 import types
 
-from typing import Any, Dict, Generator, List, Mapping, Optional, Sequence, Tuple, Union
+import attr
 
 from swh.model.hashutil import hash_to_hex, hash_to_bytes
 from swh.model.model import (
@@ -20,17 +22,77 @@ from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
-    MetadataTargetType,
-    RawExtrinsicMetadata,
 )
-from swh.loader.package.loader import PackageLoader
+from swh.loader.package.loader import (
+    BasePackageInfo,
+    PackageLoader,
+    RawExtrinsicMetadataCore,
+)
 from swh.loader.package.utils import download
 
 
 logger = logging.getLogger(__name__)
 
 
-class DepositLoader(PackageLoader):
+@attr.s
+class DepositPackageInfo(BasePackageInfo):
+    filename = attr.ib(type=str)  # instead of Optional[str]
+    raw_info = attr.ib(type=Dict[str, Any])
+
+    author_date = attr.ib(type=datetime.datetime)
+    """codemeta:dateCreated if any, deposit completed_date otherwise"""
+    commit_date = attr.ib(type=datetime.datetime)
+    """codemeta:datePublished if any, deposit completed_date otherwise"""
+    client = attr.ib(type=str)
+    id = attr.ib(type=int)
+    """Internal ID of the deposit in the deposit DB"""
+    collection = attr.ib(type=str)
+    """The collection in the deposit; see SWORD specification."""
+    author = attr.ib(type=Person)
+    committer = attr.ib(type=Person)
+    revision_parents = attr.ib(type=Tuple[Sha1Git, ...])
+    """Revisions created from previous deposits, that will be used as parents of the
+    revision created for this deposit."""
+
+    @classmethod
+    def from_metadata(
+        cls, metadata: Dict[str, Any], url: str, filename: str
+    ) -> "DepositPackageInfo":
+        # Note:
+        # `date` and `committer_date` are always transmitted by the deposit read api
+        # which computes itself the values. The loader needs to use those to create the
+        # revision.
+
+        raw_metadata_from_origin = json.dumps(
+            metadata["origin_metadata"]["metadata"]
+        ).encode()
+        metadata = metadata.copy()
+        # FIXME: this removes information from 'raw' metadata
+        depo = metadata.pop("deposit")
+
+        return cls(
+            url=url,
+            filename=filename,
+            author_date=depo["author_date"],
+            commit_date=depo["committer_date"],
+            client=depo["client"],
+            id=depo["id"],
+            collection=depo["collection"],
+            author=parse_author(depo["author"]),
+            committer=parse_author(depo["committer"]),
+            revision_parents=tuple(hash_to_bytes(p) for p in depo["revision_parents"]),
+            raw_info=metadata,
+            revision_extrinsic_metadata=[
+                RawExtrinsicMetadataCore(
+                    format="sword-v2-atom-codemeta-v2-in-json",
+                    metadata=raw_metadata_from_origin,
+                    discovery_date=None,
+                ),
+            ],
+        )
+
+
+class DepositLoader(PackageLoader[DepositPackageInfo]):
     """Load pypi origin's artifact releases into swh archive.
 
     """
@@ -57,62 +119,75 @@ class DepositLoader(PackageLoader):
         # branch
         return ["HEAD"]
 
+    def get_metadata_authority(self) -> MetadataAuthority:
+        provider = self.metadata["origin_metadata"]["provider"]
+        assert provider["provider_type"] == "deposit_client"
+        return MetadataAuthority(
+            type=MetadataAuthorityType.DEPOSIT_CLIENT,
+            url=provider["provider_url"],
+            metadata={
+                "name": provider["provider_name"],
+                **(provider["metadata"] or {}),
+            },
+        )
+
+    def get_metadata_fetcher(self) -> MetadataFetcher:
+        tool = self.metadata["origin_metadata"]["tool"]
+        return MetadataFetcher(
+            name=tool["name"], version=tool["version"], metadata=tool["configuration"],
+        )
+
     def get_package_info(
         self, version: str
-    ) -> Generator[Tuple[str, Mapping[str, Any]], None, None]:
-        p_info = {
-            "filename": "archive.zip",
-            "raw": self.metadata,
-        }
+    ) -> Iterator[Tuple[str, DepositPackageInfo]]:
+        p_info = DepositPackageInfo.from_metadata(
+            self.metadata, url=self.url, filename="archive.zip",
+        )
         yield "HEAD", p_info
 
     def download_package(
-        self, p_info: Mapping[str, Any], tmpdir: str
+        self, p_info: DepositPackageInfo, tmpdir: str
     ) -> List[Tuple[str, Mapping]]:
         """Override to allow use of the dedicated deposit client
 
         """
-        return [self.client.archive_get(self.deposit_id, tmpdir, p_info["filename"])]
+        return [self.client.archive_get(self.deposit_id, tmpdir, p_info.filename)]
 
     def build_revision(
-        self, a_metadata: Dict, uncompressed_path: str, directory: Sha1Git
+        self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Revision]:
-        depo = a_metadata.pop("deposit")
-
-        # Note:
-        # `date` and `committer_date` are always transmitted by the deposit read api
-        # which computes itself the values. The loader needs to use those to create the
-        # revision.
-
-        # date: codemeta:dateCreated if any, deposit completed_date otherwise
-        date = TimestampWithTimezone.from_dict(depo["author_date"])
-        # commit_date: codemeta:datePublished if any, deposit completed_date otherwise
-        commit_date = TimestampWithTimezone.from_dict(depo["committer_date"])
-
-        client, id, collection = [depo[k] for k in ["client", "id", "collection"]]
-        message = f"{client}: Deposit {id} in collection {collection}".encode("utf-8")
-
-        author = parse_author(depo["author"])
-        committer = parse_author(depo["committer"])
+        message = (
+            f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}"
+        ).encode("utf-8")
 
         return Revision(
             type=RevisionType.TAR,
             message=message,
-            author=author,
-            date=date,
-            committer=committer,
-            committer_date=commit_date,
-            parents=tuple([hash_to_bytes(p) for p in depo["revision_parents"]]),
+            author=p_info.author,
+            date=TimestampWithTimezone.from_dict(p_info.author_date),
+            committer=p_info.committer,
+            committer_date=TimestampWithTimezone.from_dict(p_info.commit_date),
+            parents=p_info.revision_parents,
             directory=directory,
             synthetic=True,
             metadata={
                 "extrinsic": {
                     "provider": self.client.metadata_url(self.deposit_id),
                     "when": self.visit_date.isoformat(),
-                    "raw": a_metadata,
+                    "raw": p_info.raw_info,
                 },
             },
         )
+
+    def get_extrinsic_origin_metadata(self) -> List[RawExtrinsicMetadataCore]:
+        origin_metadata = self.metadata["origin_metadata"]
+        return [
+            RawExtrinsicMetadataCore(
+                format="sword-v2-atom-codemeta-v2-in-json",
+                metadata=json.dumps(origin_metadata["metadata"]).encode(),
+                discovery_date=None,
+            )
+        ]
 
     def load(self) -> Dict:
         # First making sure the deposit is known prior to trigger a loading
@@ -124,45 +199,6 @@ class DepositLoader(PackageLoader):
         # Then usual loading
         r = super().load()
         success = r["status"] != "failed"
-
-        if success:
-            # Update archive with metadata information
-            origin_metadata = self.metadata["origin_metadata"]
-            logger.debug("origin_metadata: %s", origin_metadata)
-
-            provider = origin_metadata["provider"]
-            assert provider["provider_type"] == "deposit_client"
-            authority = MetadataAuthority(
-                type=MetadataAuthorityType.DEPOSIT_CLIENT,
-                url=provider["provider_url"],
-                metadata={
-                    "name": provider["provider_name"],
-                    **(provider["metadata"] or {}),
-                },
-            )
-            self.storage.metadata_authority_add([authority])
-
-            tool = origin_metadata["tool"]
-            fetcher = MetadataFetcher(
-                name=tool["name"],
-                version=tool["version"],
-                metadata=tool["configuration"],
-            )
-            self.storage.metadata_fetcher_add([fetcher])
-
-            self.storage.object_metadata_add(
-                [
-                    RawExtrinsicMetadata(
-                        type=MetadataTargetType.ORIGIN,
-                        id=self.url,
-                        discovery_date=self.visit_date,
-                        authority=authority,
-                        fetcher=fetcher,
-                        format="sword-v2-atom-codemeta-v2-in-json",
-                        metadata=json.dumps(origin_metadata["metadata"]).encode(),
-                    )
-                ]
-            )
 
         # Update deposit status
         try:

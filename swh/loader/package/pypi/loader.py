@@ -5,9 +5,10 @@
 
 import os
 import logging
-
-from typing import Any, Dict, Generator, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
 from urllib.parse import urlparse
+
+import attr
 from pkginfo import UnpackedSDist
 
 from swh.model.model import (
@@ -18,13 +19,33 @@ from swh.model.model import (
     RevisionType,
 )
 
-from swh.loader.package.loader import PackageLoader
+from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.loader.package.utils import api_info, release_name, EMPTY_AUTHOR
 
 logger = logging.getLogger(__name__)
 
 
-class PyPILoader(PackageLoader):
+@attr.s
+class PyPIPackageInfo(BasePackageInfo):
+    raw_info = attr.ib(type=Dict[str, Any])
+
+    comment_text = attr.ib(type=Optional[str])
+    sha256 = attr.ib(type=str)
+    upload_time = attr.ib(type=str)
+
+    @classmethod
+    def from_metadata(cls, metadata: Dict[str, Any]) -> "PyPIPackageInfo":
+        return cls(
+            url=metadata["url"],
+            filename=metadata["filename"],
+            raw_info=metadata,
+            comment_text=metadata.get("comment_text"),
+            sha256=metadata["digests"]["sha256"],
+            upload_time=metadata["upload_time"],
+        )
+
+
+class PyPILoader(PackageLoader[PyPIPackageInfo]):
     """Load pypi origin's artifact releases into swh archive.
 
     """
@@ -51,19 +72,12 @@ class PyPILoader(PackageLoader):
     def get_default_version(self) -> str:
         return self.info["info"]["version"]
 
-    def get_package_info(
-        self, version: str
-    ) -> Generator[Tuple[str, Mapping[str, Any]], None, None]:
+    def get_package_info(self, version: str) -> Iterator[Tuple[str, PyPIPackageInfo]]:
         res = []
         for meta in self.info["releases"][version]:
             if meta["packagetype"] != "sdist":
                 continue
-            filename = meta["filename"]
-            p_info = {
-                "url": meta["url"],
-                "filename": filename,
-                "raw": meta,
-            }
+            p_info = PyPIPackageInfo.from_metadata(meta)
             res.append((version, p_info))
 
         if len(res) == 1:
@@ -71,15 +85,15 @@ class PyPILoader(PackageLoader):
             yield release_name(version), p_info
         else:
             for version, p_info in res:
-                yield release_name(version, p_info["filename"]), p_info
+                yield release_name(version, p_info.filename), p_info
 
     def resolve_revision_from(
-        self, known_artifacts: Dict, artifact_metadata: Dict
+        self, known_artifacts: Dict, p_info: PyPIPackageInfo
     ) -> Optional[bytes]:
-        return artifact_to_revision_id(known_artifacts, artifact_metadata)
+        return artifact_to_revision_id(known_artifacts, p_info)
 
     def build_revision(
-        self, a_metadata: Dict, uncompressed_path: str, directory: Sha1Git
+        self, p_info: PyPIPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Revision]:
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
         if not i_metadata:
@@ -90,9 +104,9 @@ class PyPILoader(PackageLoader):
         _author = author(i_metadata)
 
         # from extrinsic metadata
-        message = a_metadata.get("comment_text", "")
+        message = p_info.comment_text or ""
         message = "%s: %s" % (name, message) if message else name
-        date = TimestampWithTimezone.from_iso8601(a_metadata["upload_time"])
+        date = TimestampWithTimezone.from_iso8601(p_info.upload_time)
 
         return Revision(
             type=RevisionType.TAR,
@@ -109,14 +123,14 @@ class PyPILoader(PackageLoader):
                 "extrinsic": {
                     "provider": self.provider_url,
                     "when": self.visit_date.isoformat(),
-                    "raw": a_metadata,
+                    "raw": p_info.raw_info,
                 },
             },
         )
 
 
 def artifact_to_revision_id(
-    known_artifacts: Dict, artifact_metadata: Dict
+    known_artifacts: Dict, p_info: PyPIPackageInfo
 ) -> Optional[bytes]:
     """Given metadata artifact, solves the associated revision id.
 
@@ -146,7 +160,7 @@ def artifact_to_revision_id(
         }
 
     """
-    sha256 = artifact_metadata["digests"]["sha256"]
+    sha256 = p_info.sha256
     for rev_id, known_artifact in known_artifacts.items():
         original_artifact = known_artifact["original_artifact"]
         if isinstance(original_artifact, dict):
