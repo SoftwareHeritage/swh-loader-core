@@ -46,6 +46,7 @@ from swh.model.model import (
 )
 from swh.model.identifiers import SWHID
 from swh.storage import get_storage
+from swh.storage.interface import StorageInterface
 from swh.storage.utils import now
 from swh.storage.algos.snapshot import snapshot_get_latest
 
@@ -126,7 +127,7 @@ class PackageLoader(Generic[TPackageInfo]):
         # This expects to use the environment variable SWH_CONFIG_FILENAME
         self.config = SWHConfig.parse_config_file()
         self._check_configuration()
-        self.storage = get_storage(**self.config["storage"])
+        self.storage: StorageInterface = get_storage(**self.config["storage"])
         self.url = url
         self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
         self.max_content_size = self.config["max_content_size"]
@@ -450,7 +451,9 @@ class PackageLoader(Generic[TPackageInfo]):
             metadata_objects = self.build_extrinsic_origin_metadata()
             self._load_metadata_objects(metadata_objects)
         except Exception as e:
-            logger.exception("Failed to extrinsic origin metadata for %s", self.url)
+            logger.exception(
+                "Failed to load extrinsic origin metadata for %s", self.url
+            )
             sentry_sdk.capture_exception(e)
             status_visit = "partial"
             status_load = "failed"
@@ -686,11 +689,11 @@ class PackageLoader(Generic[TPackageInfo]):
             (authority.type, authority.url): authority for authority in authorities
         }
         if authorities:
-            self.storage.metadata_authority_add(deduplicated_authorities.values())
+            self.storage.metadata_authority_add(list(deduplicated_authorities.values()))
 
     def _create_fetchers(self, fetchers: Iterable[MetadataFetcher]) -> None:
         deduplicated_fetchers = {
             (fetcher.name, fetcher.version): fetcher for fetcher in fetchers
         }
         if fetchers:
-            self.storage.metadata_fetcher_add(deduplicated_fetchers.values())
+            self.storage.metadata_fetcher_add(list(deduplicated_fetchers.values()))

@@ -1,8 +1,12 @@
-swh-loader-core (0.7.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.7.2-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.7.2     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2020-07-29 11:41:39 +0200)
+  * Upstream changes:     - v0.7.2     - * Fix typo in message logged on
+    extrinsic metadata loading errors.     - * Don't pass non-sequence
+    iterables to the storage API.
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 28 Jul 2020 10:20:31 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 29 Jul 2020 09:45:52 +0000
 
 swh-loader-core (0.7.1-1~swh1) unstable-swh; urgency=medium
 
