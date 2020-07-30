@@ -1,8 +1,11 @@
-swh-loader-core (0.7.2-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.7.3-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.7.3     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2020-07-30 19:16:21 +0200)
+  * Upstream changes:     - v0.7.3     - core.loader: Fix Iterable/List
+    typing issues     - package.loader: Fix type warning
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 29 Jul 2020 09:49:46 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 30 Jul 2020 17:23:57 +0000
 
 swh-loader-core (0.7.2-1~swh1) unstable-swh; urgency=medium
 
