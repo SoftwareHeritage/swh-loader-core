@@ -5,13 +5,14 @@
 
 import json
 import logging
-import requests
 from typing import Any, Dict, Iterator, Mapping, Optional, Tuple
 
 import attr
 
 from swh.model import hashutil
 from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
     Revision,
     RevisionType,
     TargetType,
@@ -20,8 +21,12 @@ from swh.model.model import (
     Sha1Git,
 )
 
-from swh.loader.package.utils import EMPTY_AUTHOR
-from swh.loader.package.loader import BasePackageInfo, PackageLoader
+from swh.loader.package.utils import EMPTY_AUTHOR, api_info
+from swh.loader.package.loader import (
+    BasePackageInfo,
+    PackageLoader,
+    RawExtrinsicMetadataCore,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -55,8 +60,8 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
 
     def __init__(self, url):
         super().__init__(url=url)
-        raw = retrieve_sources(url)
-        clean = clean_sources(raw)
+        self.raw_sources = retrieve_sources(url)
+        clean = clean_sources(parse_sources(self.raw_sources))
         self.sources = clean["sources"]
         self.provider_url = url
 
@@ -75,6 +80,18 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
 
         """
         return self._integrityByUrl.keys()
+
+    def get_metadata_authority(self):
+        return MetadataAuthority(
+            type=MetadataAuthorityType.FORGE, url=self.url, metadata={},
+        )
+
+    def get_extrinsic_snapshot_metadata(self):
+        return [
+            RawExtrinsicMetadataCore(
+                format="nixguix-sources-json", metadata=self.raw_sources,
+            ),
+        ]
 
     # Note: this could be renamed get_artifact_info in the PackageLoader
     # base class.
@@ -186,21 +203,31 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
         )
 
 
-def retrieve_sources(url: str) -> Dict[str, Any]:
-    response = requests.get(url, allow_redirects=True)
-    if response.status_code != 200:
-        raise ValueError("Got %d HTTP code on %s", response.status_code, url)
+def retrieve_sources(url: str) -> bytes:
+    return api_info(url, allow_redirects=True)
 
-    return json.loads(response.content.decode("utf-8"))
+
+def parse_sources(raw_sources: bytes) -> Dict[str, Any]:
+    return json.loads(raw_sources.decode("utf-8"))
 
 
 def clean_sources(sources: Dict[str, Any]) -> Dict[str, Any]:
-    """Validate and clean the sources structure. First, it ensures all top
-    level keys are presents. Then, it walks on the sources list
-    and removes sources that don't contain required keys.
+    """Validate and clean the sources structure. First, ensure all top level keys are
+    present. Then, walk the sources list and remove sources that do not contain required
+    keys.
+
+    Filter out source entries whose:
+    - required keys are missing
+    - source type is not supported
+    - urls attribute type is not a list
 
     Raises:
-      ValueError: if a top level key is missing
+        ValueError if:
+        - a required top level key is missing
+        - top-level version is not 1
+
+    Returns:
+        Dict sources
 
     """
     # Required top level keys
@@ -212,14 +239,14 @@ def clean_sources(sources: Dict[str, Any]) -> Dict[str, Any]:
 
     if missing_keys != []:
         raise ValueError(
-            "sources structure invalid, missing: %s", ",".join(missing_keys)
+            f"sources structure invalid, missing: {','.join(missing_keys)}"
         )
 
     # Only the version 1 is currently supported
     version = int(sources["version"])
     if version != 1:
         raise ValueError(
-            "The sources structure version '%d' is not supported", sources["version"]
+            f"The sources structure version '{sources['version']}' is not supported"
         )
 
     # If a source doesn't contain required attributes, this source is

@@ -15,6 +15,8 @@ import chardet
 
 from urllib.parse import quote
 from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
     Person,
     RevisionType,
     Revision,
@@ -22,8 +24,12 @@ from swh.model.model import (
     Sha1Git,
 )
 
-from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import api_info, release_name
+from swh.loader.package.loader import (
+    BasePackageInfo,
+    PackageLoader,
+    RawExtrinsicMetadataCore,
+)
+from swh.loader.package.utils import api_info, cached_method, release_name
 
 
 logger = logging.getLogger(__name__)
@@ -90,24 +96,38 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         self._info: Dict[str, Any] = {}
         self._versions = None
 
-    @property
-    def info(self) -> Dict[str, Any]:
+    @cached_method
+    def _raw_info(self) -> bytes:
+        return api_info(self.provider_url)
+
+    @cached_method
+    def info(self) -> Dict:
         """Return the project metadata information (fetched from npm registry)
 
         """
-        if not self._info:
-            self._info = api_info(self.provider_url)
-        return self._info
+        return json.loads(self._raw_info())
 
     def get_versions(self) -> Sequence[str]:
-        return sorted(list(self.info["versions"].keys()))
+        return sorted(list(self.info()["versions"].keys()))
 
     def get_default_version(self) -> str:
-        return self.info["dist-tags"].get("latest", "")
+        return self.info()["dist-tags"].get("latest", "")
+
+    def get_metadata_authority(self):
+        return MetadataAuthority(
+            type=MetadataAuthorityType.FORGE, url="https://npmjs.com/", metadata={},
+        )
+
+    def get_extrinsic_snapshot_metadata(self):
+        return [
+            RawExtrinsicMetadataCore(
+                format="replicate-npm-package-json", metadata=self._raw_info(),
+            ),
+        ]
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, NpmPackageInfo]]:
         p_info = NpmPackageInfo.from_metadata(
-            project_metadata=self.info, version=version
+            project_metadata=self.info(), version=version
         )
         yield release_name(version), p_info
 

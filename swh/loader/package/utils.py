@@ -4,11 +4,12 @@
 # See top-level LICENSE file for more information
 
 import copy
+import functools
 import logging
 import os
 import requests
 
-from typing import Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple, TypeVar
 
 from swh.model.hashutil import MultiHash, HASH_BLOCK_SIZE
 from swh.model.model import Person
@@ -25,7 +26,7 @@ DOWNLOAD_HASHES = set(["sha1", "sha256", "length"])
 EMPTY_AUTHOR = Person(fullname=b"", name=None, email=None,)
 
 
-def api_info(url: str) -> Dict:
+def api_info(url: str, **extra_params) -> bytes:
     """Basic api client to retrieve information on project. This deals with
        fetching json metadata about pypi projects.
 
@@ -36,13 +37,13 @@ def api_info(url: str) -> Dict:
         ValueError in case of query failures (for some reasons: 404, ...)
 
     Returns:
-        The associated response's information dict
+        The associated response's information
 
     """
-    response = requests.get(url, **DEFAULT_PARAMS)
+    response = requests.get(url, **{**DEFAULT_PARAMS, **extra_params})
     if response.status_code != 200:
         raise ValueError("Fail to query '%s'. Reason: %s" % (url, response.status_code))
-    return response.json()
+    return response.content
 
 
 def download(
@@ -121,3 +122,23 @@ def release_name(version: str, filename: Optional[str] = None) -> str:
     if filename:
         return "releases/%s/%s" % (version, filename)
     return "releases/%s" % version
+
+
+TReturn = TypeVar("TReturn")
+TSelf = TypeVar("TSelf")
+
+_UNDEFINED = object()
+
+
+def cached_method(f: Callable[[TSelf], TReturn]) -> Callable[[TSelf], TReturn]:
+    cache_name = f"_cached_{f.__name__}"
+
+    @functools.wraps(f)
+    def newf(self):
+        value = getattr(self, cache_name, _UNDEFINED)
+        if value is _UNDEFINED:
+            value = f(self)
+            setattr(self, cache_name, value)
+        return value
+
+    return newf
