@@ -1,3 +1,23 @@
+swh-loader-core (0.8.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.8.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-08-05 10:16:36
+    +0200)
+  * Upstream changes:     - v0.8.0     - archive: fix docstring     -
+    nixguix: Fix docstring     - nixguix: Align error message formatting
+    using f-string     - nixguix: Fix format issue in error message     -
+    Convert the 'metadata' and 'info' cached-properties/lazy-attributes
+    into methods     - cran: fix call to logger.warning     - pypi: Load
+    the content of the API's response as extrinsic snapshot metadata
+    - Add a default value for RawExtrinsicMetadataCore.discovery_date
+    - npm: Load the content of the API's response as extrinsic snapshot
+    metadata     - Make retrieve_sources use generic api_info instead of
+    duplicating its code     - nixguix: Load the content of sources.json
+    as extrinsic snapshot metadata     - Update tests to accept
+    PagedResult from storage.raw_extrinsic_metadata_get
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 05 Aug 2020 08:19:20 +0000
+
 swh-loader-core (0.7.3-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.7.3     - (tagged by Valentin Lorentz
