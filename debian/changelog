@@ -1,3 +1,16 @@
+swh-loader-core (0.9.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.9.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-08-07 22:57:14
+    +0200)
+  * Upstream changes:     - v0.9.0     - nixguix: Filter out unsupported
+    artifact extensions     - swh.loader.tests: Use
+    snapshot_get_all_branches in check_snapshot     - test_npm: Adapt
+    content_get_metadata call to content_get     - npm: Fix assertion to
+    use the correct storage api
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 07 Aug 2020 21:00:40 +0000
+
 swh-loader-core (0.8.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.8.1     - (tagged by Antoine R. Dumont
