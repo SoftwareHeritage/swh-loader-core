@@ -95,6 +95,7 @@ swh/loader/package/nixguix/__init__.py
 swh/loader/package/nixguix/loader.py
 swh/loader/package/nixguix/tasks.py
 swh/loader/package/nixguix/tests/__init__.py
+swh/loader/package/nixguix/tests/conftest.py
 swh/loader/package/nixguix/tests/test_nixguix.py
 swh/loader/package/nixguix/tests/test_tasks.py
 swh/loader/package/nixguix/tests/data/https_example.com/file.txt
