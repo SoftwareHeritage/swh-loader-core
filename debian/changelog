@@ -1,3 +1,14 @@
+swh-loader-core (0.9.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.9.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-08-08 14:47:52
+    +0200)
+  * Upstream changes:     - v0.9.1     - nixguix: Make the unsupported
+    artifact extensions configurable     - package.loader: Log a failure
+    summary report at the end of the task
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Sat, 08 Aug 2020 12:51:33 +0000
+
 swh-loader-core (0.9.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.9.0     - (tagged by Antoine R. Dumont
