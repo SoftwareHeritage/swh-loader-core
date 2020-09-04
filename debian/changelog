@@ -1,3 +1,21 @@
+swh-loader-core (0.10.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.10.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-09-04 13:19:29
+    +0200)
+  * Upstream changes:     - v0.10.0     - loader: Adapt to latest
+    storage revision_get change     - origin/master Rename metadata
+    format 'original-artifact-json' to 'original-artifacts-json'.     -
+    Tell pytest not to recurse in dotdirs.     - package loader: Add the
+    'url' to the 'original_artifact' extrinsic metadata.     - Write
+    'original_artifact' metadata to the extrinsic metadata storage.     -
+    Move parts of _load_revision to a new _load_directory method.     -
+    tests: Don't use naive datetimes.     - package.loader: Split the
+    warning message into multiple chunks     - Replace calls to
+    snapshot_get with snapshot_get_all_branches.
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 04 Sep 2020 11:28:09 +0000
+
 swh-loader-core (0.9.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.9.1     - (tagged by Antoine R. Dumont
