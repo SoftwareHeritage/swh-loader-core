@@ -28,6 +28,7 @@ from swh.loader.package.loader import (
     RawExtrinsicMetadataCore,
 )
 from swh.loader.package.utils import cached_method, download
+from swh.storage.algos.snapshot import snapshot_get_all_branches
 
 
 logger = logging.getLogger(__name__)
@@ -208,25 +209,18 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
                 return r
 
             snapshot_id = hash_to_bytes(r["snapshot_id"])
-            snapshot = self.storage.snapshot_get(snapshot_id)
+            snapshot = snapshot_get_all_branches(self.storage, snapshot_id)
             if not snapshot:
                 return r
-            branches = snapshot["branches"]
+            branches = snapshot.branches
             logger.debug("branches: %s", branches)
             if not branches:
                 return r
-            rev_id = branches[b"HEAD"]["target"]
+            rev_id = branches[b"HEAD"].target
 
-            revisions = list(self.storage.revision_get([rev_id]))
-            if not revisions:
-                return r
-
-            revision = revisions[0]
+            revision = self.storage.revision_get([rev_id])[0]
             if not revision:
                 return r
-
-            # Retrieve the revision identifier
-            dir_id = revision["directory"]
 
             # update the deposit's status to success with its
             # revision-id and directory-id
@@ -234,7 +228,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
                 self.deposit_id,
                 status="done",
                 revision_id=hash_to_hex(rev_id),
-                directory_id=hash_to_hex(dir_id),
+                directory_id=hash_to_hex(revision.directory),
                 snapshot_id=r["snapshot_id"],
                 origin_url=self.url,
             )
