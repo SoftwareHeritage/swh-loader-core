@@ -5,8 +5,18 @@
 
 import json
 import os
+
 import pytest
 
+from swh.loader.package import __version__
+from swh.loader.package.npm.loader import (
+    NpmLoader,
+    _author_str,
+    artifact_to_revision_id,
+    extract_npm_package_author,
+)
+from swh.loader.package.tests.common import check_metadata_paths
+from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.model.identifiers import SWHID
 from swh.model.model import (
@@ -20,22 +30,7 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
-
 from swh.storage.interface import PagedResult
-
-from swh.loader.package import __version__
-from swh.loader.package.npm.loader import (
-    _author_str,
-    NpmLoader,
-    extract_npm_package_author,
-    artifact_to_revision_id,
-)
-from swh.loader.package.tests.common import check_metadata_paths
-from swh.loader.tests import (
-    assert_last_visit_matches,
-    check_snapshot,
-    get_stats,
-)
 
 
 @pytest.fixture
@@ -364,7 +359,6 @@ def test_npm_loader_first_visit(swh_config, requests_mock_datadir, org_api_info)
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "person": 2,
         "release": 0,
         "revision": len(_expected_new_revisions_first_visit),
         "skipped_content": 0,
@@ -455,7 +449,6 @@ def test_npm_loader_incremental_visit(swh_config, requests_mock_datadir_visits):
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "person": 2,
         "release": 0,
         "revision": len(_expected_new_revisions_first_visit),
         "skipped_content": 0,
@@ -481,7 +474,6 @@ def test_npm_loader_incremental_visit(swh_config, requests_mock_datadir_visits):
         "directory": len(_expected_new_directories_first_visit) + 15,
         "origin": 1,
         "origin_visit": 2,
-        "person": 2,
         "release": 0,
         "revision": len(_expected_new_revisions_first_visit) + 3,
         "skipped_content": 0,
@@ -519,7 +511,6 @@ def test_npm_loader_version_divergence(swh_config):
         "directory": 153,
         "origin": 1,
         "origin_visit": 1,
-        "person": 1,
         "release": 0,
         "revision": 2,
         "skipped_content": 0,
