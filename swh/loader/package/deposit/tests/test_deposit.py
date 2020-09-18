@@ -9,29 +9,22 @@ import re
 import attr
 import pytest
 
+from swh.core.pytest_plugin import requests_mock_datadir_factory
+from swh.loader.package.deposit.loader import DepositLoader
+from swh.loader.package.tests.common import check_metadata_paths
+from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.model.identifiers import SWHID
 from swh.model.model import (
-    Snapshot,
-    SnapshotBranch,
-    TargetType,
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
     MetadataTargetType,
     RawExtrinsicMetadata,
+    Snapshot,
+    SnapshotBranch,
+    TargetType,
 )
-from swh.loader.package.deposit.loader import DepositLoader
-
-from swh.loader.package.tests.common import check_metadata_paths
-from swh.loader.tests import (
-    assert_last_visit_matches,
-    check_snapshot,
-    get_stats,
-)
-
-from swh.core.pytest_plugin import requests_mock_datadir_factory
-
 
 DEPOSIT_URL = "https://deposit.softwareheritage.org/1/private"
 
@@ -76,7 +69,6 @@ def test_deposit_loading_unknown_deposit(swh_config, requests_mock_datadir):
         "directory": 0,
         "origin": 0,
         "origin_visit": 0,
-        "person": 0,
         "release": 0,
         "revision": 0,
         "skipped_content": 0,
@@ -112,7 +104,6 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
         "directory": 0,
         "origin": 1,
         "origin_visit": 1,
-        "person": 0,
         "release": 0,
         "revision": 0,
         "skipped_content": 0,
@@ -172,7 +163,6 @@ def test_deposit_loading_ok(swh_config, requests_mock_datadir):
         "directory": 12,
         "origin": 1,
         "origin_visit": 1,
-        "person": 1,
         "release": 0,
         "revision": 1,
         "skipped_content": 0,

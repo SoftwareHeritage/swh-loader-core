@@ -5,17 +5,11 @@
 
 import attr
 
-from swh.model.hashutil import hash_to_bytes
-from swh.model.model import Snapshot, SnapshotBranch, TargetType
-
 from swh.loader.package.archive.loader import ArchiveLoader, ArchivePackageInfo
 from swh.loader.package.tests.common import check_metadata_paths
-from swh.loader.tests import (
-    assert_last_visit_matches,
-    check_snapshot,
-    get_stats,
-)
-
+from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
+from swh.model.hashutil import hash_to_bytes
+from swh.model.model import Snapshot, SnapshotBranch, TargetType
 
 URL = "https://ftp.gnu.org/gnu/8sync/"
 GNU_ARTIFACTS = [
@@ -102,7 +96,6 @@ def visit_with_no_artifact_found(swh_config, requests_mock_datadir):
         "directory": 0,
         "origin": 1,
         "origin_visit": 1,
-        "person": 0,
         "release": 0,
         "revision": 0,
         "skipped_content": 0,
@@ -169,7 +162,6 @@ def test_visit_with_release_artifact_no_prior_visit(swh_config, requests_mock_da
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "person": 1,
         "release": 0,
         "revision": len(_expected_new_revisions_first_visit),
         "skipped_content": 0,
@@ -249,7 +241,6 @@ def test_2_visits_with_new_artifact(swh_config, requests_mock_datadir):
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "person": 1,
         "release": 0,
         "revision": len(_expected_new_revisions_first_visit),
         "skipped_content": 0,
@@ -287,7 +278,6 @@ def test_2_visits_with_new_artifact(swh_config, requests_mock_datadir):
         "directory": len(_expected_new_directories_first_visit) + 8,
         "origin": 1,
         "origin_visit": 1 + 1,
-        "person": 1,
         "release": 0,
         "revision": len(_expected_new_revisions_first_visit) + 1,
         "skipped_content": 0,
