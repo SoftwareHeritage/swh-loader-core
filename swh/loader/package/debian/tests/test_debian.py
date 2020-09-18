@@ -4,34 +4,27 @@
 # See top-level LICENSE file for more information
 
 import logging
-import pytest
+from os import path
 import random
 
-from os import path
+import pytest
 
 from swh.loader.package.debian.loader import (
     DebianLoader,
-    DebianPackageInfo,
     DebianPackageChangelog,
+    DebianPackageInfo,
     IntrinsicPackageMetadata,
     download_package,
     dsc_information,
-    uid_to_person,
-    prepare_person,
-    get_intrinsic_package_metadata,
     extract_package,
+    get_intrinsic_package_metadata,
+    prepare_person,
+    resolve_revision_from,
+    uid_to_person,
 )
-from swh.loader.tests import (
-    assert_last_visit_matches,
-    check_snapshot,
-    get_stats,
-)
-
-from swh.loader.package.debian.loader import resolve_revision_from
-
+from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import Person, Snapshot, SnapshotBranch, TargetType
-
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +122,6 @@ def test_debian_first_visit(swh_config, requests_mock_datadir):
         "directory": 2,
         "origin": 1,
         "origin_visit": 1,
-        "person": 1,
         "release": 0,
         "revision": 1,  # all artifacts under 1 revision
         "skipped_content": 0,
@@ -173,7 +165,6 @@ def test_debian_first_visit_then_another_visit(swh_config, requests_mock_datadir
         "directory": 2,
         "origin": 1,
         "origin_visit": 1,
-        "person": 1,
         "release": 0,
         "revision": 1,  # all artifacts under 1 revision
         "skipped_content": 0,
@@ -203,7 +194,6 @@ def test_debian_first_visit_then_another_visit(swh_config, requests_mock_datadir
         "directory": 2 + 0,
         "origin": 1,
         "origin_visit": 1 + 1,  # a new visit occurred
-        "person": 1,
         "release": 0,
         "revision": 1,
         "skipped_content": 0,

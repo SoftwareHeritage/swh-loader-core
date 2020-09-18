@@ -3,26 +3,25 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from abc import ABCMeta, abstractmethod
 import datetime
 import hashlib
 import logging
 import os
-
-from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 from swh.core import config
 from swh.model.model import (
     BaseContent,
     Content,
-    SkippedContent,
     Directory,
     Origin,
     OriginVisit,
     OriginVisitStatus,
-    Revision,
     Release,
+    Revision,
     Sha1Git,
+    SkippedContent,
     Snapshot,
 )
 from swh.storage import get_storage
@@ -412,23 +411,22 @@ class DVCSLoader(BaseLoader):
             self.save_data()
 
         if self.has_contents():
-            contents = []
-            skipped_contents = []
             for obj in self.get_contents():
                 if isinstance(obj, Content):
-                    contents.append(obj)
+                    self.storage.content_add([obj])
                 elif isinstance(obj, SkippedContent):
-                    skipped_contents.append(obj)
+                    self.storage.skipped_content_add([obj])
                 else:
                     raise TypeError(f"Unexpected content type: {obj}")
-            self.storage.skipped_content_add(skipped_contents)
-            self.storage.content_add(contents)
         if self.has_directories():
-            self.storage.directory_add(list(self.get_directories()))
+            for directory in self.get_directories():
+                self.storage.directory_add([directory])
         if self.has_revisions():
-            self.storage.revision_add(list(self.get_revisions()))
+            for revision in self.get_revisions():
+                self.storage.revision_add([revision])
         if self.has_releases():
-            self.storage.release_add(list(self.get_releases()))
+            for release in self.get_releases():
+                self.storage.release_add([release])
         snapshot = self.get_snapshot()
         self.storage.snapshot_add([snapshot])
         self.flush()
