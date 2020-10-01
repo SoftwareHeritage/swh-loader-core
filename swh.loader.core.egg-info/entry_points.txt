@@ -1,4 +1,6 @@
 
+        [swh.cli.subcommands]
+        loader=swh.loader.cli
         [swh.workers]
         loader.archive=swh.loader.package.archive:register
         loader.cran=swh.loader.package.cran:register
@@ -7,6 +9,4 @@
         loader.nixguix=swh.loader.package.nixguix:register
         loader.npm=swh.loader.package.npm:register
         loader.pypi=swh.loader.package.pypi:register
-        [swh.cli.subcommands]
-        loader=swh.loader.cli:loader
     
