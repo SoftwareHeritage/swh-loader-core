@@ -1,8 +1,14 @@
-swh-loader-core (0.12.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.13.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.13.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-10-02 13:18:55
+    +0200)
+  * Upstream changes:     - v0.13.0     - package.loader: Migrate away
+    from SWHConfig mixin     - core.loader: Migrate away from SWHConfig
+    mixin     - Expose deposit configuration only within the deposit
+    tests
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 01 Oct 2020 14:06:28 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 02 Oct 2020 11:21:55 +0000
 
 swh-loader-core (0.12.0-1~swh1) unstable-swh; urgency=medium
 
