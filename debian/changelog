@@ -1,3 +1,14 @@
+swh-loader-core (0.14.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.14.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2020-10-16 18:23:28 +0200)
+  * Upstream changes:     - v0.14.0     - * npm: write metadata on
+    revisions instead of snapshots.     - * pypi: write metadata on
+    revisions instead of snapshots.     - * deposit.loader: Avoid
+    unnecessary metadata json transformation
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 16 Oct 2020 16:26:14 +0000
+
 swh-loader-core (0.13.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.13.1     - (tagged by Antoine R. Dumont
