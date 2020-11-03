@@ -1,3 +1,15 @@
+swh-loader-core (0.15.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.15.0     - (tagged by Nicolas Dandrimont
+    <nicolas@dandrimont.eu> on 2020-11-03 17:21:21 +0100)
+  * Upstream changes:     - Release swh-loader-core v0.15.0     - Attach
+    raw extrinsic metadata to directories, not revisions     - Handle a
+    bunch of deprecation warnings:     - explicit args in swh.objstorage
+    get_objstorage     - id -> target for raw extrinsic metadata objects
+    - positional arguments for storage.raw_extrinsic_metadata_get
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 03 Nov 2020 16:26:20 +0000
+
 swh-loader-core (0.14.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.14.0     - (tagged by Valentin Lorentz
