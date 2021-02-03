@@ -803,7 +803,7 @@ swh-loader-core (0.0.59-1~swh1) unstable-swh; urgency=medium
   * New upstream release 0.0.59     - (tagged by Antoine R. Dumont
     (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-22 18:11:33
     +0100)
-  * Upstream changes:     - v0.0.59     - npm: Explicitely retrieve the
+  * Upstream changes:     - v0.0.59     - npm: Explicitly retrieve the
     revision date from extrinsic metadata
 
  -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 22 Nov 2019 17:15:34 +0000
