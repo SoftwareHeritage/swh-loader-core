@@ -1,3 +1,16 @@
+swh-loader-core (0.16.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.16.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-02-03 14:14:01
+    +0100)
+  * Upstream changes:     - v0.16.0     - Adapt
+    origin_get_latest_visit_status according to latest api change     -
+    Add a cli section in the doc     - tox.ini: Add swh.core[testing]
+    requirement     - Small docstring improvements in the deposit loader
+    code
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 03 Feb 2021 13:17:30 +0000
+
 swh-loader-core (0.15.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.15.0     - (tagged by Nicolas Dandrimont
