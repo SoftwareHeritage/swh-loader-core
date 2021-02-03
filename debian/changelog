@@ -1,8 +1,21 @@
-swh-loader-core (0.15.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.16.0-1~swh2) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * Bump dependencies
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 03 Nov 2020 16:28:21 +0000
+ -- Antoine R. Dumont (@ardumont) <ardumont@softwareheritage.org>  Wed, 03 Feb 2021 14:25:26 +0100
+
+swh-loader-core (0.16.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.16.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-02-03 14:14:01
+    +0100)
+  * Upstream changes:     - v0.16.0     - Adapt
+    origin_get_latest_visit_status according to latest api change     -
+    Add a cli section in the doc     - tox.ini: Add swh.core[testing]
+    requirement     - Small docstring improvements in the deposit loader
+    code
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 03 Feb 2021 13:17:30 +0000
 
 swh-loader-core (0.15.0-1~swh1) unstable-swh; urgency=medium
 
@@ -796,7 +809,7 @@ swh-loader-core (0.0.59-1~swh1) unstable-swh; urgency=medium
   * New upstream release 0.0.59     - (tagged by Antoine R. Dumont
     (@ardumont) <antoine.romain.dumont@gmail.com> on 2019-11-22 18:11:33
     +0100)
-  * Upstream changes:     - v0.0.59     - npm: Explicitely retrieve the
+  * Upstream changes:     - v0.0.59     - npm: Explicitly retrieve the
     revision date from extrinsic metadata
 
  -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 22 Nov 2019 17:15:34 +0000
