@@ -34,6 +34,7 @@ swh.loader.core.egg-info/requires.txt
 swh.loader.core.egg-info/top_level.txt
 swh/loader/__init__.py
 swh/loader/cli.py
+swh/loader/exception.py
 swh/loader/pytest_plugin.py
 swh/loader/core/__init__.py
 swh/loader/core/converters.py
