@@ -1,3 +1,14 @@
+swh-loader-core (0.18.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.18.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-02-17 13:13:24
+    +0100)
+  * Upstream changes:     - v0.18.0     - core.loader: Merge Loader into
+    BaseLoader     - Unify loader instantiation     - nixguix: Ensure
+    interaction with the origin url for edge case tests
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 17 Feb 2021 12:16:47 +0000
+
 swh-loader-core (0.17.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.17.0     - (tagged by Antoine R. Dumont
