@@ -107,6 +107,7 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
     # private api url form: 'https://deposit.s.o/1/private/hal/666/raw/'
     url = "some-url-2"
     deposit_id = 666
+    requests_mock_datadir_missing_one.put(re.compile("https"))
     loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
 
     actual_load_status = loader.load()
@@ -126,6 +127,23 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
+
+    # Retrieve the information for deposit status update query to the deposit
+    urls = [
+        m
+        for m in requests_mock_datadir_missing_one.request_history
+        if m.url == f"{DEPOSIT_URL}/{deposit_id}/update/"
+    ]
+
+    assert len(urls) == 1
+    update_query = urls[0]
+
+    body = update_query.json()
+    expected_body = {
+        "status": "failed",
+    }
+
+    assert body == expected_body
 
 
 def test_deposit_revision_metadata_structure(
@@ -448,3 +466,26 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     }
 
     assert body == expected_body
+
+
+def test_deposit_loading_ok_3(swh_storage, deposit_client, requests_mock_datadir):
+    """Deposit loading can happen on tarball artifacts as well
+
+    The latest deposit changes introduce the internal change.
+
+    """
+    external_id = "hal-123456"
+    url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
+    deposit_id = 888
+    loader = DepositLoader(
+        swh_storage, url, deposit_id, deposit_client, default_filename="archive.tar"
+    )
+
+    actual_load_status = loader.load()
+    expected_snapshot_id = "0ac7b54c042a026389f2087dc16f1d5c644ed0e4"
+
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": expected_snapshot_id,
+    }
+    assert_last_visit_matches(loader.storage, url, status="full", type="deposit")
