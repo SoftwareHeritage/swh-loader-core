@@ -1,3 +1,17 @@
+swh-loader-core (0.21.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.21.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2021-03-30 17:19:13 +0200)
+  * Upstream changes:     - v0.21.0     - * tests: recompute ids when
+    evolving RawExtrinsicMetadata objects, to support swh-model 2.0.0
+    - * deposit.loader: Make archive.tar the default_filename     - *
+    debian: Make resolve_revision_from use the sha256 of the .dsc     -
+    * package.loader.*: unify package "cache"/deduplication using ExtIDs
+    - * package.loader: Lookup packages from the ExtID storage     - *
+    package.loader: Write to the ExtID storage
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 30 Mar 2021 15:26:35 +0000
+
 swh-loader-core (0.20.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.20.0     - (tagged by Valentin Lorentz
