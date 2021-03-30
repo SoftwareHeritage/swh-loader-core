@@ -7,7 +7,6 @@ import json
 import re
 from typing import List
 
-import attr
 import pytest
 
 from swh.core.pytest_plugin import requests_mock_datadir_factory
@@ -50,7 +49,7 @@ def test_deposit_init_ok(swh_storage, deposit_client, swh_loader_config):
     url = "some-url"
     deposit_id = 999
     loader = DepositLoader(
-        swh_storage, url, deposit_id, deposit_client
+        swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
     )  # Something that does not exist
 
     assert loader.url == url
@@ -62,7 +61,9 @@ def test_deposit_from_configfile(swh_config):
     """Ensure the deposit instantiation is ok
 
     """
-    loader = DepositLoader.from_configfile(url="some-url", deposit_id="666")
+    loader = DepositLoader.from_configfile(
+        url="some-url", deposit_id="666", default_filename="archive.zip"
+    )
 
     assert isinstance(loader.client, ApiClient)
 
@@ -78,7 +79,11 @@ def test_deposit_loading_unknown_deposit(
     url = "some-url"
     unknown_deposit_id = 667
     loader = DepositLoader(
-        swh_storage, url, unknown_deposit_id, deposit_client
+        swh_storage,
+        url,
+        unknown_deposit_id,
+        deposit_client,
+        default_filename="archive.zip",
     )  # does not exist
 
     actual_load_status = loader.load()
@@ -113,7 +118,9 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
     url = "some-url-2"
     deposit_id = 666
     requests_mock_datadir_missing_one.put(re.compile("https"))
-    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+    loader = DepositLoader(
+        swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
+    )
 
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "uneventful"
@@ -156,7 +163,9 @@ def test_deposit_revision_metadata_structure(
 ):
     url = "https://hal-test.archives-ouvertes.fr/some-external-id"
     deposit_id = 666
-    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+    loader = DepositLoader(
+        swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
+    )
 
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
@@ -188,7 +197,9 @@ def test_deposit_revision_metadata_structure(
 def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     url = "https://hal-test.archives-ouvertes.fr/some-external-id"
     deposit_id = 666
-    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+    loader = DepositLoader(
+        swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
+    )
 
     actual_load_status = loader.load()
     expected_snapshot_id = "b2b327b33dc85818bd23c3ccda8b7e675a66ecbd"
@@ -292,7 +303,9 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     external_id = "some-external-id"
     url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
     deposit_id = 777
-    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+    loader = DepositLoader(
+        swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
+    )
 
     actual_load_status = loader.load()
     expected_snapshot_id = "3e68440fdd7c81d283f8f3aebb6f0c8657864192"
@@ -411,9 +424,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         )
     )
 
-    assert len(origin_extrinsic_metadata.results) == len(expected_metadata)
-    for orig_meta in origin_extrinsic_metadata.results:
-        assert orig_meta in expected_metadata
+    assert sorted(origin_extrinsic_metadata.results) == sorted(expected_metadata)
 
     # Check the revision metadata swh side
     directory_swhid = ExtendedSWHID(
@@ -445,14 +456,22 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     for idx, raw_meta in enumerate(all_metadata_raw):
         dir_metadata = actual_directory_metadata.results[idx]
         expected_directory_metadata.append(
-            attr.evolve(
-                dir_metadata_template,
-                discovery_date=dir_metadata.discovery_date,
-                metadata=raw_meta.encode(),
+            RawExtrinsicMetadata.from_dict(
+                {
+                    **{
+                        k: v
+                        for (k, v) in dir_metadata_template.to_dict().items()
+                        if k != "id"
+                    },
+                    "discovery_date": dir_metadata.discovery_date,
+                    "metadata": raw_meta.encode(),
+                }
             )
         )
 
-    assert actual_directory_metadata.results == expected_directory_metadata
+    assert sorted(actual_directory_metadata.results) == sorted(
+        expected_directory_metadata
+    )
 
     # Retrieve the information for deposit status update query to the deposit
     urls = [
@@ -485,9 +504,7 @@ def test_deposit_loading_ok_3(swh_storage, deposit_client, requests_mock_datadir
     external_id = "hal-123456"
     url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
     deposit_id = 888
-    loader = DepositLoader(
-        swh_storage, url, deposit_id, deposit_client, default_filename="archive.tar"
-    )
+    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
 
     actual_load_status = loader.load()
     expected_snapshot_id = "0ac7b54c042a026389f2087dc16f1d5c644ed0e4"

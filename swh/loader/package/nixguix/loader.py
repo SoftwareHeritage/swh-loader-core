@@ -14,6 +14,7 @@ import attr
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
+    PartialExtID,
     RawExtrinsicMetadataCore,
 )
 from swh.loader.package.utils import EMPTY_AUTHOR, api_info, cached_method
@@ -32,6 +33,10 @@ from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
 
+EXTID_TYPE = "subresource-integrity"
+"""The ExtID is an ASCII string, as defined by
+https://w3c.github.io/webappsec-subresource-integrity/"""
+
 
 @attr.s
 class NixGuixPackageInfo(BasePackageInfo):
@@ -49,6 +54,9 @@ class NixGuixPackageInfo(BasePackageInfo):
             integrity=metadata["integrity"],
             raw_info=metadata,
         )
+
+    def extid(self) -> PartialExtID:
+        return (EXTID_TYPE, self.integrity.encode("ascii"))
 
 
 class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
@@ -84,7 +92,7 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
         )
 
     @cached_method
-    def integrity_by_url(self) -> Dict[str, Any]:
+    def integrity_by_url(self) -> Dict[str, str]:
         sources = self.supported_sources()
         return {s["urls"][0]: s["integrity"] for s in sources["sources"]}
 
@@ -147,31 +155,20 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
             ret[revision.id] = revision.metadata
         return ret
 
-    def resolve_revision_from(
-        self, known_artifacts: Dict, p_info: NixGuixPackageInfo,
-    ) -> Optional[bytes]:
-        for rev_id, known_artifact in known_artifacts.items():
-            try:
-                known_integrity = known_artifact["extrinsic"]["raw"]["integrity"]
-            except KeyError as e:
-                logger.exception(
-                    "Unexpected metadata revision structure detected: %(context)s",
-                    {
-                        "context": {
-                            "revision": hashutil.hash_to_hex(rev_id),
-                            "reason": str(e),
-                            "known_artifact": known_artifact,
-                        }
-                    },
-                )
-                # metadata field for the revision is not as expected by the loader
-                # nixguix. We consider this not the right revision and continue checking
-                # the other revisions
-                continue
-            else:
-                if p_info.integrity == known_integrity:
-                    return rev_id
-        return None
+    @staticmethod
+    def known_artifact_to_extid(known_artifact: Dict) -> Optional[PartialExtID]:
+        try:
+            value = known_artifact["extrinsic"]["raw"]["integrity"].encode("ascii")
+        except KeyError as e:
+            logger.exception(
+                "Unexpected metadata revision structure detected: %(context)s",
+                {"context": {"reason": str(e), "known_artifact": known_artifact,}},
+            )
+            # metadata field for the revision is not as expected by the loader
+            # nixguix. We consider this not the right revision and continue checking
+            # the other revisions
+            return None
+        return (EXTID_TYPE, value)
 
     def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
         """We add a branch to the snapshot called 'evaluation' pointing to the
