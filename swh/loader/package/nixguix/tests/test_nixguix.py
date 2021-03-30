@@ -6,7 +6,7 @@
 import json
 import logging
 import os
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from unittest.mock import patch
 
 import attr
@@ -26,7 +26,7 @@ from swh.loader.package.utils import download
 from swh.loader.tests import assert_last_visit_matches
 from swh.loader.tests import check_snapshot as check_snapshot_full
 from swh.loader.tests import get_stats
-from swh.model.hashutil import hash_to_bytes, hash_to_hex
+from swh.model.hashutil import hash_to_bytes
 from swh.model.identifiers import ExtendedObjectType, ExtendedSWHID
 from swh.model.model import (
     MetadataAuthority,
@@ -469,7 +469,7 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
     } == stats
 
 
-def test_resolve_revision_from(swh_storage, requests_mock_datadir, datadir):
+def test_resolve_revision_from_artifacts(swh_storage, requests_mock_datadir, datadir):
     loader = NixGuixLoader(swh_storage, sources_url)
 
     known_artifacts = {
@@ -480,11 +480,11 @@ def test_resolve_revision_from(swh_storage, requests_mock_datadir, datadir):
     p_info = NixGuixPackageInfo.from_metadata(
         {"url": "url1", "integrity": "integrity1"}
     )
-    assert loader.resolve_revision_from(known_artifacts, p_info) == "id1"
+    assert loader.resolve_revision_from_artifacts(known_artifacts, p_info) == "id1"
     p_info = NixGuixPackageInfo.from_metadata(
         {"url": "url3", "integrity": "integrity3"}
     )
-    assert loader.resolve_revision_from(known_artifacts, p_info) == None  # noqa
+    assert loader.resolve_revision_from_artifacts(known_artifacts, p_info) is None
 
 
 def test_evaluation_branch(swh_storage, requests_mock_datadir):
@@ -635,6 +635,9 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
     snapshot = snapshot_get_all_branches(swh_storage, hash_to_bytes(snapshot_id))
     assert snapshot
 
+    # 3. Then ingest again with the nixguix loader, with a different snapshot
+    #    and different source
+
     # simulate a snapshot already seen with a revision with the wrong metadata structure
     # This revision should be skipped, thus making the artifact being ingested again.
     with patch(
@@ -686,20 +689,18 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
         # new run
         assert new_revision.metadata["extrinsic"]["raw"]["integrity"] is not None
 
-        nb_detections = 0
-        actual_detection: Dict
+        actual_detections: List[Dict] = []
         for record in caplog.records:
             logtext = record.getMessage()
             if "Unexpected metadata revision structure detected:" in logtext:
-                nb_detections += 1
-                actual_detection = record.args["context"]
+                actual_detections.append(record.args["context"])
 
-        assert actual_detection
-        # as many calls as there are sources listed in the sources.json
-        assert nb_detections == len(all_sources["sources"])
+        expected_detections = [
+            {"reason": "'integrity'", "known_artifact": old_revision.metadata,},
+        ]
 
-        assert actual_detection == {
-            "revision": hash_to_hex(old_revision.id),
-            "reason": "'integrity'",
-            "known_artifact": old_revision.metadata,
-        }
+        # less calls than there are sources listed in the sources.json;
+        # as some of them are skipped using the ExtID from a previous run
+        assert len(expected_detections) <= len(all_sources["sources"])
+
+        assert actual_detections == expected_detections

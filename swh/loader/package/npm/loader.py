@@ -16,9 +16,11 @@ import chardet
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
+    PartialExtID,
     RawExtrinsicMetadataCore,
 )
 from swh.loader.package.utils import api_info, cached_method, release_name
+from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -34,6 +36,9 @@ logger = logging.getLogger(__name__)
 
 
 EMPTY_PERSON = Person(fullname=b"", name=None, email=None)
+
+
+EXTID_TYPE = "npm-archive-sha1"
 
 
 @attr.s
@@ -78,6 +83,9 @@ class NpmPackageInfo(BasePackageInfo):
                 )
             ],
         )
+
+    def extid(self) -> PartialExtID:
+        return (EXTID_TYPE, hash_to_bytes(self.shasum))
 
 
 class NpmLoader(PackageLoader[NpmPackageInfo]):
@@ -133,10 +141,15 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         )
         yield release_name(version), p_info
 
-    def resolve_revision_from(
-        self, known_artifacts: Dict, p_info: NpmPackageInfo
-    ) -> Optional[bytes]:
-        return artifact_to_revision_id(known_artifacts, p_info)
+    @staticmethod
+    def known_artifact_to_extid(known_artifact: Dict) -> Optional[PartialExtID]:
+        extid_str = _artifact_to_sha1(known_artifact)
+        if extid_str is None:
+            return None
+        try:
+            return (EXTID_TYPE, hash_to_bytes(extid_str))
+        except ValueError:
+            return None
 
     def build_revision(
         self, p_info: NpmPackageInfo, uncompressed_path: str, directory: Sha1Git
@@ -182,10 +195,8 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         return r
 
 
-def artifact_to_revision_id(
-    known_artifacts: Dict, p_info: NpmPackageInfo
-) -> Optional[bytes]:
-    """Given metadata artifact, solves the associated revision id.
+def _artifact_to_sha1(known_artifact: Dict) -> Optional[str]:
+    """Returns the sha1 from an NPM 'original_artifact' dict
 
     The following code allows to deal with 2 metadata formats:
 
@@ -210,21 +221,16 @@ def artifact_to_revision_id(
         }
 
     """
-    shasum = p_info.shasum
-    for rev_id, known_artifact in known_artifacts.items():
-        known_original_artifact = known_artifact.get("original_artifact")
+    known_original_artifact = known_artifact.get("original_artifact")
+    if not known_original_artifact:
+        # previous loader-npm version kept original artifact elsewhere
+        known_original_artifact = known_artifact.get("package_source")
         if not known_original_artifact:
-            # previous loader-npm version kept original artifact elsewhere
-            known_original_artifact = known_artifact.get("package_source")
-            if not known_original_artifact:
-                continue
-            original_hash = known_original_artifact["sha1"]
-        else:
-            assert isinstance(known_original_artifact, list)
-            original_hash = known_original_artifact[0]["checksums"]["sha1"]
-        if shasum == original_hash:
-            return rev_id
-    return None
+            return None
+        return known_original_artifact["sha1"]
+    else:
+        assert isinstance(known_original_artifact, list)
+        return known_original_artifact[0]["checksums"]["sha1"]
 
 
 def _author_str(author_data: Union[Dict, List, str]) -> str:
