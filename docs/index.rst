@@ -1,16 +1,13 @@
 .. _swh-loader-core:
 
-Software Heritage - Loader foundations
-======================================
-
-Low-level loading utilities and helpers used by other loaders.
-
+.. include:: README.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   README
+   package-loader-tutorial
+   vcs-loader-overview
 
 
 Reference Documentation
@@ -21,3 +18,4 @@ Reference Documentation
 
    cli
    /apidoc/swh.loader.core
+   /apidoc/swh.loader.package
