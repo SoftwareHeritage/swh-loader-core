@@ -6,7 +6,7 @@ CONTRIBUTORS
 LICENSE
 MANIFEST.in
 Makefile
-README.md
+README.rst
 conftest.py
 mypy.ini
 pyproject.toml
@@ -19,10 +19,12 @@ setup.py
 tox.ini
 docs/.gitignore
 docs/Makefile
-docs/README.md
+docs/README.rst
 docs/cli.rst
 docs/conf.py
 docs/index.rst
+docs/package-loader-tutorial.rst
+docs/vcs-loader-overview.rst
 docs/_static/.placeholder
 docs/_templates/.placeholder
 swh/__init__.py
@@ -165,7 +167,6 @@ swh/loader/package/pypi/tests/data/https_pypi.org/pypi_nexter_json
 swh/loader/package/pypi/tests/data/https_pypi.org/pypi_upymenu_json
 swh/loader/package/tests/__init__.py
 swh/loader/package/tests/common.py
-swh/loader/package/tests/test_common.py
 swh/loader/package/tests/test_conftest.py
 swh/loader/package/tests/test_loader.py
 swh/loader/package/tests/test_loader_metadata.py
