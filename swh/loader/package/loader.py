@@ -75,7 +75,7 @@ of downloaded archive files."""
 
 
 PartialExtID = Tuple[str, bytes]
-"""The ``extid_type`` and ``extid`` fields of an :ref:py:`ExtID` object."""
+"""The ``extid_type`` and ``extid`` fields of an :class:`ExtID` object."""
 
 
 @attr.s
@@ -121,8 +121,10 @@ class BasePackageInfo:
     directory_extrinsic_metadata = attr.ib(
         type=List[RawExtrinsicMetadataCore], default=[], kw_only=True,
     )
+    """:term:`extrinsic metadata` collected by the loader, that will be attached to the
+    loaded directory and added to the Metadata storage."""
 
-    # TODO: add support for metadata for directories and contents
+    # TODO: add support for metadata for revisions and contents
 
     def extid(self) -> Optional[PartialExtID]:
         """Returns a unique intrinsic identifier of this package info,
@@ -168,7 +170,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         """Return the list of all published package versions.
 
         Raises:
-           `class:swh.loader.exception.NotFound` error when failing to read the
+           class:`swh.loader.exception.NotFound` error when failing to read the
             published package versions.
 
         Returns:
@@ -249,45 +251,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
     def new_packageinfo_to_extid(self, p_info: TPackageInfo) -> Optional[PartialExtID]:
         return p_info.extid()
-
-    def known_artifact_to_extid(self, known_artifact: Dict) -> Optional[PartialExtID]:
-        """Returns a unique intrinsic identifier of a downloaded artifact,
-        used to check if a new artifact is the same."""
-        return None
-
-    def resolve_revision_from_artifacts(
-        self, known_artifacts: Dict[Sha1Git, Any], p_info: TPackageInfo,
-    ) -> Optional[Sha1Git]:
-        """Resolve the revision from known artifact metadata and a package info object.
-
-        If the artifact has already been downloaded, this will return the
-        existing revision targeting that uncompressed artifact directory.
-        Otherwise, this returns None.
-
-        Args:
-            known_artifacts: dict from revision ids to revision metadata
-            p_info: Package information
-
-        Returns:
-            None or revision identifier
-
-        """
-        if not known_artifacts:
-            # No known artifact, no need to compute the artifact's extid
-            return None
-
-        new_extid = self.new_packageinfo_to_extid(p_info)
-        if new_extid is None:
-            # This loader does not support deduplication, at least not for this
-            # artifact.
-            return None
-
-        for rev_id, known_artifact in known_artifacts.items():
-            known_extid = self.known_artifact_to_extid(known_artifact)
-            if new_extid == known_extid:
-                return rev_id
-
-        return None
 
     def _get_known_extids(
         self, packages_info: List[TPackageInfo]
@@ -468,24 +431,30 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
     def load(self) -> Dict:
         """Load for a specific origin the associated contents.
 
-        for each package version of the origin
+        1. Get the list of versions in an origin.
 
-        1. Fetch the files for one package version By default, this can be
+        2. Get the snapshot from the previous run of the loader,
+           and filter out versions that were already loaded, if their
+           :term:`extids <extid>` match
+
+        Then, for each remaining version in the origin
+
+        3. Fetch the files for one package version By default, this can be
            implemented as a simple HTTP request. Loaders with more specific
            requirements can override this, e.g.: the PyPI loader checks the
            integrity of the downloaded files; the Debian loader has to download
            and check several files for one package version.
 
-        2. Extract the downloaded files By default, this would be a universal
+        4. Extract the downloaded files. By default, this would be a universal
            archive/tarball extraction.
 
            Loaders for specific formats can override this method (for instance,
            the Debian loader uses dpkg-source -x).
 
-        3. Convert the extracted directory to a set of Software Heritage
+        5. Convert the extracted directory to a set of Software Heritage
            objects Using swh.model.from_disk.
 
-        4. Extract the metadata from the unpacked directories This would only
+        6. Extract the metadata from the unpacked directories This would only
            be applicable for "smart" loaders like npm (parsing the
            package.json), PyPI (parsing the PKG-INFO file) or Debian (parsing
            debian/changelog and debian/control).
@@ -495,15 +464,15 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
            revision/release objects (authors, dates) as an argument to the
            task.
 
-        5. Generate the revision/release objects for the given version. From
+        7. Generate the revision/release objects for the given version. From
            the data generated at steps 3 and 4.
 
         end for each
 
-        6. Generate and load the snapshot for the visit
+        8. Generate and load the snapshot for the visit
 
-        Using the revisions/releases collected at step 5., and the branch
-        information from step 0., generate a snapshot and load it into the
+        Using the revisions/releases collected at step 7., and the branch
+        information from step 2., generate a snapshot and load it into the
         Software Heritage archive
 
         """
@@ -600,14 +569,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             revision_id = self.resolve_revision_from_extids(
                 known_extids, p_info, last_snapshot_targets
             )
-
-            if revision_id is None:
-                # No existing revision found from an acceptable ExtID,
-                # search in the artifact data instead.
-                # TODO: remove this after we finished migrating to ExtIDs.
-                revision_id = self.resolve_revision_from_artifacts(
-                    known_artifacts, p_info
-                )
 
             if revision_id is None:
                 # No matching revision found in the last snapshot, load it.
@@ -763,18 +724,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 return None
 
         metadata = [metadata for (filepath, metadata) in dl_artifacts]
-        extra_metadata: Tuple[str, Any] = (
-            "original_artifact",
-            metadata,
-        )
-
-        if revision.metadata is not None:
-            full_metadata = list(revision.metadata.items()) + [extra_metadata]
-        else:
-            full_metadata = [extra_metadata]
-
-        # TODO: don't add these extrinsic metadata to the revision.
-        revision = attr.evolve(revision, metadata=ImmutableDict(full_metadata))
 
         original_artifact_metadata = RawExtrinsicMetadata(
             target=ExtendedSWHID(
