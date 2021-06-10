@@ -1,8 +1,10 @@
-swh-loader-core (0.22.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.22.2-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.22.2     - (tagged by Antoine Lambert
+    <antoine.lambert@inria.fr> on 2021-06-10 16:11:30 +0200)
+  * Upstream changes:     - version 0.22.2
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 27 May 2021 12:24:19 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 10 Jun 2021 14:19:06 +0000
 
 swh-loader-core (0.22.1-1~swh1) unstable-swh; urgency=medium
 
