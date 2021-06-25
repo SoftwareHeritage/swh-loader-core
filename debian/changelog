@@ -1,8 +1,12 @@
-swh-loader-core (0.22.2-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (0.22.3-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.22.3     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2021-06-25 14:50:40 +0200)
+  * Upstream changes:     - v0.22.3     - * Use the postgresql class to
+    instantiate storage in tests     - * package-loader-tutorial: Add
+    anchor so it can be referenced from swh-docs
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 10 Jun 2021 14:20:42 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 25 Jun 2021 12:57:33 +0000
 
 swh-loader-core (0.22.2-1~swh1) unstable-swh; urgency=medium
 
