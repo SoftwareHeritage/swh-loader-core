@@ -1,3 +1,12 @@
+swh-loader-core (0.23.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.23.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-08-05 16:11:02
+    +0200)
+  * Upstream changes:     - v0.23.1     - Fix pypi upload issue.
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 05 Aug 2021 14:20:37 +0000
+
 swh-loader-core (0.22.3-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.22.3     - (tagged by Valentin Lorentz
