@@ -8,6 +8,7 @@ import json
 import logging
 import re
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple
+from urllib.parse import urlparse
 
 import attr
 
@@ -48,11 +49,12 @@ class NixGuixPackageInfo(BasePackageInfo):
 
     @classmethod
     def from_metadata(cls, metadata: Dict[str, Any]) -> "NixGuixPackageInfo":
+        url = metadata["url"]
+        if not urlparse(url).scheme:
+            url = f"http://{url}"
+
         return cls(
-            url=metadata["url"],
-            filename=None,
-            integrity=metadata["integrity"],
-            raw_info=metadata,
+            url=url, filename=None, integrity=metadata["integrity"], raw_info=metadata,
         )
 
     def extid(self) -> PartialExtID:
