@@ -22,4 +22,5 @@ def swh_scheduler_celery_includes(swh_scheduler_celery_includes):
         "swh.loader.package.npm.tasks",
         "swh.loader.package.pypi.tasks",
         "swh.loader.package.nixguix.tasks",
+        "swh.loader.package.maven.tasks",
     ]
