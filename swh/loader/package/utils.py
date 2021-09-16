@@ -5,9 +5,13 @@
 
 import copy
 import functools
+import itertools
 import logging
 import os
+import re
 from typing import Callable, Dict, Optional, Tuple, TypeVar
+from urllib.parse import unquote
+from urllib.request import urlopen
 
 import requests
 
@@ -45,6 +49,20 @@ def api_info(url: str, **extra_params) -> bytes:
     return response.content
 
 
+def _content_disposition_filename(header: str) -> Optional[str]:
+    fname = None
+    fnames = re.findall(r"filename[\*]?=([^;]+)", header)
+    if fnames and "utf-8''" in fnames[0].lower():
+        #  RFC 5987
+        fname = re.sub("utf-8''", "", fnames[0], flags=re.IGNORECASE)
+        fname = unquote(fname)
+    elif fnames:
+        fname = fnames[0]
+    if fname:
+        fname = os.path.basename(fname.strip().strip('"'))
+    return fname
+
+
 def download(
     url: str,
     dest: str,
@@ -79,9 +97,26 @@ def download(
         params["headers"].update(extra_request_headers)
     # so the connection does not hang indefinitely (read/connection timeout)
     timeout = params.get("timeout", 60)
-    response = requests.get(url, **params, timeout=timeout, stream=True)
-    if response.status_code != 200:
-        raise ValueError("Fail to query '%s'. Reason: %s" % (url, response.status_code))
+
+    if url.startswith("ftp://"):
+        response = urlopen(url, timeout=timeout)
+        chunks = (response.read(HASH_BLOCK_SIZE) for _ in itertools.count())
+        response_data = itertools.takewhile(bool, chunks)
+    else:
+        response = requests.get(url, **params, timeout=timeout, stream=True)
+        if response.status_code != 200:
+            raise ValueError(
+                "Fail to query '%s'. Reason: %s" % (url, response.status_code)
+            )
+        # update URL to response one as requests follow redirection by default
+        # on GET requests
+        url = response.url
+        # try to extract filename from content-disposition header if available
+        if filename is None and "content-disposition" in response.headers:
+            filename = _content_disposition_filename(
+                response.headers["content-disposition"]
+            )
+        response_data = response.iter_content(chunk_size=HASH_BLOCK_SIZE)
 
     filename = filename if filename else os.path.basename(url)
     logger.debug("filename: %s", filename)
@@ -90,9 +125,11 @@ def download(
 
     h = MultiHash(hash_names=DOWNLOAD_HASHES)
     with open(filepath, "wb") as f:
-        for chunk in response.iter_content(chunk_size=HASH_BLOCK_SIZE):
+        for chunk in response_data:
             h.update(chunk)
             f.write(chunk)
+
+    response.close()
 
     # Also check the expected hashes if provided
     if hashes:
