@@ -6,6 +6,9 @@
 
 import json
 import os
+from unittest.mock import MagicMock
+from urllib.error import URLError
+from urllib.parse import quote
 
 import pytest
 
@@ -32,57 +35,46 @@ def test_download_fail_to_download(tmp_path, requests_mock):
     assert e.value.args[0] == "Fail to query '%s'. Reason: %s" % (url, status_code)
 
 
-@pytest.mark.fs
-def test_download_ok(tmp_path, requests_mock):
-    """Download without issue should provide filename and hashes"""
-    filename = "requests-0.0.1.tar.gz"
-    url = "https://pypi.org/pypi/requests/%s" % filename
-    data = "this is something"
-    requests_mock.get(url, text=data, headers={"content-length": str(len(data))})
+_filename = "requests-0.0.1.tar.gz"
+_data = "this is something"
 
-    actual_filepath, actual_hashes = download(url, dest=str(tmp_path))
+
+def _check_download_ok(url, dest, filename=_filename, hashes=None):
+    actual_filepath, actual_hashes = download(url, dest, hashes=hashes)
 
     actual_filename = os.path.basename(actual_filepath)
     assert actual_filename == filename
-    assert actual_hashes["length"] == len(data)
+    assert actual_hashes["length"] == len(_data)
     assert (
         actual_hashes["checksums"]["sha1"] == "fdd1ce606a904b08c816ba84f3125f2af44d92b2"
-    )  # noqa
+    )
     assert (
         actual_hashes["checksums"]["sha256"]
         == "1d9224378d77925d612c9f926eb9fb92850e6551def8328011b6a972323298d5"
     )
+
+
+@pytest.mark.fs
+def test_download_ok(tmp_path, requests_mock):
+    """Download without issue should provide filename and hashes"""
+    url = f"https://pypi.org/pypi/requests/{_filename}"
+    requests_mock.get(url, text=_data, headers={"content-length": str(len(_data))})
+    _check_download_ok(url, dest=str(tmp_path))
 
 
 @pytest.mark.fs
 def test_download_ok_no_header(tmp_path, requests_mock):
     """Download without issue should provide filename and hashes"""
-    filename = "requests-0.0.1.tar.gz"
-    url = "https://pypi.org/pypi/requests/%s" % filename
-    data = "this is something"
-    requests_mock.get(url, text=data)  # no header information
-
-    actual_filepath, actual_hashes = download(url, dest=str(tmp_path))
-
-    actual_filename = os.path.basename(actual_filepath)
-    assert actual_filename == filename
-    assert actual_hashes["length"] == len(data)
-    assert (
-        actual_hashes["checksums"]["sha1"] == "fdd1ce606a904b08c816ba84f3125f2af44d92b2"
-    )  # noqa
-    assert (
-        actual_hashes["checksums"]["sha256"]
-        == "1d9224378d77925d612c9f926eb9fb92850e6551def8328011b6a972323298d5"
-    )
+    url = f"https://pypi.org/pypi/requests/{_filename}"
+    requests_mock.get(url, text=_data)  # no header information
+    _check_download_ok(url, dest=str(tmp_path))
 
 
 @pytest.mark.fs
 def test_download_ok_with_hashes(tmp_path, requests_mock):
     """Download without issue should provide filename and hashes"""
-    filename = "requests-0.0.1.tar.gz"
-    url = "https://pypi.org/pypi/requests/%s" % filename
-    data = "this is something"
-    requests_mock.get(url, text=data, headers={"content-length": str(len(data))})
+    url = f"https://pypi.org/pypi/requests/{_filename}"
+    requests_mock.get(url, text=_data, headers={"content-length": str(len(_data))})
 
     # good hashes for such file
     good = {
@@ -90,13 +82,7 @@ def test_download_ok_with_hashes(tmp_path, requests_mock):
         "sha256": "1d9224378d77925d612c9f926eb9fb92850e6551def8328011b6a972323298d5",  # noqa
     }
 
-    actual_filepath, actual_hashes = download(url, dest=str(tmp_path), hashes=good)
-
-    actual_filename = os.path.basename(actual_filepath)
-    assert actual_filename == filename
-    assert actual_hashes["length"] == len(data)
-    assert actual_hashes["checksums"]["sha1"] == good["sha1"]
-    assert actual_hashes["checksums"]["sha256"] == good["sha256"]
+    _check_download_ok(url, dest=str(tmp_path), hashes=good)
 
 
 @pytest.mark.fs
@@ -104,10 +90,8 @@ def test_download_fail_hashes_mismatch(tmp_path, requests_mock):
     """Mismatch hash after download should raise
 
     """
-    filename = "requests-0.0.1.tar.gz"
-    url = "https://pypi.org/pypi/requests/%s" % filename
-    data = "this is something"
-    requests_mock.get(url, text=data, headers={"content-length": str(len(data))})
+    url = f"https://pypi.org/pypi/requests/{_filename}"
+    requests_mock.get(url, text=_data, headers={"content-length": str(len(_data))})
 
     # good hashes for such file
     good = {
@@ -128,6 +112,89 @@ def test_download_fail_hashes_mismatch(tmp_path, requests_mock):
 
         with pytest.raises(ValueError, match=expected_msg):
             download(url, dest=str(tmp_path), hashes=expected_hashes)
+
+
+@pytest.mark.fs
+def test_ftp_download_ok(tmp_path, mocker):
+    """Download without issue should provide filename and hashes"""
+    url = f"ftp://pypi.org/pypi/requests/{_filename}"
+
+    cm = MagicMock()
+    cm.getstatus.return_value = 200
+    cm.read.side_effect = [_data.encode(), b""]
+    cm.__enter__.return_value = cm
+    mocker.patch("swh.loader.package.utils.urlopen").return_value = cm
+
+    _check_download_ok(url, dest=str(tmp_path))
+
+
+@pytest.mark.fs
+def test_ftp_download_ko(tmp_path, mocker):
+    """Download without issue should provide filename and hashes"""
+    filename = "requests-0.0.1.tar.gz"
+    url = "ftp://pypi.org/pypi/requests/%s" % filename
+
+    mocker.patch("swh.loader.package.utils.urlopen").side_effect = URLError("FTP error")
+
+    with pytest.raises(URLError):
+        download(url, dest=str(tmp_path))
+
+
+@pytest.mark.fs
+def test_download_with_redirection(tmp_path, requests_mock):
+    """Download with redirection should use the targeted URL to extract filename"""
+    url = "https://example.org/project/requests/download"
+    redirection_url = f"https://example.org/project/requests/files/{_filename}"
+
+    requests_mock.get(url, status_code=302, headers={"location": redirection_url})
+    requests_mock.get(
+        redirection_url, text=_data, headers={"content-length": str(len(_data))}
+    )
+
+    _check_download_ok(url, dest=str(tmp_path))
+
+
+@pytest.mark.fs
+@pytest.mark.parametrize(
+    "filename", [f'"{_filename}"', _filename, '"filename with spaces.tar.gz"']
+)
+def test_download_filename_from_content_disposition(tmp_path, requests_mock, filename):
+    """Filename should be extracted from content-disposition request header
+    when available."""
+    url = "https://example.org/download/requests/tar.gz/v0.0.1"
+
+    requests_mock.get(
+        url,
+        text=_data,
+        headers={
+            "content-length": str(len(_data)),
+            "content-disposition": f"attachment; filename={filename}",
+        },
+    )
+
+    _check_download_ok(url, dest=str(tmp_path), filename=filename.strip('"'))
+
+
+@pytest.mark.fs
+@pytest.mark.parametrize("filename", ['"archive école.tar.gz"', "archive_école.tgz"])
+def test_download_utf8_filename_from_content_disposition(
+    tmp_path, requests_mock, filename
+):
+    """Filename should be extracted from content-disposition request header
+    when available."""
+    url = "https://example.org/download/requests/tar.gz/v0.0.1"
+    data = "this is something"
+
+    requests_mock.get(
+        url,
+        text=data,
+        headers={
+            "content-length": str(len(data)),
+            "content-disposition": f"attachment; filename*=utf-8''{quote(filename)}",
+        },
+    )
+
+    _check_download_ok(url, dest=str(tmp_path), filename=filename.strip('"'))
 
 
 def test_api_info_failure(requests_mock):
