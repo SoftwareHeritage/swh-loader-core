@@ -109,8 +109,12 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
     def get_package_info(self, version: str) -> Iterator[Tuple[str, PyPIPackageInfo]]:
         res = []
         for meta in self.info()["releases"][version]:
-            if meta["packagetype"] != "sdist":
+            # process only standard sdist archives
+            if meta["packagetype"] != "sdist" or meta["filename"].lower().endswith(
+                (".deb", ".egg", ".rpm", ".whl")
+            ):
                 continue
+
             p_info = PyPIPackageInfo.from_metadata(meta)
             res.append((version, p_info))
 
@@ -129,12 +133,12 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
             return None
 
         # from intrinsic metadata
-        name = i_metadata["version"]
+        version = i_metadata.get("version", "")
         _author = author(i_metadata)
 
         # from extrinsic metadata
         message = p_info.comment_text or ""
-        message = "%s: %s" % (name, message) if message else name
+        message = "%s: %s" % (version, message) if message else version
         date = TimestampWithTimezone.from_iso8601(p_info.upload_time)
 
         return Revision(
