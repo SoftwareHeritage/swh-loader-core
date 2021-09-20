@@ -1,3 +1,13 @@
+swh-loader-core (0.23.4-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.23.4     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-09-20 11:53:11
+    +0200)
+  * Upstream changes:     - v0.23.4     - Ensure that filename fallback
+    out of an url is properly sanitized
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 20 Sep 2021 09:56:31 +0000
+
 swh-loader-core (0.23.3-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.23.3     - (tagged by Antoine Lambert
