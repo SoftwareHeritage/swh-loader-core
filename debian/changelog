@@ -1,3 +1,13 @@
+swh-loader-core (0.23.5-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.23.5     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-09-24 17:31:22
+    +0200)
+  * Upstream changes:     - v0.23.5     - opam: Initialize opam root
+    directory outside the constructor
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 24 Sep 2021 15:34:52 +0000
+
 swh-loader-core (0.23.4-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.23.4     - (tagged by Antoine R. Dumont
