@@ -1,3 +1,14 @@
+swh-loader-core (0.25.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.25.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-09-29 09:19:10
+    +0200)
+  * Upstream changes:     - v0.25.0     - Allow opam loader to actually
+    use multi-instance opam root     - opam: Define a
+    initialize_opam_root parameter for opam loader
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 29 Sep 2021 07:26:12 +0000
+
 swh-loader-core (0.23.5-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.23.5     - (tagged by Antoine R. Dumont
