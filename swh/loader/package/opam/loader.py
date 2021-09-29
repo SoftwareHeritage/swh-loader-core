@@ -11,6 +11,7 @@ from typing import Iterator, List, Optional, Tuple
 import attr
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
+from swh.loader.package.utils import cached_method
 from swh.model.model import Person, Revision, RevisionType, Sha1Git
 from swh.storage.interface import StorageInterface
 
@@ -52,17 +53,22 @@ def opam_read(
 
 
 class OpamLoader(PackageLoader[OpamPackageInfo]):
-    """
-    Load all versions of a given package in a given opam repository.
+    """Load all versions of a given package in a given opam repository.
 
-    The state of the opam repository is stored in a directory called an
-    opam root. Either the opam root has been created by the loader and we
-    simply re-use it, either it doesn't exist yet and we create it on the
-    first package we try to load (next packages will be able to re-use it).
+    The state of the opam repository is stored in a directory called an opam root. This
+    folder is a requisite for the opam binary to actually list information on package.
 
-    Then we just ask the opam binary to give us the list of all versions of
-    the given package. For each version, we ask the opam binary to give us
-    the url to the tarball to archive.
+    When initialize_opam_root is False (the default for production workers), the opam
+    root must already have been configured outside of the loading process. If not an
+    error is raised, thus failing the loading.
+
+    For standalone workers, initialize_opam_root must be set to True, so the ingestion
+    can take care of installing the required opam root properly.
+
+    The remaining ingestion uses the opam binary to give the versions of the given
+    package. Then, for each version, the loader uses the opam binary to list the tarball
+    url to fetch and ingest.
+
     """
 
     visit_type = "opam"
@@ -76,6 +82,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         opam_url: str,
         opam_package: str,
         max_content_size: Optional[int] = None,
+        initialize_opam_root: bool = False,
     ):
         super().__init__(storage=storage, url=url, max_content_size=max_content_size)
 
@@ -83,104 +90,112 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         self.opam_instance = opam_instance
         self.opam_url = opam_url
         self.opam_package = opam_package
+        self.initialize_opam_root = initialize_opam_root
 
-    def get_versions(self) -> List[str]:
-        """First initialize the opam root directory if needed the start listing the package
-versions.
+    def get_package_dir(self) -> str:
+        return (
+            f"{self.opam_root}/repo/{self.opam_instance}/packages/{self.opam_package}"
+        )
+
+    def get_package_name(self, version: str) -> str:
+        return f"{self.opam_package}.{version}"
+
+    def get_package_file(self, version: str) -> str:
+        return f"{self.get_package_dir()}/{self.get_package_name(version)}/opam"
+
+    @cached_method
+    def _compute_versions(self) -> List[str]:
+        """Compute the versions using opam internals
+
+        Raises:
+            ValueError in case the lister is not able to determine the list of versions
+
+        Returns:
+            The list of versions for the package
 
         """
-        if not os.path.isdir(self.opam_root):
-            if os.path.isfile(self.opam_root):
-                raise ValueError("invalid opam root")
-            else:
-                call(
-                    [
-                        "opam",
-                        "init",
-                        "--reinit",
-                        "--bare",
-                        "--no-setup",
-                        "--root",
-                        self.opam_root,
-                        self.opam_instance,
-                        self.opam_url,
-                    ]
-                )
-        elif not os.path.isfile(os.path.join(self.opam_root, "config")):
-            raise ValueError("invalid opam root")
-
-        versions = opam_read(
-            [
-                "opam",
-                "show",
-                "--color",
-                "never",
-                "--normalise",
-                "--root",
-                self.opam_root,
-                "-f",
-                "all-versions",
-                self.opam_package,
-            ],
-            init_error_msg_if_any=(
+        # TODO: use `opam show` instead of this workaround when it support the `--repo`
+        # flag
+        package_dir = self.get_package_dir()
+        if not os.path.exists(package_dir):
+            raise ValueError(
                 f"can't get versions for package {self.opam_package} "
-                f"(at url {self.url}) from `opam show`"
-            ),
-        )
-        return versions.split() if versions else []
+                f"(at url {self.url})."
+            )
+        versions = [
+            ".".join(version.split(".")[1:]) for version in os.listdir(package_dir)
+        ]
+        if not versions:
+            raise ValueError(
+                f"can't get versions for package {self.opam_package} "
+                f"(at url {self.url})"
+            )
+        versions.sort()
+        return versions
+
+    def get_versions(self) -> List[str]:
+        """First initialize the opam root directory if needed then start listing the
+        package versions.
+
+        Raises:
+            ValueError in case the lister is not able to determine the list of
+            versions or if the opam root directory is invalid.
+
+        """
+        if self.initialize_opam_root:
+            # for standalone loader (e.g docker), loader must initialize the opam root
+            # folder
+            call(
+                [
+                    "opam",
+                    "init",
+                    "--reinit",
+                    "--bare",
+                    "--no-setup",
+                    "--root",
+                    self.opam_root,
+                    self.opam_instance,
+                    self.opam_url,
+                ]
+            )
+        else:
+            # for standard/production loaders, no need to initialize the opam root
+            # folder. It must be present though so check for it, if not present, raise
+            if not os.path.isfile(os.path.join(self.opam_root, "config")):
+                # so if not correctly setup, raise immediately
+                raise ValueError("Invalid opam root")
+
+        return self._compute_versions()
 
     def get_default_version(self) -> str:
-
-        init_error_msg = f"can't get default version for package {self.opam_package} \
-            (at url {self.url}) from `opam show`"
-        # we only care about the first element of the first line
-        # which is the initial version
-        versions_ = opam_read(
-            [
-                "opam",
-                "show",
-                "--color",
-                "never",
-                "--normalise",
-                "--root",
-                self.opam_root,
-                "-f",
-                "version",
-                self.opam_package,
-            ],
-            init_error_msg_if_any=init_error_msg,
-        )
-        if not versions_:
-            raise ValueError(init_error_msg)
-        versions = versions_.split()
-        if len(versions) != 1:
-            raise ValueError(init_error_msg)
-        return versions[0]
+        """Return the most recent version of the package as default."""
+        return self._compute_versions()[-1]
 
     def get_enclosed_single_line_field(self, field, version) -> Optional[str]:
+        package_file = self.get_package_file(version)
         result = opam_read(
             [
                 "opam",
                 "show",
                 "--color",
                 "never",
+                "--safe",
                 "--normalise",
                 "--root",
                 self.opam_root,
-                "-f",
+                "--file",
+                package_file,
+                "--field",
                 field,
-                f"{self.opam_package}.{version}",
             ]
         )
 
-        # this needs to be cleaned up a bit (remove enclosing " and the trailing \n)
-        return result[1:-2] if result else None
+        # Sanitize the result if any (remove trailing \n and enclosing ")
+        return result.strip().strip('"') if result else None
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, OpamPackageInfo]]:
 
-        branch_name = f"{self.opam_package}.{version}"
         url = self.get_enclosed_single_line_field("url.src:", version)
-
         if url is None:
             raise ValueError(
                 f"can't get field url.src: for version {version} of package {self.opam_package} \
@@ -195,7 +210,7 @@ versions.
         fullname = b"" if maintainer_field is None else str.encode(maintainer_field)
         committer = Person(fullname=fullname, name=None, email=None)
 
-        yield branch_name, OpamPackageInfo(
+        yield self.get_package_name(version), OpamPackageInfo(
             url=url, filename=None, author=author, committer=committer, version=version
         )
 
