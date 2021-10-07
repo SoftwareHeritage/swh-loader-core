@@ -38,12 +38,6 @@ from swh.loader.package.utils import download
 from swh.model import from_disk
 from swh.model.collections import ImmutableDict
 from swh.model.hashutil import hash_to_hex
-from swh.model.identifiers import (
-    CoreSWHID,
-    ExtendedObjectType,
-    ExtendedSWHID,
-    ObjectType,
-)
 from swh.model.model import (
     ExtID,
     MetadataAuthority,
@@ -58,6 +52,7 @@ from swh.model.model import (
     Snapshot,
     TargetType,
 )
+from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.algos.snapshot import snapshot_get_latest
 from swh.storage.interface import StorageInterface
 from swh.storage.utils import now

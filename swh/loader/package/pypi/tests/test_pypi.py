@@ -22,12 +22,6 @@ from swh.loader.package.pypi.loader import (
 )
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
-from swh.model.identifiers import (
-    CoreSWHID,
-    ExtendedObjectType,
-    ExtendedSWHID,
-    ObjectType,
-)
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -38,6 +32,7 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
+from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.interface import PagedResult
 
 

@@ -24,7 +24,6 @@ from swh.loader.tests import assert_last_visit_matches
 from swh.loader.tests import check_snapshot as check_snapshot_full
 from swh.loader.tests import get_stats
 from swh.model.hashutil import hash_to_bytes
-from swh.model.identifiers import ExtendedObjectType, ExtendedSWHID
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -34,6 +33,7 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
+from swh.model.swhids import ExtendedObjectType, ExtendedSWHID
 from swh.storage.algos.origin import origin_get_latest_visit_status
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.exc import HashCollision

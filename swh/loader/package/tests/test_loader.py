@@ -12,7 +12,6 @@ import attr
 import pytest
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.model.identifiers import CoreSWHID, ObjectType
 from swh.model.model import (
     ExtID,
     Origin,
@@ -22,6 +21,7 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
+from swh.model.swhids import CoreSWHID, ObjectType
 from swh.storage import get_storage
 from swh.storage.algos.snapshot import snapshot_get_latest
 

@@ -15,12 +15,6 @@ from swh.loader.package.loader import (
     RawExtrinsicMetadataCore,
 )
 from swh.model.hashutil import hash_to_bytes
-from swh.model.identifiers import (
-    CoreSWHID,
-    ExtendedObjectType,
-    ExtendedSWHID,
-    ObjectType,
-)
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -32,6 +26,7 @@ from swh.model.model import (
     RevisionType,
     Sha1Git,
 )
+from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 EMPTY_SNAPSHOT_ID = "1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"
 FULL_SNAPSHOT_ID = "4a9b608c9f01860a627237dd2409d1d50ec4b054"
