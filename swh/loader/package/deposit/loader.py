@@ -57,9 +57,6 @@ class DepositPackageInfo(BasePackageInfo):
     """The collection in the deposit; see SWORD specification."""
     author = attr.ib(type=Person)
     committer = attr.ib(type=Person)
-    revision_parents = attr.ib(type=Tuple[Sha1Git, ...])
-    """Revisions created from previous deposits, that will be used as parents of the
-    revision created for this deposit."""
 
     @classmethod
     def from_metadata(
@@ -90,7 +87,6 @@ class DepositPackageInfo(BasePackageInfo):
             collection=depo["collection"],
             author=parse_author(depo["author"]),
             committer=parse_author(depo["committer"]),
-            revision_parents=tuple(hash_to_bytes(p) for p in depo["revision_parents"]),
             raw_info=raw_info,
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
@@ -206,7 +202,6 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             date=TimestampWithTimezone.from_dict(p_info.author_date),
             committer=p_info.committer,
             committer_date=TimestampWithTimezone.from_dict(p_info.commit_date),
-            parents=p_info.revision_parents,
             directory=directory,
             synthetic=True,
         )
