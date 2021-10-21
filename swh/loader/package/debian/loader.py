@@ -248,23 +248,6 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         )
 
 
-def _artifact_to_dsc_sha256(known_artifacts: Dict, url: str) -> Optional[str]:
-    extrinsic = known_artifacts.get("extrinsic")
-    if not extrinsic:
-        return None
-
-    known_p_info = DebianPackageInfo.from_metadata(extrinsic["raw"], url=url)
-    dsc = [file for (name, file) in known_p_info.files.items() if name.endswith(".dsc")]
-
-    if len(dsc) != 1:
-        raise DscCountError(
-            f"Expected exactly one known .dsc file for package {known_p_info.name}, "
-            f"got {len(dsc)}"
-        )
-
-    return dsc[0].sha256
-
-
 def uid_to_person(uid: str) -> Dict[str, str]:
     """Convert an uid to a person suitable for insertion.
 

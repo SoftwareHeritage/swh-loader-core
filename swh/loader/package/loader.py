@@ -36,7 +36,6 @@ from swh.loader.core.loader import BaseLoader
 from swh.loader.exception import NotFound
 from swh.loader.package.utils import download
 from swh.model import from_disk
-from swh.model.collections import ImmutableDict
 from swh.model.hashutil import hash_to_hex
 from swh.model.model import (
     ExtID,
@@ -50,7 +49,6 @@ from swh.model.model import (
     Revision,
     Sha1Git,
     Snapshot,
-    TargetType,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.algos.snapshot import snapshot_get_latest
@@ -218,32 +216,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         """
         return snapshot_get_latest(self.storage, self.url)
-
-    def known_artifacts(
-        self, snapshot: Optional[Snapshot]
-    ) -> Dict[Sha1Git, Optional[ImmutableDict[str, object]]]:
-        """Retrieve the known releases/artifact for the origin.
-
-        Args
-            snapshot: snapshot for the visit
-
-        Returns:
-            Dict of keys revision id (bytes), values a metadata Dict.
-
-        """
-        if not snapshot:
-            return {}
-
-        # retrieve only revisions (e.g the alias we do not want here)
-        revs = [
-            rev.target
-            for rev in snapshot.branches.values()
-            if rev and rev.target_type == TargetType.REVISION
-        ]
-        known_revisions = self.storage.revision_get(revs)
-        return {
-            revision.id: revision.metadata for revision in known_revisions if revision
-        }
 
     def new_packageinfo_to_extid(self, p_info: TPackageInfo) -> Optional[PartialExtID]:
         return p_info.extid()
@@ -514,8 +486,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         try:
             last_snapshot = self.last_snapshot()
             logger.debug("last snapshot: %s", last_snapshot)
-            known_artifacts = self.known_artifacts(last_snapshot)
-            logger.debug("known artifacts: %s", known_artifacts)
         except Exception as e:
             logger.exception("Failed to get previous state for %s", self.url)
             sentry_sdk.capture_exception(e)
