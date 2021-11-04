@@ -10,9 +10,20 @@ from typing import Iterator, List, Optional, Tuple
 
 import attr
 
-from swh.loader.package.loader import BasePackageInfo, PackageLoader
+from swh.loader.package.loader import (
+    BasePackageInfo,
+    PackageLoader,
+    RawExtrinsicMetadataCore,
+)
 from swh.loader.package.utils import cached_method
-from swh.model.model import Person, Revision, RevisionType, Sha1Git
+from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    Person,
+    Revision,
+    RevisionType,
+    Sha1Git,
+)
 from swh.storage.interface import StorageInterface
 
 
@@ -103,6 +114,9 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
     def get_package_file(self, version: str) -> str:
         return f"{self.get_package_dir()}/{self.get_package_name(version)}/opam"
 
+    def get_metadata_authority(self):
+        return MetadataAuthority(type=MetadataAuthorityType.FORGE, url=self.opam_url)
+
     @cached_method
     def _compute_versions(self) -> List[str]:
         """Compute the versions using opam internals
@@ -171,24 +185,24 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         """Return the most recent version of the package as default."""
         return self._compute_versions()[-1]
 
-    def get_enclosed_single_line_field(self, field, version) -> Optional[str]:
+    def _opam_show_args(self, version: str):
         package_file = self.get_package_file(version)
-        result = opam_read(
-            [
-                "opam",
-                "show",
-                "--color",
-                "never",
-                "--safe",
-                "--normalise",
-                "--root",
-                self.opam_root,
-                "--file",
-                package_file,
-                "--field",
-                field,
-            ]
-        )
+
+        return [
+            "opam",
+            "show",
+            "--color",
+            "never",
+            "--safe",
+            "--normalise",
+            "--root",
+            self.opam_root,
+            "--file",
+            package_file,
+        ]
+
+    def get_enclosed_single_line_field(self, field, version) -> Optional[str]:
+        result = opam_read(self._opam_show_args(version) + ["--field", field])
 
         # Sanitize the result if any (remove trailing \n and enclosing ")
         return result.strip().strip('"') if result else None
@@ -210,8 +224,21 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         fullname = b"" if maintainer_field is None else str.encode(maintainer_field)
         committer = Person(fullname=fullname, name=None, email=None)
 
+        with Popen(self._opam_show_args(version) + ["--raw"], stdout=PIPE) as proc:
+            assert proc.stdout is not None
+            metadata = proc.stdout.read()
+
         yield self.get_package_name(version), OpamPackageInfo(
-            url=url, filename=None, author=author, committer=committer, version=version
+            url=url,
+            filename=None,
+            author=author,
+            committer=committer,
+            version=version,
+            directory_extrinsic_metadata=[
+                RawExtrinsicMetadataCore(
+                    metadata=metadata, format="opam-package-definition",
+                )
+            ],
         )
 
     def build_revision(
