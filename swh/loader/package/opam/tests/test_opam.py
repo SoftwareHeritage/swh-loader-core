@@ -127,11 +127,12 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
             ),
         },
     )
-    check_snapshot(expected_snapshot, swh_storage)
 
     assert_last_visit_matches(
         swh_storage, url, status="full", type="opam", snapshot=expected_snapshot_id
     )
+
+    check_snapshot(expected_snapshot, swh_storage)
 
     stats = get_stats(swh_storage)
 
@@ -195,11 +196,11 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
         },
     )
 
-    check_snapshot(expected_snapshot, swh_storage)
-
     assert_last_visit_matches(
         swh_storage, url, status="full", type="opam", snapshot=expected_snapshot_id
     )
+
+    check_snapshot(expected_snapshot, swh_storage)
 
 
 def test_opam_revision(tmpdir, requests_mock_datadir, swh_storage, datadir):

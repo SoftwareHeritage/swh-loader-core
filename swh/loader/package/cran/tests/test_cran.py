@@ -182,9 +182,11 @@ def test_cran_one_visit(swh_storage, requests_mock_datadir):
         "snapshot_id": SNAPSHOT.id.hex(),
     }
 
-    check_snapshot(SNAPSHOT, swh_storage)
+    assert_last_visit_matches(
+        swh_storage, origin_url, status="full", type="cran", snapshot=SNAPSHOT.id
+    )
 
-    assert_last_visit_matches(swh_storage, origin_url, status="full", type="cran")
+    check_snapshot(SNAPSHOT, swh_storage)
 
     visit_stats = get_stats(swh_storage)
     assert {
@@ -230,7 +232,9 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
 
     check_snapshot(SNAPSHOT, swh_storage)
 
-    assert_last_visit_matches(swh_storage, origin_url, status="full", type="cran")
+    assert_last_visit_matches(
+        swh_storage, origin_url, status="full", type="cran", snapshot=SNAPSHOT.id
+    )
 
     visit_stats = get_stats(swh_storage)
     assert {
@@ -252,7 +256,13 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
         "snapshot_id": expected_snapshot_id,
     }
 
-    assert_last_visit_matches(swh_storage, origin_url, status="full", type="cran")
+    assert_last_visit_matches(
+        swh_storage,
+        origin_url,
+        status="full",
+        type="cran",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
     visit_stats2 = get_stats(swh_storage)
     visit_stats["origin_visit"] += 1
@@ -360,5 +370,5 @@ def test_cran_fail_to_build_or_load_extrinsic_metadata(
         } == visit_stats
 
         assert_last_visit_matches(
-            swh_storage, origin_url, status="partial", type="cran"
+            swh_storage, origin_url, status="partial", type="cran", snapshot=SNAPSHOT.id
         )

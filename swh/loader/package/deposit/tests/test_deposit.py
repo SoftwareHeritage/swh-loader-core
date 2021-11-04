@@ -177,19 +177,13 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         "snapshot_id": expected_snapshot_id,
     }
 
-    assert_last_visit_matches(loader.storage, url, status="full", type="deposit")
-
-    stats = get_stats(loader.storage)
-    assert {
-        "content": 303,
-        "directory": 12,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
     revision_id_hex = "637318680351f5d78856d13264faebbd91efe9bb"
     revision_id = hash_to_bytes(revision_id_hex)
@@ -287,6 +281,18 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
 
     assert body == expected_body
 
+    stats = get_stats(loader.storage)
+    assert {
+        "content": 303,
+        "directory": 12,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 1,
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
+
 
 def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir):
     """Field dates should be se appropriately
@@ -306,7 +312,13 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
     }
-    assert_last_visit_matches(loader.storage, url, status="full", type="deposit")
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
     revision_id = "564d18943d71be80d0d73b43a77cfb205bcde96c"
     expected_snapshot = Snapshot(
@@ -479,4 +491,10 @@ def test_deposit_loading_ok_3(swh_storage, deposit_client, requests_mock_datadir
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
     }
-    assert_last_visit_matches(loader.storage, url, status="full", type="deposit")
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )

@@ -116,19 +116,13 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
         "snapshot_id": expected_snapshot_id,
     }
 
-    assert_last_visit_matches(swh_storage, URL, status="full", type="deb")
-
-    stats = get_stats(swh_storage)
-    assert {
-        "content": 42,
-        "directory": 2,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": 1,  # all artifacts under 1 revision
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
+    assert_last_visit_matches(
+        swh_storage,
+        URL,
+        status="full",
+        type="deb",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
@@ -141,6 +135,18 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
     )  # different than the previous loader as no release is done
 
     check_snapshot(expected_snapshot, swh_storage)
+
+    stats = get_stats(swh_storage)
+    assert {
+        "content": 42,
+        "directory": 2,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 1,  # all artifacts under 1 revision
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
 
 
 def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadir):
@@ -162,19 +168,13 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
         "snapshot_id": expected_snapshot_id,
     }
 
-    assert_last_visit_matches(swh_storage, URL, status="full", type="deb")
-
-    stats = get_stats(swh_storage)
-    assert {
-        "content": 42,
-        "directory": 2,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": 1,  # all artifacts under 1 revision
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
+    assert_last_visit_matches(
+        swh_storage,
+        URL,
+        status="full",
+        type="deb",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
@@ -188,10 +188,28 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
 
     check_snapshot(expected_snapshot, swh_storage)
 
+    stats = get_stats(swh_storage)
+    assert {
+        "content": 42,
+        "directory": 2,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 1,  # all artifacts under 1 revision
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
+
     # No change in between load
     actual_load_status2 = loader.load()
     assert actual_load_status2["status"] == "uneventful"
-    assert_last_visit_matches(swh_storage, URL, status="full", type="deb")
+    assert_last_visit_matches(
+        swh_storage,
+        URL,
+        status="full",
+        type="deb",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
     stats2 = get_stats(swh_storage)
     assert {
@@ -406,7 +424,13 @@ def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
         "snapshot_id": expected_snapshot_id,
     }
 
-    assert_last_visit_matches(swh_storage, URL, status="full", type="deb")
+    assert_last_visit_matches(
+        swh_storage,
+        URL,
+        status="full",
+        type="deb",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),

@@ -153,15 +153,6 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         "snapshot": 1,
     } == stats
 
-    expected_contents = map(hash_to_bytes, _expected_new_contents_first_visit)
-    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
-
-    expected_dirs = map(hash_to_bytes, _expected_new_directories_first_visit)
-    assert list(swh_storage.directory_missing(expected_dirs)) == []
-
-    expected_revs = map(hash_to_bytes, _expected_new_revisions_first_visit)
-    assert list(swh_storage.revision_missing(expected_revs)) == []
-
     expected_snapshot = Snapshot(
         id=expected_snapshot_first_visit_id,
         branches={
@@ -170,12 +161,21 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
             ),
             b"releases/0.1.0": SnapshotBranch(
                 target_type=TargetType.REVISION,
-                target=hash_to_bytes("44183488c0774ce3c957fa19ba695cf18a4a42b3"),
+                target=hash_to_bytes(list(_expected_new_revisions_first_visit)[0]),
             ),
         },
     )
 
     check_snapshot(expected_snapshot, swh_storage)
+
+    expected_contents = map(hash_to_bytes, _expected_new_contents_first_visit)
+    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
+
+    expected_dirs = map(hash_to_bytes, _expected_new_directories_first_visit)
+    assert list(swh_storage.directory_missing(expected_dirs)) == []
+
+    expected_revs = map(hash_to_bytes, _expected_new_revisions_first_visit)
+    assert list(swh_storage.revision_missing(expected_revs)) == []
 
 
 def test_archive_2_visits_without_change(swh_storage, requests_mock_datadir):

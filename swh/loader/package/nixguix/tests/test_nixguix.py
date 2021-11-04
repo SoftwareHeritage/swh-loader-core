@@ -536,14 +536,18 @@ def test_raise_exception(swh_storage, requests_mock_datadir, mocker):
         "snapshot_id": SNAPSHOT1.id.hex(),
     }
 
+    # The visit is partial because some artifact downloads failed
+    assert_last_visit_matches(
+        swh_storage,
+        sources_url,
+        status="partial",
+        type="nixguix",
+        snapshot=SNAPSHOT1.id,
+    )
+
     check_snapshot(SNAPSHOT1, storage=swh_storage)
 
     assert len(mock_download.mock_calls) == 2
-
-    # The visit is partial because some artifact downloads failed
-    assert_last_visit_matches(
-        swh_storage, sources_url, status="partial", type="nixguix"
-    )
 
 
 def test_load_nixguix_one_common_artifact_from_other_loader(
@@ -574,7 +578,11 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
     assert actual_load_status["snapshot_id"] == expected_snapshot_id  # noqa
 
     assert_last_visit_matches(
-        archive_loader.storage, gnu_url, status="full", type="tar"
+        archive_loader.storage,
+        gnu_url,
+        status="full",
+        type="tar",
+        snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
     # 2. Then ingest with the nixguix loader which lists the same artifact within its
@@ -599,8 +607,15 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
     actual_load_status2 = loader.load()
     assert actual_load_status2["status"] == "eventful"
 
-    assert_last_visit_matches(swh_storage, sources_url, status="full", type="nixguix")
-
     snapshot_id = actual_load_status2["snapshot_id"]
+
+    assert_last_visit_matches(
+        swh_storage,
+        sources_url,
+        status="full",
+        type="nixguix",
+        snapshot=hash_to_bytes(snapshot_id),
+    )
+
     snapshot = snapshot_get_all_branches(swh_storage, hash_to_bytes(snapshot_id))
     assert snapshot

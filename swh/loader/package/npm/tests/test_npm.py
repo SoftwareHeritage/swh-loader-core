@@ -318,29 +318,6 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         swh_storage, url, status="full", type="npm", snapshot=expected_snapshot_id
     )
 
-    stats = get_stats(swh_storage)
-
-    assert {
-        "content": len(_expected_new_contents_first_visit),
-        "directory": len(_expected_new_directories_first_visit),
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": len(_expected_new_revisions_first_visit),
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
-
-    contents = swh_storage.content_get(_expected_new_contents_first_visit)
-    count = sum(0 if content is None else 1 for content in contents)
-    assert count == len(_expected_new_contents_first_visit)
-
-    assert (
-        list(swh_storage.directory_missing(_expected_new_directories_first_visit)) == []
-    )
-
-    assert list(swh_storage.revision_missing(_expected_new_revisions_first_visit)) == []
-
     versions = [
         ("0.0.2", "d8a1c7474d2956ac598a19f0f27d52f7015f117e"),
         ("0.0.3", "5f9eb78af37ffd12949f235e86fac04898f9f72a"),
@@ -363,6 +340,16 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         },
     )
     check_snapshot(expected_snapshot, swh_storage)
+
+    contents = swh_storage.content_get(_expected_new_contents_first_visit)
+    count = sum(0 if content is None else 1 for content in contents)
+    assert count == len(_expected_new_contents_first_visit)
+
+    assert (
+        list(swh_storage.directory_missing(_expected_new_directories_first_visit)) == []
+    )
+
+    assert list(swh_storage.revision_missing(_expected_new_revisions_first_visit)) == []
 
     metadata_authority = MetadataAuthority(
         type=MetadataAuthorityType.FORGE, url="https://npmjs.com/",
@@ -396,6 +383,19 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         assert swh_storage.raw_extrinsic_metadata_get(
             directory_swhid, metadata_authority,
         ) == PagedResult(next_page_token=None, results=expected_metadata,)
+
+    stats = get_stats(swh_storage)
+
+    assert {
+        "content": len(_expected_new_contents_first_visit),
+        "directory": len(_expected_new_directories_first_visit),
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": len(_expected_new_revisions_first_visit),
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
 
 
 def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits):
@@ -475,19 +475,6 @@ def test_npm_loader_version_divergence(swh_storage):
         swh_storage, url, status="full", type="npm", snapshot=expected_snapshot_id
     )
 
-    stats = get_stats(swh_storage)
-
-    assert {  # 1 new releases artifacts
-        "content": 534,
-        "directory": 153,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": 2,
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
-
     expected_snapshot = Snapshot(
         id=expected_snapshot_id,
         branches={
@@ -505,6 +492,19 @@ def test_npm_loader_version_divergence(swh_storage):
         },
     )
     check_snapshot(expected_snapshot, swh_storage)
+
+    stats = get_stats(swh_storage)
+
+    assert {  # 1 new releases artifacts
+        "content": 534,
+        "directory": 153,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 2,
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
 
 
 def test_npm_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_datadir):
@@ -525,11 +525,11 @@ def test_npm_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_data
         "snapshot_id": expected_snapshot.id.hex(),
     }
 
-    check_snapshot(expected_snapshot, swh_storage)
-
     assert_last_visit_matches(
         swh_storage, url, status="full", type="npm", snapshot=expected_snapshot.id
     )
+
+    check_snapshot(expected_snapshot, swh_storage)
 
 
 def test_npm_artifact_with_no_upload_time(swh_storage, requests_mock_datadir):
@@ -550,11 +550,11 @@ def test_npm_artifact_with_no_upload_time(swh_storage, requests_mock_datadir):
         "snapshot_id": expected_snapshot.id.hex(),
     }
 
-    check_snapshot(expected_snapshot, swh_storage)
-
     assert_last_visit_matches(
         swh_storage, url, status="partial", type="npm", snapshot=expected_snapshot.id
     )
+
+    check_snapshot(expected_snapshot, swh_storage)
 
 
 def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
@@ -586,11 +586,12 @@ def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
             ),
         },
     )
-    check_snapshot(expected_snapshot, swh_storage)
 
     assert_last_visit_matches(
         swh_storage, url, status="full", type="npm", snapshot=expected_snapshot.id
     )
+
+    check_snapshot(expected_snapshot, swh_storage)
 
 
 def test_npm_no_artifact(swh_storage, requests_mock_datadir):

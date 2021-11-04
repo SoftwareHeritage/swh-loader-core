@@ -218,6 +218,12 @@ def test_pypi_no_release_artifact(swh_storage, requests_mock_datadir_missing_all
     assert actual_load_status["status"] == "uneventful"
     assert actual_load_status["snapshot_id"] is not None
 
+    empty_snapshot = Snapshot(branches={})
+
+    assert_last_visit_matches(
+        swh_storage, url, status="partial", type="pypi", snapshot=empty_snapshot.id
+    )
+
     stats = get_stats(swh_storage)
     assert {
         "content": 0,
@@ -229,8 +235,6 @@ def test_pypi_no_release_artifact(swh_storage, requests_mock_datadir_missing_all
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
-
-    assert_last_visit_matches(swh_storage, url, status="partial", type="pypi")
 
 
 def test_pypi_fail__load_snapshot(swh_storage, requests_mock_datadir):
@@ -247,6 +251,8 @@ def test_pypi_fail__load_snapshot(swh_storage, requests_mock_datadir):
         actual_load_status = loader.load()
         assert actual_load_status == {"status": "failed"}
 
+        assert_last_visit_matches(swh_storage, url, status="failed", type="pypi")
+
         stats = get_stats(loader.storage)
 
         assert {
@@ -259,8 +265,6 @@ def test_pypi_fail__load_snapshot(swh_storage, requests_mock_datadir):
             "skipped_content": 0,
             "snapshot": 0,
         } == stats
-
-        assert_last_visit_matches(swh_storage, url, status="failed", type="pypi")
 
 
 # problem during loading:
@@ -278,6 +282,8 @@ def test_pypi_release_with_traceback(swh_storage, requests_mock_datadir):
         actual_load_status = loader.load()
         assert actual_load_status == {"status": "failed"}
 
+        assert_last_visit_matches(swh_storage, url, status="failed", type="pypi")
+
         stats = get_stats(swh_storage)
 
         assert {
@@ -290,8 +296,6 @@ def test_pypi_release_with_traceback(swh_storage, requests_mock_datadir):
             "skipped_content": 0,
             "snapshot": 0,
         } == stats
-
-        assert_last_visit_matches(swh_storage, url, status="failed", type="pypi")
 
 
 # problem during loading: failure early enough in between swh contents...
@@ -375,18 +379,23 @@ def test_pypi_visit_with_missing_artifact(
         "snapshot_id": expected_snapshot_id.hex(),
     }
 
-    stats = get_stats(swh_storage)
+    assert_last_visit_matches(
+        swh_storage, url, status="partial", type="pypi", snapshot=expected_snapshot_id,
+    )
 
-    assert {
-        "content": 3,
-        "directory": 2,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
+    expected_snapshot = Snapshot(
+        id=hash_to_bytes(expected_snapshot_id),
+        branches={
+            b"releases/1.2.0": SnapshotBranch(
+                target=hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"),
+                target_type=TargetType.REVISION,
+            ),
+            b"HEAD": SnapshotBranch(
+                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
+            ),
+        },
+    )
+    check_snapshot(expected_snapshot, storage=swh_storage)
 
     expected_contents = map(
         hash_to_bytes,
@@ -417,23 +426,18 @@ def test_pypi_visit_with_missing_artifact(
     }
     assert list(swh_storage.revision_missing(expected_revs)) == []
 
-    expected_snapshot = Snapshot(
-        id=hash_to_bytes(expected_snapshot_id),
-        branches={
-            b"releases/1.2.0": SnapshotBranch(
-                target=hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"),
-                target_type=TargetType.REVISION,
-            ),
-            b"HEAD": SnapshotBranch(
-                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
-            ),
-        },
-    )
-    check_snapshot(expected_snapshot, storage=swh_storage)
+    stats = get_stats(swh_storage)
 
-    assert_last_visit_matches(
-        swh_storage, url, status="partial", type="pypi", snapshot=expected_snapshot_id,
-    )
+    assert {
+        "content": 3,
+        "directory": 2,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 1,
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
 
 
 def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
@@ -449,6 +453,28 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
     }
+
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot_id
+    )
+
+    expected_snapshot = Snapshot(
+        id=expected_snapshot_id,
+        branches={
+            b"releases/1.1.0": SnapshotBranch(
+                target=hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571"),
+                target_type=TargetType.REVISION,
+            ),
+            b"releases/1.2.0": SnapshotBranch(
+                target=hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"),
+                target_type=TargetType.REVISION,
+            ),
+            b"HEAD": SnapshotBranch(
+                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
+            ),
+        },
+    )
+    check_snapshot(expected_snapshot, swh_storage)
 
     stats = get_stats(swh_storage)
     assert {
@@ -499,28 +525,6 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
     }
     assert list(swh_storage.revision_missing(expected_revs)) == []
 
-    expected_snapshot = Snapshot(
-        id=expected_snapshot_id,
-        branches={
-            b"releases/1.1.0": SnapshotBranch(
-                target=hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571"),
-                target_type=TargetType.REVISION,
-            ),
-            b"releases/1.2.0": SnapshotBranch(
-                target=hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"),
-                target_type=TargetType.REVISION,
-            ),
-            b"HEAD": SnapshotBranch(
-                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
-            ),
-        },
-    )
-    check_snapshot(expected_snapshot, swh_storage)
-
-    assert_last_visit_matches(
-        swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot_id
-    )
-
 
 def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir):
     """Multiple visits with no changes results in 1 same snapshot
@@ -539,19 +543,6 @@ def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir)
         swh_storage, url, status="full", type="pypi", snapshot=snapshot_id
     )
 
-    stats = get_stats(swh_storage)
-
-    assert {
-        "content": 6,
-        "directory": 4,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": 2,
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
-
     expected_snapshot = Snapshot(
         id=snapshot_id,
         branches={
@@ -569,6 +560,19 @@ def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir)
         },
     )
     check_snapshot(expected_snapshot, swh_storage)
+
+    stats = get_stats(swh_storage)
+
+    assert {
+        "content": 6,
+        "directory": 4,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 2,
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
 
     actual_load_status2 = loader.load()
     assert actual_load_status2 == {
@@ -637,6 +641,33 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
         swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot_id2
     )
 
+    expected_snapshot = Snapshot(
+        id=expected_snapshot_id2,
+        branches={
+            b"releases/1.1.0": SnapshotBranch(
+                target=hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571"),
+                target_type=TargetType.REVISION,
+            ),
+            b"releases/1.2.0": SnapshotBranch(
+                target=hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"),
+                target_type=TargetType.REVISION,
+            ),
+            b"releases/1.3.0": SnapshotBranch(
+                target=hash_to_bytes("51247143b01445c9348afa9edfae31bf7c5d86b1"),
+                target_type=TargetType.REVISION,
+            ),
+            b"HEAD": SnapshotBranch(
+                target=b"releases/1.3.0", target_type=TargetType.ALIAS,
+            ),
+        },
+    )
+
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot.id
+    )
+
+    check_snapshot(expected_snapshot, swh_storage)
+
     assert {
         "content": 6 + 1,  # 1 more content
         "directory": 4 + 2,  # 2 more directories
@@ -692,33 +723,6 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
 
     assert list(swh_storage.revision_missing(expected_revs)) == []
 
-    expected_snapshot = Snapshot(
-        id=expected_snapshot_id2,
-        branches={
-            b"releases/1.1.0": SnapshotBranch(
-                target=hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571"),
-                target_type=TargetType.REVISION,
-            ),
-            b"releases/1.2.0": SnapshotBranch(
-                target=hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"),
-                target_type=TargetType.REVISION,
-            ),
-            b"releases/1.3.0": SnapshotBranch(
-                target=hash_to_bytes("51247143b01445c9348afa9edfae31bf7c5d86b1"),
-                target_type=TargetType.REVISION,
-            ),
-            b"HEAD": SnapshotBranch(
-                target=b"releases/1.3.0", target_type=TargetType.ALIAS,
-            ),
-        },
-    )
-
-    check_snapshot(expected_snapshot, swh_storage)
-
-    assert_last_visit_matches(
-        swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot.id
-    )
-
     urls = [
         m.url
         for m in requests_mock_datadir_visits.request_history
@@ -753,6 +757,10 @@ def test_pypi_visit_1_release_with_2_artifacts(swh_storage, requests_mock_datadi
         "snapshot_id": expected_snapshot_id.hex(),
     }
 
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot_id
+    )
+
     expected_snapshot = Snapshot(
         id=expected_snapshot_id,
         branches={
@@ -767,10 +775,6 @@ def test_pypi_visit_1_release_with_2_artifacts(swh_storage, requests_mock_datadi
         },
     )
     check_snapshot(expected_snapshot, swh_storage)
-
-    assert_last_visit_matches(
-        swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot.id
-    )
 
 
 def test_pypi_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_datadir):
@@ -789,11 +793,12 @@ def test_pypi_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_dat
 
     # no branch as one artifact without any intrinsic metadata
     expected_snapshot = Snapshot(id=expected_snapshot_id, branches={})
-    check_snapshot(expected_snapshot, swh_storage)
 
     assert_last_visit_matches(
         swh_storage, url, status="full", type="pypi", snapshot=expected_snapshot.id
     )
+
+    check_snapshot(expected_snapshot, swh_storage)
 
 
 def test_pypi_origin_not_found(swh_storage, requests_mock_datadir):
