@@ -397,35 +397,6 @@ def test_pypi_visit_with_missing_artifact(
     )
     check_snapshot(expected_snapshot, storage=swh_storage)
 
-    expected_contents = map(
-        hash_to_bytes,
-        [
-            "405859113963cb7a797642b45f171d6360425d16",
-            "e5686aa568fdb1d19d7f1329267082fe40482d31",
-            "83ecf6ec1114fd260ca7a833a2d165e71258c338",
-        ],
-    )
-
-    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
-
-    expected_dirs = map(
-        hash_to_bytes,
-        [
-            "b178b66bd22383d5f16f4f5c923d39ca798861b4",
-            "c3a58f8b57433a4b56caaa5033ae2e0931405338",
-        ],
-    )
-
-    assert list(swh_storage.directory_missing(expected_dirs)) == []
-
-    # {revision hash: directory hash}
-    expected_revs = {
-        hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"): hash_to_bytes(
-            "b178b66bd22383d5f16f4f5c923d39ca798861b4"
-        ),  # noqa
-    }
-    assert list(swh_storage.revision_missing(expected_revs)) == []
-
     stats = get_stats(swh_storage)
 
     assert {
@@ -487,43 +458,6 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
-
-    expected_contents = map(
-        hash_to_bytes,
-        [
-            "a61e24cdfdab3bb7817f6be85d37a3e666b34566",
-            "938c33483285fd8ad57f15497f538320df82aeb8",
-            "a27576d60e08c94a05006d2e6d540c0fdb5f38c8",
-            "405859113963cb7a797642b45f171d6360425d16",
-            "e5686aa568fdb1d19d7f1329267082fe40482d31",
-            "83ecf6ec1114fd260ca7a833a2d165e71258c338",
-        ],
-    )
-
-    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
-
-    expected_dirs = map(
-        hash_to_bytes,
-        [
-            "05219ba38bc542d4345d5638af1ed56c7d43ca7d",
-            "cf019eb456cf6f78d8c4674596f1c9a97ece8f44",
-            "b178b66bd22383d5f16f4f5c923d39ca798861b4",
-            "c3a58f8b57433a4b56caaa5033ae2e0931405338",
-        ],
-    )
-
-    assert list(swh_storage.directory_missing(expected_dirs)) == []
-
-    # {revision hash: directory hash}
-    expected_revs = {
-        hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571"): hash_to_bytes(
-            "05219ba38bc542d4345d5638af1ed56c7d43ca7d"
-        ),  # noqa
-        hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"): hash_to_bytes(
-            "b178b66bd22383d5f16f4f5c923d39ca798861b4"
-        ),  # noqa
-    }
-    assert list(swh_storage.revision_missing(expected_revs)) == []
 
 
 def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir):
@@ -678,50 +612,6 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
         "skipped_content": 0,
         "snapshot": 1 + 1,  # 1 more snapshot
     } == visit2_stats
-
-    expected_contents = map(
-        hash_to_bytes,
-        [
-            "a61e24cdfdab3bb7817f6be85d37a3e666b34566",
-            "938c33483285fd8ad57f15497f538320df82aeb8",
-            "a27576d60e08c94a05006d2e6d540c0fdb5f38c8",
-            "405859113963cb7a797642b45f171d6360425d16",
-            "e5686aa568fdb1d19d7f1329267082fe40482d31",
-            "83ecf6ec1114fd260ca7a833a2d165e71258c338",
-            "92689fa2b7fb4d4fc6fb195bf73a50c87c030639",
-        ],
-    )
-
-    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
-
-    expected_dirs = map(
-        hash_to_bytes,
-        [
-            "05219ba38bc542d4345d5638af1ed56c7d43ca7d",
-            "cf019eb456cf6f78d8c4674596f1c9a97ece8f44",
-            "b178b66bd22383d5f16f4f5c923d39ca798861b4",
-            "c3a58f8b57433a4b56caaa5033ae2e0931405338",
-            "e226e7e4ad03b4fc1403d69a18ebdd6f2edd2b3a",
-            "52604d46843b898f5a43208045d09fcf8731631b",
-        ],
-    )
-
-    assert list(swh_storage.directory_missing(expected_dirs)) == []
-
-    # {revision hash: directory hash}
-    expected_revs = {
-        hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571"): hash_to_bytes(
-            "05219ba38bc542d4345d5638af1ed56c7d43ca7d"
-        ),  # noqa
-        hash_to_bytes("e445da4da22b31bfebb6ffc4383dbf839a074d21"): hash_to_bytes(
-            "b178b66bd22383d5f16f4f5c923d39ca798861b4"
-        ),  # noqa
-        hash_to_bytes("51247143b01445c9348afa9edfae31bf7c5d86b1"): hash_to_bytes(
-            "e226e7e4ad03b4fc1403d69a18ebdd6f2edd2b3a"
-        ),  # noqa
-    }
-
-    assert list(swh_storage.revision_missing(expected_revs)) == []
 
     urls = [
         m.url

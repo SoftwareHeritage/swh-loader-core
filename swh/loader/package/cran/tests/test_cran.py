@@ -224,7 +224,6 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
     # first visit
     actual_load_status = loader.load()
 
-    expected_snapshot_id = "920adcccc78aaeedd3cfa4459dd900d8c3431a21"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": SNAPSHOT.id.hex(),
@@ -253,15 +252,11 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
 
     assert actual_load_status2 == {
         "status": "uneventful",
-        "snapshot_id": expected_snapshot_id,
+        "snapshot_id": SNAPSHOT.id.hex(),
     }
 
     assert_last_visit_matches(
-        swh_storage,
-        origin_url,
-        status="full",
-        type="cran",
-        snapshot=hash_to_bytes(expected_snapshot_id),
+        swh_storage, origin_url, status="full", type="cran", snapshot=SNAPSHOT.id,
     )
 
     visit_stats2 = get_stats(swh_storage)
