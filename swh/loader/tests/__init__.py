@@ -44,6 +44,7 @@ def assert_last_visit_matches(
         the visit status for further check during the remaining part of the test.
 
     """
+    __tracebackhide__ = True  # Hide from pytest tracebacks on failure
     visit_status = origin_get_latest_visit_status(storage, url)
     assert visit_status is not None, f"Origin {url} has no visits"
     if type:
@@ -136,6 +137,7 @@ def check_snapshot(
         needed.
 
     """
+    __tracebackhide__ = True  # Hide from pytest tracebacks on failure
     if not isinstance(expected_snapshot, Snapshot):
         raise AssertionError(
             f"argument 'expected_snapshot' must be a snapshot: {expected_snapshot!r}"
