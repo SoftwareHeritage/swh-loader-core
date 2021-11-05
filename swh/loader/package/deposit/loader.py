@@ -65,7 +65,7 @@ class DepositPackageInfo(BasePackageInfo):
         # Note:
         # `date` and `committer_date` are always transmitted by the deposit read api
         # which computes itself the values. The loader needs to use those to create the
-        # revision.
+        # release.
 
         all_metadata_raw: List[str] = metadata["metadata_raw"]
         raw_info = {
@@ -270,19 +270,19 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             logger.debug("branches: %s", branches)
             if not branches:
                 return r
-            rev_id = branches[b"HEAD"].target
+            rel_id = branches[b"HEAD"].target
 
-            revision = self.storage.revision_get([rev_id])[0]
-            if not revision:
+            release = self.storage.release_get([rel_id])[0]
+            if not release:
                 return r
 
             # update the deposit's status to success with its
-            # revision-id and directory-id
+            # release-id and directory-id
             self.client.status_update(
                 self.deposit_id,
                 status="done",
-                revision_id=hash_to_hex(rev_id),
-                directory_id=hash_to_hex(revision.directory),
+                release_id=hash_to_hex(rel_id),
+                directory_id=hash_to_hex(release.target),
                 snapshot_id=r["snapshot_id"],
                 origin_url=self.url,
             )
@@ -358,7 +358,7 @@ class ApiClient:
         deposit_id: Union[int, str],
         status: str,
         errors: Optional[List[str]] = None,
-        revision_id: Optional[str] = None,
+        release_id: Optional[str] = None,
         directory_id: Optional[str] = None,
         snapshot_id: Optional[str] = None,
         origin_url: Optional[str] = None,
@@ -369,8 +369,8 @@ class ApiClient:
         """
         url = f"{self.base_url}/{deposit_id}/update/"
         payload: Dict[str, Any] = {"status": status}
-        if revision_id:
-            payload["revision_id"] = revision_id
+        if release_id:
+            payload["release_id"] = release_id
         if directory_id:
             payload["directory_id"] = directory_id
         if snapshot_id:

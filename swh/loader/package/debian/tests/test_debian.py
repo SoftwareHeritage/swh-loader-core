@@ -110,7 +110,7 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "3b6b66e6ee4e7d903a379a882684a2a50480c0b4"
+    expected_snapshot_id = "8bc5d12e2443ab216fdd2f969b25b39e96c20fef"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -128,8 +128,8 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("2807f5b3f84368b4889a9ae827fe85854ffecf07"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("5a99736512d381700c5f54d7fdd6b46e136535a2"),
             )
         },
     )  # different than the previous loader as no release is done
@@ -142,8 +142,8 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
         "directory": 2,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 1,  # all artifacts under 1 revision
+        "release": 1,  # all artifacts under 1 release
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -162,7 +162,7 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = "3b6b66e6ee4e7d903a379a882684a2a50480c0b4"
+    expected_snapshot_id = "8bc5d12e2443ab216fdd2f969b25b39e96c20fef"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -180,8 +180,8 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("2807f5b3f84368b4889a9ae827fe85854ffecf07"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("5a99736512d381700c5f54d7fdd6b46e136535a2"),
             )
         },
     )  # different than the previous loader as no release is done
@@ -194,8 +194,8 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
         "directory": 2,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 1,  # all artifacts under 1 revision
+        "release": 1,  # all artifacts under 1 release
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -217,8 +217,8 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
         "directory": 2 + 0,
         "origin": 1,
         "origin_visit": 1 + 1,  # a new visit occurred
-        "release": 0,
-        "revision": 1,
+        "release": 1,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,  # same snapshot across 2 visits
     } == stats2
@@ -418,7 +418,7 @@ def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "defc19021187f3727293121fcf6c5c82cb923604"
+    expected_snapshot_id = "3d26243c91eb084c350627a5a102cfe039c5b92a"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -436,12 +436,12 @@ def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("2807f5b3f84368b4889a9ae827fe85854ffecf07"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("5a99736512d381700c5f54d7fdd6b46e136535a2"),
             ),
             b"releases/buster/contrib/0.7.2-4": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("8224139c274c984147ef4b09aa0e462c55a10bd3"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("192fc7ccce80f64a0d3cf33d379133af067ec721"),
             ),
         },
     )

@@ -110,20 +110,19 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("4e4bf977312460329d7f769b0be89937c9827efc")
+    expected_snapshot_id = hash_to_bytes("50b5961c27dd4f8b138acce8bac4f90d1e33081f")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
     }
-
-    target = b"S\x8c\x8aq\xdcy\xa4/0\xa0\xb2j\xeb\xc1\x16\xad\xce\x06\xeaV"
 
     expected_snapshot = Snapshot(
         id=expected_snapshot_id,
         branches={
             b"HEAD": SnapshotBranch(target=b"agrid.0.1", target_type=TargetType.ALIAS,),
             b"agrid.0.1": SnapshotBranch(
-                target=target, target_type=TargetType.REVISION,
+                target=hash_to_bytes("efcb9ef9d0f2a85312463251732b42f9e45a5c12"),
+                target_type=TargetType.RELEASE,
             ),
         },
     )
@@ -141,8 +140,8 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
         "directory": 8,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
+        "release": 1,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -168,7 +167,7 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("1b49be175dcf17c0f568bcd7aac3d4faadc41249")
+    expected_snapshot_id = hash_to_bytes("f0a974e47999e74d323f1fb9604fde72527bda28")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -181,17 +180,16 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
                 target=b"directories.0.3", target_type=TargetType.ALIAS,
             ),
             b"directories.0.1": SnapshotBranch(
-                target=b"N\x92jA\xb2\x892\xeb\xcc\x9c\xa9\xb3\xea\xa7kz\xb08\xa6V",
-                target_type=TargetType.REVISION,
+                target=hash_to_bytes("1f839cb1f4720d6b33fdd856e3ff1119497979d9"),
+                target_type=TargetType.RELEASE,
             ),
             b"directories.0.2": SnapshotBranch(
-                target=b"yj\xc9\x1a\x8f\xe0\xaa\xff[\x88\xffz"
-                b"\x91C\xcc\x96\xb7\xd4\xf65",
-                target_type=TargetType.REVISION,
+                target=hash_to_bytes("4133834d966381804347efbc41e35dd2bdd48962"),
+                target_type=TargetType.RELEASE,
             ),
             b"directories.0.3": SnapshotBranch(
-                target=b"hA \xc4\xb5\x18A8\xb8C\x12\xa3\xa5T\xb7/v\x85X\xcb",
-                target_type=TargetType.REVISION,
+                target=hash_to_bytes("2f20cabfbacfe447b80dc2a4eb14d461775100c8"),
+                target_type=TargetType.RELEASE,
             ),
         },
     )
@@ -203,7 +201,7 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
     check_snapshot(expected_snapshot, swh_storage)
 
 
-def test_opam_revision(tmpdir, requests_mock_datadir, swh_storage, datadir):
+def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
 
     opam_url = f"file://{datadir}/fake_opam_repo"
     opam_root = tmpdir
@@ -224,7 +222,7 @@ def test_opam_revision(tmpdir, requests_mock_datadir, swh_storage, datadir):
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("398df115b9feb2f463efd21941d69b7d59cd9025")
+    expected_snapshot_id = hash_to_bytes("987425c6fe94d3972c4c4e97ee27a6a7c8b68e82")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -253,14 +251,29 @@ def test_opam_revision(tmpdir, requests_mock_datadir, swh_storage, datadir):
     assert branch_name == expected_branch_name
     assert package_info == expected_package_info
 
-    revision_id = b"o\xad\x7f=\x07\xbb\xaah\xdbI(\xb0'\x10z\xfc\xff\x06x\x1b"
+    release_id = hash_to_bytes("8d0612cdf172e5dff3d876ca2bbc0f6003cc36cc")
 
-    revision = swh_storage.revision_get([revision_id])[0]
+    expected_snapshot = Snapshot(
+        id=hash_to_bytes(actual_load_status["snapshot_id"]),
+        branches={
+            b"HEAD": SnapshotBranch(target=b"ocb.0.1", target_type=TargetType.ALIAS,),
+            b"ocb.0.1": SnapshotBranch(
+                target=release_id, target_type=TargetType.RELEASE,
+            ),
+        },
+    )
 
-    assert revision is not None
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="opam", snapshot=expected_snapshot.id
+    )
 
-    assert revision.author == expected_package_info.author
-    assert revision.committer == expected_package_info.committer
+    check_snapshot(expected_snapshot, swh_storage)
+
+    release = swh_storage.release_get([release_id])[0]
+
+    assert release is not None
+
+    assert release.author == expected_package_info.author
 
 
 def test_opam_metadata(tmpdir, requests_mock_datadir, swh_storage, datadir):
@@ -285,16 +298,32 @@ def test_opam_metadata(tmpdir, requests_mock_datadir, swh_storage, datadir):
 
     assert actual_load_status["status"] == "eventful"
 
-    expected_revision_id = b"o\xad\x7f=\x07\xbb\xaah\xdbI(\xb0'\x10z\xfc\xff\x06x\x1b"
+    expected_release_id = hash_to_bytes("8d0612cdf172e5dff3d876ca2bbc0f6003cc36cc")
 
-    revision = swh_storage.revision_get([expected_revision_id])[0]
-    assert revision is not None
+    expected_snapshot = Snapshot(
+        id=hash_to_bytes(actual_load_status["snapshot_id"]),
+        branches={
+            b"HEAD": SnapshotBranch(target=b"ocb.0.1", target_type=TargetType.ALIAS,),
+            b"ocb.0.1": SnapshotBranch(
+                target=expected_release_id, target_type=TargetType.RELEASE,
+            ),
+        },
+    )
 
-    revision_swhid = CoreSWHID(
-        object_type=ObjectType.REVISION, object_id=expected_revision_id
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="opam", snapshot=expected_snapshot.id
+    )
+
+    check_snapshot(expected_snapshot, swh_storage)
+
+    release = swh_storage.release_get([expected_release_id])[0]
+    assert release is not None
+
+    release_swhid = CoreSWHID(
+        object_type=ObjectType.RELEASE, object_id=expected_release_id
     )
     directory_swhid = ExtendedSWHID(
-        object_type=ExtendedObjectType.DIRECTORY, object_id=revision.directory
+        object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
         type=MetadataAuthorityType.FORGE, url=opam_url,
@@ -310,7 +339,7 @@ def test_opam_metadata(tmpdir, requests_mock_datadir, swh_storage, datadir):
             format="opam-package-definition",
             metadata=OCB_METADATA,
             origin=url,
-            revision=revision_swhid,
+            release=release_swhid,
         )
     ]
     assert swh_storage.raw_extrinsic_metadata_get(

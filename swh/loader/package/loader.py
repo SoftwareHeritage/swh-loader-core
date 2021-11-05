@@ -26,6 +26,7 @@ from typing import (
     Tuple,
     TypeVar,
 )
+import warnings
 
 import attr
 from requests.exceptions import ContentDecodingError
@@ -42,14 +43,18 @@ from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
+)
+from swh.model.model import (
     Origin,
     OriginVisit,
     OriginVisitStatus,
     RawExtrinsicMetadata,
+    Release,
     Revision,
     Sha1Git,
     Snapshot,
 )
+from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.algos.snapshot import snapshot_get_latest
 from swh.storage.interface import StorageInterface
@@ -118,7 +123,7 @@ class BasePackageInfo:
     """:term:`extrinsic metadata` collected by the loader, that will be attached to the
     loaded directory and added to the Metadata storage."""
 
-    # TODO: add support for metadata for revisions and contents
+    # TODO: add support for metadata for releases and contents
 
     def extid(self) -> Optional[PartialExtID]:
         """Returns a unique intrinsic identifier of this package info,
@@ -192,15 +197,39 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         """Build the revision from the archive metadata (extrinsic
         artifact metadata) and the intrinsic metadata.
 
+        This method is deprecated, :meth:`build_release` should be implemented instead.
+
         Args:
             p_info: Package information
             uncompressed_path: Artifact uncompressed path on disk
-
-        Returns:
-            Revision object
-
         """
         raise NotImplementedError("build_revision")
+
+    def build_release(
+        self,
+        version: str,
+        p_info: TPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
+        """Build the release from the archive metadata (extrinsic
+        artifact metadata) and the intrinsic metadata.
+
+        Args:
+            p_info: Package information
+            uncompressed_path: Artifact uncompressed path on disk
+        """
+        warnings.warn(
+            f"{self.get_loader_name()} is missing a build_release() method. "
+            f"Falling back to `build_revision` + automatic conversion to release.",
+            DeprecationWarning,
+        )
+
+        rev = self.build_revision(p_info, uncompressed_path, directory)
+        if rev is None:
+            return None
+        else:
+            return rev2rel(rev, version)
 
     def get_default_version(self) -> str:
         """Retrieve the latest release version if any.
@@ -245,33 +274,34 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         return known_extids
 
-    def resolve_revision_from_extids(
+    def resolve_object_from_extids(
         self,
         known_extids: Dict[PartialExtID, List[CoreSWHID]],
         p_info: TPackageInfo,
-        revision_whitelist: Set[Sha1Git],
-    ) -> Optional[Sha1Git]:
-        """Resolve the revision from known ExtIDs and a package info object.
+        whitelist: Set[Sha1Git],
+    ) -> Optional[CoreSWHID]:
+        """Resolve the revision/release from known ExtIDs and a package info object.
 
         If the artifact has already been downloaded, this will return the
-        existing revision targeting that uncompressed artifact directory.
+        existing release (or revision) targeting that uncompressed artifact directory.
         Otherwise, this returns None.
 
         Args:
             known_extids: Dict built from a list of ExtID, with the target as value
             p_info: Package information
-            revision_whitelist: Any ExtID with target not in this set is filtered out
+            whitelist: Any ExtID with target not in this set is filtered out
 
         Returns:
-            None or revision identifier
+            None or release/revision SWHID
 
         """
         new_extid = p_info.extid()
         if new_extid is None:
             return None
 
+        extid_targets = []
         for extid_target in known_extids.get(new_extid, []):
-            if extid_target.object_id not in revision_whitelist:
+            if extid_target.object_id not in whitelist:
                 # There is a known ExtID for this package, but its target is not
                 # in the snapshot.
                 # This can happen for three reasons:
@@ -290,22 +320,43 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 #
                 # In case of 1, we must actually load the package now,
                 # so let's do it.
-                # TODO: detect when we are in case 3 using revision_missing instead
-                # of the snapshot.
+                # TODO: detect when we are in case 3 using release_missing
+                # or revision_missing instead of the snapshot.
                 continue
-            elif extid_target.object_type != ObjectType.REVISION:
-                # We only support revisions for now.
+            elif extid_target.object_type in (ObjectType.RELEASE, ObjectType.REVISION):
+                extid_targets.append(extid_target)
+            else:
                 # Note that this case should never be reached unless there is a
                 # collision between a revision hash and some non-revision object's
                 # hash, but better safe than sorry.
                 logger.warning(
-                    "%s is in the revision whitelist, but is not a revision.",
+                    "%s is in the whitelist, but is not a revision/release.",
                     hash_to_hex(extid_target.object_type),
                 )
-                continue
-            return extid_target.object_id
 
-        return None
+        if extid_targets:
+            # This is a known package version, as we have an extid to reference it.
+            # Let's return one of them.
+
+            # If there is a release extid, return it.
+            release_extid_targets = [
+                extid_target
+                for extid_target in extid_targets
+                if extid_target.object_type == ObjectType.RELEASE
+            ]
+            if release_extid_targets:
+                assert len(release_extid_targets) == 1, release_extid_targets
+                return release_extid_targets[0]
+
+            # If there is no release extid (ie. if the package was only loaded with
+            # older versions of this loader, which produced revision objects instead
+            # of releases), return a revision extid.
+            assert len(extid_targets) == 1, extid_targets
+            assert extid_targets[0].object_type == ObjectType.REVISION, extid_targets
+            return extid_targets[0]
+        else:
+            # No target found (this is probably a new package version)
+            return None
 
     def download_package(
         self, p_info: TPackageInfo, tmpdir: str
@@ -542,7 +593,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             }
 
         new_extids: Set[ExtID] = set()
-        tmp_revisions: Dict[str, List[Tuple[str, Sha1Git]]] = {
+        tmp_releases: Dict[str, List[Tuple[str, Sha1Git]]] = {
             version: [] for version in versions
         }
         errors = []
@@ -550,20 +601,39 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             logger.debug("package_info: %s", p_info)
 
             # Check if the package was already loaded, using its ExtID
-            revision_id = self.resolve_revision_from_extids(
+            swhid = self.resolve_object_from_extids(
                 known_extids, p_info, last_snapshot_targets
             )
 
-            if revision_id is None:
-                # No matching revision found in the last snapshot, load it.
+            if swhid is not None and swhid.object_type == ObjectType.REVISION:
+                # This package was already loaded, but by an older version
+                # of this loader, which produced revisions instead of releases.
+                # Let's fetch the revision's data, and "upgrade" it into a release.
+                (rev,) = self.storage.revision_get([swhid.object_id])
+                if not rev:
+                    logger.error(
+                        "Failed to upgrade branch %s from revision to "
+                        "release, %s is missing from the storage. "
+                        "Falling back to re-loading from the origin.",
+                        branch_name,
+                        swhid,
+                    )
+            else:
+                rev = None
+
+            if swhid is None or (swhid.object_type == ObjectType.REVISION and not rev):
+                # No matching revision or release found in the last snapshot, load it.
+
+                release_id = None
+
                 try:
-                    res = self._load_revision(p_info, origin)
+                    res = self._load_release(version, p_info, origin)
                     if res:
-                        (revision_id, directory_id) = res
-                        assert revision_id
+                        (release_id, directory_id) = res
+                        assert release_id
                         assert directory_id
                         self._load_extrinsic_directory_metadata(
-                            p_info, revision_id, directory_id
+                            p_info, release_id, directory_id
                         )
                     self.storage.flush()
                     status_load = "eventful"
@@ -577,26 +647,49 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     errors.append(f"{error}: {e}")
                     continue
 
-                if revision_id is None:
+                if release_id is None:
                     continue
 
+                add_extid = True
+            elif swhid.object_type == ObjectType.REVISION:
+                # If 'rev' was None, the previous block would have run.
+                assert rev is not None
+                rel = rev2rel(rev, version)
+                self.storage.release_add([rel])
+                logger.debug("Upgraded %s to %s", swhid, rel.swhid())
+                release_id = rel.id
+
+                # Create a new extid for this package, so the next run of this loader
+                # will be able to find the new release, and use it (instead of the
+                # old revision)
+                add_extid = True
+            elif swhid.object_type == ObjectType.RELEASE:
+                # This package was already loaded, nothing to do.
+                release_id = swhid.object_id
+                add_extid = False
+            else:
+                assert False, f"Unexpected object type: {swhid}"
+
+            assert release_id is not None
+
+            if add_extid:
                 partial_extid = p_info.extid()
                 if partial_extid is not None:
                     (extid_type, extid) = partial_extid
-                    revision_swhid = CoreSWHID(
-                        object_type=ObjectType.REVISION, object_id=revision_id
+                    release_swhid = CoreSWHID(
+                        object_type=ObjectType.RELEASE, object_id=release_id
                     )
                     new_extids.add(
-                        ExtID(extid_type=extid_type, extid=extid, target=revision_swhid)
+                        ExtID(extid_type=extid_type, extid=extid, target=release_swhid)
                     )
 
-            tmp_revisions[version].append((branch_name, revision_id))
+            tmp_releases[version].append((branch_name, release_id))
 
         if load_exceptions:
             status_visit = "partial"
 
-        if not tmp_revisions:
-            # We could not load any revisions; fail completely
+        if not tmp_releases:
+            # We could not load any releases; fail completely
             return self.finalize_visit(
                 snapshot=snapshot,
                 visit=visit,
@@ -615,7 +708,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             logger.debug("extra branches: %s", extra_branches)
 
             snapshot = self._load_snapshot(
-                default_version, tmp_revisions, extra_branches
+                default_version, tmp_releases, extra_branches
             )
             self.storage.flush()
         except Exception as e:
@@ -683,15 +776,15 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         return (uncompressed_path, directory)
 
-    def _load_revision(
-        self, p_info: TPackageInfo, origin
+    def _load_release(
+        self, version: str, p_info: TPackageInfo, origin
     ) -> Optional[Tuple[Sha1Git, Sha1Git]]:
-        """Does all the loading of a revision itself:
+        """Does all the loading of a release itself:
 
         * downloads a package and uncompresses it
         * loads it from disk
-        * adds contents, directories, and revision to self.storage
-        * returns (revision_id, directory_id)
+        * adds contents, directories, and release to self.storage
+        * returns (release_id, directory_id)
 
         Raises
             exception when unable to download or uncompress artifacts
@@ -703,54 +796,57 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             (uncompressed_path, directory) = self._load_directory(dl_artifacts, tmpdir)
 
             # FIXME: This should be release. cf. D409
-            revision = self.build_revision(
-                p_info, uncompressed_path, directory=directory.hash
+            release = self.build_release(
+                version, p_info, uncompressed_path, directory=directory.hash
             )
-            if not revision:
+            if not release:
                 # Some artifacts are missing intrinsic metadata
                 # skipping those
                 return None
 
         metadata = [metadata for (filepath, metadata) in dl_artifacts]
 
+        assert release.target is not None, release
+        assert release.target_type == ModelObjectType.DIRECTORY, release
+        metadata_target = ExtendedSWHID(
+            object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
+        )
         original_artifact_metadata = RawExtrinsicMetadata(
-            target=ExtendedSWHID(
-                object_type=ExtendedObjectType.DIRECTORY, object_id=revision.directory
-            ),
+            target=metadata_target,
             discovery_date=self.visit_date,
             authority=SWH_METADATA_AUTHORITY,
             fetcher=self.get_metadata_fetcher(),
             format="original-artifacts-json",
             metadata=json.dumps(metadata).encode(),
             origin=self.url,
-            revision=CoreSWHID(object_type=ObjectType.REVISION, object_id=revision.id),
+            release=release.swhid(),
         )
         self._load_metadata_objects([original_artifact_metadata])
 
-        logger.debug("Revision: %s", revision)
+        logger.debug("Release: %s", release)
 
-        self.storage.revision_add([revision])
+        self.storage.release_add([release])
         assert directory.hash
-        return (revision.id, directory.hash)
+        return (release.id, directory.hash)
 
     def _load_snapshot(
         self,
         default_version: str,
-        revisions: Dict[str, List[Tuple[str, bytes]]],
+        releases: Dict[str, List[Tuple[str, bytes]]],
         extra_branches: Dict[bytes, Mapping[str, Any]],
     ) -> Optional[Snapshot]:
-        """Build snapshot out of the current revisions stored and extra branches.
+        """Build snapshot out of the current releases stored and extra branches.
            Then load it in the storage.
 
         """
-        logger.debug("revisions: %s", revisions)
+        logger.debug("releases: %s", releases)
         # Build and load the snapshot
         branches = {}  # type: Dict[bytes, Mapping[str, Any]]
-        for version, branch_name_revisions in revisions.items():
-            if version == default_version and len(branch_name_revisions) == 1:
+        for version, branch_name_releases in releases.items():
+            if version == default_version and len(branch_name_releases) == 1:
                 # only 1 branch (no ambiguity), we can create an alias
                 # branch 'HEAD'
-                branch_name, _ = branch_name_revisions[0]
+                branch_name, _ = branch_name_releases[0]
                 # except for some corner case (deposit)
                 if branch_name != "HEAD":
                     branches[b"HEAD"] = {
@@ -758,9 +854,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                         "target": branch_name.encode("utf-8"),
                     }
 
-            for branch_name, target in branch_name_revisions:
+            for branch_name, target in branch_name_releases:
                 branches[branch_name.encode("utf-8")] = {
-                    "target_type": "revision",
+                    "target_type": "release",
                     "target": target,
                 }
 
@@ -886,7 +982,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         return metadata_objects
 
     def build_extrinsic_directory_metadata(
-        self, p_info: TPackageInfo, revision_id: Sha1Git, directory_id: Sha1Git,
+        self, p_info: TPackageInfo, release_id: Sha1Git, directory_id: Sha1Git,
     ) -> List[RawExtrinsicMetadata]:
         if not p_info.directory_extrinsic_metadata:
             # If this package loader doesn't write metadata, no need to require
@@ -910,8 +1006,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     format=item.format,
                     metadata=item.metadata,
                     origin=self.url,
-                    revision=CoreSWHID(
-                        object_type=ObjectType.REVISION, object_id=revision_id
+                    release=CoreSWHID(
+                        object_type=ObjectType.RELEASE, object_id=release_id
                     ),
                 )
             )
@@ -919,10 +1015,10 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         return metadata_objects
 
     def _load_extrinsic_directory_metadata(
-        self, p_info: TPackageInfo, revision_id: Sha1Git, directory_id: Sha1Git,
+        self, p_info: TPackageInfo, release_id: Sha1Git, directory_id: Sha1Git,
     ) -> None:
         metadata_objects = self.build_extrinsic_directory_metadata(
-            p_info, revision_id, directory_id
+            p_info, release_id, directory_id
         )
         self._load_metadata_objects(metadata_objects)
 
@@ -963,3 +1059,16 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             sentry_sdk.capture_exception(e)
             # No big deal, it just means the next visit will load the same versions
             # again.
+
+
+def rev2rel(rev: Revision, version: str) -> Release:
+    """Converts a revision to a release."""
+    return Release(
+        name=version.encode(),
+        message=rev.message,
+        target=rev.directory,
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=rev.synthetic,
+        author=rev.author,
+        date=rev.date,
+    )

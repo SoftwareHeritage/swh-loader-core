@@ -17,15 +17,14 @@ from swh.loader.package.npm.loader import (
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
-    MetadataAuthority,
-    MetadataAuthorityType,
-    MetadataFetcher,
     Person,
     RawExtrinsicMetadata,
     Snapshot,
     SnapshotBranch,
     TargetType,
 )
+from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
+from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.interface import PagedResult
 
@@ -279,15 +278,15 @@ _expected_new_directories_first_visit = normalize_hashes(
     ]
 )
 
-_expected_new_revisions_first_visit = normalize_hashes(
+_expected_new_releases_first_visit = normalize_hashes(
     {
-        "d8a1c7474d2956ac598a19f0f27d52f7015f117e": (
+        "d25e722a32c145b3eb88b416049dd35d27759a87": (
             "42753c0c2ab00c4501b552ac4671c68f3cf5aece"
         ),
-        "5f9eb78af37ffd12949f235e86fac04898f9f72a": (
+        "3522e846b97c0b8434c565fe891c0f082a357e5d": (
             "3370d20d6f96dc1c9e50f083e2134881db110f4f"
         ),
-        "ba019b192bdb94bd0b5bd68b3a5f92b5acc2239a": (
+        "54f6c1711c6aedb6de3cf2d6347b9f772e343784": (
             "d7895533ef5edbcffdea3f057d9fef3a1ef845ce"
         ),
     }
@@ -308,7 +307,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("d0587e1195aed5a8800411a008f2f2d627f18e2d")
+    expected_snapshot_id = hash_to_bytes("ddaad89b0b4edb7eefe7c92e9b1166caa776ebbc")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -319,9 +318,9 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
     )
 
     versions = [
-        ("0.0.2", "d8a1c7474d2956ac598a19f0f27d52f7015f117e"),
-        ("0.0.3", "5f9eb78af37ffd12949f235e86fac04898f9f72a"),
-        ("0.0.4", "ba019b192bdb94bd0b5bd68b3a5f92b5acc2239a"),
+        ("0.0.2", "d25e722a32c145b3eb88b416049dd35d27759a87"),
+        ("0.0.3", "3522e846b97c0b8434c565fe891c0f082a357e5d"),
+        ("0.0.4", "54f6c1711c6aedb6de3cf2d6347b9f772e343784"),
     ]
 
     expected_snapshot = Snapshot(
@@ -333,7 +332,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
             **{
                 b"releases/"
                 + version_name.encode(): SnapshotBranch(
-                    target=hash_to_bytes(version_id), target_type=TargetType.REVISION,
+                    target=hash_to_bytes(version_id), target_type=TargetType.RELEASE,
                 )
                 for (version_name, version_id) in versions
             },
@@ -349,20 +348,21 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         list(swh_storage.directory_missing(_expected_new_directories_first_visit)) == []
     )
 
-    assert list(swh_storage.revision_missing(_expected_new_revisions_first_visit)) == []
+    assert list(swh_storage.release_missing(_expected_new_releases_first_visit)) == []
 
     metadata_authority = MetadataAuthority(
         type=MetadataAuthorityType.FORGE, url="https://npmjs.com/",
     )
 
-    for (version_name, revision_id) in versions:
-        revision = swh_storage.revision_get([hash_to_bytes(revision_id)])[0]
-        directory_id = revision.directory
+    for (version_name, release_id) in versions:
+        release = swh_storage.release_get([hash_to_bytes(release_id)])[0]
+        assert release.target_type == ModelObjectType.DIRECTORY
+        directory_id = release.target
         directory_swhid = ExtendedSWHID(
             object_type=ExtendedObjectType.DIRECTORY, object_id=directory_id,
         )
-        revision_swhid = CoreSWHID(
-            object_type=ObjectType.REVISION, object_id=hash_to_bytes(revision_id),
+        release_swhid = CoreSWHID(
+            object_type=ObjectType.RELEASE, object_id=hash_to_bytes(release_id),
         )
         expected_metadata = [
             RawExtrinsicMetadata(
@@ -377,7 +377,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
                     json.loads(org_api_info)["versions"][version_name]
                 ).encode(),
                 origin="https://www.npmjs.com/package/org",
-                revision=revision_swhid,
+                release=release_swhid,
             )
         ]
         assert swh_storage.raw_extrinsic_metadata_get(
@@ -391,8 +391,8 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": len(_expected_new_revisions_first_visit),
+        "release": len(_expected_new_releases_first_visit),
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -403,7 +403,7 @@ def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits)
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)
 
-    expected_snapshot_id = hash_to_bytes("d0587e1195aed5a8800411a008f2f2d627f18e2d")
+    expected_snapshot_id = hash_to_bytes("ddaad89b0b4edb7eefe7c92e9b1166caa776ebbc")
     actual_load_status = loader.load()
     assert actual_load_status == {
         "status": "eventful",
@@ -420,8 +420,8 @@ def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits)
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": len(_expected_new_revisions_first_visit),
+        "release": len(_expected_new_releases_first_visit),
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -445,8 +445,8 @@ def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits)
         "directory": len(_expected_new_directories_first_visit) + 15,
         "origin": 1,
         "origin_visit": 2,
-        "release": 0,
-        "revision": len(_expected_new_revisions_first_visit) + 3,
+        "release": len(_expected_new_releases_first_visit) + 3,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 2,
     } == stats
@@ -466,7 +466,7 @@ def test_npm_loader_version_divergence(swh_storage):
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("b11ebac8c9d0c9e5063a2df693a18e3aba4b2f92")
+    expected_snapshot_id = hash_to_bytes("7a89bc3cb51ff1d3213b2151c745d82c3b9d69b1")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -482,12 +482,12 @@ def test_npm_loader_version_divergence(swh_storage):
                 target_type=TargetType.ALIAS, target=b"releases/0.1.0"
             ),
             b"releases/0.1.0": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("845673bfe8cbd31b1eaf757745a964137e6f9116"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("103fa6d0a1abb405468e3590dcf634bcb77f67be"),
             ),
             b"releases/0.1.1-alpha.14": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("05181c12cd8c22035dd31155656826b85745da37"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("c00b54143582a4e963e0b86e8dfa58eedd260020"),
             ),
         },
     )
@@ -500,8 +500,8 @@ def test_npm_loader_version_divergence(swh_storage):
         "directory": 153,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 2,
+        "release": 2,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -566,7 +566,7 @@ def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("d6e08e19159f77983242877c373c75222d5ae9dd")
+    expected_snapshot_id = hash_to_bytes("7f5e591dd3c4754abca4db1cc18355671e2c014c")
 
     assert actual_load_status == {
         "status": "eventful",
@@ -581,8 +581,8 @@ def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
                 target_type=TargetType.ALIAS, target=b"releases/0.0.1"
             ),
             b"releases/0.0.1": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("9e4dd2b40d1b46b70917c0949aa2195c823a648e"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("199bf0ad020617357d608655e6549e526a65dc36"),
             ),
         },
     )

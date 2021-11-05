@@ -29,7 +29,7 @@ from swh.model.model import (
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 EMPTY_SNAPSHOT_ID = "1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"
-FULL_SNAPSHOT_ID = "4a9b608c9f01860a627237dd2409d1d50ec4b054"
+FULL_SNAPSHOT_ID = "4ac5730a9393f5099b63a35a17b6c33d36d70c3a"
 
 AUTHORITY = MetadataAuthority(
     type=MetadataAuthorityType.FORGE, url="http://example.org/",
@@ -38,7 +38,8 @@ ORIGIN_URL = "http://example.org/archive.tgz"
 ORIGIN_SWHID = Origin(ORIGIN_URL).swhid()
 
 REVISION_ID = hash_to_bytes("8ff44f081d43176474b267de5451f2c2e88089d0")
-REVISION_SWHID = CoreSWHID(object_type=ObjectType.REVISION, object_id=REVISION_ID)
+RELEASE_ID = hash_to_bytes("9477a708196b44e59efb4e47b7d979a4146bd428")
+RELEASE_SWHID = CoreSWHID(object_type=ObjectType.RELEASE, object_id=RELEASE_ID)
 DIRECTORY_ID = hash_to_bytes("aa" * 20)
 DIRECTORY_SWHID = ExtendedSWHID(
     object_type=ExtendedObjectType.DIRECTORY, object_id=DIRECTORY_ID
@@ -61,7 +62,7 @@ DIRECTORY_METADATA = [
         format="test-format1",
         metadata=b"foo bar",
         origin=ORIGIN_URL,
-        revision=REVISION_SWHID,
+        release=RELEASE_SWHID,
     ),
     RawExtrinsicMetadata(
         target=DIRECTORY_SWHID,
@@ -71,7 +72,7 @@ DIRECTORY_METADATA = [
         format="test-format2",
         metadata=b"bar baz",
         origin=ORIGIN_URL,
-        revision=REVISION_SWHID,
+        release=RELEASE_SWHID,
     ),
 ]
 
@@ -95,7 +96,7 @@ class MetadataTestLoader(PackageLoader[BasePackageInfo]):
         class directory:
             hash = DIRECTORY_ID
 
-        return (None, directory)  # just enough for _load_revision to work
+        return (None, directory)  # just enough for _load_release to work
 
     def download_package(self, p_info: BasePackageInfo, tmpdir: str):
         return [("path", {"artifact_key": "value", "length": 0})]
@@ -161,7 +162,7 @@ def test_load_artifact_metadata(swh_storage, caplog):
         format="original-artifacts-json",
         metadata=b'[{"artifact_key": "value", "length": 0}]',
         origin=ORIGIN_URL,
-        revision=REVISION_SWHID,
+        release=RELEASE_SWHID,
     )
 
 
