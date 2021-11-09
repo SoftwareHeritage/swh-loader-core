@@ -60,7 +60,7 @@ class DepositPackageInfo(BasePackageInfo):
 
     @classmethod
     def from_metadata(
-        cls, metadata: Dict[str, Any], url: str, filename: str
+        cls, metadata: Dict[str, Any], url: str, filename: str, version: str
     ) -> "DepositPackageInfo":
         # Note:
         # `date` and `committer_date` are always transmitted by the deposit read api
@@ -80,6 +80,7 @@ class DepositPackageInfo(BasePackageInfo):
         return cls(
             url=url,
             filename=filename,
+            version=version,
             author_date=depo["author_date"],
             commit_date=depo["committer_date"],
             client=depo["client"],
@@ -176,7 +177,10 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self, version: str
     ) -> Iterator[Tuple[str, DepositPackageInfo]]:
         p_info = DepositPackageInfo.from_metadata(
-            self.metadata(), url=self.url, filename=self.default_filename,
+            self.metadata(),
+            url=self.url,
+            filename=self.default_filename,
+            version=version,
         )
         yield "HEAD", p_info
 
@@ -189,18 +193,14 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         return [self.client.archive_get(self.deposit_id, tmpdir, p_info.filename)]
 
     def build_release(
-        self,
-        version: str,
-        p_info: DepositPackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git,
     ) -> Optional[Release]:
         message = (
             f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}"
         ).encode("utf-8")
 
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             message=message,
             author=p_info.author,
             date=TimestampWithTimezone.from_dict(p_info.author_date),

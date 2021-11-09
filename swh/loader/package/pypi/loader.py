@@ -46,10 +46,11 @@ class PyPIPackageInfo(BasePackageInfo):
     upload_time = attr.ib(type=str)
 
     @classmethod
-    def from_metadata(cls, metadata: Dict[str, Any]) -> "PyPIPackageInfo":
+    def from_metadata(cls, metadata: Dict[str, Any], version: str) -> "PyPIPackageInfo":
         return cls(
             url=metadata["url"],
             filename=metadata["filename"],
+            version=version,
             raw_info=metadata,
             comment_text=metadata.get("comment_text"),
             sha256=metadata["digests"]["sha256"],
@@ -115,7 +116,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
             ):
                 continue
 
-            p_info = PyPIPackageInfo.from_metadata(meta)
+            p_info = PyPIPackageInfo.from_metadata(meta, version=version)
             res.append((version, p_info))
 
         if len(res) == 1:
@@ -126,11 +127,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
                 yield release_name(version, p_info.filename), p_info
 
     def build_release(
-        self,
-        version: str,
-        p_info: PyPIPackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: PyPIPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
         if not i_metadata:
@@ -146,7 +143,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
         date = TimestampWithTimezone.from_iso8601(p_info.upload_time)
 
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             message=message.encode(),
             author=author_,
             date=date,

@@ -100,14 +100,10 @@ class MetadataTestLoader(PackageLoader[BasePackageInfo]):
         return [("path", {"artifact_key": "value", "length": 0})]
 
     def build_release(
-        self,
-        version: str,
-        p_info: BasePackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: BasePackageInfo, uncompressed_path: str, directory: Sha1Git,
     ):
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             message=b"",
             author=Person.from_fullname(b""),
             date=None,
@@ -125,6 +121,7 @@ class MetadataTestLoader(PackageLoader[BasePackageInfo]):
         p_info = BasePackageInfo(
             url=ORIGIN_URL,
             filename="archive.tgz",
+            version=version,
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(m0.format, m0.metadata, m0.discovery_date),
                 RawExtrinsicMetadataCore(m1.format, m1.metadata, m1.discovery_date),

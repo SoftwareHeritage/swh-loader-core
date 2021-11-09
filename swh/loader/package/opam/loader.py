@@ -31,7 +31,6 @@ from swh.storage.interface import StorageInterface
 class OpamPackageInfo(BasePackageInfo):
     author = attr.ib(type=Person)
     committer = attr.ib(type=Person)
-    version = attr.ib(type=str)
 
 
 def opam_read(
@@ -242,15 +241,11 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         )
 
     def build_release(
-        self,
-        version: str,
-        p_info: OpamPackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: OpamPackageInfo, uncompressed_path: str, directory: Sha1Git,
     ) -> Optional[Release]:
 
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             author=p_info.author,
             message=str.encode(p_info.version),
             date=None,

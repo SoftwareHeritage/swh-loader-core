@@ -58,7 +58,9 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
         return ["v1.0", "v2.0", "v3.0", "v4.0"]
 
     def get_package_info(self, version):
-        p_info = StubPackageInfo("http://example.org", f"example-{version}.tar")
+        p_info = StubPackageInfo(
+            "http://example.org", f"example-{version}.tar", version=version
+        )
         extid_type = "extid-type1" if version in ("v1.0", "v2.0") else "extid-type2"
         # Versions 1.0 and 2.0 have an extid of a given type, v3.0 has an extid
         # of a different type
@@ -70,7 +72,7 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
         ).start()
         yield (f"branch-{version}", p_info)
 
-    def _load_release(self, version, p_info, origin):
+    def _load_release(self, p_info, origin):
         return None
 
 
@@ -93,7 +95,7 @@ def test_loader_origin_visit_failure(swh_storage):
 def test_resolve_object_from_extids() -> None:
     loader = PackageLoader(None, None)  # type: ignore
 
-    p_info = Mock(wraps=BasePackageInfo(None, None))  # type: ignore
+    p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
 
     # The PackageInfo does not support extids
     p_info.extid.return_value = None
@@ -217,12 +219,12 @@ def test_load_extids() -> None:
         # v1.0: not loaded because there is already its (extid_type, extid, rel)
         #       in the storage.
         # v2.0: loaded, because there is already a similar extid, but different type
-        call("v2.0", StubPackageInfo(origin, "example-v2.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v2.0.tar", "v2.0"), Origin(url=origin),),
         # v3.0: loaded despite having an (extid_type, extid) in storage, because
         #       the target of the extid is not in the previous snapshot
-        call("v3.0", StubPackageInfo(origin, "example-v3.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v3.0.tar", "v3.0"), Origin(url=origin),),
         # v4.0: loaded, because there isn't its extid
-        call("v4.0", StubPackageInfo(origin, "example-v4.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v4.0.tar", "v4.0"), Origin(url=origin),),
     ]
 
     # then check the snapshot has all the branches.
@@ -374,9 +376,9 @@ def test_load_upgrade_from_revision_extids(caplog):
         # v1.0: not loaded because there is already a revision matching it
         # v2.0: loaded, as the revision is missing from the storage even though there
         #       is an extid
-        call("v2.0", StubPackageInfo(origin, "example-v2.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v2.0.tar", "v2.0"), Origin(url=origin)),
         # v3.0: loaded (did not exist yet)
-        call("v3.0", StubPackageInfo(origin, "example-v3.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v3.0.tar", "v3.0"), Origin(url=origin)),
     ]
 
     snapshot = Snapshot(
@@ -416,7 +418,6 @@ def test_manifest_extid():
         b = attr.ib()
         length = attr.ib()
         filename = attr.ib()
-        version = attr.ib()
 
         MANIFEST_FORMAT = string.Template("$a $b")
 

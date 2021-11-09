@@ -34,7 +34,6 @@ class ArchivePackageInfo(BasePackageInfo):
     """Size of the archive file"""
     time = attr.ib(type=Union[str, datetime.datetime])
     """Timestamp of the archive file on the server"""
-    version = attr.ib(type=str)
 
     # default format for gnu
     MANIFEST_FORMAT = string.Template("$time $length $version $url")
@@ -143,11 +142,7 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
         return p_info.extid(manifest_format=self.extid_manifest_format)
 
     def build_release(
-        self,
-        version: str,
-        p_info: ArchivePackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: ArchivePackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
         time = p_info.time  # assume it's a timestamp
         if isinstance(time, str):  # otherwise, assume it's a parsable date
@@ -156,7 +151,7 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
             parsed_time = time
         normalized_time = TimestampWithTimezone.from_datetime(parsed_time)
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             message=REVISION_MESSAGE,
             date=normalized_time,
             author=SWH_PERSON,

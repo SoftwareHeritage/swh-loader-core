@@ -733,6 +733,7 @@ def test_pypi_build_release_missing_version_in_pkg_info(swh_storage, tmp_path):
     p_info = PyPIPackageInfo(
         url=url,
         filename="GermlineFilter-1.2.tar.gz",
+        version="1.2",
         directory_extrinsic_metadata=[],
         raw_info={},
         comment_text="",
@@ -758,7 +759,7 @@ Platform: UNKNOWN"""
 
     # attempt to build release
     loader = PyPILoader(swh_storage, url)
-    release = loader.build_release("1.2", p_info, str(tmp_path), directory)
+    release = loader.build_release(p_info, str(tmp_path), directory)
 
     # without comment_text and version in PKG-INFO, message should be empty
     assert release.message == b""

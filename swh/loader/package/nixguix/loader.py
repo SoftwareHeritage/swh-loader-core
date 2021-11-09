@@ -44,10 +44,13 @@ class NixGuixPackageInfo(BasePackageInfo):
     specification."""
 
     @classmethod
-    def from_metadata(cls, metadata: Dict[str, Any]) -> "NixGuixPackageInfo":
+    def from_metadata(
+        cls, metadata: Dict[str, Any], version: str
+    ) -> "NixGuixPackageInfo":
         return cls(
             url=metadata["url"],
             filename=None,
+            version=version,
             integrity=metadata["integrity"],
             raw_info=metadata,
         )
@@ -120,7 +123,9 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
         # currently only use the first one, but if the first one
         # fails, we should try the second one and so on.
         integrity = self.integrity_by_url()[url]
-        p_info = NixGuixPackageInfo.from_metadata({"url": url, "integrity": integrity})
+        p_info = NixGuixPackageInfo.from_metadata(
+            {"url": url, "integrity": integrity}, version=url
+        )
         yield url, p_info
 
     def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
@@ -151,14 +156,10 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
         }
 
     def build_release(
-        self,
-        version: str,
-        p_info: NixGuixPackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: NixGuixPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             message=b"",
             author=EMPTY_AUTHOR,
             date=None,

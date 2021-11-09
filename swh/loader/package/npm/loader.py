@@ -48,7 +48,6 @@ class NpmPackageInfo(BasePackageInfo):
     date = attr.ib(type=Optional[str])
     shasum = attr.ib(type=str)
     """sha1 checksum"""
-    version = attr.ib(type=str)
 
     @classmethod
     def from_metadata(
@@ -142,11 +141,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         yield release_name(version), p_info
 
     def build_release(
-        self,
-        version: str,
-        p_info: NpmPackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: NpmPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
         if not i_metadata:
@@ -168,7 +163,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         date = attr.evolve(date, timestamp=attr.evolve(date.timestamp, microseconds=0))
 
         r = Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             message=message,
             author=author,
             date=date,

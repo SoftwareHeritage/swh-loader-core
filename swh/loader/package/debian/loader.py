@@ -69,20 +69,24 @@ class DebianPackageInfo(BasePackageInfo):
     files = attr.ib(type=Dict[str, DebianFileMetadata])
     """Metadata of the files (.deb, .dsc, ...) of the package."""
     name = attr.ib(type=str)
-    version = attr.ib(type=str)
+    full_version = attr.ib(type=str)
+    """eg. stretch/contrib/0.7.2-3"""
 
     @classmethod
-    def from_metadata(cls, a_metadata: Dict[str, Any], url: str) -> "DebianPackageInfo":
+    def from_metadata(
+        cls, a_metadata: Dict[str, Any], url: str, version: str
+    ) -> "DebianPackageInfo":
         return cls(
             url=url,
             filename=None,
+            version=version,
             raw_info=a_metadata,
             files={
                 file_name: DebianFileMetadata(**file_metadata)
                 for (file_name, file_metadata) in a_metadata.get("files", {}).items()
             },
             name=a_metadata["name"],
-            version=a_metadata["version"],
+            full_version=a_metadata["version"],
         )
 
     def extid(self) -> Optional[PartialExtID]:
@@ -177,7 +181,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, DebianPackageInfo]]:
         meta = self.packages[version]
-        p_info = DebianPackageInfo.from_metadata(meta, url=self.url)
+        p_info = DebianPackageInfo.from_metadata(meta, url=self.url, version=version)
         yield release_name(version), p_info
 
     def download_package(
@@ -207,11 +211,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         return extract_package(dl_artifacts, dest=dest)
 
     def build_release(
-        self,
-        version: str,
-        p_info: DebianPackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: DebianPackageInfo, uncompressed_path: str, directory: Sha1Git,
     ) -> Optional[Release]:
         dsc_url, dsc_name = dsc_information(p_info)
         if not dsc_name:
@@ -226,7 +226,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
         msg = "Synthetic revision for Debian source package %s version %s" % (
             p_info.name,
-            p_info.version,
+            p_info.full_version,
         )
 
         author = prepare_person(intrinsic_metadata.changelog.person)
@@ -234,7 +234,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
         # inspired from swh.loader.debian.converters.package_metadata_to_revision
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             message=msg.encode("utf-8"),
             author=author,
             date=date,

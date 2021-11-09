@@ -104,6 +104,8 @@ class BasePackageInfo:
 
     url = attr.ib(type=str)
     filename = attr.ib(type=Optional[str])
+    version = attr.ib(type=str)
+    """Version name/number."""
 
     MANIFEST_FORMAT: Optional[string.Template] = None
     """If not None, used by the default extid() implementation to format a manifest,
@@ -191,11 +193,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         yield from {}
 
     def build_release(
-        self,
-        version: str,
-        p_info: TPackageInfo,
-        uncompressed_path: str,
-        directory: Sha1Git,
+        self, p_info: TPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
         """Build the release from the archive metadata (extrinsic
         artifact metadata) and the intrinsic metadata.
@@ -549,16 +547,14 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             )
 
         # Get the metadata of each version's package
-        packages_info: List[Tuple[str, str, TPackageInfo]] = [
-            (version, branch_name, p_info)
+        packages_info: List[Tuple[str, TPackageInfo]] = [
+            (branch_name, p_info)
             for version in versions
             for (branch_name, p_info) in self.get_package_info(version)
         ]
 
         # Compute the ExtID of each of these packages
-        known_extids = self._get_known_extids(
-            [p_info for (_, _, p_info) in packages_info]
-        )
+        known_extids = self._get_known_extids([p_info for (_, p_info) in packages_info])
 
         if last_snapshot is None:
             last_snapshot_targets: Set[Sha1Git] = set()
@@ -572,7 +568,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             version: [] for version in versions
         }
         errors = []
-        for (version, branch_name, p_info) in packages_info:
+        for (branch_name, p_info) in packages_info:
             logger.debug("package_info: %s", p_info)
 
             # Check if the package was already loaded, using its ExtID
@@ -602,7 +598,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 release_id = None
 
                 try:
-                    res = self._load_release(version, p_info, origin)
+                    res = self._load_release(p_info, origin)
                     if res:
                         (release_id, directory_id) = res
                         assert release_id
@@ -629,7 +625,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             elif swhid.object_type == ObjectType.REVISION:
                 # If 'rev' was None, the previous block would have run.
                 assert rev is not None
-                rel = rev2rel(rev, version)
+                rel = rev2rel(rev, p_info.version)
                 self.storage.release_add([rel])
                 logger.debug("Upgraded %s to %s", swhid, rel.swhid())
                 release_id = rel.id
@@ -658,7 +654,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                         ExtID(extid_type=extid_type, extid=extid, target=release_swhid)
                     )
 
-            tmp_releases[version].append((branch_name, release_id))
+            tmp_releases[p_info.version].append((branch_name, release_id))
 
         if load_exceptions:
             status_visit = "partial"
@@ -752,7 +748,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         return (uncompressed_path, directory)
 
     def _load_release(
-        self, version: str, p_info: TPackageInfo, origin
+        self, p_info: TPackageInfo, origin
     ) -> Optional[Tuple[Sha1Git, Sha1Git]]:
         """Does all the loading of a release itself:
 
@@ -772,9 +768,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
             # FIXME: This should be release. cf. D409
             release = self.build_release(
-                version, p_info, uncompressed_path, directory=directory.hash
+                p_info, uncompressed_path, directory=directory.hash
             )
-            print(release)
             if not release:
                 # Some artifacts are missing intrinsic metadata
                 # skipping those
