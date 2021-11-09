@@ -19,9 +19,9 @@ from swh.loader.package.utils import cached_method
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
+    ObjectType,
     Person,
-    Revision,
-    RevisionType,
+    Release,
     Sha1Git,
 )
 from swh.storage.interface import StorageInterface
@@ -241,18 +241,20 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
             ],
         )
 
-    def build_revision(
-        self, p_info: OpamPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self,
+        version: str,
+        p_info: OpamPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
 
-        return Revision(
-            type=RevisionType.TAR,
+        return Release(
+            name=version.encode(),
             author=p_info.author,
-            committer=p_info.committer,
             message=str.encode(p_info.version),
             date=None,
-            committer_date=None,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )

@@ -25,9 +25,9 @@ from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
+    ObjectType,
     Person,
-    Revision,
-    RevisionType,
+    Release,
     Sha1Git,
     TimestampWithTimezone,
 )
@@ -188,21 +188,24 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         """
         return [self.client.archive_get(self.deposit_id, tmpdir, p_info.filename)]
 
-    def build_revision(
-        self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self,
+        version: str,
+        p_info: DepositPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
         message = (
             f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}"
         ).encode("utf-8")
 
-        return Revision(
-            type=RevisionType.TAR,
+        return Release(
+            name=version.encode(),
             message=message,
             author=p_info.author,
             date=TimestampWithTimezone.from_dict(p_info.author_date),
-            committer=p_info.committer,
-            committer_date=TimestampWithTimezone.from_dict(p_info.commit_date),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 

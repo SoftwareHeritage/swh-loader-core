@@ -18,13 +18,7 @@ from debian.deb822 import Deb822
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.loader.package.utils import release_name
-from swh.model.model import (
-    Person,
-    Revision,
-    RevisionType,
-    Sha1Git,
-    TimestampWithTimezone,
-)
+from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -88,23 +82,25 @@ class CRANLoader(PackageLoader[CRANPackageInfo]):
             if version == p_info.version:
                 yield release_name(version), p_info
 
-    def build_revision(
-        self, p_info: CRANPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self,
+        version: str,
+        p_info: CRANPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
         # a_metadata is empty
         metadata = extract_intrinsic_metadata(uncompressed_path)
         date = parse_date(metadata.get("Date"))
         author = Person.from_fullname(metadata.get("Maintainer", "").encode())
         version = metadata.get("Version", p_info.version)
-        return Revision(
-            message=version.encode("utf-8"),
-            type=RevisionType.TAR,
+        return Release(
+            name=version.encode(),
+            message=version.encode(),
             date=date,
             author=author,
-            committer=author,
-            committer_date=date,
-            parents=(),
-            directory=directory,
+            target_type=ObjectType.DIRECTORY,
+            target=directory,
             synthetic=True,
         )
 

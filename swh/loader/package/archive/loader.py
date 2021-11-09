@@ -15,13 +15,7 @@ import iso8601
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader, PartialExtID
 from swh.loader.package.utils import release_name
-from swh.model.model import (
-    Person,
-    Revision,
-    RevisionType,
-    Sha1Git,
-    TimestampWithTimezone,
-)
+from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -148,24 +142,26 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
     ) -> Optional[PartialExtID]:
         return p_info.extid(manifest_format=self.extid_manifest_format)
 
-    def build_revision(
-        self, p_info: ArchivePackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self,
+        version: str,
+        p_info: ArchivePackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
         time = p_info.time  # assume it's a timestamp
         if isinstance(time, str):  # otherwise, assume it's a parsable date
             parsed_time = iso8601.parse_date(time)
         else:
             parsed_time = time
         normalized_time = TimestampWithTimezone.from_datetime(parsed_time)
-        return Revision(
-            type=RevisionType.TAR,
+        return Release(
+            name=version.encode(),
             message=REVISION_MESSAGE,
             date=normalized_time,
             author=SWH_PERSON,
-            committer=SWH_PERSON,
-            committer_date=normalized_time,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 

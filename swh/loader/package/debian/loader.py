@@ -18,13 +18,7 @@ from debian.deb822 import Dsc
 from swh.loader.package.loader import BasePackageInfo, PackageLoader, PartialExtID
 from swh.loader.package.utils import download, release_name
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import (
-    Person,
-    Revision,
-    RevisionType,
-    Sha1Git,
-    TimestampWithTimezone,
-)
+from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -212,9 +206,13 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         logger.debug("dl_artifacts: %s", dl_artifacts)
         return extract_package(dl_artifacts, dest=dest)
 
-    def build_revision(
-        self, p_info: DebianPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self,
+        version: str,
+        p_info: DebianPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
         dsc_url, dsc_name = dsc_information(p_info)
         if not dsc_name:
             raise ValueError("dsc name for url %s should not be None" % dsc_url)
@@ -234,16 +232,14 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         author = prepare_person(intrinsic_metadata.changelog.person)
         date = TimestampWithTimezone.from_iso8601(intrinsic_metadata.changelog.date)
 
-        # inspired from swh.loader.debian.converters.package_metadata_to_revision  # noqa
-        return Revision(
-            type=RevisionType.DSC,
+        # inspired from swh.loader.debian.converters.package_metadata_to_revision
+        return Release(
+            name=version.encode(),
             message=msg.encode("utf-8"),
             author=author,
             date=date,
-            committer=author,
-            committer_date=date,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 

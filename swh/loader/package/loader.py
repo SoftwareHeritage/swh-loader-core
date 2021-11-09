@@ -26,7 +26,6 @@ from typing import (
     Tuple,
     TypeVar,
 )
-import warnings
 
 import attr
 from requests.exceptions import ContentDecodingError
@@ -191,20 +190,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         """
         yield from {}
 
-    def build_revision(
-        self, p_info: TPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
-        """Build the revision from the archive metadata (extrinsic
-        artifact metadata) and the intrinsic metadata.
-
-        This method is deprecated, :meth:`build_release` should be implemented instead.
-
-        Args:
-            p_info: Package information
-            uncompressed_path: Artifact uncompressed path on disk
-        """
-        raise NotImplementedError("build_revision")
-
     def build_release(
         self,
         version: str,
@@ -219,17 +204,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             p_info: Package information
             uncompressed_path: Artifact uncompressed path on disk
         """
-        warnings.warn(
-            f"{self.get_loader_name()} is missing a build_release() method. "
-            f"Falling back to `build_revision` + automatic conversion to release.",
-            DeprecationWarning,
-        )
-
-        rev = self.build_revision(p_info, uncompressed_path, directory)
-        if rev is None:
-            return None
-        else:
-            return rev2rel(rev, version)
+        raise NotImplementedError("build_release")
 
     def get_default_version(self) -> str:
         """Retrieve the latest release version if any.
@@ -799,6 +774,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             release = self.build_release(
                 version, p_info, uncompressed_path, directory=directory.hash
             )
+            print(release)
             if not release:
                 # Some artifacts are missing intrinsic metadata
                 # skipping those

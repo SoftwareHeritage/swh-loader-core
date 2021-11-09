@@ -23,9 +23,9 @@ from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
+    ObjectType,
     Person,
-    Revision,
-    RevisionType,
+    Release,
     Sha1Git,
     TimestampWithTimezone,
 )
@@ -125,31 +125,33 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
             for version, p_info in res:
                 yield release_name(version, p_info.filename), p_info
 
-    def build_revision(
-        self, p_info: PyPIPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self,
+        version: str,
+        p_info: PyPIPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
         if not i_metadata:
             return None
 
         # from intrinsic metadata
-        version = i_metadata.get("version", "")
-        _author = author(i_metadata)
+        version_ = i_metadata.get("version", "")
+        author_ = author(i_metadata)
 
         # from extrinsic metadata
         message = p_info.comment_text or ""
-        message = "%s: %s" % (version, message) if message else version
+        message = "%s: %s" % (version_, message) if message else version_
         date = TimestampWithTimezone.from_iso8601(p_info.upload_time)
 
-        return Revision(
-            type=RevisionType.TAR,
-            message=message.encode("utf-8"),
-            author=_author,
+        return Release(
+            name=version.encode(),
+            message=message.encode(),
+            author=author_,
             date=date,
-            committer=_author,
-            committer_date=date,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 

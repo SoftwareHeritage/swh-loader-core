@@ -22,8 +22,8 @@ from swh.model import hashutil
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
-    Revision,
-    RevisionType,
+    ObjectType,
+    Release,
     Sha1Git,
 )
 from swh.storage.interface import StorageInterface
@@ -150,18 +150,20 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
             }
         }
 
-    def build_revision(
-        self, p_info: NixGuixPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
-        return Revision(
-            type=RevisionType.TAR,
+    def build_release(
+        self,
+        version: str,
+        p_info: NixGuixPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
+    ) -> Optional[Release]:
+        return Release(
+            name=version.encode(),
             message=b"",
             author=EMPTY_AUTHOR,
             date=None,
-            committer=EMPTY_AUTHOR,
-            committer_date=None,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 
