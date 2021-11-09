@@ -244,10 +244,14 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         self, p_info: OpamPackageInfo, uncompressed_path: str, directory: Sha1Git,
     ) -> Optional[Release]:
 
+        msg = (
+            f"Synthetic release for OPAM source package {self.opam_package} "
+            f"version {p_info.version}"
+        )
         return Release(
             name=p_info.version.encode(),
             author=p_info.author,
-            message=str.encode(p_info.version),
+            message=msg.encode(),
             date=None,
             target=directory,
             target_type=ObjectType.DIRECTORY,

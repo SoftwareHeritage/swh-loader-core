@@ -160,7 +160,7 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
     ) -> Optional[Release]:
         return Release(
             name=p_info.version.encode(),
-            message=b"",
+            message=None,
             author=EMPTY_AUTHOR,
             date=None,
             target=directory,

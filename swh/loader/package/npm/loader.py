@@ -106,8 +106,8 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
             str: origin url (e.g. https://www.npmjs.com/package/<package-name>)
         """
         super().__init__(storage=storage, url=url, max_content_size=max_content_size)
-        package_name = url.split("https://www.npmjs.com/package/")[1]
-        safe_name = quote(package_name, safe="")
+        self.package_name = url.split("https://www.npmjs.com/package/")[1]
+        safe_name = quote(self.package_name, safe="")
         self.provider_url = f"https://replicate.npmjs.com/{safe_name}/"
         self._info: Dict[str, Any] = {}
         self._versions = None
@@ -147,7 +147,10 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         if not i_metadata:
             return None
         author = extract_npm_package_author(i_metadata)
-        message = i_metadata["version"].encode("ascii")
+        msg = (
+            f"Synthetic release for NPM source package {self.package_name} "
+            f"version {p_info.version}"
+        )
 
         if p_info.date is None:
             url = p_info.url
@@ -164,7 +167,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
 
         r = Release(
             name=p_info.version.encode(),
-            message=message,
+            message=msg.encode(),
             author=author,
             date=date,
             target=directory,

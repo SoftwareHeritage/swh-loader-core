@@ -20,17 +20,27 @@ from swh.loader.package.cran.loader import (
 )
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import Snapshot, SnapshotBranch, TargetType, TimestampWithTimezone
+from swh.model.model import (
+    ObjectType,
+    Person,
+    Release,
+    Snapshot,
+    SnapshotBranch,
+    TargetType,
+    Timestamp,
+    TimestampWithTimezone,
+)
+
+RELEASE_ID = hash_to_bytes("9a977f6415e6997fd9dd53c6dcb540ff0a7bff26")
 
 SNAPSHOT = Snapshot(
-    id=hash_to_bytes("56ed00938d83892bd5b42f2f368ae38a1dbfa718"),
+    id=hash_to_bytes("3787efc620c55b1e18889cfa561d9bcdc62c4cb2"),
     branches={
         b"HEAD": SnapshotBranch(
             target=b"releases/2.22-6", target_type=TargetType.ALIAS
         ),
         b"releases/2.22-6": SnapshotBranch(
-            target=hash_to_bytes("42993a72eac50a4a83523c9327a52be3593755a8"),
-            target_type=TargetType.RELEASE,
+            target=RELEASE_ID, target_type=TargetType.RELEASE,
         ),
     },
 )
@@ -172,7 +182,15 @@ def test_cran_one_visit(swh_storage, requests_mock_datadir):
         f"{base_url}/src_contrib_1.4.0_Recommended_KernSmooth_{version}.tar.gz"  # noqa
     )
     loader = CRANLoader(
-        swh_storage, origin_url, artifacts=[{"url": artifact_url, "version": version,}]
+        swh_storage,
+        origin_url,
+        artifacts=[
+            {
+                "url": artifact_url,
+                "version": version,
+                "package": "Recommended_KernSmooth",
+            }
+        ],
     )
 
     actual_load_status = loader.load()
@@ -187,6 +205,28 @@ def test_cran_one_visit(swh_storage, requests_mock_datadir):
     )
 
     check_snapshot(SNAPSHOT, swh_storage)
+
+    assert swh_storage.release_get([RELEASE_ID])[0] == Release(
+        id=RELEASE_ID,
+        name=b"2.22-6",
+        message=(
+            b"Synthetic release for CRAN source package "
+            b"Recommended_KernSmooth version 2.22-6"
+        ),
+        target=hash_to_bytes("ff64177fea3f4a5136b9caf7581a4f7d4cf65296"),
+        target_type=ObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person(
+            fullname=b"Brian Ripley <ripley@stats.ox.ac.uk>",
+            name=b"Brian Ripley",
+            email=b"ripley@stats.ox.ac.uk",
+        ),
+        date=TimestampWithTimezone(
+            timestamp=Timestamp(seconds=991958400, microseconds=0),
+            offset=0,
+            negative_utc=False,
+        ),
+    )
 
     visit_stats = get_stats(swh_storage)
     assert {
@@ -218,7 +258,15 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
         f"{base_url}/src_contrib_1.4.0_Recommended_KernSmooth_{version}.tar.gz"  # noqa
     )
     loader = CRANLoader(
-        swh_storage, origin_url, artifacts=[{"url": artifact_url, "version": version}]
+        swh_storage,
+        origin_url,
+        artifacts=[
+            {
+                "url": artifact_url,
+                "version": version,
+                "package": "Recommended_KernSmooth",
+            }
+        ],
     )
 
     # first visit
@@ -342,7 +390,13 @@ def test_cran_fail_to_build_or_load_extrinsic_metadata(
         loader = CRANLoader(
             swh_storage,
             origin_url,
-            artifacts=[{"url": artifact_url, "version": version}],
+            artifacts=[
+                {
+                    "url": artifact_url,
+                    "version": version,
+                    "package": "Recommended_KernSmooth",
+                }
+            ],
         )
 
         actual_load_status = loader.load()

@@ -14,17 +14,11 @@ import attr
 import iso8601
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader, PartialExtID
-from swh.loader.package.utils import release_name
-from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
+from swh.loader.package.utils import EMPTY_AUTHOR, release_name
+from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
-SWH_PERSON = Person(
-    name=b"Software Heritage",
-    fullname=b"Software Heritage",
-    email=b"robot@softwareheritage.org",
-)
-REVISION_MESSAGE = b"swh-loader-package: synthetic revision message"
 
 
 @attr.s
@@ -150,11 +144,12 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
         else:
             parsed_time = time
         normalized_time = TimestampWithTimezone.from_datetime(parsed_time)
+        msg = f"Synthetic release for archive at {p_info.url}"
         return Release(
             name=p_info.version.encode(),
-            message=REVISION_MESSAGE,
+            message=msg.encode(),
             date=normalized_time,
-            author=SWH_PERSON,
+            author=EMPTY_AUTHOR,
             target=directory,
             target_type=ObjectType.DIRECTORY,
             synthetic=True,
