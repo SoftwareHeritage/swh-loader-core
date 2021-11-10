@@ -57,10 +57,12 @@ def test_run_help(swh_config):
     result = runner.invoke(loader_cli, ["run", "-h"])
 
     assert result.exit_code == 0
-    usage_prefix = _write_usage(
-        "loader run", f"[OPTIONS] [{'|'.join(SUPPORTED_LOADERS)}]\n"
-    )
-    assert result.output.startswith(usage_prefix)
+
+    # Syntax depends on dependencies' versions
+    supported_loaders = "|".join(SUPPORTED_LOADERS)
+    usage_prefix = _write_usage("loader run", "[OPTIONS] [%s]\n" % supported_loaders)
+    usage_prefix2 = _write_usage("loader run", "[OPTIONS] {%s}\n" % supported_loaders)
+    assert result.output.startswith((usage_prefix, usage_prefix2))
 
 
 def test_run_with_configuration_failure(tmp_path):
