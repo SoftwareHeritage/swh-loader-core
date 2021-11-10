@@ -1,3 +1,13 @@
+swh-loader-core (1.0.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 1.0.1     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2021-11-10 14:47:52 +0100)
+  * Upstream changes:     - v1.0.1     - * utils: Add types and let log
+    instruction do the formatting     - * Fix tests when run by gbp on
+    Sid.
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 10 Nov 2021 13:53:43 +0000
+
 swh-loader-core (1.0.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 1.0.0     - (tagged by Valentin Lorentz
