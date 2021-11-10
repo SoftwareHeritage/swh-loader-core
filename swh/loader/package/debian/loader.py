@@ -18,13 +18,7 @@ from debian.deb822 import Dsc
 from swh.loader.package.loader import BasePackageInfo, PackageLoader, PartialExtID
 from swh.loader.package.utils import download, release_name
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import (
-    Person,
-    Revision,
-    RevisionType,
-    Sha1Git,
-    TimestampWithTimezone,
-)
+from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -75,20 +69,24 @@ class DebianPackageInfo(BasePackageInfo):
     files = attr.ib(type=Dict[str, DebianFileMetadata])
     """Metadata of the files (.deb, .dsc, ...) of the package."""
     name = attr.ib(type=str)
-    version = attr.ib(type=str)
+    full_version = attr.ib(type=str)
+    """eg. stretch/contrib/0.7.2-3"""
 
     @classmethod
-    def from_metadata(cls, a_metadata: Dict[str, Any], url: str) -> "DebianPackageInfo":
+    def from_metadata(
+        cls, a_metadata: Dict[str, Any], url: str, version: str
+    ) -> "DebianPackageInfo":
         return cls(
             url=url,
             filename=None,
+            version=version,
             raw_info=a_metadata,
             files={
                 file_name: DebianFileMetadata(**file_metadata)
                 for (file_name, file_metadata) in a_metadata.get("files", {}).items()
             },
             name=a_metadata["name"],
-            version=a_metadata["version"],
+            full_version=a_metadata["version"],
         )
 
     def extid(self) -> Optional[PartialExtID]:
@@ -183,7 +181,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, DebianPackageInfo]]:
         meta = self.packages[version]
-        p_info = DebianPackageInfo.from_metadata(meta, url=self.url)
+        p_info = DebianPackageInfo.from_metadata(meta, url=self.url, version=version)
         yield release_name(version), p_info
 
     def download_package(
@@ -212,9 +210,9 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         logger.debug("dl_artifacts: %s", dl_artifacts)
         return extract_package(dl_artifacts, dest=dest)
 
-    def build_revision(
-        self, p_info: DebianPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self, p_info: DebianPackageInfo, uncompressed_path: str, directory: Sha1Git,
+    ) -> Optional[Release]:
         dsc_url, dsc_name = dsc_information(p_info)
         if not dsc_name:
             raise ValueError("dsc name for url %s should not be None" % dsc_url)
@@ -228,41 +226,22 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
         msg = "Synthetic revision for Debian source package %s version %s" % (
             p_info.name,
-            p_info.version,
+            p_info.full_version,
         )
 
         author = prepare_person(intrinsic_metadata.changelog.person)
         date = TimestampWithTimezone.from_iso8601(intrinsic_metadata.changelog.date)
 
-        # inspired from swh.loader.debian.converters.package_metadata_to_revision  # noqa
-        return Revision(
-            type=RevisionType.DSC,
+        # inspired from swh.loader.debian.converters.package_metadata_to_revision
+        return Release(
+            name=p_info.version.encode(),
             message=msg.encode("utf-8"),
             author=author,
             date=date,
-            committer=author,
-            committer_date=date,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
-
-
-def _artifact_to_dsc_sha256(known_artifacts: Dict, url: str) -> Optional[str]:
-    extrinsic = known_artifacts.get("extrinsic")
-    if not extrinsic:
-        return None
-
-    known_p_info = DebianPackageInfo.from_metadata(extrinsic["raw"], url=url)
-    dsc = [file for (name, file) in known_p_info.files.items() if name.endswith(".dsc")]
-
-    if len(dsc) != 1:
-        raise DscCountError(
-            f"Expected exactly one known .dsc file for package {known_p_info.name}, "
-            f"got {len(dsc)}"
-        )
-
-    return dsc[0].sha256
 
 
 def uid_to_person(uid: str) -> Dict[str, str]:

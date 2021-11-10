@@ -6,8 +6,9 @@
    :maxdepth: 2
    :caption: Contents:
 
-   package-loader-tutorial
    vcs-loader-overview
+   package-loader-tutorial
+   package-loader-specifications
 
 
 Reference Documentation

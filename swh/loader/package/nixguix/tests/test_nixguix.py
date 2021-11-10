@@ -24,7 +24,6 @@ from swh.loader.tests import assert_last_visit_matches
 from swh.loader.tests import check_snapshot as check_snapshot_full
 from swh.loader.tests import get_stats
 from swh.model.hashutil import hash_to_bytes
-from swh.model.identifiers import ExtendedObjectType, ExtendedSWHID
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -34,6 +33,7 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
+from swh.model.swhids import ExtendedObjectType, ExtendedSWHID
 from swh.storage.algos.origin import origin_get_latest_visit_status
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.exc import HashCollision
@@ -54,15 +54,15 @@ def raw_sources(datadir) -> bytes:
 
 
 SNAPSHOT1 = Snapshot(
-    id=hash_to_bytes("0c5881c74283793ebe9a09a105a9381e41380383"),
+    id=hash_to_bytes("771d13ae4e799755c22d1e05da8fc39cf215de58"),
     branches={
         b"evaluation": SnapshotBranch(
             target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             target_type=TargetType.REVISION,
         ),
         b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
-            target=hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
-            target_type=TargetType.REVISION,
+            target=hash_to_bytes("24853190589d26d0ea2b6c0330b553ff39176e0c"),
+            target_type=TargetType.RELEASE,
         ),
     },
 )
@@ -282,8 +282,8 @@ def test_loader_one_visit(swh_storage, requests_mock_datadir, raw_sources):
         "directory": 3,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
+        "release": 1,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -405,15 +405,15 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
         "directory": 3,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
+        "release": 1,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
 
     loader = NixGuixLoader(swh_storage, sources_url)
     load_status = loader.load()
-    expected_snapshot_id_hex = "b0bfa75cbd0cc90aac3b9e95fb0f59c731176d97"
+    expected_snapshot_id_hex = "c5bba84fd5ac3342566effb86190619092d34e79"
     expected_snapshot_id = hash_to_bytes(expected_snapshot_id_hex)
     assert load_status == {
         "status": "eventful",
@@ -439,12 +439,12 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
                 target_type=TargetType.REVISION,
             ),
             b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
-                target=hash_to_bytes("488ad4e7b8e2511258725063cf43a2b897c503b4"),
-                target_type=TargetType.REVISION,
+                target=hash_to_bytes("24853190589d26d0ea2b6c0330b553ff39176e0c"),
+                target_type=TargetType.RELEASE,
             ),
             b"https://github.com/owner-2/repository-1/revision-1.tgz": SnapshotBranch(
-                target=hash_to_bytes("85e0bad74e33e390aaeb74f139853ae3863ee544"),
-                target_type=TargetType.REVISION,
+                target=hash_to_bytes("3d44fbe814ba802cfd77f83975e45766d3a2ba85"),
+                target_type=TargetType.RELEASE,
             ),
         },
     )
@@ -456,8 +456,8 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
         "directory": 5,
         "origin": 1,
         "origin_visit": 2,
-        "release": 0,
-        "revision": 2,
+        "release": 2,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 2,
     } == stats
@@ -536,14 +536,18 @@ def test_raise_exception(swh_storage, requests_mock_datadir, mocker):
         "snapshot_id": SNAPSHOT1.id.hex(),
     }
 
+    # The visit is partial because some artifact downloads failed
+    assert_last_visit_matches(
+        swh_storage,
+        sources_url,
+        status="partial",
+        type="nixguix",
+        snapshot=SNAPSHOT1.id,
+    )
+
     check_snapshot(SNAPSHOT1, storage=swh_storage)
 
     assert len(mock_download.mock_calls) == 2
-
-    # The visit is partial because some artifact downloads failed
-    assert_last_visit_matches(
-        swh_storage, sources_url, status="partial", type="nixguix"
-    )
 
 
 def test_load_nixguix_one_common_artifact_from_other_loader(
@@ -569,12 +573,16 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
     ]
     archive_loader = ArchiveLoader(swh_storage, url=gnu_url, artifacts=gnu_artifacts)
     actual_load_status = archive_loader.load()
-    expected_snapshot_id = "c419397fd912039825ebdbea378bc6283f006bf5"
+    expected_snapshot_id = "cdf8f335fa0c81c8ad089870ec14f52b1980eb6c"
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] == expected_snapshot_id  # noqa
 
     assert_last_visit_matches(
-        archive_loader.storage, gnu_url, status="full", type="tar"
+        archive_loader.storage,
+        gnu_url,
+        status="full",
+        type="tar",
+        snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
     # 2. Then ingest with the nixguix loader which lists the same artifact within its
@@ -599,8 +607,15 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
     actual_load_status2 = loader.load()
     assert actual_load_status2["status"] == "eventful"
 
-    assert_last_visit_matches(swh_storage, sources_url, status="full", type="nixguix")
-
     snapshot_id = actual_load_status2["snapshot_id"]
+
+    assert_last_visit_matches(
+        swh_storage,
+        sources_url,
+        status="full",
+        type="nixguix",
+        snapshot=hash_to_bytes(snapshot_id),
+    )
+
     snapshot = snapshot_get_all_branches(swh_storage, hash_to_bytes(snapshot_id))
     assert snapshot

@@ -19,15 +19,12 @@ from swh.loader.package.loader import (
 )
 from swh.loader.package.utils import EMPTY_AUTHOR, api_info, cached_method
 from swh.model import hashutil
-from swh.model.collections import ImmutableDict
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
-    Revision,
-    RevisionType,
+    ObjectType,
+    Release,
     Sha1Git,
-    Snapshot,
-    TargetType,
 )
 from swh.storage.interface import StorageInterface
 
@@ -47,10 +44,13 @@ class NixGuixPackageInfo(BasePackageInfo):
     specification."""
 
     @classmethod
-    def from_metadata(cls, metadata: Dict[str, Any]) -> "NixGuixPackageInfo":
+    def from_metadata(
+        cls, metadata: Dict[str, Any], version: str
+    ) -> "NixGuixPackageInfo":
         return cls(
             url=metadata["url"],
             filename=None,
+            version=version,
             integrity=metadata["integrity"],
             raw_info=metadata,
         )
@@ -123,37 +123,10 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
         # currently only use the first one, but if the first one
         # fails, we should try the second one and so on.
         integrity = self.integrity_by_url()[url]
-        p_info = NixGuixPackageInfo.from_metadata({"url": url, "integrity": integrity})
+        p_info = NixGuixPackageInfo.from_metadata(
+            {"url": url, "integrity": integrity}, version=url
+        )
         yield url, p_info
-
-    def known_artifacts(
-        self, snapshot: Optional[Snapshot]
-    ) -> Dict[Sha1Git, Optional[ImmutableDict[str, object]]]:
-        """Almost same implementation as the default one except it filters out the extra
-        "evaluation" branch which does not have the right metadata structure.
-
-        """
-        if not snapshot:
-            return {}
-
-        # Skip evaluation revision which has no metadata
-        revs = [
-            rev.target
-            for branch_name, rev in snapshot.branches.items()
-            if (
-                rev
-                and rev.target_type == TargetType.REVISION
-                and branch_name != b"evaluation"
-            )
-        ]
-        known_revisions = self.storage.revision_get(revs)
-
-        ret = {}
-        for revision in known_revisions:
-            if not revision:  # revision_get can return None
-                continue
-            ret[revision.id] = revision.metadata
-        return ret
 
     def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
         """We add a branch to the snapshot called 'evaluation' pointing to the
@@ -182,18 +155,16 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
             }
         }
 
-    def build_revision(
+    def build_release(
         self, p_info: NixGuixPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
-        return Revision(
-            type=RevisionType.TAR,
+    ) -> Optional[Release]:
+        return Release(
+            name=p_info.version.encode(),
             message=b"",
             author=EMPTY_AUTHOR,
             date=None,
-            committer=EMPTY_AUTHOR,
-            committer_date=None,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 

@@ -44,6 +44,7 @@ def assert_last_visit_matches(
         the visit status for further check during the remaining part of the test.
 
     """
+    __tracebackhide__ = True  # Hide from pytest tracebacks on failure
     visit_status = origin_get_latest_visit_status(storage, url)
     assert visit_status is not None, f"Origin {url} has no visits"
     if type:
@@ -115,7 +116,7 @@ class InexistentObjectsError(AssertionError):
 
 
 def check_snapshot(
-    snapshot: Snapshot,
+    expected_snapshot: Snapshot,
     storage: StorageInterface,
     allowed_empty: Iterable[Tuple[TargetType, bytes]] = [],
 ) -> Snapshot:
@@ -124,7 +125,7 @@ def check_snapshot(
     - each object reference up to the revision/release targets exists
 
     Args:
-        snapshot: full snapshot to check for existence and consistency
+        expected_snapshot: full snapshot to check for existence and consistency
         storage: storage to lookup information into
         allowed_empty: Iterable of branch we allow to be empty (some edge case loaders
           allows this case to happen, nixguix for example allows the branch evaluation"
@@ -136,12 +137,15 @@ def check_snapshot(
         needed.
 
     """
-    if not isinstance(snapshot, Snapshot):
-        raise AssertionError(f"variable 'snapshot' must be a snapshot: {snapshot!r}")
+    __tracebackhide__ = True  # Hide from pytest tracebacks on failure
+    if not isinstance(expected_snapshot, Snapshot):
+        raise AssertionError(
+            f"argument 'expected_snapshot' must be a snapshot: {expected_snapshot!r}"
+        )
 
-    expected_snapshot = snapshot_get_all_branches(storage, snapshot.id)
-    if expected_snapshot is None:
-        raise AssertionError(f"Snapshot {snapshot.id.hex()} is not found")
+    snapshot = snapshot_get_all_branches(storage, expected_snapshot.id)
+    if snapshot is None:
+        raise AssertionError(f"Snapshot {expected_snapshot.id.hex()} is not found")
 
     assert snapshot == expected_snapshot
 

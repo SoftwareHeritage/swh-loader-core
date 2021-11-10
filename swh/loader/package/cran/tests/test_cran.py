@@ -23,14 +23,14 @@ from swh.model.hashutil import hash_to_bytes
 from swh.model.model import Snapshot, SnapshotBranch, TargetType, TimestampWithTimezone
 
 SNAPSHOT = Snapshot(
-    id=hash_to_bytes("920adcccc78aaeedd3cfa4459dd900d8c3431a21"),
+    id=hash_to_bytes("56ed00938d83892bd5b42f2f368ae38a1dbfa718"),
     branches={
         b"HEAD": SnapshotBranch(
             target=b"releases/2.22-6", target_type=TargetType.ALIAS
         ),
         b"releases/2.22-6": SnapshotBranch(
-            target=hash_to_bytes("42bdb16facd5140424359c8ce89a28ecfa1ce603"),
-            target_type=TargetType.REVISION,
+            target=hash_to_bytes("42993a72eac50a4a83523c9327a52be3593755a8"),
+            target_type=TargetType.RELEASE,
         ),
     },
 )
@@ -182,9 +182,11 @@ def test_cran_one_visit(swh_storage, requests_mock_datadir):
         "snapshot_id": SNAPSHOT.id.hex(),
     }
 
-    check_snapshot(SNAPSHOT, swh_storage)
+    assert_last_visit_matches(
+        swh_storage, origin_url, status="full", type="cran", snapshot=SNAPSHOT.id
+    )
 
-    assert_last_visit_matches(swh_storage, origin_url, status="full", type="cran")
+    check_snapshot(SNAPSHOT, swh_storage)
 
     visit_stats = get_stats(swh_storage)
     assert {
@@ -192,8 +194,8 @@ def test_cran_one_visit(swh_storage, requests_mock_datadir):
         "directory": 7,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
+        "release": 1,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == visit_stats
@@ -222,7 +224,6 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
     # first visit
     actual_load_status = loader.load()
 
-    expected_snapshot_id = "920adcccc78aaeedd3cfa4459dd900d8c3431a21"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": SNAPSHOT.id.hex(),
@@ -230,7 +231,9 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
 
     check_snapshot(SNAPSHOT, swh_storage)
 
-    assert_last_visit_matches(swh_storage, origin_url, status="full", type="cran")
+    assert_last_visit_matches(
+        swh_storage, origin_url, status="full", type="cran", snapshot=SNAPSHOT.id
+    )
 
     visit_stats = get_stats(swh_storage)
     assert {
@@ -238,8 +241,8 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
         "directory": 7,
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
+        "release": 1,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == visit_stats
@@ -249,10 +252,12 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
 
     assert actual_load_status2 == {
         "status": "uneventful",
-        "snapshot_id": expected_snapshot_id,
+        "snapshot_id": SNAPSHOT.id.hex(),
     }
 
-    assert_last_visit_matches(swh_storage, origin_url, status="full", type="cran")
+    assert_last_visit_matches(
+        swh_storage, origin_url, status="full", type="cran", snapshot=SNAPSHOT.id,
+    )
 
     visit_stats2 = get_stats(swh_storage)
     visit_stats["origin_visit"] += 1
@@ -353,12 +358,12 @@ def test_cran_fail_to_build_or_load_extrinsic_metadata(
             "directory": 7,
             "origin": 1,
             "origin_visit": 1,
-            "release": 0,
-            "revision": 1,
+            "release": 1,
+            "revision": 0,
             "skipped_content": 0,
             "snapshot": 1,
         } == visit_stats
 
         assert_last_visit_matches(
-            swh_storage, origin_url, status="partial", type="cran"
+            swh_storage, origin_url, status="partial", type="cran", snapshot=SNAPSHOT.id
         )
