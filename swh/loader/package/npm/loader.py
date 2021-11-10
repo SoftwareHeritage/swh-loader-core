@@ -24,9 +24,9 @@ from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
+    ObjectType,
     Person,
-    Revision,
-    RevisionType,
+    Release,
     Sha1Git,
     TimestampWithTimezone,
 )
@@ -48,7 +48,6 @@ class NpmPackageInfo(BasePackageInfo):
     date = attr.ib(type=Optional[str])
     shasum = attr.ib(type=str)
     """sha1 checksum"""
-    version = attr.ib(type=str)
 
     @classmethod
     def from_metadata(
@@ -141,9 +140,9 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         )
         yield release_name(version), p_info
 
-    def build_revision(
+    def build_release(
         self, p_info: NpmPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    ) -> Optional[Release]:
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
         if not i_metadata:
             return None
@@ -163,15 +162,13 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         # FIXME: this is to remain bug-compatible with earlier versions:
         date = attr.evolve(date, timestamp=attr.evolve(date.timestamp, microseconds=0))
 
-        r = Revision(
-            type=RevisionType.TAR,
+        r = Release(
+            name=p_info.version.encode(),
             message=message,
             author=author,
             date=date,
-            committer=author,
-            committer_date=date,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
         return r

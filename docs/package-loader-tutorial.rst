@@ -636,6 +636,31 @@ but this is rarely relevant in practice.
 Be sure to check if loader can find any potentially interesting metadata, though!
 
 
+You also need to implement a new method on your loader class, to return information
+on where the metadata is coming from, called a metadata authority.
+This authority is identified by a URI, such as ``https://github.com/`` for GitHub,
+``https://pypi.org/`` for PyPI, etc.
+For example::
+
+    from swh.model.model import MetadataAuthority, MetadataAuthorityType
+
+    def get_metadata_authority(self):
+        return MetadataAuthority(
+            type=MetadataAuthorityType.FORGE,
+            url="https://pypi.org/",
+        )
+
+If your loader supports loading from different instances (like GitLab),
+you can define the authority dynamically based on the URL of the origin::
+
+    def get_metadata_authority(self):
+        p_url = urlparse(self.url)
+        return MetadataAuthority(
+            type=MetadataAuthorityType.FORGE,
+            url=f"{p_url.scheme}://{p_url.netloc}/",
+        )
+
+
 Final words
 -----------
 

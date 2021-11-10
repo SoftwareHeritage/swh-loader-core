@@ -25,9 +25,9 @@ from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
+    ObjectType,
     Person,
-    Revision,
-    RevisionType,
+    Release,
     Sha1Git,
     TimestampWithTimezone,
 )
@@ -57,18 +57,15 @@ class DepositPackageInfo(BasePackageInfo):
     """The collection in the deposit; see SWORD specification."""
     author = attr.ib(type=Person)
     committer = attr.ib(type=Person)
-    revision_parents = attr.ib(type=Tuple[Sha1Git, ...])
-    """Revisions created from previous deposits, that will be used as parents of the
-    revision created for this deposit."""
 
     @classmethod
     def from_metadata(
-        cls, metadata: Dict[str, Any], url: str, filename: str
+        cls, metadata: Dict[str, Any], url: str, filename: str, version: str
     ) -> "DepositPackageInfo":
         # Note:
         # `date` and `committer_date` are always transmitted by the deposit read api
         # which computes itself the values. The loader needs to use those to create the
-        # revision.
+        # release.
 
         all_metadata_raw: List[str] = metadata["metadata_raw"]
         raw_info = {
@@ -83,6 +80,7 @@ class DepositPackageInfo(BasePackageInfo):
         return cls(
             url=url,
             filename=filename,
+            version=version,
             author_date=depo["author_date"],
             commit_date=depo["committer_date"],
             client=depo["client"],
@@ -90,7 +88,6 @@ class DepositPackageInfo(BasePackageInfo):
             collection=depo["collection"],
             author=parse_author(depo["author"]),
             committer=parse_author(depo["committer"]),
-            revision_parents=tuple(hash_to_bytes(p) for p in depo["revision_parents"]),
             raw_info=raw_info,
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
@@ -180,7 +177,10 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self, version: str
     ) -> Iterator[Tuple[str, DepositPackageInfo]]:
         p_info = DepositPackageInfo.from_metadata(
-            self.metadata(), url=self.url, filename=self.default_filename,
+            self.metadata(),
+            url=self.url,
+            filename=self.default_filename,
+            version=version,
         )
         yield "HEAD", p_info
 
@@ -192,22 +192,20 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         """
         return [self.client.archive_get(self.deposit_id, tmpdir, p_info.filename)]
 
-    def build_revision(
-        self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    def build_release(
+        self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git,
+    ) -> Optional[Release]:
         message = (
             f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}"
         ).encode("utf-8")
 
-        return Revision(
-            type=RevisionType.TAR,
+        return Release(
+            name=p_info.version.encode(),
             message=message,
             author=p_info.author,
             date=TimestampWithTimezone.from_dict(p_info.author_date),
-            committer=p_info.committer,
-            committer_date=TimestampWithTimezone.from_dict(p_info.commit_date),
-            parents=p_info.revision_parents,
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 
@@ -275,19 +273,19 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             logger.debug("branches: %s", branches)
             if not branches:
                 return r
-            rev_id = branches[b"HEAD"].target
+            rel_id = branches[b"HEAD"].target
 
-            revision = self.storage.revision_get([rev_id])[0]
-            if not revision:
+            release = self.storage.release_get([rel_id])[0]
+            if not release:
                 return r
 
             # update the deposit's status to success with its
-            # revision-id and directory-id
+            # release-id and directory-id
             self.client.status_update(
                 self.deposit_id,
                 status="done",
-                revision_id=hash_to_hex(rev_id),
-                directory_id=hash_to_hex(revision.directory),
+                release_id=hash_to_hex(rel_id),
+                directory_id=hash_to_hex(release.target),
                 snapshot_id=r["snapshot_id"],
                 origin_url=self.url,
             )
@@ -363,7 +361,7 @@ class ApiClient:
         deposit_id: Union[int, str],
         status: str,
         errors: Optional[List[str]] = None,
-        revision_id: Optional[str] = None,
+        release_id: Optional[str] = None,
         directory_id: Optional[str] = None,
         snapshot_id: Optional[str] = None,
         origin_url: Optional[str] = None,
@@ -374,8 +372,8 @@ class ApiClient:
         """
         url = f"{self.base_url}/{deposit_id}/update/"
         payload: Dict[str, Any] = {"status": status}
-        if revision_id:
-            payload["revision_id"] = revision_id
+        if release_id:
+            payload["release_id"] = release_id
         if directory_id:
             payload["directory_id"] = directory_id
         if snapshot_id:
