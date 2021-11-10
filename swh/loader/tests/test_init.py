@@ -400,7 +400,9 @@ def test_check_snapshot_failures(swh_storage):
     )
 
     # 0. not a Snapshot object, raise!
-    with pytest.raises(AssertionError, match="variable 'snapshot' must be a snapshot"):
+    with pytest.raises(
+        AssertionError, match="argument 'expected_snapshot' must be a snapshot"
+    ):
         check_snapshot(ORIGIN_VISIT, swh_storage)
 
     # 1. snapshot id is correct but branches mismatched

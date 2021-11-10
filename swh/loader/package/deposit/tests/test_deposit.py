@@ -14,22 +14,20 @@ from swh.loader.package.deposit.loader import ApiClient, DepositLoader
 from swh.loader.package.loader import now
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
-from swh.model.identifiers import (
-    CoreSWHID,
-    ExtendedObjectType,
-    ExtendedSWHID,
-    ObjectType,
-)
 from swh.model.model import (
-    MetadataAuthority,
-    MetadataAuthorityType,
-    MetadataFetcher,
     Origin,
+    Person,
     RawExtrinsicMetadata,
+    Release,
     Snapshot,
     SnapshotBranch,
     TargetType,
+    Timestamp,
+    TimestampWithTimezone,
 )
+from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
+from swh.model.model import ObjectType as ModelObjectType
+from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 DEPOSIT_URL = "https://deposit.softwareheritage.org/1/private"
 
@@ -171,41 +169,53 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "b2b327b33dc85818bd23c3ccda8b7e675a66ecbd"
+    expected_snapshot_id = "1090aaadc9fd1a77798bf6187d309145cbd23c53"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
     }
 
-    assert_last_visit_matches(loader.storage, url, status="full", type="deposit")
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
-    stats = get_stats(loader.storage)
-    assert {
-        "content": 303,
-        "directory": 12,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 0,
-        "revision": 1,
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
-
-    revision_id_hex = "637318680351f5d78856d13264faebbd91efe9bb"
-    revision_id = hash_to_bytes(revision_id_hex)
+    release_id_hex = "77c127bff4f9137baf26774fe19e29d82a41f69d"
+    release_id = hash_to_bytes(release_id_hex)
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
-            b"HEAD": SnapshotBranch(
-                target=revision_id, target_type=TargetType.REVISION,
-            ),
+            b"HEAD": SnapshotBranch(target=release_id, target_type=TargetType.RELEASE,),
         },
     )
     check_snapshot(expected_snapshot, storage=loader.storage)
 
-    revision = loader.storage.revision_get([revision_id])[0]
-    assert revision is not None
+    release = loader.storage.release_get([release_id])[0]
+    date = TimestampWithTimezone(
+        timestamp=Timestamp(seconds=1507389428, microseconds=0),
+        offset=0,
+        negative_utc=False,
+    )
+    person = Person(
+        fullname=b"Software Heritage",
+        name=b"Software Heritage",
+        email=b"robot@softwareheritage.org",
+    )
+    assert release == Release(
+        id=release_id,
+        name=b"HEAD",
+        message=b"hal: Deposit 666 in collection hal",
+        author=person,
+        date=date,
+        target_type=ModelObjectType.DIRECTORY,
+        target=b"\xfd-\xf1-\xc5SL\x1d\xa1\xe9\x18\x0b\x91Q\x02\xfbo`\x1d\x19",
+        synthetic=True,
+        metadata=None,
+    )
 
     # check metadata
 
@@ -230,8 +240,9 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     assert orig_meta0.fetcher == fetcher
 
     # Check directory metadata
+    assert release.target_type == ModelObjectType.DIRECTORY
     directory_swhid = CoreSWHID(
-        object_type=ObjectType.DIRECTORY, object_id=revision.directory
+        object_type=ObjectType.DIRECTORY, object_id=release.target
     )
     actual_dir_meta = loader.storage.raw_extrinsic_metadata_get(
         directory_swhid, authority
@@ -256,13 +267,25 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     body = update_query.json()
     expected_body = {
         "status": "done",
-        "revision_id": revision_id_hex,
-        "directory_id": hash_to_hex(revision.directory),
+        "release_id": release_id_hex,
+        "directory_id": hash_to_hex(release.target),
         "snapshot_id": expected_snapshot_id,
         "origin_url": url,
     }
 
     assert body == expected_body
+
+    stats = get_stats(loader.storage)
+    assert {
+        "content": 303,
+        "directory": 12,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 1,
+        "revision": 0,
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
 
 
 def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir):
@@ -277,20 +300,26 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "3e68440fdd7c81d283f8f3aebb6f0c8657864192"
+    expected_snapshot_id = "f87b25c121d9ab3ff0219b04b92d83f8c6f368f4"
 
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
     }
-    assert_last_visit_matches(loader.storage, url, status="full", type="deposit")
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
 
-    revision_id = "564d18943d71be80d0d73b43a77cfb205bcde96c"
+    release_id = "c6891941d4033f4fb1dbf39b501c819ac618f957"
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"HEAD": SnapshotBranch(
-                target=hash_to_bytes(revision_id), target_type=TargetType.REVISION
+                target=hash_to_bytes(release_id), target_type=TargetType.RELEASE
             )
         },
     )
@@ -298,14 +327,13 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     check_snapshot(expected_snapshot, storage=loader.storage)
 
     raw_meta = loader.client.metadata_get(deposit_id)
-    # Ensure the date fields are set appropriately in the revision
+    # Ensure the date fields are set appropriately in the release
 
-    # Retrieve the revision
-    revision = loader.storage.revision_get([hash_to_bytes(revision_id)])[0]
-    assert revision
-    assert revision.date.to_dict() == raw_meta["deposit"]["author_date"]
-    assert revision.committer_date.to_dict() == raw_meta["deposit"]["committer_date"]
-    assert not revision.metadata
+    # Retrieve the release
+    release = loader.storage.release_get([hash_to_bytes(release_id)])[0]
+    assert release
+    assert release.date.to_dict() == raw_meta["deposit"]["author_date"]
+    assert not release.metadata
 
     provider = {
         "provider_name": "hal",
@@ -369,9 +397,10 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
 
     assert sorted(origin_extrinsic_metadata.results) == sorted(expected_metadata)
 
-    # Check the revision metadata swh side
+    # Check the release metadata swh side
+    assert release.target_type == ModelObjectType.DIRECTORY
     directory_swhid = ExtendedSWHID(
-        object_type=ExtendedObjectType.DIRECTORY, object_id=revision.directory
+        object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     actual_directory_metadata = loader.storage.raw_extrinsic_metadata_get(
         directory_swhid, authority
@@ -380,8 +409,8 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     assert actual_directory_metadata.next_page_token is None
     assert len(actual_directory_metadata.results) == len(all_metadata_raw)
 
-    revision_swhid = CoreSWHID(
-        object_type=ObjectType.REVISION, object_id=hash_to_bytes(revision_id)
+    release_swhid = CoreSWHID(
+        object_type=ObjectType.RELEASE, object_id=hash_to_bytes(release_id)
     )
     dir_metadata_template = RawExtrinsicMetadata(
         target=directory_swhid,
@@ -389,7 +418,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         authority=authority,
         fetcher=fetcher,
         origin=url,
-        revision=revision_swhid,
+        release=release_swhid,
         # to satisfy the constructor
         discovery_date=now(),
         metadata=b"",
@@ -429,8 +458,8 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     body = update_query.json()
     expected_body = {
         "status": "done",
-        "revision_id": revision_id,
-        "directory_id": hash_to_hex(revision.directory),
+        "release_id": release_id,
+        "directory_id": hash_to_hex(release.target),
         "snapshot_id": expected_snapshot_id,
         "origin_url": url,
     }
@@ -450,10 +479,16 @@ def test_deposit_loading_ok_3(swh_storage, deposit_client, requests_mock_datadir
     loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "0ac7b54c042a026389f2087dc16f1d5c644ed0e4"
+    expected_snapshot_id = "212228fe041c763471c14545cf11dbec8003d6b4"
 
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
     }
-    assert_last_visit_matches(loader.storage, url, status="full", type="deposit")
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )

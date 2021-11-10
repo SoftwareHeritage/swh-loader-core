@@ -23,6 +23,7 @@ docs/README.rst
 docs/cli.rst
 docs/conf.py
 docs/index.rst
+docs/package-loader-specifications.rst
 docs/package-loader-tutorial.rst
 docs/vcs-loader-overview.rst
 docs/_static/.placeholder

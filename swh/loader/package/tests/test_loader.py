@@ -5,6 +5,7 @@
 
 import datetime
 import hashlib
+import logging
 import string
 from unittest.mock import Mock, call, patch
 
@@ -12,16 +13,22 @@ import attr
 import pytest
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.model.identifiers import CoreSWHID, ObjectType
 from swh.model.model import (
-    ExtID,
     Origin,
     OriginVisit,
     OriginVisitStatus,
+    Person,
+    Release,
+    Revision,
+    RevisionType,
     Snapshot,
     SnapshotBranch,
     TargetType,
+    TimestampWithTimezone,
 )
+from swh.model.model import ExtID
+from swh.model.model import ObjectType as ModelObjectType
+from swh.model.swhids import CoreSWHID, ObjectType
 from swh.storage import get_storage
 from swh.storage.algos.snapshot import snapshot_get_latest
 
@@ -51,7 +58,9 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
         return ["v1.0", "v2.0", "v3.0", "v4.0"]
 
     def get_package_info(self, version):
-        p_info = StubPackageInfo("http://example.org", f"example-{version}.tar")
+        p_info = StubPackageInfo(
+            "http://example.org", f"example-{version}.tar", version=version
+        )
         extid_type = "extid-type1" if version in ("v1.0", "v2.0") else "extid-type2"
         # Versions 1.0 and 2.0 have an extid of a given type, v3.0 has an extid
         # of a different type
@@ -63,7 +72,7 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
         ).start()
         yield (f"branch-{version}", p_info)
 
-    def _load_revision(self, p_info, origin):
+    def _load_release(self, p_info, origin):
         return None
 
 
@@ -83,60 +92,49 @@ def test_loader_origin_visit_failure(swh_storage):
     assert actual_load_status2 == {"status": "failed"}
 
 
-def test_resolve_revision_from_extids() -> None:
+def test_resolve_object_from_extids() -> None:
     loader = PackageLoader(None, None)  # type: ignore
 
-    p_info = Mock(wraps=BasePackageInfo(None, None))  # type: ignore
+    p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
 
     # The PackageInfo does not support extids
     p_info.extid.return_value = None
     known_extids = {
         ("extid-type", b"extid-of-aaaa"): [
-            CoreSWHID(object_type=ObjectType.REVISION, object_id=b"a" * 20),
+            CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20),
         ]
     }
-    revision_whitelist = {b"unused"}
-    assert (
-        loader.resolve_revision_from_extids(known_extids, p_info, revision_whitelist)
-        is None
-    )
+    whitelist = {b"unused"}
+    assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
 
     # Some known extid, and the PackageInfo is not one of them (ie. cache miss)
     p_info.extid.return_value = ("extid-type", b"extid-of-cccc")
-    assert (
-        loader.resolve_revision_from_extids(known_extids, p_info, revision_whitelist)
-        is None
-    )
+    assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
 
     # Some known extid, and the PackageInfo is one of them (ie. cache hit),
-    # but the target revision was not in the previous snapshot
+    # but the target release was not in the previous snapshot
     p_info.extid.return_value = ("extid-type", b"extid-of-aaaa")
-    assert (
-        loader.resolve_revision_from_extids(known_extids, p_info, revision_whitelist)
-        is None
-    )
+    assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
 
     # Some known extid, and the PackageInfo is one of them (ie. cache hit),
-    # and the target revision was in the previous snapshot
-    revision_whitelist = {b"a" * 20}
-    assert (
-        loader.resolve_revision_from_extids(known_extids, p_info, revision_whitelist)
-        == b"a" * 20
-    )
+    # and the target release was in the previous snapshot
+    whitelist = {b"a" * 20}
+    assert loader.resolve_object_from_extids(
+        known_extids, p_info, whitelist
+    ) == CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20)
 
     # Same as before, but there is more than one extid, and only one is an allowed
-    # revision
-    revision_whitelist = {b"a" * 20}
+    # release
+    whitelist = {b"a" * 20}
     known_extids = {
         ("extid-type", b"extid-of-aaaa"): [
-            CoreSWHID(object_type=ObjectType.REVISION, object_id=b"b" * 20),
-            CoreSWHID(object_type=ObjectType.REVISION, object_id=b"a" * 20),
+            CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"b" * 20),
+            CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20),
         ]
     }
-    assert (
-        loader.resolve_revision_from_extids(known_extids, p_info, revision_whitelist)
-        == b"a" * 20
-    )
+    assert loader.resolve_object_from_extids(
+        known_extids, p_info, whitelist
+    ) == CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20)
 
 
 def test_load_get_known_extids() -> None:
@@ -163,29 +161,29 @@ def test_load_extids() -> None:
     storage = get_storage("memory")
 
     origin = "http://example.org"
-    rev1_swhid = CoreSWHID(object_type=ObjectType.REVISION, object_id=b"a" * 20)
-    rev2_swhid = CoreSWHID(object_type=ObjectType.REVISION, object_id=b"b" * 20)
-    rev3_swhid = CoreSWHID(object_type=ObjectType.REVISION, object_id=b"c" * 20)
-    rev4_swhid = CoreSWHID(object_type=ObjectType.REVISION, object_id=b"d" * 20)
+    rel1_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20)
+    rel2_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"b" * 20)
+    rel3_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"c" * 20)
+    rel4_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"d" * 20)
     dir_swhid = CoreSWHID(object_type=ObjectType.DIRECTORY, object_id=b"e" * 20)
 
     # Results of a previous load
     storage.extid_add(
         [
-            ExtID("extid-type1", b"extid-of-v1.0", rev1_swhid),
-            ExtID("extid-type2", b"extid-of-v2.0", rev2_swhid),
+            ExtID("extid-type1", b"extid-of-v1.0", rel1_swhid),
+            ExtID("extid-type2", b"extid-of-v2.0", rel2_swhid),
         ]
     )
     last_snapshot = Snapshot(
         branches={
             b"v1.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev1_swhid.object_id
+                target_type=TargetType.RELEASE, target=rel1_swhid.object_id
             ),
             b"v2.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev2_swhid.object_id
+                target_type=TargetType.RELEASE, target=rel2_swhid.object_id
             ),
             b"v3.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev3_swhid.object_id
+                target_type=TargetType.RELEASE, target=rel3_swhid.object_id
             ),
         }
     )
@@ -210,65 +208,202 @@ def test_load_extids() -> None:
     loader = StubPackageLoader(storage, "http://example.org")
     patch.object(
         loader,
-        "_load_revision",
-        return_value=(rev4_swhid.object_id, dir_swhid.object_id),
+        "_load_release",
+        return_value=(rel4_swhid.object_id, dir_swhid.object_id),
         autospec=True,
     ).start()
 
     loader.load()
 
-    assert loader._load_revision.mock_calls == [  # type: ignore
-        # v1.0: not loaded because there is already its (extid_type, extid, rev)
+    assert loader._load_release.mock_calls == [  # type: ignore
+        # v1.0: not loaded because there is already its (extid_type, extid, rel)
         #       in the storage.
         # v2.0: loaded, because there is already a similar extid, but different type
-        call(StubPackageInfo(origin, "example-v2.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v2.0.tar", "v2.0"), Origin(url=origin),),
         # v3.0: loaded despite having an (extid_type, extid) in storage, because
         #       the target of the extid is not in the previous snapshot
-        call(StubPackageInfo(origin, "example-v3.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v3.0.tar", "v3.0"), Origin(url=origin),),
         # v4.0: loaded, because there isn't its extid
-        call(StubPackageInfo(origin, "example-v4.0.tar"), Origin(url=origin)),
+        call(StubPackageInfo(origin, "example-v4.0.tar", "v4.0"), Origin(url=origin),),
     ]
 
     # then check the snapshot has all the branches.
-    # versions 2.0 to 4.0 all point to rev4_swhid (instead of the value of the last
+    # versions 2.0 to 4.0 all point to rel4_swhid (instead of the value of the last
     # snapshot), because they had to be loaded (mismatched extid), and the mocked
-    # _load_revision always returns rev4_swhid.
+    # _load_release always returns rel4_swhid.
     snapshot = Snapshot(
         branches={
             b"branch-v1.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev1_swhid.object_id
+                target_type=TargetType.RELEASE, target=rel1_swhid.object_id
             ),
             b"branch-v2.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev4_swhid.object_id
+                target_type=TargetType.RELEASE, target=rel4_swhid.object_id
             ),
             b"branch-v3.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev4_swhid.object_id
+                target_type=TargetType.RELEASE, target=rel4_swhid.object_id
             ),
             b"branch-v4.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev4_swhid.object_id
+                target_type=TargetType.RELEASE, target=rel4_swhid.object_id
             ),
         }
     )
     assert snapshot_get_latest(storage, origin) == snapshot
 
     extids = storage.extid_get_from_target(
-        ObjectType.REVISION,
+        ObjectType.RELEASE,
         [
-            rev1_swhid.object_id,
-            rev2_swhid.object_id,
-            rev3_swhid.object_id,
-            rev4_swhid.object_id,
+            rel1_swhid.object_id,
+            rel2_swhid.object_id,
+            rel3_swhid.object_id,
+            rel4_swhid.object_id,
         ],
     )
 
     assert set(extids) == {
         # What we inserted at the beginning of the test:
-        ExtID("extid-type1", b"extid-of-v1.0", rev1_swhid),
-        ExtID("extid-type2", b"extid-of-v2.0", rev2_swhid),
+        ExtID("extid-type1", b"extid-of-v1.0", rel1_swhid),
+        ExtID("extid-type2", b"extid-of-v2.0", rel2_swhid),
         # Added by the loader:
-        ExtID("extid-type1", b"extid-of-v2.0", rev4_swhid),
-        ExtID("extid-type2", b"extid-of-v3.0", rev4_swhid),
-        ExtID("extid-type2", b"extid-of-v4.0", rev4_swhid),
+        ExtID("extid-type1", b"extid-of-v2.0", rel4_swhid),
+        ExtID("extid-type2", b"extid-of-v3.0", rel4_swhid),
+        ExtID("extid-type2", b"extid-of-v4.0", rel4_swhid),
+    }
+
+
+def test_load_upgrade_from_revision_extids(caplog):
+    """Tests that, when loading incrementally based on a snapshot made by an old
+    version of the loader, the loader will convert revisions to releases
+    and add them to the storage.
+
+    Also checks that, if an extid exists pointing to a non-existent revision
+    (which should never happen, but you never know...), the release is loaded from
+    scratch."""
+
+    storage = get_storage("memory")
+
+    origin = "http://example.org"
+    dir1_swhid = CoreSWHID(object_type=ObjectType.DIRECTORY, object_id=b"d" * 20)
+    dir2_swhid = CoreSWHID(object_type=ObjectType.DIRECTORY, object_id=b"e" * 20)
+
+    date = TimestampWithTimezone.from_datetime(
+        datetime.datetime.now(tz=datetime.timezone.utc)
+    )
+    person = Person.from_fullname(b"Jane Doe <jdoe@example.org>")
+
+    rev1 = Revision(
+        message=b"blah",
+        author=person,
+        date=date,
+        committer=person,
+        committer_date=date,
+        directory=dir1_swhid.object_id,
+        type=RevisionType.TAR,
+        synthetic=True,
+    )
+
+    rel1 = Release(
+        name=b"v1.0",
+        message=b"blah",
+        author=person,
+        date=date,
+        target=dir1_swhid.object_id,
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=True,
+    )
+
+    rev1_swhid = rev1.swhid()
+    rel1_swhid = rel1.swhid()
+    rev2_swhid = CoreSWHID(object_type=ObjectType.REVISION, object_id=b"b" * 20)
+    rel2_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"c" * 20)
+
+    # Results of a previous load
+    storage.extid_add(
+        [
+            ExtID("extid-type1", b"extid-of-v1.0", rev1_swhid),
+            ExtID("extid-type1", b"extid-of-v2.0", rev2_swhid),
+        ]
+    )
+    storage.revision_add([rev1])
+    last_snapshot = Snapshot(
+        branches={
+            b"v1.0": SnapshotBranch(
+                target_type=TargetType.REVISION, target=rev1_swhid.object_id
+            ),
+            b"v2.0": SnapshotBranch(
+                target_type=TargetType.REVISION, target=rev2_swhid.object_id
+            ),
+        }
+    )
+    storage.snapshot_add([last_snapshot])
+    date = datetime.datetime.now(tz=datetime.timezone.utc)
+    storage.origin_add([Origin(url=origin)])
+    storage.origin_visit_add(
+        [OriginVisit(origin="http://example.org", visit=1, date=date, type="tar")]
+    )
+    storage.origin_visit_status_add(
+        [
+            OriginVisitStatus(
+                origin=origin,
+                visit=1,
+                status="full",
+                date=date,
+                snapshot=last_snapshot.id,
+            )
+        ]
+    )
+
+    loader = StubPackageLoader(storage, "http://example.org")
+    patch.object(
+        loader,
+        "_load_release",
+        return_value=(rel2_swhid.object_id, dir2_swhid.object_id),
+        autospec=True,
+    ).start()
+    patch.object(
+        loader, "get_versions", return_value=["v1.0", "v2.0", "v3.0"], autospec=True,
+    ).start()
+
+    caplog.set_level(logging.ERROR)
+
+    loader.load()
+
+    assert len(caplog.records) == 1
+    (record,) = caplog.records
+    assert record.levelname == "ERROR"
+    assert "Failed to upgrade branch branch-v2.0" in record.message
+
+    assert loader._load_release.mock_calls == [
+        # v1.0: not loaded because there is already a revision matching it
+        # v2.0: loaded, as the revision is missing from the storage even though there
+        #       is an extid
+        call(StubPackageInfo(origin, "example-v2.0.tar", "v2.0"), Origin(url=origin)),
+        # v3.0: loaded (did not exist yet)
+        call(StubPackageInfo(origin, "example-v3.0.tar", "v3.0"), Origin(url=origin)),
+    ]
+
+    snapshot = Snapshot(
+        branches={
+            b"branch-v1.0": SnapshotBranch(
+                target_type=TargetType.RELEASE, target=rel1_swhid.object_id
+            ),
+            b"branch-v2.0": SnapshotBranch(
+                target_type=TargetType.RELEASE, target=rel2_swhid.object_id
+            ),
+            b"branch-v3.0": SnapshotBranch(
+                target_type=TargetType.RELEASE, target=rel2_swhid.object_id
+            ),
+        }
+    )
+    assert snapshot_get_latest(storage, origin) == snapshot
+
+    extids = storage.extid_get_from_target(
+        ObjectType.RELEASE, [rel1_swhid.object_id, rel2_swhid.object_id,],
+    )
+
+    assert set(extids) == {
+        ExtID("extid-type1", b"extid-of-v1.0", rel1_swhid),
+        ExtID("extid-type1", b"extid-of-v2.0", rel2_swhid),
+        ExtID("extid-type2", b"extid-of-v3.0", rel2_swhid),
     }
 
 
@@ -283,7 +418,6 @@ def test_manifest_extid():
         b = attr.ib()
         length = attr.ib()
         filename = attr.ib()
-        version = attr.ib()
 
         MANIFEST_FORMAT = string.Template("$a $b")
 

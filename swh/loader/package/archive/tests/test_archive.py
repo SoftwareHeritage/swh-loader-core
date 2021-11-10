@@ -76,8 +76,8 @@ _expected_new_directories_first_visit = [
     "3aebc29ed1fccc4a6f2f2010fb8e57882406b528",
 ]
 
-_expected_new_revisions_first_visit = {
-    "44183488c0774ce3c957fa19ba695cf18a4a42b3": (
+_expected_new_releases_first_visit = {
+    "c9786c1e3b46f52779c727d3509d66ebf8948d88": (
         "3aebc29ed1fccc4a6f2f2010fb8e57882406b528"
     )
 }
@@ -131,7 +131,7 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
     assert actual_load_status["status"] == "eventful"
 
     expected_snapshot_first_visit_id = hash_to_bytes(
-        "c419397fd912039825ebdbea378bc6283f006bf5"
+        "cdf8f335fa0c81c8ad089870ec14f52b1980eb6c"
     )
 
     assert (
@@ -147,20 +147,11 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": len(_expected_new_revisions_first_visit),
+        "release": len(_expected_new_releases_first_visit),
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
-
-    expected_contents = map(hash_to_bytes, _expected_new_contents_first_visit)
-    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
-
-    expected_dirs = map(hash_to_bytes, _expected_new_directories_first_visit)
-    assert list(swh_storage.directory_missing(expected_dirs)) == []
-
-    expected_revs = map(hash_to_bytes, _expected_new_revisions_first_visit)
-    assert list(swh_storage.revision_missing(expected_revs)) == []
 
     expected_snapshot = Snapshot(
         id=expected_snapshot_first_visit_id,
@@ -169,13 +160,22 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
                 target_type=TargetType.ALIAS, target=b"releases/0.1.0",
             ),
             b"releases/0.1.0": SnapshotBranch(
-                target_type=TargetType.REVISION,
-                target=hash_to_bytes("44183488c0774ce3c957fa19ba695cf18a4a42b3"),
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes(list(_expected_new_releases_first_visit)[0]),
             ),
         },
     )
 
     check_snapshot(expected_snapshot, swh_storage)
+
+    expected_contents = map(hash_to_bytes, _expected_new_contents_first_visit)
+    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
+
+    expected_dirs = map(hash_to_bytes, _expected_new_directories_first_visit)
+    assert list(swh_storage.directory_missing(expected_dirs)) == []
+
+    expected_rels = map(hash_to_bytes, _expected_new_releases_first_visit)
+    assert list(swh_storage.release_missing(expected_rels)) == []
 
 
 def test_archive_2_visits_without_change(swh_storage, requests_mock_datadir):
@@ -226,8 +226,8 @@ def test_archive_2_visits_with_new_artifact(swh_storage, requests_mock_datadir):
         "directory": len(_expected_new_directories_first_visit),
         "origin": 1,
         "origin_visit": 1,
-        "release": 0,
-        "revision": len(_expected_new_revisions_first_visit),
+        "release": len(_expected_new_releases_first_visit),
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
@@ -255,8 +255,8 @@ def test_archive_2_visits_with_new_artifact(swh_storage, requests_mock_datadir):
         "directory": len(_expected_new_directories_first_visit) + 8,
         "origin": 1,
         "origin_visit": 1 + 1,
-        "release": 0,
-        "revision": len(_expected_new_revisions_first_visit) + 1,
+        "release": len(_expected_new_releases_first_visit) + 1,
+        "revision": 0,
         "skipped_content": 0,
         "snapshot": 1 + 1,
     } == stats2

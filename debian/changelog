@@ -1,8 +1,27 @@
-swh-loader-core (0.25.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (1.0.1-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 1.0.1     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2021-11-10 14:47:52 +0100)
+  * Upstream changes:     - v1.0.1     - * utils: Add types and let log
+    instruction do the formatting     - * Fix tests when run by gbp on
+    Sid.
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 29 Sep 2021 07:28:03 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 10 Nov 2021 13:53:43 +0000
+
+swh-loader-core (1.0.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 1.0.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2021-11-10 14:25:24 +0100)
+  * Upstream changes:     - v1.0.0     - Main change: thismakes package
+    loaders write releases instead of revisions     - Other more-or-less
+    related changes:     - * Add missing documentation for
+    `get_metadata_authority`.     - * opam: Write package definitions to
+    the extrinsic metadata storage     - * deposit: Remove 'parent'
+    deposit     - * cleanup tests and unused code     - * Document how
+    each package loader populates fields.     - * Refactor package
+    loaders to make the version part of BasePackageInfo
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 10 Nov 2021 13:38:43 +0000
 
 swh-loader-core (0.25.0-1~swh1) unstable-swh; urgency=medium
 
