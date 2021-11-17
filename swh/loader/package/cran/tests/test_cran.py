@@ -31,10 +31,10 @@ from swh.model.model import (
     TimestampWithTimezone,
 )
 
-RELEASE_ID = hash_to_bytes("9a977f6415e6997fd9dd53c6dcb540ff0a7bff26")
+RELEASE_ID = hash_to_bytes("daaf3cffedac946060de53648994631d0b3c63bc")
 
 SNAPSHOT = Snapshot(
-    id=hash_to_bytes("3787efc620c55b1e18889cfa561d9bcdc62c4cb2"),
+    id=hash_to_bytes("c0ccd6452cbe9cd4f0a523b23f09c411bd92ef4e"),
     branches={
         b"HEAD": SnapshotBranch(
             target=b"releases/2.22-6", target_type=TargetType.ALIAS
@@ -211,7 +211,7 @@ def test_cran_one_visit(swh_storage, requests_mock_datadir):
         name=b"2.22-6",
         message=(
             b"Synthetic release for CRAN source package "
-            b"Recommended_KernSmooth version 2.22-6"
+            b"Recommended_KernSmooth version 2.22-6\n"
         ),
         target=hash_to_bytes("ff64177fea3f4a5136b9caf7581a4f7d4cf65296"),
         target_type=ObjectType.DIRECTORY,

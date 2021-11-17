@@ -149,7 +149,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         author = extract_npm_package_author(i_metadata)
         msg = (
             f"Synthetic release for NPM source package {self.package_name} "
-            f"version {p_info.version}"
+            f"version {p_info.version}\n"
         )
 
         if p_info.date is None:

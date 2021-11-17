@@ -148,7 +148,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
         else:
             msg = (
                 f"Synthetic release for PyPI source package {p_info.name} "
-                f"version {version_}"
+                f"version {version_}\n"
             )
 
         date = TimestampWithTimezone.from_iso8601(p_info.upload_time)

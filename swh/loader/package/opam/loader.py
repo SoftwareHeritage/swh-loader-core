@@ -246,7 +246,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
 
         msg = (
             f"Synthetic release for OPAM source package {self.opam_package} "
-            f"version {p_info.version}"
+            f"version {p_info.version}\n"
         )
         return Release(
             name=p_info.version.encode(),

@@ -283,13 +283,13 @@ _expected_new_directories_first_visit = normalize_hashes(
 
 _expected_new_releases_first_visit = normalize_hashes(
     {
-        "adcc40ee87a3ebb1b5a82edd692cf52aa5099cee": (
+        "d38cc0b571cd41f3c85513864e049766b42032a7": (
             "42753c0c2ab00c4501b552ac4671c68f3cf5aece"
         ),
-        "c781147df0e4963a0f9859134abd28296b702233": (
+        "62bf7076bae9aa2cb4d6cb3bf7ce0ea4fdd5b295": (
             "3370d20d6f96dc1c9e50f083e2134881db110f4f"
         ),
-        "f544812dac98e7589155be7dfaef64477a408ec0": (
+        "6e976db82f6c310596b21fb0ed8b11f507631434": (
             "d7895533ef5edbcffdea3f057d9fef3a1ef845ce"
         ),
     }
@@ -310,7 +310,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("d24e3f10492ade1e9462ec701370fef4a79a40f1")
+    expected_snapshot_id = hash_to_bytes("0996ca28d6280499abcf485b51c4e3941b057249")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -320,10 +320,11 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         swh_storage, url, status="full", type="npm", snapshot=expected_snapshot_id
     )
 
+    release_id = "d38cc0b571cd41f3c85513864e049766b42032a7"
     versions = [
-        ("0.0.2", "adcc40ee87a3ebb1b5a82edd692cf52aa5099cee"),
-        ("0.0.3", "c781147df0e4963a0f9859134abd28296b702233"),
-        ("0.0.4", "f544812dac98e7589155be7dfaef64477a408ec0"),
+        ("0.0.2", release_id),
+        ("0.0.3", "62bf7076bae9aa2cb4d6cb3bf7ce0ea4fdd5b295"),
+        ("0.0.4", "6e976db82f6c310596b21fb0ed8b11f507631434"),
     ]
 
     expected_snapshot = Snapshot(
@@ -343,11 +344,9 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
     )
     check_snapshot(expected_snapshot, swh_storage)
 
-    assert swh_storage.release_get(
-        [hash_to_bytes("adcc40ee87a3ebb1b5a82edd692cf52aa5099cee")]
-    )[0] == Release(
+    assert swh_storage.release_get([hash_to_bytes(release_id)])[0] == Release(
         name=b"0.0.2",
-        message=b"Synthetic release for NPM source package org version 0.0.2",
+        message=b"Synthetic release for NPM source package org version 0.0.2\n",
         target=hash_to_bytes("42753c0c2ab00c4501b552ac4671c68f3cf5aece"),
         target_type=ModelObjectType.DIRECTORY,
         synthetic=True,
@@ -361,7 +360,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
             offset=0,
             negative_utc=False,
         ),
-        id=hash_to_bytes("adcc40ee87a3ebb1b5a82edd692cf52aa5099cee"),
+        id=hash_to_bytes(release_id),
     )
 
     contents = swh_storage.content_get(_expected_new_contents_first_visit)
@@ -427,7 +426,7 @@ def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits)
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)
 
-    expected_snapshot_id = hash_to_bytes("d24e3f10492ade1e9462ec701370fef4a79a40f1")
+    expected_snapshot_id = hash_to_bytes("0996ca28d6280499abcf485b51c4e3941b057249")
     actual_load_status = loader.load()
     assert actual_load_status == {
         "status": "eventful",
@@ -490,7 +489,7 @@ def test_npm_loader_version_divergence(swh_storage):
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("92ff37da8045f0088ed35bce0bc34e2025202825")
+    expected_snapshot_id = hash_to_bytes("ebbe6397d0c2a6cf7cba40fa5b043c59dd4f2497")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -507,11 +506,11 @@ def test_npm_loader_version_divergence(swh_storage):
             ),
             b"releases/0.1.0": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("c5e0f0e185660b6bdd694ca5c68babe5bab20e24"),
+                target=hash_to_bytes("04c66f3a82aa001e8f1b45246b58b82d2b0ca0df"),
             ),
             b"releases/0.1.1-alpha.14": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("2f89c709eacc974b587e13f90d10a826b23a550e"),
+                target=hash_to_bytes("90cc04dc72193f3b1444f10e1c525bee2ea9dac6"),
             ),
         },
     )
@@ -590,7 +589,7 @@ def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("2a7a67725f9c7134f56612281e8d1638f1386118")
+    expected_snapshot_id = hash_to_bytes("33b8f105d48ce16b6c59158af660e0cc78bcbef4")
 
     assert actual_load_status == {
         "status": "eventful",
@@ -606,7 +605,7 @@ def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
             ),
             b"releases/0.0.1": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("68b2a100103cecec06b8dd780228bb751f2dc6f3"),
+                target=hash_to_bytes("3e3b800570869fa9b3dbc302500553e62400cc06"),
             ),
         },
     )

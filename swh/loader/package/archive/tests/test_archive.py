@@ -86,7 +86,7 @@ _expected_new_directories_first_visit = [
 ]
 
 _expected_new_releases_first_visit = {
-    "97c2ada10ca9b7876a8b5b17858b0518309170fd": (
+    "c92b2ad9e70ef1dce455e8fe1d8e41b92512cc08": (
         "3aebc29ed1fccc4a6f2f2010fb8e57882406b528"
     )
 }
@@ -140,7 +140,7 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
     assert actual_load_status["status"] == "eventful"
 
     expected_snapshot_first_visit_id = hash_to_bytes(
-        "af62f6f6d464f9b29f270d1bbefa355af38946c4"
+        "9efecc835e8f99254934f256b5301b94f348fd17"
     )
 
     assert actual_load_status["snapshot_id"] == hash_to_hex(
@@ -180,7 +180,7 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         name=b"0.1.0",
         message=(
             b"Synthetic release for archive at "
-            b"https://ftp.gnu.org/gnu/8sync/8sync-0.1.0.tar.gz"
+            b"https://ftp.gnu.org/gnu/8sync/8sync-0.1.0.tar.gz\n"
         ),
         target=hash_to_bytes("3aebc29ed1fccc4a6f2f2010fb8e57882406b528"),
         target_type=ObjectType.DIRECTORY,

@@ -329,7 +329,7 @@ def test_pypi_release_metadata_structure(
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    expected_release_id = hash_to_bytes("e05d81600f3db1f905d23ab2a06ea64460c7e3f4")
+    expected_release_id = hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68")
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),
@@ -338,7 +338,7 @@ def test_pypi_release_metadata_structure(
                 target=b"releases/1.2.0", target_type=TargetType.ALIAS,
             ),
             b"releases/1.1.0": SnapshotBranch(
-                target=hash_to_bytes("ed4132a0160d97752a6ce5716722fb937a2e00b1"),
+                target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
@@ -396,7 +396,7 @@ def test_pypi_visit_with_missing_artifact(
     loader = PyPILoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("1838a3d6fff760338ab14b95c43c2dabcbb03c5a")
+    expected_snapshot_id = hash_to_bytes("00785a38479abe5fbfa402df96be26d2ddf89c97")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -410,7 +410,7 @@ def test_pypi_visit_with_missing_artifact(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/1.2.0": SnapshotBranch(
-                target=hash_to_bytes("e05d81600f3db1f905d23ab2a06ea64460c7e3f4"),
+                target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
@@ -442,7 +442,7 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
     loader = PyPILoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("7e34abda294fb80e6d4e64637ae43fed112079ca")
+    expected_snapshot_id = hash_to_bytes("3dd50c1a0e48a7625cf1427e3190a65b787c774e")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -456,11 +456,11 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
         id=expected_snapshot_id,
         branches={
             b"releases/1.1.0": SnapshotBranch(
-                target=hash_to_bytes("ed4132a0160d97752a6ce5716722fb937a2e00b1"),
+                target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
-                target=hash_to_bytes("e05d81600f3db1f905d23ab2a06ea64460c7e3f4"),
+                target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
@@ -491,7 +491,7 @@ def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir)
     loader = PyPILoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    snapshot_id = hash_to_bytes("7e34abda294fb80e6d4e64637ae43fed112079ca")
+    snapshot_id = hash_to_bytes("3dd50c1a0e48a7625cf1427e3190a65b787c774e")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": snapshot_id.hex(),
@@ -504,11 +504,11 @@ def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir)
         id=snapshot_id,
         branches={
             b"releases/1.1.0": SnapshotBranch(
-                target=hash_to_bytes("ed4132a0160d97752a6ce5716722fb937a2e00b1"),
+                target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
-                target=hash_to_bytes("e05d81600f3db1f905d23ab2a06ea64460c7e3f4"),
+                target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
@@ -559,7 +559,7 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
 
     visit1_actual_load_status = loader.load()
     visit1_stats = get_stats(swh_storage)
-    expected_snapshot_id = hash_to_bytes("7e34abda294fb80e6d4e64637ae43fed112079ca")
+    expected_snapshot_id = hash_to_bytes("3dd50c1a0e48a7625cf1427e3190a65b787c774e")
     assert visit1_actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -588,7 +588,7 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
     visit2_stats = get_stats(swh_storage)
 
     assert visit2_actual_load_status["status"] == "eventful", visit2_actual_load_status
-    expected_snapshot_id2 = hash_to_bytes("6636693213eab9000b8eee1c5bbb3f1b675a4c70")
+    expected_snapshot_id2 = hash_to_bytes("77febe6ff0faf6cc00dd015a6c9763579a9fb6c7")
     assert visit2_actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id2.hex(),
@@ -602,11 +602,11 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
         id=expected_snapshot_id2,
         branches={
             b"releases/1.1.0": SnapshotBranch(
-                target=hash_to_bytes("ed4132a0160d97752a6ce5716722fb937a2e00b1"),
+                target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
-                target=hash_to_bytes("e05d81600f3db1f905d23ab2a06ea64460c7e3f4"),
+                target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/1.3.0": SnapshotBranch(
@@ -664,7 +664,7 @@ def test_pypi_visit_1_release_with_2_artifacts(swh_storage, requests_mock_datadi
     loader = PyPILoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("a65c03a837b24720fa95622de07074e279eddd0d")
+    expected_snapshot_id = hash_to_bytes("1394b2e59351a944cc763bd9d26d90ce8e8121a8")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -678,11 +678,11 @@ def test_pypi_visit_1_release_with_2_artifacts(swh_storage, requests_mock_datadi
         id=expected_snapshot_id,
         branches={
             b"releases/1.1.0/nexter-1.1.0.zip": SnapshotBranch(
-                target=hash_to_bytes("18d0087b1e1a3a31070d54bf3e9edbd44ab01cb5"),
+                target=hash_to_bytes("f7d43faeb65b64d3faa67e4f46559db57d26b9a4"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/1.1.0/nexter-1.1.0.tar.gz": SnapshotBranch(
-                target=hash_to_bytes("b2b379b3eb61adcde22e10788b1fc5f985e938d2"),
+                target=hash_to_bytes("732bb9dc087e6015884daaebb8b82559be729b5a"),
                 target_type=TargetType.RELEASE,
             ),
         },
@@ -764,7 +764,7 @@ Platform: UNKNOWN"""
     # without comment_text and version in PKG-INFO, message should be empty
     assert (
         release.message
-        == b"Synthetic release for PyPI source package GermlineFilter version 1.2"
+        == b"Synthetic release for PyPI source package GermlineFilter version 1.2\n"
     )
 
 

@@ -92,7 +92,7 @@ class CRANLoader(PackageLoader[CRANPackageInfo]):
         author = Person.from_fullname(metadata.get("Maintainer", "").encode())
         msg = (
             f"Synthetic release for CRAN source package {p_info.name} "
-            f"version {p_info.version}"
+            f"version {p_info.version}\n"
         )
         return Release(
             name=p_info.version.encode(),

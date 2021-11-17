@@ -607,7 +607,7 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
     ]
     archive_loader = ArchiveLoader(swh_storage, url=gnu_url, artifacts=gnu_artifacts)
     actual_load_status = archive_loader.load()
-    expected_snapshot_id = "af62f6f6d464f9b29f270d1bbefa355af38946c4"
+    expected_snapshot_id = "9efecc835e8f99254934f256b5301b94f348fd17"
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] == expected_snapshot_id  # noqa
 

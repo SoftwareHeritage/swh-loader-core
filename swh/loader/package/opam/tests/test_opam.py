@@ -110,13 +110,17 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("e480958fa7851268be2bcc8d01145c0c9624b34b")
+    expected_snapshot_id = hash_to_bytes("e1159446b00745ba4daa7ee26d74fbd81ecc081c")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
     }
 
-    release_id = hash_to_bytes("03db7f0d572509f1c7ce18c847db83070e26fd5e")
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="opam", snapshot=expected_snapshot_id
+    )
+
+    release_id = hash_to_bytes("d4d8d3df4f34609a3eeabd48aea49002c5f54f41")
 
     expected_snapshot = Snapshot(
         id=expected_snapshot_id,
@@ -128,9 +132,11 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
         },
     )
 
+    check_snapshot(expected_snapshot, swh_storage)
+
     assert swh_storage.release_get([release_id])[0] == Release(
         name=b"0.1",
-        message=b"Synthetic release for OPAM source package agrid version 0.1",
+        message=b"Synthetic release for OPAM source package agrid version 0.1\n",
         target=hash_to_bytes("00412ee5bc601deb462e55addd1004715116785e"),
         target_type=ModelObjectType.DIRECTORY,
         synthetic=True,
@@ -140,12 +146,6 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
         date=None,
         id=release_id,
     )
-
-    assert_last_visit_matches(
-        swh_storage, url, status="full", type="opam", snapshot=expected_snapshot_id
-    )
-
-    check_snapshot(expected_snapshot, swh_storage)
 
     stats = get_stats(swh_storage)
 
@@ -181,7 +181,7 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("1a70631bee44c86dded71e0a091b1c91c110f812")
+    expected_snapshot_id = hash_to_bytes("f498f7f3b0edbce5cf5834b487a4f8360f6a6a43")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -194,15 +194,15 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
                 target=b"directories.0.3", target_type=TargetType.ALIAS,
             ),
             b"directories.0.1": SnapshotBranch(
-                target=hash_to_bytes("013d53d7e1aedbe03aaa3d5c0e6d1d780ef2634d"),
+                target=hash_to_bytes("1c88d466b3d57a619e296999322d096fa37bb1c2"),
                 target_type=TargetType.RELEASE,
             ),
             b"directories.0.2": SnapshotBranch(
-                target=hash_to_bytes("4fdcc3606c0af33cb4d733b70074e79f03e928a1"),
+                target=hash_to_bytes("d6f30684039ad485511a138e2ae504ff67a13075"),
                 target_type=TargetType.RELEASE,
             ),
             b"directories.0.3": SnapshotBranch(
-                target=hash_to_bytes("5de72a60f81649157d267773c30e897b7005dcdb"),
+                target=hash_to_bytes("6cf92c0ff052074e69ac18809a9c8198bcc2e746"),
                 target_type=TargetType.RELEASE,
             ),
         },
@@ -236,7 +236,7 @@ def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("96246035587354a71f429d5b9b8dcc98afad3708")
+    expected_snapshot_id = hash_to_bytes("8ba39f050243a72ca667c5587a87413240cbaa47")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -265,7 +265,7 @@ def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
     assert branch_name == expected_branch_name
     assert package_info == expected_package_info
 
-    release_id = hash_to_bytes("4904ad9d0f3b3f84cec2b899d0d05c682b0efdcb")
+    release_id = hash_to_bytes("c231e541eb29c712635ada394b04127ac69e9fb0")
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),
@@ -312,7 +312,7 @@ def test_opam_metadata(tmpdir, requests_mock_datadir, swh_storage, datadir):
 
     assert actual_load_status["status"] == "eventful"
 
-    expected_release_id = hash_to_bytes("4904ad9d0f3b3f84cec2b899d0d05c682b0efdcb")
+    expected_release_id = hash_to_bytes("c231e541eb29c712635ada394b04127ac69e9fb0")
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),

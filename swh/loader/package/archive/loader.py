@@ -144,7 +144,7 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
         else:
             parsed_time = time
         normalized_time = TimestampWithTimezone.from_datetime(parsed_time)
-        msg = f"Synthetic release for archive at {p_info.url}"
+        msg = f"Synthetic release for archive at {p_info.url}\n"
         return Release(
             name=p_info.version.encode(),
             message=msg.encode(),

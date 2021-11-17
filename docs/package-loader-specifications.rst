@@ -24,7 +24,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - passed as arg
      - ``release_name(​version)``
      - =version
-     - "Synthetic release for archive at {p_info.url}"
+     - "Synthetic release for archive at {p_info.url}\n"
      - true
      - ""
      - passed as arg
@@ -51,7 +51,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - HEAD
      - only HEAD
      - HEAD
-     - "{client}: Deposit {id} in collection {collection}"
+     - "{client}: Deposit {id} in collection {collection}\n"
      - true
      - original author
      - ``<codemeta: dateCreated>`` from SWORD XML
@@ -104,7 +104,7 @@ and "standard message" being::
 
     msg = (
         f"Synthetic release for {PACKAGE_MANAGER} source package {name} "
-        f"version {version}"
+        f"version {version}\n"
     )
 
 

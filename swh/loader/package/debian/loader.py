@@ -226,7 +226,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
         msg = (
             f"Synthetic release for Debian source package {p_info.name} "
-            f"version {p_info.full_version}"
+            f"version {p_info.full_version}\n"
         )
 
         author = prepare_person(intrinsic_metadata.changelog.person)
