@@ -1,3 +1,12 @@
+swh-loader-core (1.1.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 1.1.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2021-11-22 11:58:11 +0100)
+  * Upstream changes:     - v1.1.0     - * Package loader: Uniformize
+    author and message
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 22 Nov 2021 11:01:45 +0000
+
 swh-loader-core (1.0.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 1.0.1     - (tagged by Valentin Lorentz
