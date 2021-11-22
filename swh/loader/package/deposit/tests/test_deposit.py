@@ -169,7 +169,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "1090aaadc9fd1a77798bf6187d309145cbd23c53"
+    expected_snapshot_id = "338b45d87e02fb5cbf324694bc4a898623d6a30f"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -183,7 +183,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
-    release_id_hex = "77c127bff4f9137baf26774fe19e29d82a41f69d"
+    release_id_hex = "2566a64a27bc00362e265be9666d7606750530a1"
     release_id = hash_to_bytes(release_id_hex)
 
     expected_snapshot = Snapshot(
@@ -208,7 +208,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     assert release == Release(
         id=release_id,
         name=b"HEAD",
-        message=b"hal: Deposit 666 in collection hal",
+        message=b"hal: Deposit 666 in collection hal\n",
         author=person,
         date=date,
         target_type=ModelObjectType.DIRECTORY,
@@ -300,7 +300,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "f87b25c121d9ab3ff0219b04b92d83f8c6f368f4"
+    expected_snapshot_id = "3449b8ff31abeacefd33cca60e3074c1649dc3a1"
 
     assert actual_load_status == {
         "status": "eventful",
@@ -314,7 +314,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
-    release_id = "c6891941d4033f4fb1dbf39b501c819ac618f957"
+    release_id = "ba6c9a59ae3256e765d32b211cc183dc2380aed7"
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
@@ -479,7 +479,7 @@ def test_deposit_loading_ok_3(swh_storage, deposit_client, requests_mock_datadir
     loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "212228fe041c763471c14545cf11dbec8003d6b4"
+    expected_snapshot_id = "4677843de89e398f1d6bfedc9ca9b89c451c55c8"
 
     assert actual_load_status == {
         "status": "eventful",

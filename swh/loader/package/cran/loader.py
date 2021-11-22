@@ -30,6 +30,7 @@ DATE_PATTERN = re.compile(r"^(?P<year>\d{4})-(?P<month>\d{2})$")
 @attr.s
 class CRANPackageInfo(BasePackageInfo):
     raw_info = attr.ib(type=Dict[str, Any])
+    name = attr.ib(type=str)
 
     EXTID_TYPE = "cran-sha256"
     MANIFEST_FORMAT = string.Template("$version $url")
@@ -41,6 +42,7 @@ class CRANPackageInfo(BasePackageInfo):
             url=url,
             filename=path.basename(url),
             raw_info=a_metadata,
+            name=a_metadata["package"],
             version=a_metadata["version"],
         )
 
@@ -88,9 +90,13 @@ class CRANLoader(PackageLoader[CRANPackageInfo]):
         metadata = extract_intrinsic_metadata(uncompressed_path)
         date = parse_date(metadata.get("Date"))
         author = Person.from_fullname(metadata.get("Maintainer", "").encode())
+        msg = (
+            f"Synthetic release for CRAN source package {p_info.name} "
+            f"version {p_info.version}\n"
+        )
         return Release(
             name=p_info.version.encode(),
-            message=p_info.version.encode(),
+            message=msg.encode(),
             date=date,
             author=author,
             target_type=ObjectType.DIRECTORY,

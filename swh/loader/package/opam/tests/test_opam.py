@@ -9,15 +9,15 @@ from swh.loader.package.opam.loader import OpamLoader, OpamPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
-    MetadataAuthority,
-    MetadataAuthorityType,
-    MetadataFetcher,
     Person,
     RawExtrinsicMetadata,
+    Release,
     Snapshot,
     SnapshotBranch,
     TargetType,
 )
+from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
+from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.interface import PagedResult
 
@@ -110,28 +110,42 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("50b5961c27dd4f8b138acce8bac4f90d1e33081f")
+    expected_snapshot_id = hash_to_bytes("e1159446b00745ba4daa7ee26d74fbd81ecc081c")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
     }
+
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="opam", snapshot=expected_snapshot_id
+    )
+
+    release_id = hash_to_bytes("d4d8d3df4f34609a3eeabd48aea49002c5f54f41")
 
     expected_snapshot = Snapshot(
         id=expected_snapshot_id,
         branches={
             b"HEAD": SnapshotBranch(target=b"agrid.0.1", target_type=TargetType.ALIAS,),
             b"agrid.0.1": SnapshotBranch(
-                target=hash_to_bytes("efcb9ef9d0f2a85312463251732b42f9e45a5c12"),
-                target_type=TargetType.RELEASE,
+                target=release_id, target_type=TargetType.RELEASE,
             ),
         },
     )
 
-    assert_last_visit_matches(
-        swh_storage, url, status="full", type="opam", snapshot=expected_snapshot_id
-    )
-
     check_snapshot(expected_snapshot, swh_storage)
+
+    assert swh_storage.release_get([release_id])[0] == Release(
+        name=b"0.1",
+        message=b"Synthetic release for OPAM source package agrid version 0.1\n",
+        target=hash_to_bytes("00412ee5bc601deb462e55addd1004715116785e"),
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person(
+            fullname=b"OCamlPro <contact@ocamlpro.com>", name=None, email=None
+        ),
+        date=None,
+        id=release_id,
+    )
 
     stats = get_stats(swh_storage)
 
@@ -167,7 +181,7 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("f0a974e47999e74d323f1fb9604fde72527bda28")
+    expected_snapshot_id = hash_to_bytes("f498f7f3b0edbce5cf5834b487a4f8360f6a6a43")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -180,15 +194,15 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
                 target=b"directories.0.3", target_type=TargetType.ALIAS,
             ),
             b"directories.0.1": SnapshotBranch(
-                target=hash_to_bytes("1f839cb1f4720d6b33fdd856e3ff1119497979d9"),
+                target=hash_to_bytes("1c88d466b3d57a619e296999322d096fa37bb1c2"),
                 target_type=TargetType.RELEASE,
             ),
             b"directories.0.2": SnapshotBranch(
-                target=hash_to_bytes("4133834d966381804347efbc41e35dd2bdd48962"),
+                target=hash_to_bytes("d6f30684039ad485511a138e2ae504ff67a13075"),
                 target_type=TargetType.RELEASE,
             ),
             b"directories.0.3": SnapshotBranch(
-                target=hash_to_bytes("2f20cabfbacfe447b80dc2a4eb14d461775100c8"),
+                target=hash_to_bytes("6cf92c0ff052074e69ac18809a9c8198bcc2e746"),
                 target_type=TargetType.RELEASE,
             ),
         },
@@ -222,7 +236,7 @@ def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = hash_to_bytes("987425c6fe94d3972c4c4e97ee27a6a7c8b68e82")
+    expected_snapshot_id = hash_to_bytes("8ba39f050243a72ca667c5587a87413240cbaa47")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -251,7 +265,7 @@ def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
     assert branch_name == expected_branch_name
     assert package_info == expected_package_info
 
-    release_id = hash_to_bytes("8d0612cdf172e5dff3d876ca2bbc0f6003cc36cc")
+    release_id = hash_to_bytes("c231e541eb29c712635ada394b04127ac69e9fb0")
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),
@@ -298,7 +312,7 @@ def test_opam_metadata(tmpdir, requests_mock_datadir, swh_storage, datadir):
 
     assert actual_load_status["status"] == "eventful"
 
-    expected_release_id = hash_to_bytes("8d0612cdf172e5dff3d876ca2bbc0f6003cc36cc")
+    expected_release_id = hash_to_bytes("c231e541eb29c712635ada394b04127ac69e9fb0")
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),

@@ -1034,9 +1034,12 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
 def rev2rel(rev: Revision, version: str) -> Release:
     """Converts a revision to a release."""
+    message = rev.message
+    if message and not message.endswith(b"\n"):
+        message += b"\n"
     return Release(
         name=version.encode(),
-        message=rev.message,
+        message=message,
         target=rev.directory,
         target_type=ModelObjectType.DIRECTORY,
         synthetic=rev.synthetic,

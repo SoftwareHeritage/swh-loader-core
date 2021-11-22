@@ -23,7 +23,16 @@ from swh.loader.package.debian.loader import (
 )
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import Person, Snapshot, SnapshotBranch, TargetType
+from swh.model.model import (
+    ObjectType,
+    Person,
+    Release,
+    Snapshot,
+    SnapshotBranch,
+    TargetType,
+    Timestamp,
+    TimestampWithTimezone,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +119,7 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "8bc5d12e2443ab216fdd2f969b25b39e96c20fef"
+    expected_snapshot_id = "ad1367b5470a03857be7c7325a5a8bde698e1800"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -124,17 +133,37 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
+    release_id = hash_to_bytes("73e0ede9c21f7074ad1f9c81a774cfcb9e02addf")
+
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.RELEASE,
-                target=hash_to_bytes("5a99736512d381700c5f54d7fdd6b46e136535a2"),
+                target_type=TargetType.RELEASE, target=release_id,
             )
         },
     )  # different than the previous loader as no release is done
 
     check_snapshot(expected_snapshot, swh_storage)
+
+    assert swh_storage.release_get([release_id])[0] == Release(
+        id=release_id,
+        name=b"stretch/contrib/0.7.2-3",
+        message=b"Synthetic release for Debian source package cicero version 0.7.2-3\n",
+        target=hash_to_bytes("798df511408c53bf842a8e54d4d335537836bdc3"),
+        target_type=ObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person(
+            fullname=b"Samuel Thibault <sthibault@debian.org>",
+            name=b"Samuel Thibault",
+            email=b"sthibault@debian.org",
+        ),
+        date=TimestampWithTimezone(
+            timestamp=Timestamp(seconds=1413730355, microseconds=0),
+            offset=120,
+            negative_utc=False,
+        ),
+    )
 
     stats = get_stats(swh_storage)
     assert {
@@ -162,7 +191,7 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = "8bc5d12e2443ab216fdd2f969b25b39e96c20fef"
+    expected_snapshot_id = "ad1367b5470a03857be7c7325a5a8bde698e1800"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -181,7 +210,7 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("5a99736512d381700c5f54d7fdd6b46e136535a2"),
+                target=hash_to_bytes("73e0ede9c21f7074ad1f9c81a774cfcb9e02addf"),
             )
         },
     )  # different than the previous loader as no release is done
@@ -418,7 +447,7 @@ def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "3d26243c91eb084c350627a5a102cfe039c5b92a"
+    expected_snapshot_id = "a83fa5c089b048161f0677b9614a4aae96a6ca18"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -437,11 +466,11 @@ def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("5a99736512d381700c5f54d7fdd6b46e136535a2"),
+                target=hash_to_bytes("73e0ede9c21f7074ad1f9c81a774cfcb9e02addf"),
             ),
             b"releases/buster/contrib/0.7.2-4": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("192fc7ccce80f64a0d3cf33d379133af067ec721"),
+                target=hash_to_bytes("9f6d8d868514f991af0d9f5d7173aba1236a5a75"),
             ),
         },
     )

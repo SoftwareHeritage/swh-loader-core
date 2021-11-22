@@ -41,17 +41,21 @@ EXTID_TYPE = "pypi-archive-sha256"
 class PyPIPackageInfo(BasePackageInfo):
     raw_info = attr.ib(type=Dict[str, Any])
 
+    name = attr.ib(type=str)
     comment_text = attr.ib(type=Optional[str])
     sha256 = attr.ib(type=str)
     upload_time = attr.ib(type=str)
 
     @classmethod
-    def from_metadata(cls, metadata: Dict[str, Any], version: str) -> "PyPIPackageInfo":
+    def from_metadata(
+        cls, metadata: Dict[str, Any], name: str, version: str
+    ) -> "PyPIPackageInfo":
         return cls(
             url=metadata["url"],
             filename=metadata["filename"],
             version=version,
             raw_info=metadata,
+            name=name,
             comment_text=metadata.get("comment_text"),
             sha256=metadata["digests"]["sha256"],
             upload_time=metadata["upload_time"],
@@ -116,7 +120,9 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
             ):
                 continue
 
-            p_info = PyPIPackageInfo.from_metadata(meta, version=version)
+            p_info = PyPIPackageInfo.from_metadata(
+                meta, name=self.info()["info"]["name"], version=version
+            )
             res.append((version, p_info))
 
         if len(res) == 1:
@@ -134,17 +140,22 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
             return None
 
         # from intrinsic metadata
-        version_ = i_metadata.get("version", "")
+        version_ = i_metadata.get("version", p_info.version)
         author_ = author(i_metadata)
 
-        # from extrinsic metadata
-        message = p_info.comment_text or ""
-        message = "%s: %s" % (version_, message) if message else version_
+        if p_info.comment_text:
+            msg = p_info.comment_text
+        else:
+            msg = (
+                f"Synthetic release for PyPI source package {p_info.name} "
+                f"version {version_}\n"
+            )
+
         date = TimestampWithTimezone.from_iso8601(p_info.upload_time)
 
         return Release(
             name=p_info.version.encode(),
-            message=message.encode(),
+            message=msg.encode(),
             author=author_,
             date=date,
             target=directory,
