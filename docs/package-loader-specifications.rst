@@ -24,17 +24,16 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - passed as arg
      - ``release_name(​version)``
      - =version
-     - "swh-loader-package:
-       synthetic revision message"
+     - "Synthetic release for archive at {p_info.url}\n"
      - true
-     - SWH robot
+     - ""
      - passed as arg
      -
    * - cran
      - ``metadata.get(​"Version", passed as arg)``
      - ``release_name(​version)``
      - =version
-     - =version
+     - standard message
      - true
      - ``metadata.get(​"Maintainer", "")``
      - ``metadata.get(​"Date")``
@@ -43,7 +42,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - passed as arg (eg. ``stretch/contrib/0.7.2-3``)
      - ``release_name(​version)``
      - =version
-     - "Synthetic revision for Debian source package %s version %s"
+     - standard message (using full version)
      - true
      - ``metadata​.changelog​.person``
      - ``metadata​.changelog​.date``
@@ -52,16 +51,16 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - HEAD
      - only HEAD
      - HEAD
-     - "{client}: Deposit {id} in collection {collection}"
+     - "{client}: Deposit {id} in collection {collection}\n"
      - true
-     - SWH robot
+     - original author
      - ``<codemeta: dateCreated>`` from SWORD XML
      - revisions had parents
    * - nixguix
      - URL
      - URL
      - URL
-     - ""
+     - None
      - true
      - ""
      - None
@@ -70,7 +69,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``metadata​["version"]``
      - ``release_name(​version)``
      - =version
-     - =version
+     - standard message
      - true
      - from int metadata or ""
      - from ext metadata or None
@@ -79,7 +78,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - as given by opam
      - "{opam_package}​.{version}"
      - =version
-     - =version
+     - standard message
      - true
      - from metadata
      - None
@@ -88,7 +87,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``metadata​["version"]``
      - ``release_name(​version)`` or ``release_name(​version, filename)``
      - =version
-     - "{version}: {metadata[​'comment_text']}" or just version
+     - ``metadata[​'comment_text']}`` or standard message
      - true
      - from int metadata or ""
      - from ext metadata or None
@@ -100,6 +99,13 @@ using this function::
         if filename:
             return "releases/%s/%s" % (version, filename)
         return "releases/%s" % version
+
+and "standard message" being::
+
+    msg = (
+        f"Synthetic release for {PACKAGE_MANAGER} source package {name} "
+        f"version {version}\n"
+    )
 
 
 The ``target_type`` field is always ``dir``, and the target the id of a directory

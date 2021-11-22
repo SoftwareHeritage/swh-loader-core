@@ -303,7 +303,7 @@ def test_load_upgrade_from_revision_extids(caplog):
 
     rel1 = Release(
         name=b"v1.0",
-        message=b"blah",
+        message=b"blah\n",
         author=person,
         date=date,
         target=dir1_swhid.object_id,

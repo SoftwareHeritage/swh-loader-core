@@ -28,7 +28,10 @@ from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
+    ObjectType,
+    Person,
     RawExtrinsicMetadata,
+    Release,
     Snapshot,
     SnapshotBranch,
     TargetType,
@@ -54,14 +57,14 @@ def raw_sources(datadir) -> bytes:
 
 
 SNAPSHOT1 = Snapshot(
-    id=hash_to_bytes("771d13ae4e799755c22d1e05da8fc39cf215de58"),
+    id=hash_to_bytes("efe5145f85af3fc87f34102d8b8481cd5198f4f8"),
     branches={
         b"evaluation": SnapshotBranch(
             target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             target_type=TargetType.REVISION,
         ),
         b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
-            target=hash_to_bytes("24853190589d26d0ea2b6c0330b553ff39176e0c"),
+            target=hash_to_bytes("df7811b9644ed8ef088e2e7add62ed32b0bab15f"),
             target_type=TargetType.RELEASE,
         ),
     },
@@ -273,8 +276,39 @@ def test_clean_sources_unsupported_artifacts(swh_storage, requests_mock_datadir)
 
 def test_loader_one_visit(swh_storage, requests_mock_datadir, raw_sources):
     loader = NixGuixLoader(swh_storage, sources_url)
-    res = loader.load()
-    assert res["status"] == "eventful"
+    load_status = loader.load()
+    expected_snapshot_id_hex = "efe5145f85af3fc87f34102d8b8481cd5198f4f8"
+    expected_snapshot_id = hash_to_bytes(expected_snapshot_id_hex)
+    assert load_status == {
+        "status": "eventful",
+        "snapshot_id": expected_snapshot_id_hex,
+    }
+
+    release_id = hash_to_bytes("df7811b9644ed8ef088e2e7add62ed32b0bab15f")
+    expected_snapshot = Snapshot(
+        id=expected_snapshot_id,
+        branches={
+            b"evaluation": SnapshotBranch(
+                target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
+                target_type=TargetType.REVISION,
+            ),
+            b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
+                target=release_id, target_type=TargetType.RELEASE,
+            ),
+        },
+    )
+    check_snapshot(expected_snapshot, storage=swh_storage)
+
+    assert swh_storage.release_get([release_id])[0] == Release(
+        id=release_id,
+        name=b"https://github.com/owner-1/repository-1/revision-1.tgz",
+        message=None,
+        target=hash_to_bytes("4de2e07d3742718d928e974b8a4c721b9f7b33bf"),
+        target_type=ObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person.from_fullname(b""),
+        date=None,
+    )
 
     stats = get_stats(swh_storage)
     assert {
@@ -413,7 +447,7 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
 
     loader = NixGuixLoader(swh_storage, sources_url)
     load_status = loader.load()
-    expected_snapshot_id_hex = "c5bba84fd5ac3342566effb86190619092d34e79"
+    expected_snapshot_id_hex = "c1983a0a3f647548e1fb92f30339da6848fe9f7a"
     expected_snapshot_id = hash_to_bytes(expected_snapshot_id_hex)
     assert load_status == {
         "status": "eventful",
@@ -439,11 +473,11 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
                 target_type=TargetType.REVISION,
             ),
             b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
-                target=hash_to_bytes("24853190589d26d0ea2b6c0330b553ff39176e0c"),
+                target=hash_to_bytes("df7811b9644ed8ef088e2e7add62ed32b0bab15f"),
                 target_type=TargetType.RELEASE,
             ),
             b"https://github.com/owner-2/repository-1/revision-1.tgz": SnapshotBranch(
-                target=hash_to_bytes("3d44fbe814ba802cfd77f83975e45766d3a2ba85"),
+                target=hash_to_bytes("5cc0115cd643902b837cb6cfbc9f5865bc5a7cb2"),
                 target_type=TargetType.RELEASE,
             ),
         },
@@ -573,7 +607,7 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
     ]
     archive_loader = ArchiveLoader(swh_storage, url=gnu_url, artifacts=gnu_artifacts)
     actual_load_status = archive_loader.load()
-    expected_snapshot_id = "cdf8f335fa0c81c8ad089870ec14f52b1980eb6c"
+    expected_snapshot_id = "9efecc835e8f99254934f256b5301b94f348fd17"
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] == expected_snapshot_id  # noqa
 
