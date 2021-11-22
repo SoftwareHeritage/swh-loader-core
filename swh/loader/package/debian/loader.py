@@ -224,9 +224,9 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         logger.debug("intrinsic_metadata: %s", intrinsic_metadata)
         logger.debug("p_info: %s", p_info)
 
-        msg = "Synthetic revision for Debian source package %s version %s" % (
-            p_info.name,
-            p_info.full_version,
+        msg = (
+            f"Synthetic release for Debian source package {p_info.name} "
+            f"version {p_info.full_version}\n"
         )
 
         author = prepare_person(intrinsic_metadata.changelog.person)
@@ -235,7 +235,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         # inspired from swh.loader.debian.converters.package_metadata_to_revision
         return Release(
             name=p_info.version.encode(),
-            message=msg.encode("utf-8"),
+            message=msg.encode(),
             author=author,
             date=date,
             target=directory,

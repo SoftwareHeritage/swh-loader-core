@@ -196,7 +196,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git,
     ) -> Optional[Release]:
         message = (
-            f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}"
+            f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}\n"
         ).encode("utf-8")
 
         return Release(
