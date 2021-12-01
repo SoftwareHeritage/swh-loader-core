@@ -663,6 +663,26 @@ you can define the authority dynamically based on the URL of the origin::
         )
 
 
+Checklist
+---------
+
+Before the final addition of a new loader, here is a list of things to check for.
+Most of them are a reminder of other sections above.
+
+* There is (or will be) a lister to trigger it
+* Tested with pytest, from scratch and incrementally (if relevant)
+* Tested in Docker, from scratch and incrementally (if relevant)
+* Release fields are consistent with the :ref:`existing specifications <package-loader-specifications>`,
+  and you updated the specifications to add your loader.
+  They must be explicitly tested.
+* Relevant metadata are loaded with as little processing as possible (ie. keep the
+  original format unchanged, instead of converting it to a JSON/msgpack/... format)
+  and :ref:`their format is documented <extrinsic-metadata-formats>`.
+  They must tested as well.
+* There is no risk of extid clashes, even across instances (if relevant),
+  even in presence of malicious actors (as far as reasonably possible)
+
+
 Final words
 -----------
 
