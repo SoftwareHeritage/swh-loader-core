@@ -357,9 +357,11 @@ Here are some scenarios you should test, when relevant:
 Making your loader incremental
 ------------------------------
 
-In the previous sections, you wrote a fully functional loader for a new type of
-package repository. This is great! Please tell us about it, and
-:ref:`submit it for review <patch-submission>` so we can give you some feedback early.
+.. important::
+
+    In the previous sections, you wrote a fully functional loader for a new type of
+    package repository. This is great! Please tell us about it, and
+    :ref:`submit it for review <patch-submission>` so we can give you some feedback early.
 
 Now, we will see a key optimization for any package loader: skipping packages
 it already downloaded, using :term:`extids <extid>`.
