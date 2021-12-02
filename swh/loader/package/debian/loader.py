@@ -45,6 +45,9 @@ class DebianFileMetadata:
     # md5sum is not always available, make it optional
     md5sum = attr.ib(type=str, default="")
 
+    # sha1 is not always available, make it optional
+    sha1 = attr.ib(type=str, default="")
+
     # Some of the DSC files imported in swh apparently had a Checksums-SHA512
     # field which got recorded in the archive. Current versions of dpkg-source
     # don't seem to generate them, but keep the field available for

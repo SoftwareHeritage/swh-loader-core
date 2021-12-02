@@ -4,10 +4,12 @@
 # See top-level LICENSE file for more information
 
 from copy import deepcopy
+import hashlib
 import logging
 from os import path
 
 import pytest
+import requests
 
 from swh.loader.package.debian.loader import (
     DebianLoader,
@@ -351,6 +353,19 @@ def test_debian_dsc_information_missing_md5sum():
 
     for debian_file_metadata in p_info.files.values():
         assert not debian_file_metadata.md5sum
+
+
+def test_debian_dsc_information_extra_sha1(requests_mock_datadir):
+    package_files = deepcopy(PACKAGE_FILES)
+
+    for package_metadata in package_files["files"].values():
+        file_bytes = requests.get(package_metadata["uri"]).content
+        package_metadata["sha1"] = hashlib.sha1(file_bytes).hexdigest()
+
+    p_info = DebianPackageInfo.from_metadata(package_files, url=URL, version="0.7.2-3")
+
+    for debian_file_metadata in p_info.files.values():
+        assert debian_file_metadata.sha1
 
 
 def test_debian_dsc_information_too_many_dsc_entries():
