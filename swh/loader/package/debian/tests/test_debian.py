@@ -111,12 +111,7 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
     """With no prior visit, load a gnu project ends up with 1 snapshot
 
     """
-    loader = DebianLoader(
-        swh_storage,
-        URL,
-        date="2019-10-12T05:58:09.165557+00:00",
-        packages=PACKAGE_PER_VERSION,
-    )
+    loader = DebianLoader(swh_storage, URL, packages=PACKAGE_PER_VERSION,)
 
     actual_load_status = loader.load()
     expected_snapshot_id = "ad1367b5470a03857be7c7325a5a8bde698e1800"
@@ -182,12 +177,7 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
     """With no prior visit, load a debian project ends up with 1 snapshot
 
     """
-    loader = DebianLoader(
-        swh_storage,
-        URL,
-        date="2019-10-12T05:58:09.165557+00:00",
-        packages=PACKAGE_PER_VERSION,
-    )
+    loader = DebianLoader(swh_storage, URL, packages=PACKAGE_PER_VERSION,)
 
     actual_load_status = loader.load()
 
@@ -439,12 +429,7 @@ def test_debian_get_intrinsic_package_metadata(
 
 
 def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
-    loader = DebianLoader(
-        swh_storage,
-        URL,
-        date="2019-10-12T05:58:09.165557+00:00",
-        packages=PACKAGES_PER_VERSION,
-    )
+    loader = DebianLoader(swh_storage, URL, packages=PACKAGES_PER_VERSION,)
 
     actual_load_status = loader.load()
     expected_snapshot_id = "a83fa5c089b048161f0677b9614a4aae96a6ca18"

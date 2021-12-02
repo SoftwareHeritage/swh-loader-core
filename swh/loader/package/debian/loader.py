@@ -126,7 +126,6 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         self,
         storage: StorageInterface,
         url: str,
-        date: str,
         packages: Mapping[str, Any],
         max_content_size: Optional[int] = None,
     ):

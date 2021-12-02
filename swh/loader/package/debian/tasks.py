@@ -9,7 +9,7 @@ from swh.loader.package.debian.loader import DebianLoader
 
 
 @shared_task(name=__name__ + ".LoadDebian")
-def load_deb_package(*, url, date, packages):
+def load_deb_package(*, url, packages):
     """Load Debian package"""
-    loader = DebianLoader.from_configfile(url=url, date=date, packages=packages)
+    loader = DebianLoader.from_configfile(url=url, packages=packages)
     return loader.load()
