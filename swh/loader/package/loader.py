@@ -272,7 +272,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         if new_extid is None:
             return None
 
-        extid_targets = []
+        extid_targets = set()
         for extid_target in known_extids.get(new_extid, []):
             if extid_target.object_id not in whitelist:
                 # There is a known ExtID for this package, but its target is not
@@ -297,7 +297,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 # or revision_missing instead of the snapshot.
                 continue
             elif extid_target.object_type in (ObjectType.RELEASE, ObjectType.REVISION):
-                extid_targets.append(extid_target)
+                extid_targets.add(extid_target)
             else:
                 # Note that this case should never be reached unless there is a
                 # collision between a revision hash and some non-revision object's
@@ -325,8 +325,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             # older versions of this loader, which produced revision objects instead
             # of releases), return a revision extid.
             assert len(extid_targets) == 1, extid_targets
-            assert extid_targets[0].object_type == ObjectType.REVISION, extid_targets
-            return extid_targets[0]
+            extid_target = list(extid_targets)[0]
+            assert extid_target.object_type == ObjectType.REVISION, extid_targets
+            return extid_target
         else:
             # No target found (this is probably a new package version)
             return None
