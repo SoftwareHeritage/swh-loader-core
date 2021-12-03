@@ -312,14 +312,14 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             # Let's return one of them.
 
             # If there is a release extid, return it.
-            release_extid_targets = [
+            release_extid_targets = {
                 extid_target
                 for extid_target in extid_targets
                 if extid_target.object_type == ObjectType.RELEASE
-            ]
+            }
             if release_extid_targets:
                 assert len(release_extid_targets) == 1, release_extid_targets
-                return release_extid_targets[0]
+                return list(release_extid_targets)[0]
 
             # If there is no release extid (ie. if the package was only loaded with
             # older versions of this loader, which produced revision objects instead
