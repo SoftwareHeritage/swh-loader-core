@@ -12,7 +12,7 @@ def test_tasks_debian_loader(
 
     res = swh_scheduler_celery_app.send_task(
         "swh.loader.package.debian.tasks.LoadDebian",
-        kwargs=dict(url="some-url", date="some-date", packages={}),
+        kwargs=dict(url="some-url", packages={}),
     )
     assert res
     res.wait()

@@ -1,8 +1,18 @@
-swh-loader-core (1.1.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (1.2.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 1.2.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2021-12-03 12:16:04
+    +0100)
+  * Upstream changes:     - v1.2.0     - debian: Rename loading task
+    function to fix scheduling     - debian: Handle extra sha1 sum in
+    source package metadata     - debian: Remove unused date parameter
+    of DebianLoader     - package.loader: Deduplicate target SWHIDs     -
+    package-loader-tutorial: Update to mention releases instead of
+    revisions     - package-loader-tutorial: Add a checklist     -
+    package-loader-tutorial: Highlight the recommendation to submit the
+    loader early.
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 22 Nov 2021 12:05:38 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 03 Dec 2021 11:19:52 +0000
 
 swh-loader-core (1.1.0-1~swh1) unstable-swh; urgency=medium
 

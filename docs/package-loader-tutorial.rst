@@ -59,7 +59,7 @@ Create a file named ``loader.py`` in your package's directory, with two empty cl
    import attr
 
    from swh.loader.package.loader import BasePackageInfo, PackageLoader
-   from swh.model.model import Person, Revision, Sha1Git, TimestampWithTimezone
+   from swh.model.model import Person, Release, Sha1Git, TimestampWithTimezone
 
 
    @attr.s
@@ -115,11 +115,11 @@ This means you do not need to manage downloads yourself; and we are now done wit
 interactions with the package repository.
 
 
-Building a revision
+Building a release
 +++++++++++++++++++
 
-The final step for your minimal loader to work, is to implement ``build_revision``.
-This is a very important part, as it will create a revision object that will be
+The final step for your minimal loader to work, is to implement ``build_release``.
+This is a very important part, as it will create a release object that will be
 inserted in |swh|, as a link between origins and the directories.
 
 This function takes three important arguments:
@@ -133,30 +133,30 @@ This function takes three important arguments:
 The way to implement it depends very much on how the package manager works,
 but here is a rough idea::
 
-    def build_revision(
+    def build_release(
         self, p_info: NewPackageInfo, uncompressed_path: str, directory: Sha1Git
-    ) -> Optional[Revision]:
+    ) -> Optional[Release]:
         author = Person(name="Jane Doe", email="jdoe@example.org")
         date = TimestampWithTimezone.from_iso8601("2021-04-01T11:55:20Z")
 
-        return Revision(
-            type=RevisionType.TAR,
+        return Release(
+            name="v2.0.0",
             message="This is a new release of the project",
             author=author,
             date=date,
-            committer=author,
-            committer_date=date,
-            parents=(),
-            directory=directory,
+            target=directory,
+            target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
 
 The strings here are placeholders, and you should extract them from either
 the extracted archive (using ``uncompressed_path``), or from the package repository's
-API.
+API; see the :ref:`existing specifications <package-loader-specifications>` for examples
+of values to use.
+
 The various classes used in this example are :py:class:`swh.model.model.Person`,
 :py:class:`swh.model.model.TimestampWithTimezone`,
-and :py:class:`swh.model.model.Revision`.
+and :py:class:`swh.model.model.Release`.
 
 Note that you have access to the ``NewPackageInfo`` object created by
 ``get_package_info()``, so you can extend the ``NewPackageInfo`` class to pass
@@ -239,7 +239,7 @@ Or alternatively, this more efficient configuration::
            content: 10000
            content_bytes: 104857600
            directory: 1000
-           revision: 1000
+           release: 1000
        - cls: filter
        - cls: remote
          url: http://localhost:5002/
@@ -306,7 +306,7 @@ are used in this test::
        # (when writing your tests for the first time, you cannot know the
        # snapshot id without running your loader; so let it error and write
        # down the result here)
-       expected_snapshot_id = hash_to_bytes("a27e638a4dad6fbfa273c6ebec1c4bf320fb84c6")
+       expected_snapshot_id = hash_to_bytes("1394b2e59351a944cc763bd9d26d90ce8e8121a8")
        assert actual_load_status == {
            "status": "eventful",
            "snapshot_id": expected_snapshot_id.hex(),
@@ -317,12 +317,12 @@ are used in this test::
            id=expected_snapshot_id,
            branches={
                b"releases/1.1.0/nexter-1.1.0.zip": SnapshotBranch(
-                   target=hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571"),
-                   target_type=TargetType.REVISION,
+                   target=hash_to_bytes("f7d43faeb65b64d3faa67e4f46559db57d26b9a4"),
+                   target_type=TargetType.RELEASE,
                ),
                b"releases/1.1.0/nexter-1.1.0.tar.gz": SnapshotBranch(
-                   target=hash_to_bytes("0bf88f5760cca7665d0af4d6575d9301134fe11a"),
-                   target_type=TargetType.REVISION,
+                   target=hash_to_bytes("732bb9dc087e6015884daaebb8b82559be729b5a"),
+                   target_type=TargetType.RELEASE,
                ),
            },
        )
@@ -334,9 +334,9 @@ are used in this test::
        )
 
        # Then you could check the directory structure:
-       directory_id = swh_storage.revision_get(
-          [hash_to_bytes("4c99891f93b81450385777235a37b5e966dd1571")]
-       )[0].directory
+       directory_id = swh_storage.release_get(
+          [hash_to_bytes("f7d43faeb65b64d3faa67e4f46559db57d26b9a4")]
+       )[0].target
        entries = list(swh_storage.directory_ls(directory_id, recursive=True))
        assert entries == [
            ...
@@ -357,9 +357,11 @@ Here are some scenarios you should test, when relevant:
 Making your loader incremental
 ------------------------------
 
-In the previous sections, you wrote a fully functional loader for a new type of
-package repository. This is great! Please tell us about it, and
-:ref:`submit it for review <patch-submission>` so we can give you some feedback early.
+.. important::
+
+    In the previous sections, you wrote a fully functional loader for a new type of
+    package repository. This is great! Please tell us about it, and
+    :ref:`submit it for review <patch-submission>` so we can give you some feedback early.
 
 Now, we will see a key optimization for any package loader: skipping packages
 it already downloaded, using :term:`extids <extid>`.
@@ -462,10 +464,10 @@ differently.
 For example, if I was to create an archive with both a ``PKG-INFO``
 and a ``package.json`` file, and submit it to both NPM and PyPI,
 both package repositories would have exactly the same tarball.
-But the NPM loader would create the revision based on authorship info in
+But the NPM loader would create the release based on authorship info in
 ``package.json``, and the PyPI loader based on ``PKG-INFO``.
-But we do not want the PyPI loader to assume it already created a revision itself,
-while the revision was created by the NPM loader!
+But we do not want the PyPI loader to assume it already created a release itself,
+while the release was created by the NPM loader!
 
 And why descriptive? This is simply for future-proofing; in case your loader changes
 the format of the ExtID (eg. by using a different hash algorithm).
@@ -518,7 +520,7 @@ to use as an example::
            "origin": 1,
            "origin_visit": 1,
            "release": 0,
-           "revision": 2,
+           "release": 2,
            "skipped_content": 0,
            "snapshot": 1,
        } == visit1_stats
@@ -548,8 +550,8 @@ to use as an example::
            "directory": 4 + 2,  # 2 more directories
            "origin": 1,
            "origin_visit": 1 + 1,
-           "release": 0,
-           "revision": 2 + 1,  # 1 more revision
+           "release": 2 + 1,  # 1 more release
+           "revision": 0,
            "skipped_content": 0,
            "snapshot": 1 + 1,  # 1 more snapshot
        } == visit2_stats
@@ -659,6 +661,26 @@ you can define the authority dynamically based on the URL of the origin::
             type=MetadataAuthorityType.FORGE,
             url=f"{p_url.scheme}://{p_url.netloc}/",
         )
+
+
+Checklist
+---------
+
+Before the final addition of a new loader, here is a list of things to check for.
+Most of them are a reminder of other sections above.
+
+* There is (or will be) a lister to trigger it
+* Tested with pytest, from scratch and incrementally (if relevant)
+* Tested in Docker, from scratch and incrementally (if relevant)
+* Release fields are consistent with the :ref:`existing specifications <package-loader-specifications>`,
+  and you updated the specifications to add your loader.
+  They must be explicitly tested.
+* Relevant metadata are loaded with as little processing as possible (ie. keep the
+  original format unchanged, instead of converting it to a JSON/msgpack/... format)
+  and :ref:`their format is documented <extrinsic-metadata-formats>`.
+  They must tested as well.
+* There is no risk of extid clashes, even across instances (if relevant),
+  even in presence of malicious actors (as far as reasonably possible)
 
 
 Final words

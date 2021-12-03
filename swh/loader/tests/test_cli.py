@@ -32,7 +32,7 @@ def test_get_loader(swh_loader_config):
     """
     loader_input = {
         "archive": {"url": "some-url", "artifacts": []},
-        "debian": {"url": "some-url", "date": "something", "packages": [],},
+        "debian": {"url": "some-url", "packages": [],},
         "npm": {"url": "https://www.npmjs.com/package/onepackage",},
         "pypi": {"url": "some-url",},
     }
