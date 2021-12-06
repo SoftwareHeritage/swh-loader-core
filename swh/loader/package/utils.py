@@ -124,7 +124,7 @@ def download(
     filepath = os.path.join(dest, filename)
     logger.debug("filepath: %s", filepath)
 
-    h = MultiHash(hash_names=DOWNLOAD_HASHES)
+    h = MultiHash(hash_names=DOWNLOAD_HASHES | set(hashes.keys()))
     with open(filepath, "wb") as f:
         for chunk in response_data:
             h.update(chunk)

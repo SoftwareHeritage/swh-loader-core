@@ -37,15 +37,14 @@ class DscCountError(ValueError):
 class DebianFileMetadata:
     name = attr.ib(type=str)
     """Filename"""
-    sha256 = attr.ib(type=str)
+
     size = attr.ib(type=int)
     uri = attr.ib(type=str)
     """URL of this specific file"""
 
-    # md5sum is not always available, make it optional
+    # all checksums are not always available, make them optional
+    sha256 = attr.ib(type=str, default="")
     md5sum = attr.ib(type=str, default="")
-
-    # sha1 is not always available, make it optional
     sha1 = attr.ib(type=str, default="")
 
     # Some of the DSC files imported in swh apparently had a Checksums-SHA512
@@ -307,9 +306,13 @@ def download_package(p_info: DebianPackageInfo, tmpdir: Any) -> Mapping[str, Any
     for filename, fileinfo in p_info.files.items():
         uri = fileinfo.uri
         logger.debug("fileinfo: %s", fileinfo)
-        extrinsic_hashes = {"sha256": fileinfo.sha256}
+        extrinsic_hashes = {"md5": fileinfo.md5sum}
+        if fileinfo.sha256:
+            extrinsic_hashes["sha256"] = fileinfo.sha256
+        if fileinfo.sha1:
+            extrinsic_hashes["sha1"] = fileinfo.sha1
         logger.debug("extrinsic_hashes(%s): %s", filename, extrinsic_hashes)
-        filepath, hashes = download(
+        _, hashes = download(
             uri, dest=tmpdir, filename=filename, hashes=extrinsic_hashes
         )
         all_hashes[filename] = hashes
