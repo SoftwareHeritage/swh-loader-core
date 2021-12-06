@@ -240,7 +240,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
         # inspired from swh.loader.debian.converters.package_metadata_to_revision
         return Release(
-            name=p_info.version.encode(),
+            name=p_info.intrinsic_version.encode(),
             message=msg.encode(),
             author=author,
             date=date,

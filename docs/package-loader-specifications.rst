@@ -41,7 +41,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
    * - debian
      - =``version``
      - ``release_name(​version)``
-     - =``version``
+     - =``i_version``
      - standard message (using ``i_version``)
      - true
      - ``metadata​.changelog​.person``
