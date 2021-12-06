@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 UPLOADERS_SPLIT = re.compile(r"(?<=\>)\s*,\s*")
 
 EXTID_TYPE = "dsc-sha256"
+EXTID_VERSION = 1
 
 
 class DscCountError(ValueError):
@@ -107,7 +108,7 @@ class DebianPackageInfo(BasePackageInfo):
                 f"got {len(dsc_files)}"
             )
 
-        return (EXTID_TYPE, hash_to_bytes(dsc_files[0].sha256))
+        return (EXTID_TYPE, EXTID_VERSION, hash_to_bytes(dsc_files[0].sha256))
 
 
 @attr.s

@@ -67,7 +67,7 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
         patch.object(
             p_info,
             "extid",
-            return_value=(extid_type, f"extid-of-{version}".encode()),
+            return_value=(extid_type, 0, f"extid-of-{version}".encode()),
             autospec=True,
         ).start()
         yield (f"branch-{version}", p_info)
@@ -100,7 +100,7 @@ def test_resolve_object_from_extids() -> None:
     # The PackageInfo does not support extids
     p_info.extid.return_value = None
     known_extids = {
-        ("extid-type", b"extid-of-aaaa"): [
+        ("extid-type", 0, b"extid-of-aaaa"): [
             CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20),
         ]
     }
@@ -108,12 +108,12 @@ def test_resolve_object_from_extids() -> None:
     assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
 
     # Some known extid, and the PackageInfo is not one of them (ie. cache miss)
-    p_info.extid.return_value = ("extid-type", b"extid-of-cccc")
+    p_info.extid.return_value = ("extid-type", 0, b"extid-of-cccc")
     assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
 
     # Some known extid, and the PackageInfo is one of them (ie. cache hit),
     # but the target release was not in the previous snapshot
-    p_info.extid.return_value = ("extid-type", b"extid-of-aaaa")
+    p_info.extid.return_value = ("extid-type", 0, b"extid-of-aaaa")
     assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
 
     # Some known extid, and the PackageInfo is one of them (ie. cache hit),
@@ -127,7 +127,7 @@ def test_resolve_object_from_extids() -> None:
     # release
     whitelist = {b"a" * 20}
     known_extids = {
-        ("extid-type", b"extid-of-aaaa"): [
+        ("extid-type", 0, b"extid-of-aaaa"): [
             CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"b" * 20),
             CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20),
         ]
@@ -148,8 +148,8 @@ def test_load_get_known_extids() -> None:
     # Calls should be grouped by extid type
     storage.extid_get_from_extid.assert_has_calls(
         [
-            call("extid-type1", [b"extid-of-v1.0", b"extid-of-v2.0"]),
-            call("extid-type2", [b"extid-of-v3.0", b"extid-of-v4.0"]),
+            call("extid-type1", [b"extid-of-v1.0", b"extid-of-v2.0"], version=0),
+            call("extid-type2", [b"extid-of-v3.0", b"extid-of-v4.0"], version=0),
         ],
         any_order=True,
     )
@@ -319,8 +319,8 @@ def test_load_upgrade_from_revision_extids(caplog):
     # Results of a previous load
     storage.extid_add(
         [
-            ExtID("extid-type1", b"extid-of-v1.0", rev1_swhid),
-            ExtID("extid-type1", b"extid-of-v2.0", rev2_swhid),
+            ExtID("extid-type1", b"extid-of-v1.0", rev1_swhid, 0),
+            ExtID("extid-type1", b"extid-of-v2.0", rev2_swhid, 0),
         ]
     )
     storage.revision_add([rev1])
@@ -431,7 +431,7 @@ def test_manifest_extid():
     )
 
     actual_id = p_info.extid()
-    assert actual_id == ("package-manifest-sha256", hashlib.sha256(b"1 2").digest())
+    assert actual_id == ("package-manifest-sha256", 0, hashlib.sha256(b"1 2").digest())
 
 
 def test_no_env_swh_config_filename_raise(monkeypatch):

@@ -41,7 +41,11 @@ class ArchivePackageInfo(BasePackageInfo):
         manifest = manifest_format.substitute(
             {k: str(v) for (k, v) in self.raw_info.items()}
         )
-        return (self.EXTID_TYPE, hashlib.sha256(manifest.encode()).digest())
+        return (
+            self.EXTID_TYPE,
+            self.EXTID_VERSION,
+            hashlib.sha256(manifest.encode()).digest(),
+        )
 
     @classmethod
     def from_metadata(cls, a_metadata: Dict[str, Any]) -> "ArchivePackageInfo":

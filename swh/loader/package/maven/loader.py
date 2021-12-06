@@ -46,6 +46,9 @@ from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
 
+EXTID_TYPE = "maven-jar"
+EXTID_VERSION = 0
+
 
 @attr.s
 class MavenPackageInfo(BasePackageInfo):
@@ -75,7 +78,7 @@ class MavenPackageInfo(BasePackageInfo):
                 "time": str(self.time),
             }
         )
-        return ("maven-jar", hashlib.sha256(manifest.encode()).digest())
+        return (EXTID_TYPE, EXTID_VERSION, hashlib.sha256(manifest.encode()).digest())
 
     @classmethod
     def from_metadata(cls, a_metadata: Dict[str, Any]) -> "MavenPackageInfo":
