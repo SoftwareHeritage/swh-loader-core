@@ -39,14 +39,17 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``metadata.get(​"Date")``
      - metadata is intrinsic
    * - debian
-     - passed as arg (eg. ``stretch/contrib/0.7.2-3``)
+     - =``version``
      - ``release_name(​version)``
-     - =version
-     - standard message (using full version)
+     - =``version``
+     - standard message (using ``i_version``)
      - true
      - ``metadata​.changelog​.person``
      - ``metadata​.changelog​.date``
      - metadata is intrinsic. Old revisions have ``dsc`` as type
+       ``i_version`` is the intrinsic version (eg. ``1.0.0``) while ``version``
+       contains the debian suite name (eg. ``stretch/contrib/0.7.2-3``) and is
+       passed as arg
    * - deposit
      - HEAD
      - only HEAD

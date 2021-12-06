@@ -282,7 +282,9 @@ def test_debian_prepare_person():
 
 def test_debian_download_package(datadir, tmpdir, requests_mock_datadir):
     tmpdir = str(tmpdir)  # py3.5 work around (LocalPath issue)
-    p_info = DebianPackageInfo.from_metadata(PACKAGE_FILES, url=URL, version="0.7.2-3")
+    p_info = DebianPackageInfo.from_metadata(
+        PACKAGE_FILES, url=URL, version="stretch/contrib/0.7.2-3"
+    )
     all_hashes = download_package(p_info, tmpdir)
     assert all_hashes == {
         "cicero_0.7.2-3.diff.gz": {
@@ -328,7 +330,9 @@ def test_debian_download_package(datadir, tmpdir, requests_mock_datadir):
 
 def test_debian_dsc_information_ok():
     fname = "cicero_0.7.2-3.dsc"
-    p_info = DebianPackageInfo.from_metadata(PACKAGE_FILES, url=URL, version="0.7.2-3")
+    p_info = DebianPackageInfo.from_metadata(
+        PACKAGE_FILES, url=URL, version="stretch/contrib/0.7.2-3"
+    )
     dsc_url, dsc_name = dsc_information(p_info)
 
     assert dsc_url == PACKAGE_FILES["files"][fname]["uri"]
@@ -337,7 +341,9 @@ def test_debian_dsc_information_ok():
 
 def test_debian_dsc_information_not_found():
     fname = "cicero_0.7.2-3.dsc"
-    p_info = DebianPackageInfo.from_metadata(PACKAGE_FILES, url=URL, version="0.7.2-3")
+    p_info = DebianPackageInfo.from_metadata(
+        PACKAGE_FILES, url=URL, version="stretch/contrib/0.7.2-3"
+    )
     p_info.files.pop(fname)
 
     dsc_url, dsc_name = dsc_information(p_info)
@@ -352,7 +358,9 @@ def test_debian_dsc_information_missing_md5sum():
     for package_metadata in package_files["files"].values():
         del package_metadata["md5sum"]
 
-    p_info = DebianPackageInfo.from_metadata(package_files, url=URL, version="0.7.2-3")
+    p_info = DebianPackageInfo.from_metadata(
+        package_files, url=URL, version="stretch/contrib/0.7.2-3"
+    )
 
     for debian_file_metadata in p_info.files.values():
         assert not debian_file_metadata.md5sum
@@ -365,7 +373,9 @@ def test_debian_dsc_information_extra_sha1(requests_mock_datadir):
         file_bytes = requests.get(package_metadata["uri"]).content
         package_metadata["sha1"] = hashlib.sha1(file_bytes).hexdigest()
 
-    p_info = DebianPackageInfo.from_metadata(package_files, url=URL, version="0.7.2-3")
+    p_info = DebianPackageInfo.from_metadata(
+        package_files, url=URL, version="stretch/contrib/0.7.2-3"
+    )
 
     for debian_file_metadata in p_info.files.values():
         assert debian_file_metadata.sha1
@@ -374,7 +384,9 @@ def test_debian_dsc_information_extra_sha1(requests_mock_datadir):
 def test_debian_dsc_information_too_many_dsc_entries():
     # craft an extra dsc file
     fname = "cicero_0.7.2-3.dsc"
-    p_info = DebianPackageInfo.from_metadata(PACKAGE_FILES, url=URL, version="0.7.2-3")
+    p_info = DebianPackageInfo.from_metadata(
+        PACKAGE_FILES, url=URL, version="stretch/contrib/0.7.2-3"
+    )
     data = p_info.files[fname]
     fname2 = fname.replace("cicero", "ciceroo")
     p_info.files[fname2] = data
@@ -391,7 +403,9 @@ def test_debian_get_intrinsic_package_metadata(
     requests_mock_datadir, datadir, tmp_path
 ):
     tmp_path = str(tmp_path)  # py3.5 compat.
-    p_info = DebianPackageInfo.from_metadata(PACKAGE_FILES, url=URL, version="0.7.2-3")
+    p_info = DebianPackageInfo.from_metadata(
+        PACKAGE_FILES, url=URL, version="stretch/contrib/0.7.2-3"
+    )
 
     logger.debug("p_info: %s", p_info)
 
