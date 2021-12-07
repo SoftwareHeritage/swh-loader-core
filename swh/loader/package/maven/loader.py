@@ -8,17 +8,7 @@ import json
 import logging
 from os import path
 import string
-from typing import (
-    Any,
-    Dict,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    OrderedDict,
-    Sequence,
-    Tuple,
-)
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
 import attr
@@ -137,13 +127,12 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         """
         super().__init__(storage=storage, url=url, max_content_size=max_content_size)
         self.artifacts = artifacts  # assume order is enforced in the lister
-        self.version_artifact: OrderedDict[str, ArtifactDict]
-        self.version_artifact = OrderedDict(
-            {str(jar["version"]): jar for jar in artifacts if jar["version"]}
-        )
+        self.version_artifact = {
+            jar["version"]: jar for jar in artifacts if jar["version"]
+        }
 
     def get_versions(self) -> Sequence[str]:
-        return list(self.version_artifact.keys())
+        return list(self.version_artifact)
 
     def get_default_version(self) -> str:
         # Default version is the last item
