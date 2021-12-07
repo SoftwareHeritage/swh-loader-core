@@ -24,6 +24,7 @@ from urllib.parse import urlparse
 import attr
 import iso8601
 import requests
+from typing_extensions import TypedDict
 
 from swh.loader.package.loader import (
     BasePackageInfo,
@@ -45,6 +46,29 @@ from swh.storage.interface import StorageInterface
 logger = logging.getLogger(__name__)
 
 
+class ArtifactDict(TypedDict):
+    """Data about a Maven artifact, passed by the Maven Lister."""
+
+    time: str
+    """the time of the last update of jar file on the server as an iso8601 date string
+    """
+
+    url: str
+    """the artifact url to retrieve filename"""
+
+    filename: Optional[str]
+    """optionally, the file's name"""
+
+    gid: str
+    """artifact's groupId"""
+
+    aid: str
+    """artifact's artifactId"""
+
+    version: str
+    """artifact's version"""
+
+
 @attr.s
 class MavenPackageInfo(BasePackageInfo):
     time = attr.ib(type=datetime)
@@ -63,7 +87,7 @@ class MavenPackageInfo(BasePackageInfo):
     EXTID_VERSION = 0
 
     @classmethod
-    def from_metadata(cls, a_metadata: Dict[str, Any]) -> "MavenPackageInfo":
+    def from_metadata(cls, a_metadata: ArtifactDict) -> "MavenPackageInfo":
         url = a_metadata["url"]
         filename = a_metadata.get("filename")
         time = iso8601.parse_date(a_metadata["time"])
@@ -97,7 +121,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         self,
         storage: StorageInterface,
         url: str,
-        artifacts: Sequence[Dict[str, Any]],
+        artifacts: Sequence[ArtifactDict],
         max_content_size: Optional[int] = None,
     ):
         """Loader constructor.
@@ -108,25 +132,12 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
 
         Args:
             url: Origin url
-            artifacts: List of single artifact information with keys:
-
-               - **time**: the time of the last update of jar file on the server
-                 as an iso8601 date string
-
-               - **url**: the artifact url to retrieve filename
-
-               - **filename**: optionally, the file's name
-
-               - **gid**: artifact's groupId
-
-               - **aid**: artifact's artifactId
-
-               - **version**: artifact's version
+            artifacts: List of single artifact information
 
         """
         super().__init__(storage=storage, url=url, max_content_size=max_content_size)
         self.artifacts = artifacts  # assume order is enforced in the lister
-        self.version_artifact: OrderedDict[str, Dict[str, Any]]
+        self.version_artifact: OrderedDict[str, ArtifactDict]
         self.version_artifact = OrderedDict(
             {str(jar["version"]): jar for jar in artifacts if jar["version"]}
         )
