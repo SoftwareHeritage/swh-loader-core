@@ -160,20 +160,9 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
     def build_extrinsic_directory_metadata(
         self, p_info: MavenPackageInfo, release_id: Sha1Git, directory_id: Sha1Git,
     ) -> List[RawExtrinsicMetadata]:
-        if not p_info.directory_extrinsic_metadata:
-            # If this package loader doesn't write metadata, no need to require
-            # an implementation for get_metadata_authority.
-            return []
-
-        # Get artifacts
-        dir_ext_metadata = p_info.directory_extrinsic_metadata[0]
-        a_metadata = json.loads(dir_ext_metadata.metadata)
-        aid = a_metadata["aid"]
-        version = a_metadata["version"]
-
         # Rebuild POM URL.
         pom_url = path.dirname(p_info.url)
-        pom_url = f"{pom_url}/{aid}-{version}.pom"
+        pom_url = f"{pom_url}/{p_info.aid}-{p_info.version}.pom"
 
         r = requests.get(pom_url, allow_redirects=True)
         if r.status_code == 200:
@@ -181,18 +170,12 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         else:
             metadata_pom = b""
 
+        p_info.directory_extrinsic_metadata.append(
+            RawExtrinsicMetadataCore(format="maven-pom", metadata=metadata_pom,)
+        )
+
         return super().build_extrinsic_directory_metadata(
-            attr.evolve(
-                p_info,
-                directory_extrinsic_metadata=[
-                    RawExtrinsicMetadataCore(
-                        format="maven-pom", metadata=metadata_pom,
-                    ),
-                    dir_ext_metadata,
-                ],
-            ),
-            release_id=release_id,
-            directory_id=directory_id,
+            p_info=p_info, release_id=release_id, directory_id=directory_id,
         )
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, MavenPackageInfo]]:
