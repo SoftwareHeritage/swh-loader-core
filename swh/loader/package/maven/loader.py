@@ -79,19 +79,14 @@ class MavenPackageInfo(BasePackageInfo):
     @classmethod
     def from_metadata(cls, a_metadata: ArtifactDict) -> "MavenPackageInfo":
         url = a_metadata["url"]
-        filename = a_metadata.get("filename")
-        time = iso8601.parse_date(a_metadata["time"])
-        time = time.astimezone(tz=timezone.utc)
-        gid = a_metadata["gid"]
-        aid = a_metadata["aid"]
-        version = a_metadata["version"]
+        time = iso8601.parse_date(a_metadata["time"]).astimezone(tz=timezone.utc)
         return cls(
             url=url,
-            filename=filename or path.split(url)[-1],
+            filename=a_metadata.get("filename") or path.split(url)[-1],
             time=time,
-            gid=gid,
-            aid=aid,
-            version=version,
+            gid=a_metadata["gid"],
+            aid=a_metadata["aid"],
+            version=a_metadata["version"],
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
                     format="maven-json", metadata=json.dumps(a_metadata).encode(),
