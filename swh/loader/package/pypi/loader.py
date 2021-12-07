@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 EXTID_TYPE = "pypi-archive-sha256"
+EXTID_VERSION = 0
 
 
 @attr.s
@@ -67,7 +68,7 @@ class PyPIPackageInfo(BasePackageInfo):
         )
 
     def extid(self) -> PartialExtID:
-        return (EXTID_TYPE, hash_to_bytes(self.sha256))
+        return (EXTID_TYPE, EXTID_VERSION, hash_to_bytes(self.sha256))
 
 
 class PyPILoader(PackageLoader[PyPIPackageInfo]):

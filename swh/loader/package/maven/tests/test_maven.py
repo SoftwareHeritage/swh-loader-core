@@ -558,7 +558,11 @@ def test_jar_extid():
         (None, "{gid} {aid} {version} {url} {time}".format(**metadata).encode()),
     ]:
         actual_id = p_info.extid(manifest_format=manifest_format)
-        assert actual_id == ("maven-jar", hashlib.sha256(expected_manifest).digest(),)
+        assert actual_id == (
+            "maven-jar",
+            0,
+            hashlib.sha256(expected_manifest).digest(),
+        )
 
     with pytest.raises(KeyError):
         p_info.extid(manifest_format=string.Template("$a $unknown_key"))
