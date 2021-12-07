@@ -47,7 +47,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``metadata​.changelog​.person``
      - ``metadata​.changelog​.date``
      - metadata is intrinsic. Old revisions have ``dsc`` as type
-       ``i_version`` is the intrinsic version (eg. ``1.0.0``) while ``version``
+       ``i_version`` is the intrinsic version (eg. ``0.7.2-3``) while ``version``
        contains the debian suite name (eg. ``stretch/contrib/0.7.2-3``) and is
        passed as arg
    * - deposit
