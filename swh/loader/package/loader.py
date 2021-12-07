@@ -72,7 +72,7 @@ Used for metadata on "original artifacts", ie. length, filename, and checksums
 of downloaded archive files."""
 
 
-PartialExtID = Tuple[str, bytes]
+PartialExtID = Tuple[str, int, bytes]
 """The ``extid_type`` and ``extid`` fields of an :class:`ExtID` object."""
 
 
@@ -112,6 +112,7 @@ class BasePackageInfo:
     before hashing it to produce an ExtID."""
 
     EXTID_TYPE: str = "package-manifest-sha256"
+    EXTID_VERSION: int = 0
 
     # The following attribute has kw_only=True in order to allow subclasses
     # to add attributes. Without kw_only, attributes without default values cannot
@@ -137,7 +138,11 @@ class BasePackageInfo:
             manifest = self.MANIFEST_FORMAT.substitute(
                 {k: str(v) for (k, v) in attr.asdict(self).items()}
             )
-            return (self.EXTID_TYPE, hashlib.sha256(manifest.encode()).digest())
+            return (
+                self.EXTID_TYPE,
+                self.EXTID_VERSION,
+                hashlib.sha256(manifest.encode()).digest(),
+            )
 
 
 TPackageInfo = TypeVar("TPackageInfo", bound=BasePackageInfo)
@@ -229,20 +234,24 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         loaded in the archive, and returns them if any."""
 
         # Compute the ExtIDs of all the new packages, grouped by extid type
-        new_extids: Dict[str, List[bytes]] = {}
+        new_extids: Dict[Tuple[str, int], List[bytes]] = {}
         for p_info in packages_info:
             res = p_info.extid()
             if res is not None:
-                (extid_type, extid_extid) = res
-                new_extids.setdefault(extid_type, []).append(extid_extid)
+                (extid_type, extid_version, extid_extid) = res
+                new_extids.setdefault((extid_type, extid_version), []).append(
+                    extid_extid
+                )
 
         # For each extid type, call extid_get_from_extid() with all the extids of
         # that type, and store them in the '(type, extid) -> target' map.
         known_extids: Dict[PartialExtID, List[CoreSWHID]] = {}
-        for (extid_type, extids) in new_extids.items():
-            for extid in self.storage.extid_get_from_extid(extid_type, extids):
+        for ((extid_type, extid_version), extids) in new_extids.items():
+            for extid in self.storage.extid_get_from_extid(
+                extid_type, extids, version=extid_version
+            ):
                 if extid is not None:
-                    key = (extid.extid_type, extid.extid)
+                    key = (extid.extid_type, extid_version, extid.extid)
                     known_extids.setdefault(key, []).append(extid.target)
 
         return known_extids
@@ -647,12 +656,17 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             if add_extid:
                 partial_extid = p_info.extid()
                 if partial_extid is not None:
-                    (extid_type, extid) = partial_extid
+                    (extid_type, extid_version, extid) = partial_extid
                     release_swhid = CoreSWHID(
                         object_type=ObjectType.RELEASE, object_id=release_id
                     )
                     new_extids.add(
-                        ExtID(extid_type=extid_type, extid=extid, target=release_swhid)
+                        ExtID(
+                            extid_type=extid_type,
+                            extid_version=extid_version,
+                            extid=extid,
+                            target=release_swhid,
+                        )
                     )
 
             tmp_releases[p_info.version].append((branch_name, release_id))

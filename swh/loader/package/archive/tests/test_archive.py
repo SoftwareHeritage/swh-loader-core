@@ -365,6 +365,7 @@ def test_archive_extid():
         actual_id = p_info.extid(manifest_format=manifest_format)
         assert actual_id == (
             "package-manifest-sha256",
+            0,
             hashlib.sha256(expected_manifest).digest(),
         )
 

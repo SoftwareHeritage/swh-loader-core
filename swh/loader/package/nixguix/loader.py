@@ -34,6 +34,8 @@ EXTID_TYPE = "subresource-integrity"
 """The ExtID is an ASCII string, as defined by
 https://w3c.github.io/webappsec-subresource-integrity/"""
 
+EXTID_VERSION = 0
+
 
 @attr.s
 class NixGuixPackageInfo(BasePackageInfo):
@@ -56,7 +58,7 @@ class NixGuixPackageInfo(BasePackageInfo):
         )
 
     def extid(self) -> PartialExtID:
-        return (EXTID_TYPE, self.integrity.encode("ascii"))
+        return (EXTID_TYPE, EXTID_VERSION, self.integrity.encode("ascii"))
 
 
 class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):

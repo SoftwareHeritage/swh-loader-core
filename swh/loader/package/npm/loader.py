@@ -39,6 +39,7 @@ EMPTY_PERSON = Person(fullname=b"", name=None, email=None)
 
 
 EXTID_TYPE = "npm-archive-sha1"
+EXTID_VERSION = 0
 
 
 @attr.s
@@ -84,7 +85,7 @@ class NpmPackageInfo(BasePackageInfo):
         )
 
     def extid(self) -> PartialExtID:
-        return (EXTID_TYPE, hash_to_bytes(self.shasum))
+        return (EXTID_TYPE, EXTID_VERSION, hash_to_bytes(self.shasum))
 
 
 class NpmLoader(PackageLoader[NpmPackageInfo]):

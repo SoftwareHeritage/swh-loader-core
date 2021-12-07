@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 UPLOADERS_SPLIT = re.compile(r"(?<=\>)\s*,\s*")
 
 EXTID_TYPE = "dsc-sha256"
+EXTID_VERSION = 1
 
 
 class DscCountError(ValueError):
@@ -71,13 +72,18 @@ class DebianPackageInfo(BasePackageInfo):
     files = attr.ib(type=Dict[str, DebianFileMetadata])
     """Metadata of the files (.deb, .dsc, ...) of the package."""
     name = attr.ib(type=str)
-    full_version = attr.ib(type=str)
-    """eg. stretch/contrib/0.7.2-3"""
+    intrinsic_version = attr.ib(type=str)
+    """eg. ``0.7.2-3``, while :attr:`version` would be ``stretch/contrib/0.7.2-3``"""
 
     @classmethod
     def from_metadata(
         cls, a_metadata: Dict[str, Any], url: str, version: str
     ) -> "DebianPackageInfo":
+        intrinsic_version = a_metadata["version"]
+        assert "/" in version and "/" not in intrinsic_version, (
+            version,
+            intrinsic_version,
+        )
         return cls(
             url=url,
             filename=None,
@@ -88,7 +94,7 @@ class DebianPackageInfo(BasePackageInfo):
                 for (file_name, file_metadata) in a_metadata.get("files", {}).items()
             },
             name=a_metadata["name"],
-            full_version=a_metadata["version"],
+            intrinsic_version=intrinsic_version,
         )
 
     def extid(self) -> Optional[PartialExtID]:
@@ -102,7 +108,7 @@ class DebianPackageInfo(BasePackageInfo):
                 f"got {len(dsc_files)}"
             )
 
-        return (EXTID_TYPE, hash_to_bytes(dsc_files[0].sha256))
+        return (EXTID_TYPE, EXTID_VERSION, hash_to_bytes(dsc_files[0].sha256))
 
 
 @attr.s
@@ -227,7 +233,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
         msg = (
             f"Synthetic release for Debian source package {p_info.name} "
-            f"version {p_info.full_version}\n"
+            f"version {p_info.intrinsic_version}\n"
         )
 
         author = prepare_person(intrinsic_metadata.changelog.person)
@@ -235,7 +241,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
         # inspired from swh.loader.debian.converters.package_metadata_to_revision
         return Release(
-            name=p_info.version.encode(),
+            name=p_info.intrinsic_version.encode(),
             message=msg.encode(),
             author=author,
             date=date,
@@ -338,7 +344,7 @@ def dsc_information(p_info: DebianPackageInfo) -> Tuple[Optional[str], Optional[
             if dsc_name:
                 raise DscCountError(
                     "Package %s_%s references several dsc files."
-                    % (p_info.name, p_info.version)
+                    % (p_info.name, p_info.intrinsic_version)
                 )
             dsc_url = fileinfo.uri
             dsc_name = filename
@@ -463,7 +469,7 @@ def get_intrinsic_package_metadata(
 
     return IntrinsicPackageMetadata(
         name=p_info.name,
-        version=str(p_info.version),
+        version=str(p_info.intrinsic_version),
         changelog=changelog,
         maintainers=maintainers,
     )
