@@ -4,7 +4,6 @@
 # See top-level LICENSE file for more information
 
 from datetime import datetime, timezone
-import hashlib
 import json
 import logging
 from os import path
@@ -29,7 +28,6 @@ import requests
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
-    PartialExtID,
     RawExtrinsicMetadataCore,
 )
 from swh.loader.package.utils import EMPTY_AUTHOR, release_name
@@ -46,9 +44,6 @@ from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
 
-EXTID_TYPE = "maven-jar"
-EXTID_VERSION = 0
-
 
 @attr.s
 class MavenPackageInfo(BasePackageInfo):
@@ -64,21 +59,8 @@ class MavenPackageInfo(BasePackageInfo):
     # default format for maven artifacts
     MANIFEST_FORMAT = string.Template("$gid $aid $version $url $time")
 
-    def extid(self, manifest_format: Optional[string.Template] = None) -> PartialExtID:
-        """Returns a unique intrinsic identifier of this package info
-
-        ``manifest_format`` allows overriding the class' default MANIFEST_FORMAT"""
-        manifest_format = manifest_format or self.MANIFEST_FORMAT
-        manifest = manifest_format.substitute(
-            {
-                "gid": self.gid,
-                "aid": self.aid,
-                "version": self.version,
-                "url": self.url,
-                "time": str(self.time),
-            }
-        )
-        return (EXTID_TYPE, EXTID_VERSION, hashlib.sha256(manifest.encode()).digest())
+    EXTID_TYPE = "maven-jar"
+    EXTID_VERSION = 0
 
     @classmethod
     def from_metadata(cls, a_metadata: Dict[str, Any]) -> "MavenPackageInfo":
@@ -116,10 +98,9 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         storage: StorageInterface,
         url: str,
         artifacts: Sequence[Dict[str, Any]],
-        extid_manifest_format: Optional[str] = None,
         max_content_size: Optional[int] = None,
     ):
-        f"""Loader constructor.
+        """Loader constructor.
 
         For now, this is the lister's task output.
         There is one, and only one, artefact (jar or zip) per version, as guaranteed by
@@ -141,10 +122,6 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
                - **aid**: artifact's artifactId
 
                - **version**: artifact's version
-
-            extid_manifest_format: template string used to format a manifest,
-                which is hashed to get the extid of a package.
-                Defaults to {MavenPackageInfo.MANIFEST_FORMAT!r}
 
         """
         super().__init__(storage=storage, url=url, max_content_size=max_content_size)

@@ -6,7 +6,6 @@
 import hashlib
 import json
 from pathlib import Path
-import string
 
 import pytest
 
@@ -541,31 +540,9 @@ def test_jar_extid():
 
     p_info = MavenPackageInfo(**metadata)
 
-    expected_manifest = (
-        b"al.aldi sprova4j 0.1.0 "
-        b"https://repo1.maven.org/maven2/al/aldi/sprova4j/0.1.0/sprova4j-0.1.0"
-        b"-sources.jar 1626109619335"
-    )
-    for manifest_format in [
-        string.Template("$aid $gid $version"),
-        string.Template("$gid $aid"),
-        string.Template("$gid $aid $version"),
-    ]:
-        actual_id = p_info.extid(manifest_format=manifest_format)
-        assert actual_id != ("maven-jar", hashlib.sha256(expected_manifest).digest(),)
-
-    for manifest_format, expected_manifest in [
-        (None, "{gid} {aid} {version} {url} {time}".format(**metadata).encode()),
-    ]:
-        actual_id = p_info.extid(manifest_format=manifest_format)
-        assert actual_id == (
-            "maven-jar",
-            0,
-            hashlib.sha256(expected_manifest).digest(),
-        )
-
-    with pytest.raises(KeyError):
-        p_info.extid(manifest_format=string.Template("$a $unknown_key"))
+    expected_manifest = "{gid} {aid} {version} {url} {time}".format(**metadata).encode()
+    actual_id = p_info.extid()
+    assert actual_id == ("maven-jar", 0, hashlib.sha256(expected_manifest).digest(),)
 
 
 def test_jar_snapshot_append(
