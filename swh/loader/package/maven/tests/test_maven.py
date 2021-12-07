@@ -38,6 +38,7 @@ MVN_ARTIFACTS = [
         "aid": "sprova4j",
         "filename": "sprova4j-0.1.0-sources.jar",
         "version": "0.1.0",
+        "base_url": "https://repo1.maven.org/maven2/",
     },
     {
         "time": "2021-07-12 19:37:05.534000",
@@ -47,6 +48,7 @@ MVN_ARTIFACTS = [
         "aid": "sprova4j",
         "filename": "sprova4j-0.1.1-sources.jar",
         "version": "0.1.1",
+        "base_url": "https://repo1.maven.org/maven2/",
     },
 ]
 
@@ -94,6 +96,7 @@ _expected_json_metadata = {
     "aid": "sprova4j",
     "filename": "sprova4j-0.1.0-sources.jar",
     "version": "0.1.0",
+    "base_url": "https://repo1.maven.org/maven2/",
 }
 _expected_pom_metadata = (
     """<?xml version="1.0" encoding="UTF-8"?>
@@ -255,6 +258,7 @@ def test_jar_visit_with_no_artifact_found(swh_storage, requests_mock_datadir):
                 "gid": "al/aldi",
                 "aid": "sprova4j",
                 "version": "0.1.0",
+                "base_url": "https://repo1.maven.org/maven2/",
             }
         ],
     )
@@ -282,6 +286,23 @@ def test_jar_visit_with_no_artifact_found(swh_storage, requests_mock_datadir):
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
+
+
+def test_jar_visit_inconsistent_base_url(
+    swh_storage, requests_mock, data_jar_1, data_pom_1
+):
+    """With no prior visit, loading a jar ends up with 1 snapshot
+
+    """
+    with pytest.raises(ValueError, match="more than one Maven instance"):
+        MavenLoader(
+            swh_storage,
+            MVN_ARTIFACTS[0]["url"],
+            artifacts=[
+                MVN_ARTIFACTS[0],
+                {**MVN_ARTIFACTS[1], "base_url": "http://maven.example/"},
+            ],
+        )
 
 
 def test_jar_visit_with_release_artifact_no_prior_visit(
@@ -438,7 +459,7 @@ def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/",
+        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/maven2/",
     )
 
     expected_metadata = [
@@ -497,7 +518,7 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/",
+        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/maven2/",
     )
 
     expected_metadata = [

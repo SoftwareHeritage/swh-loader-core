@@ -9,7 +9,6 @@ import logging
 from os import path
 import string
 from typing import Iterator, List, Optional, Sequence, Tuple
-from urllib.parse import urlparse
 
 import attr
 import iso8601
@@ -58,6 +57,9 @@ class ArtifactDict(TypedDict):
     version: str
     """artifact's version"""
 
+    base_url: str
+    """root URL of the Maven instance"""
+
 
 @attr.s
 class MavenPackageInfo(BasePackageInfo):
@@ -69,6 +71,8 @@ class MavenPackageInfo(BasePackageInfo):
     """Artifact ID of the maven artifact"""
     version = attr.ib(type=str)
     """Version of the maven artifact"""
+    base_url = attr.ib(type=str)
+    """Root URL of the Maven instance"""
 
     # default format for maven artifacts
     MANIFEST_FORMAT = string.Template("$gid $aid $version $url $time")
@@ -87,6 +91,7 @@ class MavenPackageInfo(BasePackageInfo):
             gid=a_metadata["gid"],
             aid=a_metadata["aid"],
             version=a_metadata["version"],
+            base_url=a_metadata["base_url"],
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
                     format="maven-json", metadata=json.dumps(a_metadata).encode(),
@@ -126,6 +131,20 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
             jar["version"]: jar for jar in artifacts if jar["version"]
         }
 
+        if artifacts:
+            base_urls = {jar["base_url"] for jar in artifacts}
+            try:
+                (self.base_url,) = base_urls
+            except ValueError:
+                raise ValueError(
+                    "Artifacts originate from more than one Maven instance: "
+                    + ", ".join(base_urls)
+                ) from None
+        else:
+            # There is no artifact, so self.metadata_authority won't be called,
+            # so self.base_url won't be accessed.
+            pass
+
     def get_versions(self) -> Sequence[str]:
         return list(self.version_artifact)
 
@@ -134,12 +153,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         return self.artifacts[-1]["version"]
 
     def get_metadata_authority(self):
-        p_url = urlparse(self.url)
-        return MetadataAuthority(
-            type=MetadataAuthorityType.FORGE,
-            url=f"{p_url.scheme}://{p_url.netloc}/",
-            metadata={},
-        )
+        return MetadataAuthority(type=MetadataAuthorityType.FORGE, url=self.base_url)
 
     def build_extrinsic_directory_metadata(
         self, p_info: MavenPackageInfo, release_id: Sha1Git, directory_id: Sha1Git,
@@ -172,7 +186,6 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         self, p_info: MavenPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
         msg = f"Synthetic release for archive at {p_info.url}\n".encode("utf-8")
-        # time is an iso8601 date
         normalized_time = TimestampWithTimezone.from_datetime(p_info.time)
         return Release(
             name=p_info.version.encode(),
