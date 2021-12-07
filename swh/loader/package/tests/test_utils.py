@@ -39,7 +39,7 @@ _filename = "requests-0.0.1.tar.gz"
 _data = "this is something"
 
 
-def _check_download_ok(url, dest, filename=_filename, hashes=None):
+def _check_download_ok(url, dest, filename=_filename, hashes={}):
     actual_filepath, actual_hashes = download(url, dest, hashes=hashes)
 
     actual_filename = os.path.basename(actual_filepath)

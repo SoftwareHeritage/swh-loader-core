@@ -56,6 +56,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - original author
      - ``<codemeta: dateCreated>`` from SWORD XML
      - revisions had parents
+   * - maven-loader
+     - passed as arg
+     - HEAD
+     - ``release_name(version)``
+     - "Synthetic release for archive at {p_info.url}\n"
+     - true
+     - ""
+     - passed as arg
+     - Only one artefact per url (jar/zip src)
    * - nixguix
      - URL
      - URL

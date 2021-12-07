@@ -287,6 +287,7 @@ def test_debian_download_package(datadir, tmpdir, requests_mock_datadir):
     assert all_hashes == {
         "cicero_0.7.2-3.diff.gz": {
             "checksums": {
+                "md5": "a93661b6a48db48d59ba7d26796fc9ce",
                 "sha1": "0815282053f21601b0ec4adf7a8fe47eace3c0bc",
                 "sha256": "f039c9642fe15c75bed5254315e2a29f9f2700da0e29d9b0729b3ffc46c8971c",  # noqa
             },
@@ -299,6 +300,7 @@ def test_debian_download_package(datadir, tmpdir, requests_mock_datadir):
         },
         "cicero_0.7.2-3.dsc": {
             "checksums": {
+                "md5": "d5dac83eb9cfc9bb52a15eb618b4670a",
                 "sha1": "abbec4e8efbbc80278236e1dd136831eac08accd",
                 "sha256": "35b7f1048010c67adfd8d70e4961aefd8800eb9a83a4d1cc68088da0009d9a03",  # noqa
             },
@@ -310,6 +312,7 @@ def test_debian_download_package(datadir, tmpdir, requests_mock_datadir):
         },
         "cicero_0.7.2.orig.tar.gz": {
             "checksums": {
+                "md5": "4353dede07c5728319ba7f5595a7230a",
                 "sha1": "a286efd63fe2c9c9f7bb30255c3d6fcdcf390b43",
                 "sha256": "63f40f2436ea9f67b44e2d4bd669dbabe90e2635a204526c20e0b3c8ee957786",  # noqa
             },
@@ -445,6 +448,47 @@ def test_debian_get_intrinsic_package_metadata(
 
 def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
     loader = DebianLoader(swh_storage, URL, packages=PACKAGES_PER_VERSION,)
+
+    actual_load_status = loader.load()
+    expected_snapshot_id = "a83fa5c089b048161f0677b9614a4aae96a6ca18"
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": expected_snapshot_id,
+    }
+
+    assert_last_visit_matches(
+        swh_storage,
+        URL,
+        status="full",
+        type="deb",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
+
+    expected_snapshot = Snapshot(
+        id=hash_to_bytes(expected_snapshot_id),
+        branches={
+            b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("73e0ede9c21f7074ad1f9c81a774cfcb9e02addf"),
+            ),
+            b"releases/buster/contrib/0.7.2-4": SnapshotBranch(
+                target_type=TargetType.RELEASE,
+                target=hash_to_bytes("9f6d8d868514f991af0d9f5d7173aba1236a5a75"),
+            ),
+        },
+    )
+
+    check_snapshot(expected_snapshot, swh_storage)
+
+
+def test_debian_loader_only_md5_sum_in_dsc(swh_storage, requests_mock_datadir):
+
+    packages_per_version = deepcopy(PACKAGES_PER_VERSION)
+    for package_files in packages_per_version.values():
+        for package_data in package_files["files"].values():
+            del package_data["sha256"]
+
+    loader = DebianLoader(swh_storage, URL, packages=packages_per_version)
 
     actual_load_status = loader.load()
     expected_snapshot_id = "a83fa5c089b048161f0677b9614a4aae96a6ca18"
