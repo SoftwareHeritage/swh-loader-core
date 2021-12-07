@@ -101,6 +101,16 @@ swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello-2
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.10.json
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.11.json
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.12.json
+swh/loader/package/maven/__init__.py
+swh/loader/package/maven/loader.py
+swh/loader/package/maven/tasks.py
+swh/loader/package/maven/tests/__init__.py
+swh/loader/package/maven/tests/test_maven.py
+swh/loader/package/maven/tests/test_tasks.py
+swh/loader/package/maven/tests/data/https_maven.org/sprova4j-0.1.0-sources.jar
+swh/loader/package/maven/tests/data/https_maven.org/sprova4j-0.1.0.pom
+swh/loader/package/maven/tests/data/https_maven.org/sprova4j-0.1.1-sources.jar
+swh/loader/package/maven/tests/data/https_maven.org/sprova4j-0.1.1.pom
 swh/loader/package/nixguix/__init__.py
 swh/loader/package/nixguix/loader.py
 swh/loader/package/nixguix/tasks.py
