@@ -8,7 +8,7 @@ import json
 import logging
 from os import path
 import string
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
+from typing import Iterator, List, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
 import attr
@@ -183,7 +183,3 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
             target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
-
-    def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
-        last_snapshot = self.last_snapshot()
-        return last_snapshot.to_dict()["branches"] if last_snapshot else {}
