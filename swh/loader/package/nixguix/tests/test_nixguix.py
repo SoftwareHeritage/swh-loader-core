@@ -277,27 +277,17 @@ def test_clean_sources_unsupported_artifacts(swh_storage, requests_mock_datadir)
 def test_loader_one_visit(swh_storage, requests_mock_datadir, raw_sources):
     loader = NixGuixLoader(swh_storage, sources_url)
     load_status = loader.load()
-    expected_snapshot_id_hex = "efe5145f85af3fc87f34102d8b8481cd5198f4f8"
-    expected_snapshot_id = hash_to_bytes(expected_snapshot_id_hex)
+    expected_snapshot_id = SNAPSHOT1.id
+    expected_snapshot_id_hex = expected_snapshot_id.hex()
     assert load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id_hex,
     }
 
-    release_id = hash_to_bytes("df7811b9644ed8ef088e2e7add62ed32b0bab15f")
-    expected_snapshot = Snapshot(
-        id=expected_snapshot_id,
-        branches={
-            b"evaluation": SnapshotBranch(
-                target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
-                target_type=TargetType.REVISION,
-            ),
-            b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
-                target=release_id, target_type=TargetType.RELEASE,
-            ),
-        },
-    )
-    check_snapshot(expected_snapshot, storage=swh_storage)
+    release_id = SNAPSHOT1.branches[
+        b"https://github.com/owner-1/repository-1/revision-1.tgz"
+    ].target
+    check_snapshot(SNAPSHOT1, storage=swh_storage)
 
     assert swh_storage.release_get([release_id])[0] == Release(
         id=release_id,
