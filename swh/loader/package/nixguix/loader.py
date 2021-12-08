@@ -7,7 +7,7 @@ import copy
 import json
 import logging
 import re
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Set, Tuple
 
 import attr
 
@@ -26,6 +26,7 @@ from swh.model.model import (
     Release,
     Sha1Git,
 )
+from swh.model.swhids import CoreSWHID
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -129,6 +130,24 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
             {"url": url, "integrity": integrity}, version=url
         )
         yield url, p_info
+
+    def select_extid_target(
+        self, p_info: NixGuixPackageInfo, extid_targets: Set[CoreSWHID]
+    ) -> Optional[CoreSWHID]:
+        if extid_targets:
+            # The archive URL is part of the release name. As that URL is not
+            # intrinsic metadata, it means different releases may be created for
+            # the same SRI so they have the same extid.
+            # Therefore, we need to pick the one with the right URL.
+            releases = self.storage.release_get(
+                [target.object_id for target in extid_targets]
+            )
+            extid_targets = {
+                release.swhid()
+                for release in releases
+                if release is not None and release.name == p_info.version.encode()
+            }
+        return super().select_extid_target(p_info, extid_targets)
 
     def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
         """We add a branch to the snapshot called 'evaluation' pointing to the

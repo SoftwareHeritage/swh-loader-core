@@ -57,7 +57,7 @@ def raw_sources(datadir) -> bytes:
 
 
 SNAPSHOT1 = Snapshot(
-    id=hash_to_bytes("efe5145f85af3fc87f34102d8b8481cd5198f4f8"),
+    id=hash_to_bytes("fafcfe32016d018bd892114fce211f37a36a092a"),
     branches={
         b"evaluation": SnapshotBranch(
             target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
@@ -65,6 +65,10 @@ SNAPSHOT1 = Snapshot(
         ),
         b"https://github.com/owner-1/repository-1/revision-1.tgz": SnapshotBranch(
             target=hash_to_bytes("df7811b9644ed8ef088e2e7add62ed32b0bab15f"),
+            target_type=TargetType.RELEASE,
+        ),
+        b"https://github.com/owner-3/repository-1/revision-1.tgz": SnapshotBranch(
+            target=hash_to_bytes("dc7dc10a664396d5c88adc56352904db231bde14"),
             target_type=TargetType.RELEASE,
         ),
     },
@@ -99,7 +103,7 @@ def check_snapshot(snapshot: Snapshot, storage: StorageInterface):
 def test_retrieve_sources(swh_storage, requests_mock_datadir):
     j = parse_sources(retrieve_sources(sources_url))
     assert "sources" in j.keys()
-    assert len(j["sources"]) == 2
+    assert len(j["sources"]) == 3
 
 
 def test_nixguix_url_not_found(swh_storage, requests_mock_datadir):
@@ -306,7 +310,7 @@ def test_loader_one_visit(swh_storage, requests_mock_datadir, raw_sources):
         "directory": 3,
         "origin": 1,
         "origin_visit": 1,
-        "release": 1,
+        "release": 2,
         "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
@@ -429,7 +433,7 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
         "directory": 3,
         "origin": 1,
         "origin_visit": 1,
-        "release": 1,
+        "release": 2,
         "revision": 0,
         "skipped_content": 0,
         "snapshot": 1,
@@ -480,7 +484,7 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
         "directory": 5,
         "origin": 1,
         "origin_visit": 2,
-        "release": 2,
+        "release": 3,
         "revision": 0,
         "skipped_content": 0,
         "snapshot": 2,
@@ -571,7 +575,7 @@ def test_raise_exception(swh_storage, requests_mock_datadir, mocker):
 
     check_snapshot(SNAPSHOT1, storage=swh_storage)
 
-    assert len(mock_download.mock_calls) == 2
+    assert len(mock_download.mock_calls) == 3
 
 
 def test_load_nixguix_one_common_artifact_from_other_loader(
