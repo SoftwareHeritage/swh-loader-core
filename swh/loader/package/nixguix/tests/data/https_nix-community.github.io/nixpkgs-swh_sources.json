@@ -7,6 +7,11 @@
     },
     {
       "type": "url",
+      "urls": [ "https://github.com/owner-3/repository-1/revision-1.tgz" ],
+      "integrity": "sha256-3vm2Nt+O4zHf3Ovd/qsv1gKTEUwodX9FLxlrQdry0zs="
+    },
+    {
+      "type": "url",
       "urls": [ "https://example.com/file.txt" ],
       "integrity": "sha256-Q0copBCnj1b8G1iZw1k0NuYasMcx6QctleltspAgXlM="
     }

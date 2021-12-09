@@ -326,9 +326,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 for extid_target in extid_targets
                 if extid_target.object_type == ObjectType.RELEASE
             }
-            if release_extid_targets:
-                assert len(release_extid_targets) == 1, release_extid_targets
-                return list(release_extid_targets)[0]
+            extid_target2 = self.select_extid_target(p_info, release_extid_targets)
+            if extid_target2:
+                return extid_target2
 
             # If there is no release extid (ie. if the package was only loaded with
             # older versions of this loader, which produced revision objects instead
@@ -340,6 +340,23 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         else:
             # No target found (this is probably a new package version)
             return None
+
+    def select_extid_target(
+        self, p_info: TPackageInfo, extid_targets: Set[CoreSWHID]
+    ) -> Optional[CoreSWHID]:
+        """Given a list of release extid targets, choses one appropriate for the
+        given package info.
+
+        Package loaders shyould implement this if their ExtIDs may map to multiple
+        releases, so they can fetch releases from the storage and inspect their fields
+        to select the right one for this ``p_info``.
+        """
+        if extid_targets:
+            # The base package loader does not have the domain-specific knowledge
+            # to select the right release -> crash if there is more than one.
+            assert len(extid_targets) == 1, extid_targets
+            return list(extid_targets)[0]
+        return None
 
     def download_package(
         self, p_info: TPackageInfo, tmpdir: str
