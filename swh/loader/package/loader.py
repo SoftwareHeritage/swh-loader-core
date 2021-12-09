@@ -332,14 +332,19 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
             # If there is no release extid (ie. if the package was only loaded with
             # older versions of this loader, which produced revision objects instead
-            # of releases), return a revision extid.
-            assert len(extid_targets) == 1, extid_targets
-            extid_target = list(extid_targets)[0]
-            assert extid_target.object_type == ObjectType.REVISION, extid_targets
-            return extid_target
-        else:
-            # No target found (this is probably a new package version)
-            return None
+            # of releases), return a revision extid when possible.
+            revision_extid_targets = {
+                extid_target
+                for extid_target in extid_targets
+                if extid_target.object_type == ObjectType.REVISION
+            }
+            if revision_extid_targets:
+                assert len(extid_targets) == 1, extid_targets
+                extid_target = list(extid_targets)[0]
+                return extid_target
+
+        # No target found (this is probably a new package version)
+        return None
 
     def select_extid_target(
         self, p_info: TPackageInfo, extid_targets: Set[CoreSWHID]
