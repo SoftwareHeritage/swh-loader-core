@@ -126,6 +126,7 @@ swh/loader/package/nixguix/tests/data/https_ftp.gnu.org/gnu_8sync_8sync-0.1.0.ta
 swh/loader/package/nixguix/tests/data/https_ftp.gnu.org/gnu_8sync_8sync-0.2.0.tar.gz
 swh/loader/package/nixguix/tests/data/https_github.com/owner-1_repository-1_revision-1.tgz
 swh/loader/package/nixguix/tests/data/https_github.com/owner-2_repository-1_revision-1.tgz
+swh/loader/package/nixguix/tests/data/https_github.com/owner-3_repository-1_revision-1.tgz
 swh/loader/package/nixguix/tests/data/https_nix-community.github.io/nixpkgs-swh_sources-EOFError.json
 swh/loader/package/nixguix/tests/data/https_nix-community.github.io/nixpkgs-swh_sources.json
 swh/loader/package/nixguix/tests/data/https_nix-community.github.io/nixpkgs-swh_sources.json_visit1

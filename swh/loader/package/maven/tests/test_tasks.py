@@ -12,11 +12,12 @@ MVN_ARTIFACTS = [
         "aid": "sprova4j",
         "filename": "sprova4j-0.1.0.jar",
         "version": "0.1.0",
+        "base_url": "https://repo1.maven.org/maven2/",
     },
 ]
 
 
-def test_tasks_jar_loader(
+def test_tasks_maven_loader(
     mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
 ):
     mock_load = mocker.patch("swh.loader.package.maven.loader.MavenLoader.load")
@@ -33,7 +34,7 @@ def test_tasks_jar_loader(
     assert res.result == {"status": "eventful"}
 
 
-def test_tasks_jar_loader_snapshot_append(
+def test_tasks_maven_loader_snapshot_append(
     mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
 ):
     mock_load = mocker.patch("swh.loader.package.maven.loader.MavenLoader.load")
