@@ -332,7 +332,15 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     # Retrieve the release
     release = loader.storage.release_get([hash_to_bytes(release_id)])[0]
     assert release
-    assert release.date.to_dict() == raw_meta["deposit"]["author_date"]
+    release_date_dict = release.date.to_dict()
+
+    # Workaround while we migrate from storing offsets as (int, bool) to bytes.
+    # When the migration is done, remove this pop().
+    # offset_bytes will also need to be converted to a string (which is fine because
+    # it is always a well-formed offset)
+    release_date_dict.pop("offset_bytes", None)
+    assert release_date_dict == raw_meta["deposit"]["author_date"]
+
     assert not release.metadata
 
     provider = {
