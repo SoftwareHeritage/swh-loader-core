@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import datetime
 import json
 import re
 from typing import List
@@ -22,7 +23,6 @@ from swh.model.model import (
     Snapshot,
     SnapshotBranch,
     TargetType,
-    Timestamp,
     TimestampWithTimezone,
 )
 from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
@@ -195,10 +195,8 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     check_snapshot(expected_snapshot, storage=loader.storage)
 
     release = loader.storage.release_get([release_id])[0]
-    date = TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1507389428, microseconds=0),
-        offset=0,
-        negative_utc=False,
+    date = TimestampWithTimezone.from_datetime(
+        datetime.datetime(2017, 10, 7, 15, 17, 8, tzinfo=datetime.timezone.utc)
     )
     person = Person(
         fullname=b"Software Heritage",
@@ -538,10 +536,8 @@ def test_deposit_loading_ok_release_notes(
     check_snapshot(expected_snapshot, storage=loader.storage)
 
     release = loader.storage.release_get([release_id])[0]
-    date = TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1507389428, microseconds=0),
-        offset=0,
-        negative_utc=False,
+    date = TimestampWithTimezone.from_datetime(
+        datetime.datetime(2017, 10, 7, 15, 17, 8, tzinfo=datetime.timezone.utc)
     )
     person = Person(
         fullname=b"Software Heritage",

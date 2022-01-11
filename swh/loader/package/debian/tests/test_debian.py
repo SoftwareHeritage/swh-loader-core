@@ -4,6 +4,7 @@
 # See top-level LICENSE file for more information
 
 from copy import deepcopy
+import datetime
 import hashlib
 import logging
 from os import path
@@ -32,7 +33,6 @@ from swh.model.model import (
     Snapshot,
     SnapshotBranch,
     TargetType,
-    Timestamp,
     TimestampWithTimezone,
 )
 
@@ -155,10 +155,16 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
             name=b"Samuel Thibault",
             email=b"sthibault@debian.org",
         ),
-        date=TimestampWithTimezone(
-            timestamp=Timestamp(seconds=1413730355, microseconds=0),
-            offset=120,
-            negative_utc=False,
+        date=TimestampWithTimezone.from_datetime(
+            datetime.datetime(
+                2014,
+                10,
+                19,
+                16,
+                52,
+                35,
+                tzinfo=datetime.timezone(datetime.timedelta(seconds=7200)),
+            )
         ),
     )
 

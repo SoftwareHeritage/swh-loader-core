@@ -27,7 +27,6 @@ from swh.model.model import (
     Snapshot,
     SnapshotBranch,
     TargetType,
-    Timestamp,
     TimestampWithTimezone,
 )
 
@@ -221,10 +220,8 @@ def test_cran_one_visit(swh_storage, requests_mock_datadir):
             name=b"Brian Ripley",
             email=b"ripley@stats.ox.ac.uk",
         ),
-        date=TimestampWithTimezone(
-            timestamp=Timestamp(seconds=991958400, microseconds=0),
-            offset=0,
-            negative_utc=False,
+        date=TimestampWithTimezone.from_datetime(
+            datetime(2001, 6, 8, 0, 0, tzinfo=timezone.utc)
         ),
     )
 

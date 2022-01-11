@@ -98,10 +98,16 @@ REVISION = Revision(
         email=b"nicolas@example.com",
         fullname=b"Nicolas Dandrimont <nicolas@example.com> ",
     ),
-    date=TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1234567890, microseconds=0),
-        offset=120,
-        negative_utc=False,
+    date=TimestampWithTimezone.from_datetime(
+        datetime.datetime(
+            2009,
+            2,
+            14,
+            1,
+            31,
+            30,
+            tzinfo=datetime.timezone(datetime.timedelta(seconds=7200)),
+        )
     ),
     committer=Person(
         name=b"St\xc3fano Zacchiroli",
@@ -135,10 +141,8 @@ RELEASE = Release(
     author=Person(
         name=b"tony", email=b"tony@ardumont.fr", fullname=b"tony <tony@ardumont.fr>",
     ),
-    date=TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1634336813, microseconds=0),
-        offset=0,
-        negative_utc=False,
+    date=TimestampWithTimezone.from_datetime(
+        datetime.datetime(2021, 10, 15, 22, 26, 53, tzinfo=datetime.timezone.utc)
     ),
     target=REVISION.id,
     target_type=ObjectType.REVISION,
