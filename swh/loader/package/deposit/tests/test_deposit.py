@@ -500,3 +500,64 @@ def test_deposit_loading_ok_3(swh_storage, deposit_client, requests_mock_datadir
         type="deposit",
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
+
+
+def test_deposit_loading_ok_release_notes(
+    swh_storage, deposit_client, requests_mock_datadir
+):
+    url = "https://hal-test.archives-ouvertes.fr/some-external-id"
+    deposit_id = 999
+    loader = DepositLoader(
+        swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
+    )
+
+    actual_load_status = loader.load()
+    expected_snapshot_id = "a307acffb7c29bebb3daf1bcb680bb3f452890a8"
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": expected_snapshot_id,
+    }
+
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
+
+    release_id_hex = "f5e8ec02ede57edbe061afa7fc2a07bb7d14a700"
+    release_id = hash_to_bytes(release_id_hex)
+
+    expected_snapshot = Snapshot(
+        id=hash_to_bytes(expected_snapshot_id),
+        branches={
+            b"HEAD": SnapshotBranch(target=release_id, target_type=TargetType.RELEASE,),
+        },
+    )
+    check_snapshot(expected_snapshot, storage=loader.storage)
+
+    release = loader.storage.release_get([release_id])[0]
+    date = TimestampWithTimezone(
+        timestamp=Timestamp(seconds=1507389428, microseconds=0),
+        offset=0,
+        negative_utc=False,
+    )
+    person = Person(
+        fullname=b"Software Heritage",
+        name=b"Software Heritage",
+        email=b"robot@softwareheritage.org",
+    )
+    assert release == Release(
+        id=release_id,
+        name=b"HEAD",
+        message=(
+            b"hal: Deposit 999 in collection hal\n\nThis release adds this and that.\n"
+        ),
+        author=person,
+        date=date,
+        target_type=ModelObjectType.DIRECTORY,
+        target=b"\xfd-\xf1-\xc5SL\x1d\xa1\xe9\x18\x0b\x91Q\x02\xfbo`\x1d\x19",
+        synthetic=True,
+        metadata=None,
+    )

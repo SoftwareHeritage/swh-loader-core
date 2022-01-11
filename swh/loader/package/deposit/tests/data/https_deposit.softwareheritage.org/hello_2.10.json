@@ -57,6 +57,7 @@
       "offset": 0,
       "negative_utc": false
     },
-    "revision_parents": []
+    "revision_parents": [],
+    "release_notes": null
   }
 }

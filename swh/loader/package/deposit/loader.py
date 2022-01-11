@@ -57,6 +57,7 @@ class DepositPackageInfo(BasePackageInfo):
     """The collection in the deposit; see SWORD specification."""
     author = attr.ib(type=Person)
     committer = attr.ib(type=Person)
+    release_notes = attr.ib(type=Optional[str])
 
     @classmethod
     def from_metadata(
@@ -88,6 +89,7 @@ class DepositPackageInfo(BasePackageInfo):
             collection=depo["collection"],
             author=parse_author(depo["author"]),
             committer=parse_author(depo["committer"]),
+            release_notes=depo["release_notes"],
             raw_info=raw_info,
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
@@ -196,12 +198,18 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git,
     ) -> Optional[Release]:
         message = (
-            f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}\n"
-        ).encode("utf-8")
+            f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}"
+        )
+
+        if p_info.release_notes:
+            message += "\n\n" + p_info.release_notes
+
+        if not message.endswith("\n"):
+            message += "\n"
 
         return Release(
             name=p_info.version.encode(),
-            message=message,
+            message=message.encode(),
             author=p_info.author,
             date=TimestampWithTimezone.from_dict(p_info.author_date),
             target=directory,
