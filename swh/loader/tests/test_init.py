@@ -98,26 +98,14 @@ REVISION = Revision(
         email=b"nicolas@example.com",
         fullname=b"Nicolas Dandrimont <nicolas@example.com> ",
     ),
-    date=TimestampWithTimezone.from_datetime(
-        datetime.datetime(
-            2009,
-            2,
-            14,
-            1,
-            31,
-            30,
-            tzinfo=datetime.timezone(datetime.timedelta(seconds=7200)),
-        )
-    ),
+    date=TimestampWithTimezone(Timestamp(1234567890, 0), offset_bytes=b"+0200"),
     committer=Person(
         name=b"St\xc3fano Zacchiroli",
         email=b"stefano@example.com",
         fullname=b"St\xc3fano Zacchiroli <stefano@example.com>",
     ),
     committer_date=TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1123456789, microseconds=0),
-        offset=0,
-        negative_utc=True,
+        Timestamp(1123456789, 0), offset_bytes=b"-0000"
     ),
     parents=(),
     type=RevisionType.GIT,
