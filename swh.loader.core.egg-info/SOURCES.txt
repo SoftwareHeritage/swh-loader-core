@@ -96,11 +96,14 @@ swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_priva
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_777_raw
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_888_meta
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_888_raw
+swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_999_meta
+swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/1_private_999_raw
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello-2.10.zip
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello-2.12.tar.gz
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.10.json
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.11.json
 swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.12.json
+swh/loader/package/deposit/tests/data/https_deposit.softwareheritage.org/hello_2.13.json
 swh/loader/package/maven/__init__.py
 swh/loader/package/maven/loader.py
 swh/loader/package/maven/tasks.py

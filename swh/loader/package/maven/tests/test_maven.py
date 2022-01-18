@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import datetime
 import hashlib
 import json
 from pathlib import Path
@@ -20,7 +21,6 @@ from swh.model.model import (
     Snapshot,
     SnapshotBranch,
     TargetType,
-    Timestamp,
     TimestampWithTimezone,
 )
 from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
@@ -210,10 +210,8 @@ REL_MSG = (
     b"sprova4j/0.1.0/sprova4j-0.1.0-sources.jar\n"
 )
 
-REVISION_DATE = TimestampWithTimezone(
-    timestamp=Timestamp(seconds=1626116819, microseconds=335000),
-    offset=0,
-    negative_utc=False,
+REVISION_DATE = TimestampWithTimezone.from_datetime(
+    datetime.datetime(2021, 7, 12, 19, 6, 59, 335000, tzinfo=datetime.timezone.utc)
 )
 
 
