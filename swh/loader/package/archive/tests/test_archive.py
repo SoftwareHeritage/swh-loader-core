@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import datetime
 import hashlib
 from io import BytesIO
 from pathlib import Path
@@ -22,7 +23,6 @@ from swh.model.model import (
     Snapshot,
     SnapshotBranch,
     TargetType,
-    Timestamp,
     TimestampWithTimezone,
 )
 
@@ -186,10 +186,8 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         target_type=ObjectType.DIRECTORY,
         synthetic=True,
         author=Person.from_fullname(b""),
-        date=TimestampWithTimezone(
-            timestamp=Timestamp(seconds=944729610, microseconds=0),
-            offset=0,
-            negative_utc=False,
+        date=TimestampWithTimezone.from_datetime(
+            datetime.datetime(1999, 12, 9, 8, 53, 30, tzinfo=datetime.timezone.utc)
         ),
     )
 
