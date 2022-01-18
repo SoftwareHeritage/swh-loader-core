@@ -41,8 +41,7 @@
         "seconds": 1507389428,
         "microseconds": 0
       },
-      "offset": 0,
-      "negative_utc": false
+      "offset": 0
     },
     "committer": {
       "name": "Software Heritage",
@@ -54,9 +53,9 @@
         "seconds": 1507389428,
         "microseconds": 0
       },
-      "offset": 0,
-      "negative_utc": false
+      "offset": 0
     },
-    "revision_parents": []
+    "revision_parents": [],
+    "release_notes": null
   }
 }

@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import datetime
 import json
 import os
 
@@ -23,7 +24,6 @@ from swh.model.model import (
     Snapshot,
     SnapshotBranch,
     TargetType,
-    Timestamp,
     TimestampWithTimezone,
 )
 from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
@@ -355,10 +355,8 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
             name=b"mooz",
             email=b"stillpedant@gmail.com",
         ),
-        date=TimestampWithTimezone(
-            timestamp=Timestamp(seconds=1388590833, microseconds=0),
-            offset=0,
-            negative_utc=False,
+        date=TimestampWithTimezone.from_datetime(
+            datetime.datetime(2014, 1, 1, 15, 40, 33, tzinfo=datetime.timezone.utc)
         ),
         id=hash_to_bytes(release_id),
     )
