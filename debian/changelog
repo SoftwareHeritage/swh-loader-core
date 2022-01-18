@@ -1,3 +1,19 @@
+swh-loader-core (2.2.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.2.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-01-18 14:33:08
+    +0100)
+  * Upstream changes:     - v2.2.0     - tests: Replace 'offset' and
+    'negative_utc' with 'offset_bytes'     - deposit: Remove
+    'negative_utc' from test data     - tests: Use
+    TimestampWithTimezone.from_datetime() instead of the constructor
+    - Add releases notes (from user-provided Atom document) to release
+    messages.     - deposit: Strip 'offset_bytes' from date dicts to
+    support swh-model 4.0.0     - Pin mypy and drop type annotations
+    which makes mypy unhappy
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 18 Jan 2022 15:52:53 +0000
+
 swh-loader-core (2.1.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 2.1.1     - (tagged by Valentin Lorentz
