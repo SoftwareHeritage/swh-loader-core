@@ -6,7 +6,7 @@ python-debian
 python-dateutil
 typing-extensions
 swh.core>=0.3
-swh.model>=4.3.0
+swh.model>=4.4.0
 swh.objstorage>=0.2.2
 swh.scheduler>=0.4.0
 swh.storage>=0.29.0
