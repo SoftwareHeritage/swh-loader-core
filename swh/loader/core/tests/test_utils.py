@@ -4,9 +4,18 @@
 # See top-level LICENSE file for more information
 
 import os
+import signal
+from time import sleep
 from unittest.mock import patch
 
-from swh.loader.core.utils import clean_dangling_folders
+import pytest
+
+from swh.loader.core.utils import (
+    CloneFailure,
+    CloneTimeout,
+    clean_dangling_folders,
+    clone_with_timeout,
+)
 
 
 def prepare_arborescence_from(tmpdir, folder_names):
@@ -93,3 +102,46 @@ def test_clean_dangling_folders_3(mock_rmtree, mock_pid_exists, tmpdir):
     mock_pid_exists.assert_called_once_with(1468)
     mock_rmtree.assert_called_once_with(os.path.join(rootpath, path2))
     assert_dirs(actual_dirs, [path2, path1])
+
+
+def test_clone_with_timeout_no_error_no_timeout():
+    def succeed():
+        """This does nothing to simulate a successful clone"""
+
+    clone_with_timeout("foo", "bar", succeed, timeout=0.5)
+
+
+def test_clone_with_timeout_no_error_timeout():
+    def slow():
+        """This lasts for more than the timeout"""
+        sleep(1)
+
+    with pytest.raises(CloneTimeout):
+        clone_with_timeout("foo", "bar", slow, timeout=0.5)
+
+
+def test_clone_with_timeout_error():
+    def raise_something():
+        raise RuntimeError("panic!")
+
+    with pytest.raises(CloneFailure):
+        clone_with_timeout("foo", "bar", raise_something, timeout=0.5)
+
+
+def test_clone_with_timeout_sigkill():
+    """This also tests that the traceback is useful"""
+    src = "https://www.mercurial-scm.org/repo/hello"
+    dest = "/dev/null"
+    timeout = 0.5
+    sleepy_time = 100 * timeout
+    assert sleepy_time > timeout
+
+    def ignores_sigterm(*args, **kwargs):
+        # ignore SIGTERM to force sigkill
+        signal.signal(signal.SIGTERM, lambda signum, frame: None)
+        sleep(sleepy_time)  # we make sure we exceed the timeout
+
+    with pytest.raises(CloneTimeout) as e:
+        clone_with_timeout(src, dest, ignores_sigterm, timeout)
+    killed = True
+    assert e.value.args == (src, timeout, killed)

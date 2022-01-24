@@ -33,7 +33,7 @@ copy them from an existing package, such as
 ``swh-loader-core/swh/loader/package/pypi/``, and replace the names in those
 with your loader's.
 
-Finally, create an `entrypoint`_ in ``setup.py``, so your loader can be discovered
+Finally, create an `entrypoint`_ in :file:`setup.py`, so your loader can be discovered
 by the SWH Celery workers::
 
     entry_points="""
@@ -51,7 +51,7 @@ Writing a minimal loader
 It is now time for the interesting part: writing the code to load packages from
 a package manager into the |swh| archive.
 
-Create a file named ``loader.py`` in your package's directory, with two empty classes
+Create a file named :file:`loader.py` in your package's directory, with two empty classes
 (replace the names with what you think is relevant)::
 
    from typing import Optional
