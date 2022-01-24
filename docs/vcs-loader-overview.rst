@@ -28,7 +28,7 @@ A loader is a Python package, usually a subpackage of ``swh.loader``
 but in its own directory (eg. ``swh-loader-git/swh/loader/git``, as ``swh.loader``
 is a :pep:`namespace package <420>`), based on the `swh-py-template`_ repository.
 
-It has at least one `entrypoint`_, declared in ``setup.py`` to be recognized
+It has at least one `entrypoint`_, declared in :file:`setup.py` to be recognized
 by ``swh-loader-core``::
 
     entry_points="""

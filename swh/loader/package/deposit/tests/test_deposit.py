@@ -330,11 +330,12 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     # Retrieve the release
     release = loader.storage.release_get([hash_to_bytes(release_id)])[0]
     assert release
-    # swh-deposit uses the numeric 'offset' instead of 'offset_bytes' because its dates
-    # are always well-formed, and it can only send JSON-serializable data.
+    # swh-deposit uses the numeric 'offset_minutes' instead of the bytes offset
+    # attribute, because its dates are always well-formed, and it can only send
+    # JSON-serializable data.
     release_date_dict = {
         "timestamp": release.date.timestamp.to_dict(),
-        "offset": release.date.offset,
+        "offset": release.date.offset_minutes(),
     }
 
     assert release_date_dict == raw_meta["deposit"]["author_date"]
