@@ -1,3 +1,13 @@
+swh-loader-core (2.3.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.3.0     - (tagged by Nicolas Dandrimont
+    <nicolas@dandrimont.eu> on 2022-01-24 11:18:43 +0100)
+  * Upstream changes:     - Release swh.loader.core     - Stop using the
+    deprecated 'TimestampWithTimezone.offset' attribute     - Include
+    clone_with_timeout utility from swh.loader.mercurial
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 24 Jan 2022 10:22:35 +0000
+
 swh-loader-core (2.2.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 2.2.0     - (tagged by Antoine R. Dumont
