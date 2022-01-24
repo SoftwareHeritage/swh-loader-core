@@ -750,7 +750,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             status_visit = "partial"
             status_load = "failed"
 
-        self._load_extids(new_extids)
+        if status_load != "failed":
+            self._load_extids(new_extids)
 
         return self.finalize_visit(
             snapshot=snapshot,
