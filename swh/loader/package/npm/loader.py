@@ -35,7 +35,7 @@ from swh.storage.interface import StorageInterface
 logger = logging.getLogger(__name__)
 
 
-EMPTY_PERSON = Person(fullname=b"", name=None, email=None)
+EMPTY_PERSON = Person.from_fullname(b"")
 
 
 EXTID_TYPE = "npm-archive-sha1"

@@ -212,8 +212,8 @@ def test_npm_extract_npm_package_author(datadir):
     }"""
     )
 
-    assert extract_npm_package_author(package_json_no_authors) == Person(
-        fullname=b"", name=None, email=None
+    assert extract_npm_package_author(package_json_no_authors) == Person.from_fullname(
+        b""
     )
 
 

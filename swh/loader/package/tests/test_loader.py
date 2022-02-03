@@ -93,17 +93,31 @@ def test_loader_origin_visit_failure(swh_storage):
 
 
 def test_resolve_object_from_extids() -> None:
-    loader = PackageLoader(None, None)  # type: ignore
+    storage = get_storage("memory")
+    target = b"\x01" * 20
+    rel1 = Release(
+        name=b"aaaa",
+        message=b"aaaa",
+        target=target,
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=False,
+    )
+    rel2 = Release(
+        name=b"bbbb",
+        message=b"bbbb",
+        target=target,
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=False,
+    )
+    storage.release_add([rel1, rel2])
+
+    loader = PackageLoader(storage, "http://example.org/")  # type: ignore
 
     p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
 
     # The PackageInfo does not support extids
     p_info.extid.return_value = None
-    known_extids = {
-        ("extid-type", 0, b"extid-of-aaaa"): [
-            CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20),
-        ]
-    }
+    known_extids = {("extid-type", 0, b"extid-of-aaaa"): [rel1.swhid()]}
     whitelist = {b"unused"}
     assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
 
@@ -118,23 +132,52 @@ def test_resolve_object_from_extids() -> None:
 
     # Some known extid, and the PackageInfo is one of them (ie. cache hit),
     # and the target release was in the previous snapshot
-    whitelist = {b"a" * 20}
-    assert loader.resolve_object_from_extids(
-        known_extids, p_info, whitelist
-    ) == CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20)
+    whitelist = {rel1.id}
+    assert (
+        loader.resolve_object_from_extids(known_extids, p_info, whitelist)
+        == rel1.swhid()
+    )
 
     # Same as before, but there is more than one extid, and only one is an allowed
     # release
-    whitelist = {b"a" * 20}
-    known_extids = {
-        ("extid-type", 0, b"extid-of-aaaa"): [
-            CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"b" * 20),
-            CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20),
-        ]
-    }
-    assert loader.resolve_object_from_extids(
-        known_extids, p_info, whitelist
-    ) == CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20)
+    whitelist = {rel1.id}
+    known_extids = {("extid-type", 0, b"extid-of-aaaa"): [rel2.swhid(), rel1.swhid()]}
+    assert (
+        loader.resolve_object_from_extids(known_extids, p_info, whitelist)
+        == rel1.swhid()
+    )
+
+
+def test_resolve_object_from_extids_missing_target() -> None:
+    storage = get_storage("memory")
+
+    target = b"\x01" * 20
+    rel = Release(
+        name=b"aaaa",
+        message=b"aaaa",
+        target=target,
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=False,
+    )
+
+    loader = PackageLoader(storage, "http://example.org/")  # type: ignore
+
+    p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
+
+    known_extids = {("extid-type", 0, b"extid-of-aaaa"): [rel.swhid()]}
+    p_info.extid.return_value = ("extid-type", 0, b"extid-of-aaaa")
+    whitelist = {rel.id}
+
+    # Targeted release is missing from the storage
+    assert loader.resolve_object_from_extids(known_extids, p_info, whitelist) is None
+
+    storage.release_add([rel])
+
+    # Targeted release now exists
+    assert (
+        loader.resolve_object_from_extids(known_extids, p_info, whitelist)
+        == rel.swhid()
+    )
 
 
 def test_load_get_known_extids() -> None:
@@ -160,12 +203,25 @@ def test_load_extids() -> None:
     the new ExtIDs"""
     storage = get_storage("memory")
 
-    origin = "http://example.org"
-    rel1_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"a" * 20)
-    rel2_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"b" * 20)
-    rel3_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"c" * 20)
-    rel4_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=b"d" * 20)
     dir_swhid = CoreSWHID(object_type=ObjectType.DIRECTORY, object_id=b"e" * 20)
+
+    rels = [
+        Release(
+            name=f"v{i}.0".encode(),
+            message=b"blah\n",
+            target=dir_swhid.object_id,
+            target_type=ModelObjectType.DIRECTORY,
+            synthetic=True,
+        )
+        for i in (1, 2, 3, 4)
+    ]
+    storage.release_add(rels[0:3])
+
+    origin = "http://example.org"
+    rel1_swhid = rels[0].swhid()
+    rel2_swhid = rels[1].swhid()
+    rel3_swhid = rels[2].swhid()
+    rel4_swhid = rels[3].swhid()
 
     # Results of a previous load
     storage.extid_add(
