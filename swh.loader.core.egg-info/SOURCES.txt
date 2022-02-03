@@ -50,6 +50,7 @@ swh/loader/core/tests/test_loader.py
 swh/loader/core/tests/test_utils.py
 swh/loader/package/__init__.py
 swh/loader/package/loader.py
+swh/loader/package/py.typed
 swh/loader/package/utils.py
 swh/loader/package/archive/__init__.py
 swh/loader/package/archive/loader.py
@@ -207,6 +208,7 @@ swh/loader/package/tests/test_loader_metadata.py
 swh/loader/package/tests/test_utils.py
 swh/loader/tests/__init__.py
 swh/loader/tests/conftest.py
+swh/loader/tests/py.typed
 swh/loader/tests/test_cli.py
 swh/loader/tests/test_init.py
 swh/loader/tests/data/0805nexter-1.1.0.tar.gz

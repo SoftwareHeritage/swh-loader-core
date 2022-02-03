@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 DOWNLOAD_HASHES = set(["sha1", "sha256", "length"])
 
 
-EMPTY_AUTHOR = Person(fullname=b"", name=None, email=None,)
+EMPTY_AUTHOR = Person.from_fullname(b"")
 
 
 def api_info(url: str, **extra_params) -> bytes:
