@@ -326,6 +326,20 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 for extid_target in extid_targets
                 if extid_target.object_type == ObjectType.RELEASE
             }
+
+            # Exclude missing targets
+            missing_releases = {
+                CoreSWHID(object_type=ObjectType.RELEASE, object_id=id_)
+                for id_ in self.storage.release_missing(
+                    [swhid.object_id for swhid in release_extid_targets]
+                )
+            }
+            if missing_releases:
+                logger.error(
+                    "Found ExtIDs pointing to missing releases: %s", missing_releases
+                )
+            release_extid_targets -= missing_releases
+
             extid_target2 = self.select_extid_target(p_info, release_extid_targets)
             if extid_target2:
                 return extid_target2
@@ -750,7 +764,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             status_visit = "partial"
             status_load = "failed"
 
-        self._load_extids(new_extids)
+        if status_load != "failed":
+            self._load_extids(new_extids)
 
         return self.finalize_visit(
             snapshot=snapshot,

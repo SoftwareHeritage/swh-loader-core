@@ -3,7 +3,6 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import email.utils
 import logging
 from os import path
 import re
@@ -265,20 +264,8 @@ def uid_to_person(uid: str) -> Dict[str, str]:
         - fullname: the actual uid input
 
     """
-    logger.debug("uid: %s", uid)
-    ret = {
-        "name": "",
-        "email": "",
-        "fullname": uid,
-    }
-
-    name, mail = email.utils.parseaddr(uid)
-    if name and email:
-        ret["name"] = name
-        ret["email"] = mail
-    else:
-        ret["name"] = uid
-    return ret
+    person = Person.from_fullname(uid.encode("utf-8"))
+    return {k: v.decode("utf-8") for k, v in person.to_dict().items() if v is not None}
 
 
 def prepare_person(person: Mapping[str, str]) -> Person:

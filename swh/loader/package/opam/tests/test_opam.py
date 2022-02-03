@@ -140,9 +140,7 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
         target=hash_to_bytes("00412ee5bc601deb462e55addd1004715116785e"),
         target_type=ModelObjectType.DIRECTORY,
         synthetic=True,
-        author=Person(
-            fullname=b"OCamlPro <contact@ocamlpro.com>", name=None, email=None
-        ),
+        author=Person.from_fullname(b"OCamlPro <contact@ocamlpro.com>"),
         date=None,
         id=release_id,
     )
@@ -248,12 +246,8 @@ def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
     expected_package_info = OpamPackageInfo(
         url="https://github.com/OCamlPro/ocb/archive/0.1.tar.gz",
         filename=None,
-        author=Person(
-            fullname=b"OCamlPro <contact@ocamlpro.com>", name=None, email=None
-        ),
-        committer=Person(
-            fullname=b"OCamlPro <contact@ocamlpro.com>", name=None, email=None
-        ),
+        author=Person.from_fullname(b"OCamlPro <contact@ocamlpro.com>"),
+        committer=Person.from_fullname(b"OCamlPro <contact@ocamlpro.com>"),
         version="0.1",
         directory_extrinsic_metadata=[
             RawExtrinsicMetadataCore(

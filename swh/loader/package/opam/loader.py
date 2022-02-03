@@ -217,11 +217,11 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
 
         authors_field = self.get_enclosed_single_line_field("authors:", version)
         fullname = b"" if authors_field is None else str.encode(authors_field)
-        author = Person(fullname=fullname, name=None, email=None)
+        author = Person.from_fullname(fullname)
 
         maintainer_field = self.get_enclosed_single_line_field("maintainer:", version)
         fullname = b"" if maintainer_field is None else str.encode(maintainer_field)
-        committer = Person(fullname=fullname, name=None, email=None)
+        committer = Person.from_fullname(fullname)
 
         with Popen(self._opam_show_args(version) + ["--raw"], stdout=PIPE) as proc:
             assert proc.stdout is not None
