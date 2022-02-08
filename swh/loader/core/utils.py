@@ -4,15 +4,17 @@
 # See top-level LICENSE file for more information
 
 
+from datetime import datetime, timezone
 import io
 import os
 import shutil
 import signal
 import time
 import traceback
-from typing import Callable
+from typing import Callable, Optional, Union
 
 from billiard import Process, Queue  # type: ignore
+from dateutil.parser import parse
 import psutil
 
 
@@ -103,3 +105,23 @@ def clone_with_timeout(
 
     if not errors.empty():
         raise CloneFailure(src, dest, errors.get())
+
+
+def parse_visit_date(visit_date: Optional[Union[datetime, str]]) -> Optional[datetime]:
+    """Convert visit date from either None, a string or a datetime to either None or
+       datetime.
+
+    """
+    if visit_date is None:
+        return None
+
+    if isinstance(visit_date, datetime):
+        return visit_date
+
+    if visit_date == "now":
+        return datetime.now(tz=timezone.utc)
+
+    if isinstance(visit_date, str):
+        return parse(visit_date)
+
+    raise ValueError(f"invalid visit date {visit_date!r}")
