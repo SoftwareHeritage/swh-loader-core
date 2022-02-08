@@ -1,8 +1,12 @@
-swh-loader-core (2.4.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (2.5.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 2.5.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-02-08 10:46:14
+    +0100)
+  * Upstream changes:     - v2.5.0     - Move visit date helper from hg
+    loader to core
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 03 Feb 2022 13:19:52 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 08 Feb 2022 09:49:53 +0000
 
 swh-loader-core (2.4.1-1~swh1) unstable-swh; urgency=medium
 
