@@ -913,7 +913,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             package_name = ".".join(module_name_parts[0:prefix_size])
             module = sys.modules[package_name]
             if hasattr(module, "__version__"):
-                return module.__version__  # type: ignore
+                return module.__version__
 
         # If this loader's class has no parent package with a __version__,
         # it should implement it itself.
