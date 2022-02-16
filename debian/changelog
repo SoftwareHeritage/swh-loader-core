@@ -1,3 +1,15 @@
+swh-loader-core (2.5.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.5.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-02-16 15:27:02
+    +0100)
+  * Upstream changes:     - v2.5.1     - Add URL and directory to CLI
+    loader status echo     - Fix load_maven scheduling task name     -
+    docs: Fix typo detected with codespell     - pre-commit: Bump hooks
+    and add new one to check commit message spelling
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 16 Feb 2022 14:30:47 +0000
+
 swh-loader-core (2.5.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 2.5.0     - (tagged by Antoine R. Dumont
