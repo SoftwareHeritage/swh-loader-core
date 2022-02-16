@@ -407,7 +407,7 @@ attribute.
 Using a custom manifest
 +++++++++++++++++++++++
 
-Unfortunaly, this does not work for all packages, as some package repositories do
+Unfortunately, this does not work for all packages, as some package repositories do
 not provide a checksum of the archives via their API.
 If this is the case of the repository you want to load from, you need to find a way
 around it.
