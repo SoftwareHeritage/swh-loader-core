@@ -44,7 +44,6 @@ def now() -> datetime.datetime:
 @attr.s
 class DepositPackageInfo(BasePackageInfo):
     filename = attr.ib(type=str)  # instead of Optional[str]
-    raw_info = attr.ib(type=Dict[str, Any])
 
     author_date = attr.ib(type=datetime.datetime)
     """codemeta:dateCreated if any, deposit completed_date otherwise"""
@@ -69,14 +68,6 @@ class DepositPackageInfo(BasePackageInfo):
         # release.
 
         all_metadata_raw: List[str] = metadata["metadata_raw"]
-        raw_info = {
-            "origin": metadata["origin"],
-            "origin_metadata": {
-                "metadata": metadata["metadata_dict"],
-                "provider": metadata["provider"],
-                "tool": metadata["tool"],
-            },
-        }
         depo = metadata["deposit"]
         return cls(
             url=url,
@@ -90,7 +81,6 @@ class DepositPackageInfo(BasePackageInfo):
             author=parse_author(depo["author"]),
             committer=parse_author(depo["committer"]),
             release_notes=depo["release_notes"],
-            raw_info=raw_info,
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
                     discovery_date=now(),
