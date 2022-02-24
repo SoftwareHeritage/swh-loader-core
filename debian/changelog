@@ -1,3 +1,13 @@
+swh-loader-core (2.5.3-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.5.3     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-02-24 16:02:53
+    +0100)
+  * Upstream changes:     - v2.5.3     - opam: Allow build to run the
+    opam init completely
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 24 Feb 2022 15:07:20 +0000
+
 swh-loader-core (2.5.2-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 2.5.2     - (tagged by Valentin Lorentz
