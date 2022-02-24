@@ -165,6 +165,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
                     "--reinit",
                     "--bare",
                     "--no-setup",
+                    "--yes",
                     "--root",
                     self.opam_root,
                     self.opam_instance,
