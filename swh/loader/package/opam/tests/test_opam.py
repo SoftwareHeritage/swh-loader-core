@@ -1,7 +1,12 @@
-# Copyright (C) 2019-2021 The Software Heritage developers
+# Copyright (C) 2019-2022 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
+
+from os.path import exists
+import shutil
+
+import pytest
 
 from swh.loader.package import __version__
 from swh.loader.package.loader import RawExtrinsicMetadataCore
@@ -64,6 +69,33 @@ url {
 """  # noqa
 
 
+@pytest.fixture
+def fake_opam_root(mocker, tmpdir, datadir):
+    """Fixture to initialize the actual opam in test context. It mocks the actual opam init
+    calls and installs a fake opam root out of the one present in datadir.
+
+    """
+    # inhibits the real `subprocess.call` which prepares the required internal opam
+    # state
+    module_name = "swh.loader.package.opam.loader"
+    mock_init = mocker.patch(f"{module_name}.call", return_value=None)
+
+    # Installs the fake opam root for the tests to use
+    fake_opam_root_src = f"{datadir}/fake_opam_repo"
+    fake_opam_root_dst = f"{tmpdir}/opam"
+    # old version does not support dirs_exist_ok...
+    # TypeError: copytree() got an unexpected keyword argument 'dirs_exist_ok'
+    # see: https://docs.python.org/3.7/library/shutil.html
+    if exists(fake_opam_root_dst):
+        shutil.rmtree(fake_opam_root_dst)
+    shutil.copytree(fake_opam_root_src, fake_opam_root_dst)
+
+    yield fake_opam_root_dst
+
+    # loader are initialized with `initialize_opam_root=True` so this should be called
+    assert mock_init.called, "This should be called when loader use this fixture"
+
+
 def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
     """Running opam loader without a prepared opam repository fails"""
     opam_url = f"file://{datadir}/fake_opam_repo"
@@ -79,7 +111,7 @@ def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
         opam_instance,
         opam_url,
         opam_package,
-        initialize_opam_root=False,  # The opam directory must be present
+        initialize_opam_root=False,  # The opam directory must be present and no init...
     )
 
     # No opam root directory init directory from loader. So, at the opam root does not
@@ -90,10 +122,11 @@ def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
     assert actual_load_status == {"status": "failed"}
 
 
-def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_storage):
-
+def test_opam_loader_one_version(
+    tmpdir, requests_mock_datadir, fake_opam_root, datadir, swh_storage
+):
     opam_url = f"file://{datadir}/fake_opam_repo"
-    opam_root = tmpdir
+    opam_root = fake_opam_root
     opam_instance = "loadertest"
     opam_package = "agrid"
     url = f"opam+{opam_url}/packages/{opam_package}"
@@ -105,7 +138,7 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
         opam_instance,
         opam_url,
         opam_package,
-        initialize_opam_root=True,
+        initialize_opam_root=True,  # go through the initialization while mocking it
     )
 
     actual_load_status = loader.load()
@@ -159,10 +192,12 @@ def test_opam_loader_one_version(tmpdir, requests_mock_datadir, datadir, swh_sto
     } == stats
 
 
-def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_storage):
+def test_opam_loader_many_version(
+    tmpdir, requests_mock_datadir, fake_opam_root, datadir, swh_storage
+):
 
     opam_url = f"file://{datadir}/fake_opam_repo"
-    opam_root = tmpdir
+    opam_root = fake_opam_root
     opam_instance = "loadertest"
     opam_package = "directories"
     url = f"opam+{opam_url}/packages/{opam_package}"
@@ -213,10 +248,12 @@ def test_opam_loader_many_version(tmpdir, requests_mock_datadir, datadir, swh_st
     check_snapshot(expected_snapshot, swh_storage)
 
 
-def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
+def test_opam_release(
+    tmpdir, requests_mock_datadir, fake_opam_root, swh_storage, datadir
+):
 
     opam_url = f"file://{datadir}/fake_opam_repo"
-    opam_root = tmpdir
+    opam_root = fake_opam_root
     opam_instance = "loadertest"
 
     opam_package = "ocb"
@@ -284,9 +321,11 @@ def test_opam_release(tmpdir, requests_mock_datadir, swh_storage, datadir):
     assert release.author == expected_package_info.author
 
 
-def test_opam_metadata(tmpdir, requests_mock_datadir, swh_storage, datadir):
+def test_opam_metadata(
+    tmpdir, requests_mock_datadir, fake_opam_root, swh_storage, datadir
+):
     opam_url = f"file://{datadir}/fake_opam_repo"
-    opam_root = tmpdir
+    opam_root = fake_opam_root
     opam_instance = "loadertest"
 
     opam_package = "ocb"
