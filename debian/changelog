@@ -1,8 +1,49 @@
-swh-loader-core (2.5.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (2.5.4-1~swh2) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * Bump new release with opam tests deactivated
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 08 Feb 2022 09:52:17 +0000
+ -- Antoine R. Dumont (@ardumont) <ardumont@softwareheritage.org>  Fri, 25 Feb 2022 12:40:40 +0100
+
+swh-loader-core (2.5.4-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.5.4     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-02-25 10:23:51
+    +0100)
+  * Upstream changes:     - v2.5.4     - loader/opam/tests: Do not run
+    actual opam init command call
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 25 Feb 2022 09:28:10 +0000
+
+swh-loader-core (2.5.3-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.5.3     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-02-24 16:02:53
+    +0100)
+  * Upstream changes:     - v2.5.3     - opam: Allow build to run the
+    opam init completely
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 24 Feb 2022 15:07:20 +0000
+
+swh-loader-core (2.5.2-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.5.2     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-02-24 09:52:26 +0100)
+  * Upstream changes:     - v2.5.2     - * deposit: Remove unused
+    raw_info
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 24 Feb 2022 08:57:52 +0000
+
+swh-loader-core (2.5.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 2.5.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-02-16 15:27:02
+    +0100)
+  * Upstream changes:     - v2.5.1     - Add URL and directory to CLI
+    loader status echo     - Fix load_maven scheduling task name     -
+    docs: Fix typo detected with codespell     - pre-commit: Bump hooks
+    and add new one to check commit message spelling
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 16 Feb 2022 14:30:47 +0000
 
 swh-loader-core (2.5.0-1~swh1) unstable-swh; urgency=medium
 

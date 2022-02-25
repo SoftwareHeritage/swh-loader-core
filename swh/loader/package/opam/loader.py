@@ -130,11 +130,13 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         # TODO: use `opam show` instead of this workaround when it support the `--repo`
         # flag
         package_dir = self.get_package_dir()
+
         if not os.path.exists(package_dir):
             raise ValueError(
                 f"can't get versions for package {self.opam_package} "
                 f"(at url {self.url})."
             )
+
         versions = [
             ".".join(version.split(".")[1:]) for version in os.listdir(package_dir)
         ]

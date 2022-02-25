@@ -1,0 +1,54 @@
+Index: swh-loader-core/swh/loader/package/opam/tests/test_opam.py
+===================================================================
+--- swh-loader-core.orig/swh/loader/package/opam/tests/test_opam.py
++++ swh-loader-core/swh/loader/package/opam/tests/test_opam.py
+@@ -96,6 +96,9 @@ def fake_opam_root(mocker, tmpdir, datad
+     assert mock_init.called, "This should be called when loader use this fixture"
+ 
+ 
++@pytest.mark.skip(
++    reason="opam > 2.0 not supported, see https://forge.softwareheritage.org/T3976"
++)
+ def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
+     """Running opam loader without a prepared opam repository fails"""
+     opam_url = f"file://{datadir}/fake_opam_repo"
+@@ -122,6 +125,9 @@ def test_opam_loader_no_opam_repository_
+     assert actual_load_status == {"status": "failed"}
+ 
+ 
++@pytest.mark.skip(
++    reason="opam > 2.0 not supported, see https://forge.softwareheritage.org/T3976"
++)
+ def test_opam_loader_one_version(
+     tmpdir, requests_mock_datadir, fake_opam_root, datadir, swh_storage
+ ):
+@@ -192,6 +198,9 @@ def test_opam_loader_one_version(
+     } == stats
+ 
+ 
++@pytest.mark.skip(
++    reason="opam > 2.0 not supported, see https://forge.softwareheritage.org/T3976"
++)
+ def test_opam_loader_many_version(
+     tmpdir, requests_mock_datadir, fake_opam_root, datadir, swh_storage
+ ):
+@@ -248,6 +257,9 @@ def test_opam_loader_many_version(
+     check_snapshot(expected_snapshot, swh_storage)
+ 
+ 
++@pytest.mark.skip(
++    reason="opam > 2.0 not supported, see https://forge.softwareheritage.org/T3976"
++)
+ def test_opam_release(
+     tmpdir, requests_mock_datadir, fake_opam_root, swh_storage, datadir
+ ):
+@@ -321,6 +333,9 @@ def test_opam_release(
+     assert release.author == expected_package_info.author
+ 
+ 
++@pytest.mark.skip(
++    reason="opam > 2.0 not supported, see https://forge.softwareheritage.org/T3976"
++)
+ def test_opam_metadata(
+     tmpdir, requests_mock_datadir, fake_opam_root, swh_storage, datadir
+ ):

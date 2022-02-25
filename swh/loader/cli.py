@@ -103,7 +103,11 @@ def run(ctx, type, url, options):
 
     loader = get_loader(type, url=url, storage=conf["storage"], **kw)
     result = loader.load()
-    click.echo(result)
+    msg = f"{result} for origin '{url}'"
+    directory = kw.get("directory")
+    if directory:
+        msg = msg + f" and directory '{directory}'"
+    click.echo(msg)
 
 
 @loader.command(name="list", context_settings=CONTEXT_SETTINGS)
