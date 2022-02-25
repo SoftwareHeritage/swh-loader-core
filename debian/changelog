@@ -1,3 +1,9 @@
+swh-loader-core (2.5.4-1~swh2) unstable-swh; urgency=medium
+
+  * Bump new release with opam tests deactivated
+
+ -- Antoine R. Dumont (@ardumont) <ardumont@softwareheritage.org>  Fri, 25 Feb 2022 12:40:40 +0100
+
 swh-loader-core (2.5.4-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 2.5.4     - (tagged by Antoine R. Dumont
