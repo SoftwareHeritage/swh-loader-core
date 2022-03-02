@@ -11,4 +11,3 @@ dist/
 version.txt
 .tox/
 .mypy_cache/
-.pc/

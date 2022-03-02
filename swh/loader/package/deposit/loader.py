@@ -67,7 +67,7 @@ class DepositPackageInfo(BasePackageInfo):
         # which computes itself the values. The loader needs to use those to create the
         # release.
 
-        all_metadata_raw: List[str] = metadata["metadata_raw"]
+        metadata_raw: str = metadata["metadata_raw"]
         depo = metadata["deposit"]
         return cls(
             url=url,
@@ -84,10 +84,9 @@ class DepositPackageInfo(BasePackageInfo):
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
                     discovery_date=now(),
-                    metadata=raw_metadata.encode(),
+                    metadata=metadata_raw.encode(),
                     format="sword-v2-atom-codemeta-v2",
                 )
-                for raw_metadata in all_metadata_raw
             ],
         )
 
@@ -209,10 +208,10 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
 
     def get_extrinsic_origin_metadata(self) -> List[RawExtrinsicMetadataCore]:
         metadata = self.metadata()
-        all_metadata_raw: List[str] = metadata["metadata_raw"]
+        metadata_raw: str = metadata["metadata_raw"]
         origin_metadata = json.dumps(
             {
-                "metadata": all_metadata_raw,
+                "metadata": [metadata_raw],
                 "provider": metadata["provider"],
                 "tool": metadata["tool"],
             }
@@ -220,16 +219,14 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         return [
             RawExtrinsicMetadataCore(
                 discovery_date=now(),
-                metadata=raw_meta.encode(),
+                metadata=metadata_raw.encode(),
                 format="sword-v2-atom-codemeta-v2",
-            )
-            for raw_meta in all_metadata_raw
-        ] + [
+            ),
             RawExtrinsicMetadataCore(
                 discovery_date=now(),
                 metadata=origin_metadata,
                 format="original-artifacts-json",
-            )
+            ),
         ]
 
     @cached_method

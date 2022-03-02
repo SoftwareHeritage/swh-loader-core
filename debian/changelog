@@ -1,8 +1,11 @@
-swh-loader-core (2.5.4-1~swh2~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (2.6.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 2.6.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-03-02 13:54:45 +0100)
+  * Upstream changes:     - v2.6.0     - * Update for the new output
+    format of the Deposit's API.
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 25 Feb 2022 11:43:24 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 02 Mar 2022 12:58:43 +0000
 
 swh-loader-core (2.5.4-1~swh2) unstable-swh; urgency=medium
 
