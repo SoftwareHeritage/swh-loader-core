@@ -6,7 +6,6 @@
 import datetime
 import json
 import re
-from typing import List
 
 import pytest
 
@@ -230,9 +229,9 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     )
     assert orig_meta.next_page_token is None
     raw_meta = loader.client.metadata_get(deposit_id)
-    all_metadata_raw: List[str] = raw_meta["metadata_raw"]
+    metadata_raw: str = raw_meta["metadata_raw"]
     # 2 raw metadata xml + 1 json dict
-    assert len(orig_meta.results) == len(all_metadata_raw) + 1
+    assert len(orig_meta.results) == 2
     orig_meta0 = orig_meta.results[0]
     assert orig_meta0.authority == authority
     assert orig_meta0.fetcher == fetcher
@@ -246,11 +245,11 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         directory_swhid, authority
     )
     assert actual_dir_meta.next_page_token is None
-    assert len(actual_dir_meta.results) == len(all_metadata_raw)
-    for dir_meta in actual_dir_meta.results:
-        assert dir_meta.authority == authority
-        assert dir_meta.fetcher == fetcher
-        assert dir_meta.metadata.decode() in all_metadata_raw
+    assert len(actual_dir_meta.results) == 1
+    dir_meta = actual_dir_meta.results[0]
+    assert dir_meta.authority == authority
+    assert dir_meta.fetcher == fetcher
+    assert dir_meta.metadata.decode() == metadata_raw
 
     # Retrieve the information for deposit status update query to the deposit
     urls = [
@@ -366,28 +365,27 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         Origin(url).swhid(), authority
     )
     assert origin_extrinsic_metadata.next_page_token is None
-    all_metadata_raw: List[str] = raw_meta["metadata_raw"]
+    metadata_raw: str = raw_meta["metadata_raw"]
     # 1 raw metadata xml + 1 json dict
-    assert len(origin_extrinsic_metadata.results) == len(all_metadata_raw) + 1
+    assert len(origin_extrinsic_metadata.results) == 2
 
     origin_swhid = Origin(url).swhid()
 
     expected_metadata = []
-    for idx, raw_meta in enumerate(all_metadata_raw):
-        origin_meta = origin_extrinsic_metadata.results[idx]
-        expected_metadata.append(
-            RawExtrinsicMetadata(
-                target=origin_swhid,
-                discovery_date=origin_meta.discovery_date,
-                metadata=raw_meta.encode(),
-                format="sword-v2-atom-codemeta-v2",
-                authority=authority,
-                fetcher=fetcher,
-            )
+    origin_meta = origin_extrinsic_metadata.results[0]
+    expected_metadata.append(
+        RawExtrinsicMetadata(
+            target=origin_swhid,
+            discovery_date=origin_meta.discovery_date,
+            metadata=metadata_raw.encode(),
+            format="sword-v2-atom-codemeta-v2",
+            authority=authority,
+            fetcher=fetcher,
         )
+    )
 
     origin_metadata = {
-        "metadata": all_metadata_raw,
+        "metadata": [metadata_raw],
         "provider": provider,
         "tool": tool,
     }
@@ -414,7 +412,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     )
 
     assert actual_directory_metadata.next_page_token is None
-    assert len(actual_directory_metadata.results) == len(all_metadata_raw)
+    assert len(actual_directory_metadata.results) == 1
 
     release_swhid = CoreSWHID(
         object_type=ObjectType.RELEASE, object_id=hash_to_bytes(release_id)
@@ -432,21 +430,20 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     )
 
     expected_directory_metadata = []
-    for idx, raw_meta in enumerate(all_metadata_raw):
-        dir_metadata = actual_directory_metadata.results[idx]
-        expected_directory_metadata.append(
-            RawExtrinsicMetadata.from_dict(
-                {
-                    **{
-                        k: v
-                        for (k, v) in dir_metadata_template.to_dict().items()
-                        if k != "id"
-                    },
-                    "discovery_date": dir_metadata.discovery_date,
-                    "metadata": raw_meta.encode(),
-                }
-            )
+    dir_metadata = actual_directory_metadata.results[0]
+    expected_directory_metadata.append(
+        RawExtrinsicMetadata.from_dict(
+            {
+                **{
+                    k: v
+                    for (k, v) in dir_metadata_template.to_dict().items()
+                    if k != "id"
+                },
+                "discovery_date": dir_metadata.discovery_date,
+                "metadata": metadata_raw.encode(),
+            }
         )
+    )
 
     assert sorted(actual_directory_metadata.results) == sorted(
         expected_directory_metadata
