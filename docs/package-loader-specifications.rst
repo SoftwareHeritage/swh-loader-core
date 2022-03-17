@@ -77,6 +77,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
        ``i_version`` is the intrinsic version (eg. ``0.7.2-3``) while ``version``
        contains the debian suite name (eg. ``stretch/contrib/0.7.2-3``) and is
        passed as arg
+   * - golang
+     - ``p_info.​version``
+     - ``release_name(version)``
+     - =version
+     - Synthetic release for Golang source package {p_info.name} version {p_info.version}
+     - true
+     - ""
+     - from ext metadata
+     - Golang offers basically no metadata outside of version and timestamp
    * - deposit
      - HEAD
      - only HEAD
