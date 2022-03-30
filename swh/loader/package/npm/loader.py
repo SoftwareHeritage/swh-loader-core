@@ -7,6 +7,7 @@ from codecs import BOM_UTF8
 import json
 import logging
 import os
+import string
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 from urllib.parse import quote
 
@@ -16,11 +17,9 @@ import chardet
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
-    PartialExtID,
     RawExtrinsicMetadataCore,
 )
 from swh.loader.package.utils import api_info, cached_method, release_name
-from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -38,17 +37,24 @@ logger = logging.getLogger(__name__)
 EMPTY_PERSON = Person.from_fullname(b"")
 
 
-EXTID_TYPE = "npm-archive-sha1"
-EXTID_VERSION = 0
-
-
 @attr.s
 class NpmPackageInfo(BasePackageInfo):
     raw_info = attr.ib(type=Dict[str, Any])
 
+    id_ = attr.ib(type=str)
+    """Unique id assigned by the registry for this version."""
+
     date = attr.ib(type=Optional[str])
     shasum = attr.ib(type=str)
     """sha1 checksum"""
+
+    # we cannot rely only on $shasum, as it is technically possible for two versions
+    # of the same package to have the exact same tarball.
+    # But the release data (message and date) are extrinsic to the content of the
+    # package, so they differ between versions.
+    MANIFEST_FORMAT = string.Template("$id_ $shasum")
+    EXTID_TYPE = "npm-archive-url-and-sha1"
+    EXTID_VERSION = 0
 
     @classmethod
     def from_metadata(
@@ -70,6 +76,7 @@ class NpmPackageInfo(BasePackageInfo):
             date = None
 
         return cls(
+            id_=package_metadata["_id"],
             url=url,
             filename=os.path.basename(url),
             date=date,
@@ -83,9 +90,6 @@ class NpmPackageInfo(BasePackageInfo):
                 )
             ],
         )
-
-    def extid(self) -> PartialExtID:
-        return (EXTID_TYPE, EXTID_VERSION, hash_to_bytes(self.shasum))
 
 
 class NpmLoader(PackageLoader[NpmPackageInfo]):
