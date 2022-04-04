@@ -38,6 +38,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``metadata.get(​"Maintainer", "")``
      - ``metadata.get(​"Date")``
      - metadata is intrinsic
+   * - crates
+     - passed as arg
+     - ``release_name(​version, filename)``
+     - =version
+     - Synthetic release for Crate source package {p_info.name} version {p_info.version} {description}
+     - true
+     - from intrinsic metadata
+     - from extrinsic metadata
+     - ``i_metadata`` for intrinsic metadata, ``e_metadata`` for extrinsic metadata
    * - debian
      - =``version``
      - ``release_name(​version)``
