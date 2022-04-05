@@ -482,12 +482,12 @@ def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits)
 
 @pytest.mark.usefixtures("requests_mock_datadir")
 def test_npm_loader_version_divergence(swh_storage):
-    package = "@aller_shared"
+    package = "@aller/shared"
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("ebbe6397d0c2a6cf7cba40fa5b043c59dd4f2497")
+    expected_snapshot_id = hash_to_bytes("68eed3d3bc852e7f435a84f18ee77e23f6884be2")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -504,11 +504,11 @@ def test_npm_loader_version_divergence(swh_storage):
             ),
             b"releases/0.1.0": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("04c66f3a82aa001e8f1b45246b58b82d2b0ca0df"),
+                target=hash_to_bytes("0c486b50b407f847ef7581f595c2b6c2062f1089"),
             ),
             b"releases/0.1.1-alpha.14": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("90cc04dc72193f3b1444f10e1c525bee2ea9dac6"),
+                target=hash_to_bytes("79d80c87c0a8d104a216cc539baad962a454802a"),
             ),
         },
     )

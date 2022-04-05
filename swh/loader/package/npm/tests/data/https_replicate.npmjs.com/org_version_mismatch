@@ -1,14 +1,14 @@
 {
-  "_id": "org",
+  "_id": "org_version_mismatch",
   "_rev": "4-22484cc537f12d3023241211ee34e39d",
-  "name": "org",
+  "name": "org_version_mismatch",
   "description": "A parser and converter for org-mode notation",
   "dist-tags": {
     "latest": "0.0.3"
   },
   "versions": {
     "0.0.3-beta": {
-      "name": "org",
+      "name": "org_version_mismatch",
       "description": "A parser and converter for org-mode notation",
       "homepage": "http://mooz.github.com/org-js",
       "keywords": [
@@ -51,7 +51,7 @@
       ]
     },
     "0.0.3": {
-      "name": "org",
+      "name": "org_version_mismatch",
       "description": "A parser and converter for org-mode notation",
       "homepage": "http://mooz.github.com/org-js",
       "bugs": {
