@@ -120,7 +120,9 @@ class BasePackageInfo:
     # See <https://github.com/python-attrs/attrs/issues/38>
 
     directory_extrinsic_metadata = attr.ib(
-        type=List[RawExtrinsicMetadataCore], default=[], kw_only=True,
+        type=List[RawExtrinsicMetadataCore],
+        default=[],
+        kw_only=True,
     )
     """:term:`extrinsic metadata` collected by the loader, that will be attached to the
     loaded directory and added to the Metadata storage."""
@@ -219,9 +221,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         return ""
 
     def last_snapshot(self) -> Optional[Snapshot]:
-        """Retrieve the last snapshot out of the last visit.
-
-        """
+        """Retrieve the last snapshot out of the last visit."""
         return snapshot_get_latest(self.storage, self.url)
 
     def new_packageinfo_to_extid(self, p_info: TPackageInfo) -> Optional[PartialExtID]:
@@ -541,7 +541,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 self.storage.origin_visit_add(
                     [
                         OriginVisit(
-                            origin=self.url, date=self.visit_date, type=self.visit_type,
+                            origin=self.url,
+                            date=self.visit_date,
+                            type=self.visit_type,
                         )
                     ]
                 )
@@ -859,7 +861,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         extra_branches: Dict[bytes, Mapping[str, Any]],
     ) -> Optional[Snapshot]:
         """Build snapshot out of the current releases stored and extra branches.
-           Then load it in the storage.
+        Then load it in the storage.
 
         """
         logger.debug("releases: %s", releases)
@@ -926,7 +928,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         which is used to for adding provenance information to extracted
         extrinsic metadata, if any."""
         return MetadataFetcher(
-            name=self.get_loader_name(), version=self.get_loader_version(), metadata={},
+            name=self.get_loader_name(),
+            version=self.get_loader_version(),
+            metadata={},
         )
 
     def get_metadata_authority(self) -> MetadataAuthority:
@@ -1005,7 +1009,10 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         return metadata_objects
 
     def build_extrinsic_directory_metadata(
-        self, p_info: TPackageInfo, release_id: Sha1Git, directory_id: Sha1Git,
+        self,
+        p_info: TPackageInfo,
+        release_id: Sha1Git,
+        directory_id: Sha1Git,
     ) -> List[RawExtrinsicMetadata]:
         if not p_info.directory_extrinsic_metadata:
             # If this package loader doesn't write metadata, no need to require
@@ -1038,7 +1045,10 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         return metadata_objects
 
     def _load_extrinsic_directory_metadata(
-        self, p_info: TPackageInfo, release_id: Sha1Git, directory_id: Sha1Git,
+        self,
+        p_info: TPackageInfo,
+        release_id: Sha1Git,
+        directory_id: Sha1Git,
     ) -> None:
         metadata_objects = self.build_extrinsic_directory_metadata(
             p_info, release_id, directory_id

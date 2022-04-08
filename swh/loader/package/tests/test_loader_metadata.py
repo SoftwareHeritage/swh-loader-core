@@ -32,7 +32,8 @@ EMPTY_SNAPSHOT_ID = "1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"
 FULL_SNAPSHOT_ID = "4ac5730a9393f5099b63a35a17b6c33d36d70c3a"
 
 AUTHORITY = MetadataAuthority(
-    type=MetadataAuthorityType.FORGE, url="http://example.org/",
+    type=MetadataAuthorityType.FORGE,
+    url="http://example.org/",
 )
 ORIGIN_URL = "http://example.org/archive.tgz"
 ORIGIN_SWHID = Origin(ORIGIN_URL).swhid()
@@ -100,7 +101,10 @@ class MetadataTestLoader(PackageLoader[BasePackageInfo]):
         return [("path", {"artifact_key": "value", "length": 0})]
 
     def build_release(
-        self, p_info: BasePackageInfo, uncompressed_path: str, directory: Sha1Git,
+        self,
+        p_info: BasePackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
     ):
         return Release(
             name=p_info.version.encode(),
@@ -145,10 +149,14 @@ def test_load_artifact_metadata(swh_storage, caplog):
     }
 
     authority = MetadataAuthority(
-        type=MetadataAuthorityType.REGISTRY, url="https://softwareheritage.org/",
+        type=MetadataAuthorityType.REGISTRY,
+        url="https://softwareheritage.org/",
     )
 
-    result = swh_storage.raw_extrinsic_metadata_get(DIRECTORY_SWHID, authority,)
+    result = swh_storage.raw_extrinsic_metadata_get(
+        DIRECTORY_SWHID,
+        authority,
+    )
     assert result.next_page_token is None
     assert len(result.results) == 1
     assert result.results[0] == RawExtrinsicMetadata(
@@ -172,11 +180,17 @@ def test_load_metadata(swh_storage, caplog):
         "snapshot_id": FULL_SNAPSHOT_ID,
     }
 
-    result = swh_storage.raw_extrinsic_metadata_get(DIRECTORY_SWHID, AUTHORITY,)
+    result = swh_storage.raw_extrinsic_metadata_get(
+        DIRECTORY_SWHID,
+        AUTHORITY,
+    )
     assert result.next_page_token is None
     assert result.results == DIRECTORY_METADATA
 
-    result = swh_storage.raw_extrinsic_metadata_get(ORIGIN_SWHID, AUTHORITY,)
+    result = swh_storage.raw_extrinsic_metadata_get(
+        ORIGIN_SWHID,
+        AUTHORITY,
+    )
     assert result.next_page_token is None
     assert result.results == ORIGIN_METADATA
 
@@ -192,7 +206,10 @@ def test_existing_authority(swh_storage, caplog):
         "snapshot_id": FULL_SNAPSHOT_ID,
     }
 
-    result = swh_storage.raw_extrinsic_metadata_get(DIRECTORY_SWHID, AUTHORITY,)
+    result = swh_storage.raw_extrinsic_metadata_get(
+        DIRECTORY_SWHID,
+        AUTHORITY,
+    )
     assert result.next_page_token is None
     assert result.results == DIRECTORY_METADATA
 
@@ -208,7 +225,10 @@ def test_existing_fetcher(swh_storage, caplog):
         "snapshot_id": FULL_SNAPSHOT_ID,
     }
 
-    result = swh_storage.raw_extrinsic_metadata_get(DIRECTORY_SWHID, AUTHORITY,)
+    result = swh_storage.raw_extrinsic_metadata_get(
+        DIRECTORY_SWHID,
+        AUTHORITY,
+    )
     assert result.next_page_token is None
     assert result.results == DIRECTORY_METADATA
 

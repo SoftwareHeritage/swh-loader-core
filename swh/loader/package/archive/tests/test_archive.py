@@ -131,9 +131,7 @@ def test_archive_visit_with_no_artifact_found(swh_storage, requests_mock_datadir
 def test_archive_visit_with_release_artifact_no_prior_visit(
     swh_storage, requests_mock_datadir
 ):
-    """With no prior visit, load a gnu project ends up with 1 snapshot
-
-    """
+    """With no prior visit, load a gnu project ends up with 1 snapshot"""
     loader = ArchiveLoader(swh_storage, URL, artifacts=GNU_ARTIFACTS[:1])
 
     actual_load_status = loader.load()
@@ -166,10 +164,12 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         id=expected_snapshot_first_visit_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS, target=b"releases/0.1.0",
+                target_type=TargetType.ALIAS,
+                target=b"releases/0.1.0",
             ),
             b"releases/0.1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=release_id,
+                target_type=TargetType.RELEASE,
+                target=release_id,
             ),
         },
     )
@@ -202,9 +202,7 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
 
 
 def test_archive_2_visits_without_change(swh_storage, requests_mock_datadir):
-    """With no prior visit, load a gnu project ends up with 1 snapshot
-
-    """
+    """With no prior visit, load a gnu project ends up with 1 snapshot"""
     url = URL
     loader = ArchiveLoader(swh_storage, url, artifacts=GNU_ARTIFACTS[:1])
 
@@ -230,9 +228,7 @@ def test_archive_2_visits_without_change(swh_storage, requests_mock_datadir):
 
 
 def test_archive_2_visits_with_new_artifact(swh_storage, requests_mock_datadir):
-    """With no prior visit, load a gnu project ends up with 1 snapshot
-
-    """
+    """With no prior visit, load a gnu project ends up with 1 snapshot"""
     url = URL
     artifact1 = GNU_ARTIFACTS[0]
     loader = ArchiveLoader(swh_storage, url, [artifact1])
@@ -296,9 +292,7 @@ def test_archive_2_visits_with_new_artifact(swh_storage, requests_mock_datadir):
 
 
 def test_archive_2_visits_without_change_not_gnu(swh_storage, requests_mock_datadir):
-    """Load a project archive (not gnu) ends up with 1 snapshot
-
-    """
+    """Load a project archive (not gnu) ends up with 1 snapshot"""
     url = "https://something.else.org/8sync/"
     artifacts = [  # this is not a gnu artifact
         {
@@ -340,9 +334,7 @@ def test_archive_2_visits_without_change_not_gnu(swh_storage, requests_mock_data
 
 
 def test_archive_extid():
-    """Compute primary key should return the right identity
-
-    """
+    """Compute primary key should return the right identity"""
 
     @attr.s
     class TestPackageInfo(ArchivePackageInfo):
@@ -352,7 +344,10 @@ def test_archive_extid():
     metadata = GNU_ARTIFACTS[0]
 
     p_info = TestPackageInfo(
-        raw_info={**metadata, "a": 1, "b": 2}, a=1, b=2, **metadata,
+        raw_info={**metadata, "a": 1, "b": 2},
+        a=1,
+        b=2,
+        **metadata,
     )
 
     for manifest_format, expected_manifest in [
@@ -462,8 +457,12 @@ def test_archive_not_gzipped_tarball(
     requests_mock.get(
         url,
         [
-            {"exc": ContentDecodingError,},
-            {"body": BytesIO(not_gzipped_tarball_bytes),},
+            {
+                "exc": ContentDecodingError,
+            },
+            {
+                "body": BytesIO(not_gzipped_tarball_bytes),
+            },
         ],
     )
     loader = ArchiveLoader(

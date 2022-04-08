@@ -11,9 +11,14 @@ import pytest
 @pytest.fixture
 def swh_loader_config() -> Dict[str, Any]:
     return {
-        "storage": {"cls": "memory",},
+        "storage": {
+            "cls": "memory",
+        },
         "deposit": {
             "url": "https://deposit.softwareheritage.org/1/private",
-            "auth": {"username": "user", "password": "pass",},
+            "auth": {
+                "username": "user",
+                "password": "pass",
+            },
         },
     }

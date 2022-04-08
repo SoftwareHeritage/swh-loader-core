@@ -6,7 +6,7 @@
 
 class NotFound(ValueError):
     """An exception raised when some information to retrieve is not found (e.g origin,
-       artifact, ...)
+    artifact, ...)
 
     """
 

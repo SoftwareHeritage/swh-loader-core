@@ -94,16 +94,15 @@ class MavenPackageInfo(BasePackageInfo):
             base_url=a_metadata["base_url"],
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
-                    format="maven-json", metadata=json.dumps(a_metadata).encode(),
+                    format="maven-json",
+                    metadata=json.dumps(a_metadata).encode(),
                 ),
             ],
         )
 
 
 class MavenLoader(PackageLoader[MavenPackageInfo]):
-    """Load source code jar origin's artifact files into swh archive
-
-    """
+    """Load source code jar origin's artifact files into swh archive"""
 
     visit_type = "maven"
 
@@ -156,7 +155,10 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         return MetadataAuthority(type=MetadataAuthorityType.FORGE, url=self.base_url)
 
     def build_extrinsic_directory_metadata(
-        self, p_info: MavenPackageInfo, release_id: Sha1Git, directory_id: Sha1Git,
+        self,
+        p_info: MavenPackageInfo,
+        release_id: Sha1Git,
+        directory_id: Sha1Git,
     ) -> List[RawExtrinsicMetadata]:
         # Rebuild POM URL.
         pom_url = path.dirname(p_info.url)
@@ -169,11 +171,16 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
             metadata_pom = b""
 
         p_info.directory_extrinsic_metadata.append(
-            RawExtrinsicMetadataCore(format="maven-pom", metadata=metadata_pom,)
+            RawExtrinsicMetadataCore(
+                format="maven-pom",
+                metadata=metadata_pom,
+            )
         )
 
         return super().build_extrinsic_directory_metadata(
-            p_info=p_info, release_id=release_id, directory_id=directory_id,
+            p_info=p_info,
+            release_id=release_id,
+            directory_id=directory_id,
         )
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, MavenPackageInfo]]:

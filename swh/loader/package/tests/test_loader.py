@@ -77,9 +77,7 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
 
 
 def test_loader_origin_visit_failure(swh_storage):
-    """Failure to add origin or origin visit should failed immediately
-
-    """
+    """Failure to add origin or origin visit should failed immediately"""
     loader = PackageLoader(swh_storage, "some-url")
     loader.storage = FakeStorage()
 
@@ -275,12 +273,21 @@ def test_load_extids() -> None:
         # v1.0: not loaded because there is already its (extid_type, extid, rel)
         #       in the storage.
         # v2.0: loaded, because there is already a similar extid, but different type
-        call(StubPackageInfo(origin, "example-v2.0.tar", "v2.0"), Origin(url=origin),),
+        call(
+            StubPackageInfo(origin, "example-v2.0.tar", "v2.0"),
+            Origin(url=origin),
+        ),
         # v3.0: loaded despite having an (extid_type, extid) in storage, because
         #       the target of the extid is not in the previous snapshot
-        call(StubPackageInfo(origin, "example-v3.0.tar", "v3.0"), Origin(url=origin),),
+        call(
+            StubPackageInfo(origin, "example-v3.0.tar", "v3.0"),
+            Origin(url=origin),
+        ),
         # v4.0: loaded, because there isn't its extid
-        call(StubPackageInfo(origin, "example-v4.0.tar", "v4.0"), Origin(url=origin),),
+        call(
+            StubPackageInfo(origin, "example-v4.0.tar", "v4.0"),
+            Origin(url=origin),
+        ),
     ]
 
     # then check the snapshot has all the branches.
@@ -416,7 +423,10 @@ def test_load_upgrade_from_revision_extids(caplog):
         autospec=True,
     ).start()
     patch.object(
-        loader, "get_versions", return_value=["v1.0", "v2.0", "v3.0"], autospec=True,
+        loader,
+        "get_versions",
+        return_value=["v1.0", "v2.0", "v3.0"],
+        autospec=True,
     ).start()
 
     caplog.set_level(logging.ERROR)
@@ -453,7 +463,11 @@ def test_load_upgrade_from_revision_extids(caplog):
     assert snapshot_get_latest(storage, origin) == snapshot
 
     extids = storage.extid_get_from_target(
-        ObjectType.RELEASE, [rel1_swhid.object_id, rel2_swhid.object_id,],
+        ObjectType.RELEASE,
+        [
+            rel1_swhid.object_id,
+            rel2_swhid.object_id,
+        ],
     )
 
     assert set(extids) == {
@@ -464,9 +478,7 @@ def test_load_upgrade_from_revision_extids(caplog):
 
 
 def test_manifest_extid():
-    """Compute primary key should return the right identity
-
-    """
+    """Compute primary key should return the right identity"""
 
     @attr.s
     class TestPackageInfo(BasePackageInfo):
@@ -491,9 +503,7 @@ def test_manifest_extid():
 
 
 def test_no_env_swh_config_filename_raise(monkeypatch):
-    """No SWH_CONFIG_FILENAME environment variable makes package loader init raise
-
-    """
+    """No SWH_CONFIG_FILENAME environment variable makes package loader init raise"""
 
     class DummyPackageLoader(PackageLoader):
         """A dummy package loader for test purpose"""

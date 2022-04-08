@@ -18,7 +18,10 @@ def swh_loader_config(swh_loader_config) -> Dict[str, Any]:
         {
             "deposit": {
                 "url": "https://deposit.softwareheritage.org/1/private",
-                "auth": {"username": "user", "password": "pass",},
+                "auth": {
+                    "username": "user",
+                    "password": "pass",
+                },
             },
         }
     )

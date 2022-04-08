@@ -97,9 +97,7 @@ class NpmPackageInfo(BasePackageInfo):
 
 
 class NpmLoader(PackageLoader[NpmPackageInfo]):
-    """Load npm origin's artifact releases into swh archive.
-
-    """
+    """Load npm origin's artifact releases into swh archive."""
 
     visit_type = "npm"
 
@@ -127,9 +125,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
 
     @cached_method
     def info(self) -> Dict:
-        """Return the project metadata information (fetched from npm registry)
-
-        """
+        """Return the project metadata information (fetched from npm registry)"""
         return json.loads(self._raw_info())
 
     def get_versions(self) -> Sequence[str]:
@@ -140,7 +136,9 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
 
     def get_metadata_authority(self):
         return MetadataAuthority(
-            type=MetadataAuthorityType.FORGE, url="https://npmjs.com/", metadata={},
+            type=MetadataAuthorityType.FORGE,
+            url="https://npmjs.com/",
+            metadata={},
         )
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, NpmPackageInfo]]:
@@ -192,9 +190,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
 
 
 def _author_str(author_data: Union[Dict, List, str]) -> str:
-    """Parse author from package.json author fields
-
-    """
+    """Parse author from package.json author fields"""
     if isinstance(author_data, dict):
         author_str = ""
         name = author_data.get("name")

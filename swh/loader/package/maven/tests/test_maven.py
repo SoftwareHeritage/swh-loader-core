@@ -289,9 +289,7 @@ def test_jar_visit_with_no_artifact_found(swh_storage, requests_mock_datadir):
 def test_jar_visit_inconsistent_base_url(
     swh_storage, requests_mock, data_jar_1, data_pom_1
 ):
-    """With no prior visit, loading a jar ends up with 1 snapshot
-
-    """
+    """With no prior visit, loading a jar ends up with 1 snapshot"""
     with pytest.raises(ValueError, match="more than one Maven instance"):
         MavenLoader(
             swh_storage,
@@ -306,9 +304,7 @@ def test_jar_visit_inconsistent_base_url(
 def test_jar_visit_with_release_artifact_no_prior_visit(
     swh_storage, requests_mock, data_jar_1, data_pom_1
 ):
-    """With no prior visit, loading a jar ends up with 1 snapshot
-
-    """
+    """With no prior visit, loading a jar ends up with 1 snapshot"""
     requests_mock.get(MVN_ARTIFACTS[0]["url"], content=data_jar_1)
     requests_mock.get(MVN_ARTIFACTS_POM[0], content=data_pom_1)
     loader = MavenLoader(
@@ -326,7 +322,8 @@ def test_jar_visit_with_release_artifact_no_prior_visit(
         id=expected_snapshot_first_visit_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS, target=b"releases/0.1.0",
+                target_type=TargetType.ALIAS,
+                target=b"releases/0.1.0",
             ),
             b"releases/0.1.0": SnapshotBranch(
                 target_type=TargetType.RELEASE,
@@ -390,9 +387,7 @@ def test_jar_visit_with_release_artifact_no_prior_visit(
 def test_jar_2_visits_without_change(
     swh_storage, requests_mock_datadir, requests_mock, data_jar_2, data_pom_2
 ):
-    """With no prior visit, load a gnu project ends up with 1 snapshot
-
-    """
+    """With no prior visit, load a gnu project ends up with 1 snapshot"""
     requests_mock.get(MVN_ARTIFACTS[1]["url"], content=data_jar_2)
     requests_mock.get(MVN_ARTIFACTS_POM[1], content=data_pom_2)
     loader = MavenLoader(
@@ -457,7 +452,8 @@ def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/maven2/",
+        type=MetadataAuthorityType.FORGE,
+        url="https://repo1.maven.org/maven2/",
     )
 
     expected_metadata = [
@@ -465,7 +461,8 @@ def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-pom",
@@ -477,7 +474,8 @@ def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-json",
@@ -516,7 +514,8 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/maven2/",
+        type=MetadataAuthorityType.FORGE,
+        url="https://repo1.maven.org/maven2/",
     )
 
     expected_metadata = [
@@ -524,7 +523,8 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-pom",
@@ -536,7 +536,8 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-json",
@@ -551,9 +552,7 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
 
 
 def test_jar_extid():
-    """Compute primary key should return the right identity
-
-    """
+    """Compute primary key should return the right identity"""
 
     metadata = MVN_ARTIFACTS[0]
 
@@ -561,7 +560,11 @@ def test_jar_extid():
 
     expected_manifest = "{gid} {aid} {version} {url} {time}".format(**metadata).encode()
     actual_id = p_info.extid()
-    assert actual_id == ("maven-jar", 0, hashlib.sha256(expected_manifest).digest(),)
+    assert actual_id == (
+        "maven-jar",
+        0,
+        hashlib.sha256(expected_manifest).digest(),
+    )
 
 
 def test_jar_snapshot_append(
