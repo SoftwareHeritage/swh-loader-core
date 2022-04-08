@@ -147,6 +147,7 @@ swh/loader/package/npm/tests/data/https_registry.npmjs.org/@aller_shared_-_share
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/jammit-express_-_jammit-express-0.0.1.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/nativescript-telerik-analytics_-_nativescript-telerik-analytics-1.0.0.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.2.tgz
+swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.3-beta.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.3.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.4.tgz
 swh/loader/package/npm/tests/data/https_registry.npmjs.org/org_-_org-0.0.5.tgz
@@ -158,6 +159,7 @@ swh/loader/package/npm/tests/data/https_replicate.npmjs.com/jammit-express
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/jammit-no-time
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/nativescript-telerik-analytics
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/org
+swh/loader/package/npm/tests/data/https_replicate.npmjs.com/org_version_mismatch
 swh/loader/package/npm/tests/data/https_replicate.npmjs.com/org_visit1
 swh/loader/package/opam/__init__.py
 swh/loader/package/opam/loader.py

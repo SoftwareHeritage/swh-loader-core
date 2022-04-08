@@ -1,0 +1,141 @@
+{
+  "_id": "org_version_mismatch",
+  "_rev": "4-22484cc537f12d3023241211ee34e39d",
+  "name": "org_version_mismatch",
+  "description": "A parser and converter for org-mode notation",
+  "dist-tags": {
+    "latest": "0.0.3"
+  },
+  "versions": {
+    "0.0.3-beta": {
+      "name": "org_version_mismatch",
+      "description": "A parser and converter for org-mode notation",
+      "homepage": "http://mooz.github.com/org-js",
+      "keywords": [
+        "org-mode",
+        "emacs",
+        "parser"
+      ],
+      "author": {
+        "name": "mooz",
+        "email": "stillpedant@gmail.com"
+      },
+      "main": "./lib/org.js",
+      "version": "0.0.3-beta",
+      "directories": {
+        "test": "./tests"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git://github.com/mooz/org-js.git"
+      },
+      "bugs": {
+        "url": "https://github.com/mooz/org-js/issues"
+      },
+      "_id": "org@0.0.3-beta",
+      "dist": {
+        "shasum": "6a44220f88903a6dfc3b47d010238058f9faf3a0",
+        "tarball": "https://registry.npmjs.org/org/-/org-0.0.3-beta.tgz"
+      },
+      "_from": ".",
+      "_npmVersion": "1.2.25",
+      "_npmUser": {
+        "name": "mooz",
+        "email": "stillpedant@gmail.com"
+      },
+      "maintainers": [
+        {
+          "name": "mooz",
+          "email": "stillpedant@gmail.com"
+        }
+      ]
+    },
+    "0.0.3": {
+      "name": "org_version_mismatch",
+      "description": "A parser and converter for org-mode notation",
+      "homepage": "http://mooz.github.com/org-js",
+      "bugs": {
+        "url": "http://github.com/mooz/org-s/issues"
+      },
+      "keywords": [
+        "org-mode",
+        "emacs",
+        "parser"
+      ],
+      "author": {
+        "name": "Masafumi Oyamada",
+        "email": "stillpedant@gmail.com",
+        "url": "http://mooz.github.io/"
+      },
+      "licenses": [
+        {
+          "type": "MIT"
+        }
+      ],
+      "main": "./lib/org.js",
+      "version": "0.0.3",
+      "directories": {
+        "test": "./tests"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git://github.com/mooz/org-js.git"
+      },
+      "_id": "org@0.0.3",
+      "dist": {
+        "shasum": "6a44220f88903a6dfc3b47d010238058f9faf3a0",
+        "tarball": "https://registry.npmjs.org/org/-/org-0.0.3.tgz"
+      },
+      "_from": ".",
+      "_npmVersion": "1.2.25",
+      "_npmUser": {
+        "name": "mooz",
+        "email": "stillpedant@gmail.com"
+      },
+      "maintainers": [
+        {
+          "name": "mooz",
+          "email": "stillpedant@gmail.com"
+        }
+      ]
+    }
+  },
+  "readme": "org-js\n======\n\nParser and converter for org-mode (<http://orgmode.org/>) notation written in JavaScript.\n\nInteractive Editor\n------------------\n\nFor working example, see http://mooz.github.com/org-js/editor/.\n\nInstallation\n------------\n\n    npm install org\n\nSimple example of org -> HTML conversion\n----------------------------------------\n\n```javascript\nvar org = require(\"org\");\n\nvar parser = new org.Parser();\nvar orgDocument = parser.parse(orgCode);\nvar orgHTMLDocument = orgDocument.convert(org.ConverterHTML, {\n  headerOffset: 1,\n  exportFromLineNumber: false,\n  suppressSubScriptHandling: false,\n  suppressAutoLink: false\n});\n\nconsole.dir(orgHTMLDocument); // => { title, contentHTML, tocHTML, toc }\nconsole.log(orgHTMLDocument.toString()) // => Rendered HTML\n```\n\nWriting yet another converter\n-----------------------------\n\nSee `lib/org/converter/html.js`.\n",
+  "maintainers": [
+    {
+      "name": "mooz",
+      "email": "stillpedant@gmail.com"
+    }
+  ],
+  "time": {
+    "modified": "2019-01-05T01:37:44Z",
+    "created": "2014-01-01T15:40:31Z",
+    "0.0.3-beta": "2014-01-01T15:40:33Z",
+    "0.0.3": "2014-01-01T15:55:45Z"
+  },
+  "author": {
+    "name": "Masafumi Oyamada",
+    "email": "stillpedant@gmail.com",
+    "url": "http://mooz.github.io/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mooz/org-js.git"
+  },
+  "users": {
+    "nak2k": true,
+    "bgschaid": true,
+    "422665vijay": true,
+    "nontau": true
+  },
+  "homepage": "http://mooz.github.com/org-js",
+  "keywords": [
+    "org-mode",
+    "emacs",
+    "parser"
+  ],
+  "bugs": {
+    "url": "http://github.com/mooz/org-s/issues"
+  },
+  "readmeFilename": "README.md"
+}

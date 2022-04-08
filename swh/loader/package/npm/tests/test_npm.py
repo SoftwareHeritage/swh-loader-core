@@ -482,12 +482,12 @@ def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits)
 
 @pytest.mark.usefixtures("requests_mock_datadir")
 def test_npm_loader_version_divergence(swh_storage):
-    package = "@aller_shared"
+    package = "@aller/shared"
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = hash_to_bytes("ebbe6397d0c2a6cf7cba40fa5b043c59dd4f2497")
+    expected_snapshot_id = hash_to_bytes("68eed3d3bc852e7f435a84f18ee77e23f6884be2")
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id.hex(),
@@ -504,11 +504,11 @@ def test_npm_loader_version_divergence(swh_storage):
             ),
             b"releases/0.1.0": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("04c66f3a82aa001e8f1b45246b58b82d2b0ca0df"),
+                target=hash_to_bytes("0c486b50b407f847ef7581f595c2b6c2062f1089"),
             ),
             b"releases/0.1.1-alpha.14": SnapshotBranch(
                 target_type=TargetType.RELEASE,
-                target=hash_to_bytes("90cc04dc72193f3b1444f10e1c525bee2ea9dac6"),
+                target=hash_to_bytes("79d80c87c0a8d104a216cc539baad962a454802a"),
             ),
         },
     )
@@ -526,6 +526,94 @@ def test_npm_loader_version_divergence(swh_storage):
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
+
+
+def test_npm_loader_duplicate_shasum(swh_storage, requests_mock_datadir):
+    """Test with two versions that have exactly the same tarball"""
+    package = "org_version_mismatch"
+    url = package_url(package)
+    loader = NpmLoader(swh_storage, url)
+
+    actual_load_status = loader.load()
+    expected_snapshot_id = hash_to_bytes("ac867a4c22ba4e22a022d319f309714477412a5a")
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": expected_snapshot_id.hex(),
+    }
+
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="npm", snapshot=expected_snapshot_id
+    )
+
+    beta_release_id = "e6d5490a02ac2a8dcd49702f9ccd5a64c90a46f1"
+    release_id = "f6985f437e28db6eb1b7533230e05ed99f2c91f0"
+    versions = [
+        ("0.0.3-beta", beta_release_id),
+        ("0.0.3", release_id),
+    ]
+
+    expected_snapshot = Snapshot(
+        id=expected_snapshot_id,
+        branches={
+            b"HEAD": SnapshotBranch(
+                target=b"releases/0.0.3", target_type=TargetType.ALIAS
+            ),
+            **{
+                b"releases/"
+                + version_name.encode(): SnapshotBranch(
+                    target=hash_to_bytes(version_id), target_type=TargetType.RELEASE,
+                )
+                for (version_name, version_id) in versions
+            },
+        },
+    )
+    check_snapshot(expected_snapshot, swh_storage)
+
+    assert swh_storage.release_get([hash_to_bytes(beta_release_id)])[0] == Release(
+        name=b"0.0.3-beta",
+        message=(
+            b"Synthetic release for NPM source package org_version_mismatch "
+            b"version 0.0.3-beta\n"
+        ),
+        target=hash_to_bytes("3370d20d6f96dc1c9e50f083e2134881db110f4f"),
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person.from_fullname(b"Masafumi Oyamada <stillpedant@gmail.com>"),
+        date=TimestampWithTimezone.from_datetime(
+            datetime.datetime(2014, 1, 1, 15, 40, 33, tzinfo=datetime.timezone.utc)
+        ),
+        id=hash_to_bytes(beta_release_id),
+    )
+
+    assert swh_storage.release_get([hash_to_bytes(release_id)])[0] == Release(
+        name=b"0.0.3",
+        message=(
+            b"Synthetic release for NPM source package org_version_mismatch "
+            b"version 0.0.3\n"
+        ),
+        target=hash_to_bytes("3370d20d6f96dc1c9e50f083e2134881db110f4f"),
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person.from_fullname(b"Masafumi Oyamada <stillpedant@gmail.com>"),
+        date=TimestampWithTimezone.from_datetime(
+            datetime.datetime(2014, 1, 1, 15, 55, 45, tzinfo=datetime.timezone.utc)
+        ),
+        id=hash_to_bytes(release_id),
+    )
+
+    # Check incremental re-load keeps it unchanged
+
+    loader = NpmLoader(swh_storage, url)
+
+    actual_load_status = loader.load()
+    assert actual_load_status == {
+        "status": "uneventful",
+        "snapshot_id": expected_snapshot_id.hex(),
+    }
+
+    assert_last_visit_matches(
+        swh_storage, url, status="full", type="npm", snapshot=expected_snapshot_id
+    )
 
 
 def test_npm_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_datadir):
