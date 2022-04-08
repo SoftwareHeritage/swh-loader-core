@@ -67,7 +67,7 @@ class DepositPackageInfo(BasePackageInfo):
         # which computes itself the values. The loader needs to use those to create the
         # release.
 
-        metadata_raw: str = metadata["metadata_raw"]
+        raw_metadata: str = metadata["raw_metadata"]
         depo = metadata["deposit"]
         return cls(
             url=url,
@@ -84,7 +84,7 @@ class DepositPackageInfo(BasePackageInfo):
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
                     discovery_date=now(),
-                    metadata=metadata_raw.encode(),
+                    metadata=raw_metadata.encode(),
                     format="sword-v2-atom-codemeta-v2",
                 )
             ],
@@ -208,10 +208,10 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
 
     def get_extrinsic_origin_metadata(self) -> List[RawExtrinsicMetadataCore]:
         metadata = self.metadata()
-        metadata_raw: str = metadata["metadata_raw"]
+        raw_metadata: str = metadata["raw_metadata"]
         origin_metadata = json.dumps(
             {
-                "metadata": [metadata_raw],
+                "metadata": [raw_metadata],
                 "provider": metadata["provider"],
                 "tool": metadata["tool"],
             }
@@ -219,7 +219,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         return [
             RawExtrinsicMetadataCore(
                 discovery_date=now(),
-                metadata=metadata_raw.encode(),
+                metadata=raw_metadata.encode(),
                 format="sword-v2-atom-codemeta-v2",
             ),
             RawExtrinsicMetadataCore(

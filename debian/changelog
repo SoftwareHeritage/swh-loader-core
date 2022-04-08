@@ -1,8 +1,14 @@
-swh-loader-core (2.6.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (2.6.1-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 2.6.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-04-08 11:03:06
+    +0200)
+  * Upstream changes:     - v2.6.1     - Rename metadata key in data
+    received from the deposit server     - origin/master npm: Add all
+    fields we use to the ExtID manifest     - npm: Include package
+    version id in ExtID manifest
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 02 Mar 2022 13:01:13 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 08 Apr 2022 09:13:17 +0000
 
 swh-loader-core (2.6.0-1~swh1) unstable-swh; urgency=medium
 
