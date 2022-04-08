@@ -229,7 +229,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     )
     assert orig_meta.next_page_token is None
     raw_meta = loader.client.metadata_get(deposit_id)
-    metadata_raw: str = raw_meta["metadata_raw"]
+    raw_metadata: str = raw_meta["raw_metadata"]
     # 2 raw metadata xml + 1 json dict
     assert len(orig_meta.results) == 2
     orig_meta0 = orig_meta.results[0]
@@ -249,7 +249,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     dir_meta = actual_dir_meta.results[0]
     assert dir_meta.authority == authority
     assert dir_meta.fetcher == fetcher
-    assert dir_meta.metadata.decode() == metadata_raw
+    assert dir_meta.metadata.decode() == raw_metadata
 
     # Retrieve the information for deposit status update query to the deposit
     urls = [
@@ -365,7 +365,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         Origin(url).swhid(), authority
     )
     assert origin_extrinsic_metadata.next_page_token is None
-    metadata_raw: str = raw_meta["metadata_raw"]
+    raw_metadata: str = raw_meta["raw_metadata"]
     # 1 raw metadata xml + 1 json dict
     assert len(origin_extrinsic_metadata.results) == 2
 
@@ -377,7 +377,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         RawExtrinsicMetadata(
             target=origin_swhid,
             discovery_date=origin_meta.discovery_date,
-            metadata=metadata_raw.encode(),
+            metadata=raw_metadata.encode(),
             format="sword-v2-atom-codemeta-v2",
             authority=authority,
             fetcher=fetcher,
@@ -385,7 +385,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     )
 
     origin_metadata = {
-        "metadata": [metadata_raw],
+        "metadata": [raw_metadata],
         "provider": provider,
         "tool": tool,
     }
@@ -440,7 +440,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
                     if k != "id"
                 },
                 "discovery_date": dir_metadata.discovery_date,
-                "metadata": metadata_raw.encode(),
+                "metadata": raw_metadata.encode(),
             }
         )
     )
