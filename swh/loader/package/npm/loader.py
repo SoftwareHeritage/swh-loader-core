@@ -7,6 +7,7 @@ from codecs import BOM_UTF8
 import json
 import logging
 import os
+import string
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 from urllib.parse import quote
 
@@ -16,11 +17,9 @@ import chardet
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
-    PartialExtID,
     RawExtrinsicMetadataCore,
 )
 from swh.loader.package.utils import api_info, cached_method, release_name
-from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -38,17 +37,26 @@ logger = logging.getLogger(__name__)
 EMPTY_PERSON = Person.from_fullname(b"")
 
 
-EXTID_TYPE = "npm-archive-sha1"
-EXTID_VERSION = 0
-
-
 @attr.s
 class NpmPackageInfo(BasePackageInfo):
     raw_info = attr.ib(type=Dict[str, Any])
 
+    package_name = attr.ib(type=str)
     date = attr.ib(type=Optional[str])
     shasum = attr.ib(type=str)
     """sha1 checksum"""
+
+    # we cannot rely only on $shasum, as it is technically possible for two versions
+    # of the same package to have the exact same tarball.
+    # But the release data (message and date) are extrinsic to the content of the
+    # package, so they differ between versions.
+    # So we need every attribute used to build the release object to be part of the
+    # manifest.
+    MANIFEST_FORMAT = string.Template(
+        "date $date\nname $package_name\nshasum $shasum\nurl $url\nversion $version"
+    )
+    EXTID_TYPE = "npm-manifest-sha256"
+    EXTID_VERSION = 0
 
     @classmethod
     def from_metadata(
@@ -56,6 +64,8 @@ class NpmPackageInfo(BasePackageInfo):
     ) -> "NpmPackageInfo":
         package_metadata = project_metadata["versions"][version]
         url = package_metadata["dist"]["tarball"]
+
+        assert package_metadata["name"] == project_metadata["name"]
 
         # No date available in intrinsic metadata: retrieve it from the API
         # metadata, using the version number that the API claims this package
@@ -70,6 +80,7 @@ class NpmPackageInfo(BasePackageInfo):
             date = None
 
         return cls(
+            package_name=package_metadata["name"],
             url=url,
             filename=os.path.basename(url),
             date=date,
@@ -83,9 +94,6 @@ class NpmPackageInfo(BasePackageInfo):
                 )
             ],
         )
-
-    def extid(self) -> PartialExtID:
-        return (EXTID_TYPE, EXTID_VERSION, hash_to_bytes(self.shasum))
 
 
 class NpmLoader(PackageLoader[NpmPackageInfo]):
@@ -144,12 +152,17 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
     def build_release(
         self, p_info: NpmPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
+        # Metadata from NPM is not intrinsic to tarballs.
+        # This means two package versions can have the same tarball, but different
+        # metadata. To avoid mixing up releases, every field used to build the
+        # release object must be part of NpmPackageInfo.MANIFEST_FORMAT.
         i_metadata = extract_intrinsic_metadata(uncompressed_path)
         if not i_metadata:
             return None
         author = extract_npm_package_author(i_metadata)
+        assert self.package_name == p_info.package_name
         msg = (
-            f"Synthetic release for NPM source package {self.package_name} "
+            f"Synthetic release for NPM source package {p_info.package_name} "
             f"version {p_info.version}\n"
         )
 
