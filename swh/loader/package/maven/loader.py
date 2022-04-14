@@ -81,8 +81,7 @@ class MavenPackageInfo(BasePackageInfo):
     EXTID_VERSION = 0
 
     @classmethod
-    def from_metadata(cls, a_metadata: ArtifactDict) -> "MavenPackageInfo":
-        url = a_metadata["url"]
+    def from_metadata(cls, url: str, a_metadata: ArtifactDict) -> "MavenPackageInfo":
         time = iso8601.parse_date(a_metadata["time"]).astimezone(tz=timezone.utc)
         return cls(
             url=url,
@@ -186,7 +185,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
     def get_package_info(self, version: str) -> Iterator[Tuple[str, MavenPackageInfo]]:
         a_metadata = self.version_artifact[version]
         yield release_name(a_metadata["version"]), MavenPackageInfo.from_metadata(
-            a_metadata
+            self.url, a_metadata
         )
 
     def build_release(
