@@ -15,7 +15,10 @@ def test_tasks_deposit_loader(
 
     res = swh_scheduler_celery_app.send_task(
         "swh.loader.package.deposit.tasks.LoadDeposit",
-        kwargs=dict(url="some-url", deposit_id="some-d-id",),
+        kwargs=dict(
+            url="some-url",
+            deposit_id="some-d-id",
+        ),
     )
     assert res
     res.wait()

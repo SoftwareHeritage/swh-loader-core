@@ -87,9 +87,7 @@ def test_download_ok_with_hashes(tmp_path, requests_mock):
 
 @pytest.mark.fs
 def test_download_fail_hashes_mismatch(tmp_path, requests_mock):
-    """Mismatch hash after download should raise
-
-    """
+    """Mismatch hash after download should raise"""
     url = f"https://pypi.org/pypi/requests/{_filename}"
     requests_mock.get(url, text=_data, headers={"content-length": str(len(_data))})
 

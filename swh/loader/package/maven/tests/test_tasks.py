@@ -25,7 +25,10 @@ def test_tasks_maven_loader(
 
     res = swh_scheduler_celery_app.send_task(
         "swh.loader.package.maven.tasks.LoadMaven",
-        kwargs=dict(url=MVN_ARTIFACTS[0]["url"], artifacts=MVN_ARTIFACTS,),
+        kwargs=dict(
+            url=MVN_ARTIFACTS[0]["url"],
+            artifacts=MVN_ARTIFACTS,
+        ),
     )
     assert res
     res.wait()

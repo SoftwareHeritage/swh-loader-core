@@ -1,8 +1,12 @@
-swh-loader-core (2.6.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (2.6.2-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 2.6.2     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-04-14 11:46:06
+    +0200)
+  * Upstream changes:     - v2.6.2     - maven: Consistently read lister
+    input to ingest a mvn origin
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 08 Apr 2022 09:15:47 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 14 Apr 2022 09:53:26 +0000
 
 swh-loader-core (2.6.1-1~swh1) unstable-swh; urgency=medium
 

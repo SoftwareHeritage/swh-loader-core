@@ -162,29 +162,23 @@ class BaseLoader:
         return self.__save_data_path
 
     def flush(self) -> None:
-        """Flush any potential buffered data not sent to swh-storage.
-
-        """
+        """Flush any potential buffered data not sent to swh-storage."""
         self.storage.flush()
 
     def cleanup(self) -> None:
-        """Last step executed by the loader.
-
-        """
+        """Last step executed by the loader."""
         raise NotImplementedError
 
     def prepare_origin_visit(self) -> None:
         """First step executed by the loader to prepare origin and visit
-           references. Set/update self.origin, and
-           optionally self.origin_url, self.visit_date.
+        references. Set/update self.origin, and
+        optionally self.origin_url, self.visit_date.
 
         """
         raise NotImplementedError
 
     def _store_origin_visit(self) -> None:
-        """Store origin and visit references. Sets the self.visit references.
-
-        """
+        """Store origin and visit references. Sets the self.visit references."""
         assert self.origin
         self.storage.origin_add([self.origin])
 

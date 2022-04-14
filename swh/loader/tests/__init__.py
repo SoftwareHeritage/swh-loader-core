@@ -86,9 +86,7 @@ def prepare_repository_from_archive(
 
 
 def encode_target(target: Dict) -> Dict:
-    """Test helper to ease readability in test
-
-    """
+    """Test helper to ease readability in test"""
     if not target:
         return target
     target_type = target["target_type"]
@@ -246,7 +244,7 @@ def check_snapshot(
 
 def get_stats(storage) -> Dict:
     """Adaptation utils to unify the stats counters across storage
-       implementation.
+    implementation.
 
     """
     storage.refresh_stat_counters()

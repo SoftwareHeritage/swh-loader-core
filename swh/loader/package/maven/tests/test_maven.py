@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 The Software Heritage developers
+# Copyright (C) 2019-2022 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -28,33 +28,35 @@ from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 
-URL = "https://repo1.maven.org/maven2/"
+REPO_BASE_URL = "https://repo1.maven.org/maven2/"
+
+MVN_ARTIFACT_URLS = [
+    f"{REPO_BASE_URL}al/aldi/sprova4j/0.1.0/sprova4j-0.1.0-sources.jar",
+    f"{REPO_BASE_URL}al/aldi/sprova4j/0.1.1/sprova4j-0.1.1-sources.jar",
+]
+
 MVN_ARTIFACTS = [
     {
         "time": "2021-07-12 19:06:59.335000",
-        "url": "https://repo1.maven.org/maven2/al/aldi/sprova4j/0.1.0/"
-        + "sprova4j-0.1.0-sources.jar",
         "gid": "al.aldi",
         "aid": "sprova4j",
         "filename": "sprova4j-0.1.0-sources.jar",
         "version": "0.1.0",
-        "base_url": "https://repo1.maven.org/maven2/",
+        "base_url": REPO_BASE_URL,
     },
     {
         "time": "2021-07-12 19:37:05.534000",
-        "url": "https://repo1.maven.org/maven2/al/aldi/sprova4j/0.1.1/"
-        + "sprova4j-0.1.1-sources.jar",
         "gid": "al.aldi",
         "aid": "sprova4j",
         "filename": "sprova4j-0.1.1-sources.jar",
         "version": "0.1.1",
-        "base_url": "https://repo1.maven.org/maven2/",
+        "base_url": REPO_BASE_URL,
     },
 ]
 
 MVN_ARTIFACTS_POM = [
-    "https://repo1.maven.org/maven2/al/aldi/sprova4j/0.1.0/sprova4j-0.1.0.pom",
-    "https://repo1.maven.org/maven2/al/aldi/sprova4j/0.1.1/sprova4j-0.1.1.pom",
+    f"{REPO_BASE_URL}al/aldi/sprova4j/0.1.0/sprova4j-0.1.0.pom",
+    f"{REPO_BASE_URL}al/aldi/sprova4j/0.1.1/sprova4j-0.1.1.pom",
 ]
 
 _expected_new_contents_first_visit = [
@@ -88,15 +90,11 @@ _expected_new_contents_first_visit = [
 
 _expected_json_metadata = {
     "time": "2021-07-12 19:06:59.335000",
-    "url": (
-        "https://repo1.maven.org/maven2/al/aldi/sprova4j/0.1.0/"
-        "sprova4j-0.1.0-sources.jar"
-    ),
     "gid": "al.aldi",
     "aid": "sprova4j",
     "filename": "sprova4j-0.1.0-sources.jar",
     "version": "0.1.0",
-    "base_url": "https://repo1.maven.org/maven2/",
+    "base_url": REPO_BASE_URL,
 }
 _expected_pom_metadata = (
     """<?xml version="1.0" encoding="UTF-8"?>
@@ -289,13 +287,11 @@ def test_jar_visit_with_no_artifact_found(swh_storage, requests_mock_datadir):
 def test_jar_visit_inconsistent_base_url(
     swh_storage, requests_mock, data_jar_1, data_pom_1
 ):
-    """With no prior visit, loading a jar ends up with 1 snapshot
-
-    """
+    """With no prior visit, loading a jar ends up with 1 snapshot"""
     with pytest.raises(ValueError, match="more than one Maven instance"):
         MavenLoader(
             swh_storage,
-            MVN_ARTIFACTS[0]["url"],
+            MVN_ARTIFACT_URLS[0],
             artifacts=[
                 MVN_ARTIFACTS[0],
                 {**MVN_ARTIFACTS[1], "base_url": "http://maven.example/"},
@@ -306,13 +302,11 @@ def test_jar_visit_inconsistent_base_url(
 def test_jar_visit_with_release_artifact_no_prior_visit(
     swh_storage, requests_mock, data_jar_1, data_pom_1
 ):
-    """With no prior visit, loading a jar ends up with 1 snapshot
-
-    """
-    requests_mock.get(MVN_ARTIFACTS[0]["url"], content=data_jar_1)
+    """With no prior visit, loading a jar ends up with 1 snapshot"""
+    requests_mock.get(MVN_ARTIFACT_URLS[0], content=data_jar_1)
     requests_mock.get(MVN_ARTIFACTS_POM[0], content=data_pom_1)
     loader = MavenLoader(
-        swh_storage, MVN_ARTIFACTS[0]["url"], artifacts=[MVN_ARTIFACTS[0]]
+        swh_storage, MVN_ARTIFACT_URLS[0], artifacts=[MVN_ARTIFACTS[0]]
     )
 
     actual_load_status = loader.load()
@@ -326,7 +320,8 @@ def test_jar_visit_with_release_artifact_no_prior_visit(
         id=expected_snapshot_first_visit_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS, target=b"releases/0.1.0",
+                target_type=TargetType.ALIAS,
+                target=b"releases/0.1.0",
             ),
             b"releases/0.1.0": SnapshotBranch(
                 target_type=TargetType.RELEASE,
@@ -348,7 +343,7 @@ def test_jar_visit_with_release_artifact_no_prior_visit(
 
     stats = get_stats(swh_storage)
     assert_last_visit_matches(
-        swh_storage, MVN_ARTIFACTS[0]["url"], status="full", type="maven"
+        swh_storage, MVN_ARTIFACT_URLS[0], status="full", type="maven"
     )
 
     expected_contents = map(hash_to_bytes, _expected_new_contents_first_visit)
@@ -390,13 +385,11 @@ def test_jar_visit_with_release_artifact_no_prior_visit(
 def test_jar_2_visits_without_change(
     swh_storage, requests_mock_datadir, requests_mock, data_jar_2, data_pom_2
 ):
-    """With no prior visit, load a gnu project ends up with 1 snapshot
-
-    """
-    requests_mock.get(MVN_ARTIFACTS[1]["url"], content=data_jar_2)
+    """With no prior visit, load a gnu project ends up with 1 snapshot"""
+    requests_mock.get(MVN_ARTIFACT_URLS[1], content=data_jar_2)
     requests_mock.get(MVN_ARTIFACTS_POM[1], content=data_pom_2)
     loader = MavenLoader(
-        swh_storage, MVN_ARTIFACTS[1]["url"], artifacts=[MVN_ARTIFACTS[1]]
+        swh_storage, MVN_ARTIFACT_URLS[1], artifacts=[MVN_ARTIFACTS[1]]
     )
 
     actual_load_status = loader.load()
@@ -412,7 +405,7 @@ def test_jar_2_visits_without_change(
     )
 
     assert_last_visit_matches(
-        swh_storage, MVN_ARTIFACTS[1]["url"], status="full", type="maven"
+        swh_storage, MVN_ARTIFACT_URLS[1], status="full", type="maven"
     )
 
     actual_load_status2 = loader.load()
@@ -421,26 +414,26 @@ def test_jar_2_visits_without_change(
     assert actual_load_status["snapshot_id"] == actual_load_status2["snapshot_id"]
 
     assert_last_visit_matches(
-        swh_storage, MVN_ARTIFACTS[1]["url"], status="full", type="maven"
+        swh_storage, MVN_ARTIFACT_URLS[1], status="full", type="maven"
     )
 
     # Make sure we have only one entry in history for the pom fetch, one for
     # the actual download of jar, and that they're correct.
     urls_history = [str(req.url) for req in list(requests_mock_datadir.request_history)]
     assert urls_history == [
-        MVN_ARTIFACTS[1]["url"],
+        MVN_ARTIFACT_URLS[1],
         MVN_ARTIFACTS_POM[1],
     ]
 
 
-def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
+def test_metadata(swh_storage, requests_mock, data_jar_1, data_pom_1):
     """With no prior visit, loading a jar ends up with 1 snapshot.
     Extrinsic metadata is the pom file associated to the source jar.
     """
-    requests_mock.get(MVN_ARTIFACTS[0]["url"], content=data_jar_1)
+    requests_mock.get(MVN_ARTIFACT_URLS[0], content=data_jar_1)
     requests_mock.get(MVN_ARTIFACTS_POM[0], content=data_pom_1)
     loader = MavenLoader(
-        swh_storage, MVN_ARTIFACTS[0]["url"], artifacts=[MVN_ARTIFACTS[0]]
+        swh_storage, MVN_ARTIFACT_URLS[0], artifacts=[MVN_ARTIFACTS[0]]
     )
 
     actual_load_status = loader.load()
@@ -457,7 +450,8 @@ def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/maven2/",
+        type=MetadataAuthorityType.FORGE,
+        url=REPO_BASE_URL,
     )
 
     expected_metadata = [
@@ -465,24 +459,26 @@ def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-pom",
             metadata=_expected_pom_metadata.encode(),
-            origin=MVN_ARTIFACTS[0]["url"],
+            origin=MVN_ARTIFACT_URLS[0],
             release=release_swhid,
         ),
         RawExtrinsicMetadata(
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-json",
             metadata=json.dumps(_expected_json_metadata).encode(),
-            origin=MVN_ARTIFACTS[0]["url"],
+            origin=MVN_ARTIFACT_URLS[0],
             release=release_swhid,
         ),
     ]
@@ -492,15 +488,14 @@ def test_metadatata(swh_storage, requests_mock, data_jar_1, data_pom_1):
     assert set(res.results) == set(expected_metadata)
 
 
-def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
+def test_metadata_no_pom(swh_storage, requests_mock, data_jar_1):
     """With no prior visit, loading a jar ends up with 1 snapshot.
     Extrinsic metadata is None if the pom file cannot be retrieved.
     """
-    requests_mock.get(MVN_ARTIFACTS[0]["url"], content=data_jar_1)
+    artifact_url = MVN_ARTIFACT_URLS[0]
+    requests_mock.get(artifact_url, content=data_jar_1)
     requests_mock.get(MVN_ARTIFACTS_POM[0], status_code="404")
-    loader = MavenLoader(
-        swh_storage, MVN_ARTIFACTS[0]["url"], artifacts=[MVN_ARTIFACTS[0]]
-    )
+    loader = MavenLoader(swh_storage, artifact_url, artifacts=[MVN_ARTIFACTS[0]])
 
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
@@ -516,7 +511,8 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://repo1.maven.org/maven2/",
+        type=MetadataAuthorityType.FORGE,
+        url=REPO_BASE_URL,
     )
 
     expected_metadata = [
@@ -524,24 +520,26 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-pom",
             metadata=b"",
-            origin=MVN_ARTIFACTS[0]["url"],
+            origin=artifact_url,
             release=release_swhid,
         ),
         RawExtrinsicMetadata(
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.maven.loader.MavenLoader", version=__version__,
+                name="swh.loader.package.maven.loader.MavenLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="maven-json",
             metadata=json.dumps(_expected_json_metadata).encode(),
-            origin=MVN_ARTIFACTS[0]["url"],
+            origin=artifact_url,
             release=release_swhid,
         ),
     ]
@@ -551,17 +549,22 @@ def test_metadatata_no_pom(swh_storage, requests_mock, data_jar_1):
 
 
 def test_jar_extid():
-    """Compute primary key should return the right identity
-
-    """
+    """Compute primary key should return the right identity"""
 
     metadata = MVN_ARTIFACTS[0]
+    # metadata.pop("url", None)
+    url = MVN_ARTIFACT_URLS[0]
+    p_info = MavenPackageInfo(url=url, **metadata)
 
-    p_info = MavenPackageInfo(**metadata)
-
-    expected_manifest = "{gid} {aid} {version} {url} {time}".format(**metadata).encode()
+    expected_manifest = "{gid} {aid} {version} {url} {time}".format(
+        url=url, **metadata
+    ).encode()
     actual_id = p_info.extid()
-    assert actual_id == ("maven-jar", 0, hashlib.sha256(expected_manifest).digest(),)
+    assert actual_id == (
+        "maven-jar",
+        0,
+        hashlib.sha256(expected_manifest).digest(),
+    )
 
 
 def test_jar_snapshot_append(
@@ -576,7 +579,7 @@ def test_jar_snapshot_append(
 
     # first loading with a first artifact
     artifact1 = MVN_ARTIFACTS[0]
-    url1 = artifact1["url"]
+    url1 = MVN_ARTIFACT_URLS[0]
     requests_mock.get(url1, content=data_jar_1)
     requests_mock.get(MVN_ARTIFACTS_POM[0], content=data_pom_1)
     loader = MavenLoader(swh_storage, url1, [artifact1])
@@ -595,7 +598,7 @@ def test_jar_snapshot_append(
 
     # second loading with a second artifact
     artifact2 = MVN_ARTIFACTS[1]
-    url2 = artifact2["url"]
+    url2 = MVN_ARTIFACT_URLS[1]
     requests_mock.get(url2, content=data_jar_2)
     requests_mock.get(MVN_ARTIFACTS_POM[1], content=data_pom_2)
     loader = MavenLoader(swh_storage, url2, [artifact2])
