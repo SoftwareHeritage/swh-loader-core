@@ -17,9 +17,7 @@ from swh.loader.package.loader import PackageLoader
 
 
 def test_get_loader_wrong_input(swh_config):
-    """Unsupported loader should raise
-
-    """
+    """Unsupported loader should raise"""
     loader_type = "unknown"
     assert loader_type not in SUPPORTED_LOADERS
     with pytest.raises(ValueError, match="Invalid loader"):
@@ -27,14 +25,19 @@ def test_get_loader_wrong_input(swh_config):
 
 
 def test_get_loader(swh_loader_config):
-    """Instantiating a supported loader should be ok
-
-    """
+    """Instantiating a supported loader should be ok"""
     loader_input = {
         "archive": {"url": "some-url", "artifacts": []},
-        "debian": {"url": "some-url", "packages": [],},
-        "npm": {"url": "https://www.npmjs.com/package/onepackage",},
-        "pypi": {"url": "some-url",},
+        "debian": {
+            "url": "some-url",
+            "packages": [],
+        },
+        "npm": {
+            "url": "https://www.npmjs.com/package/onepackage",
+        },
+        "pypi": {
+            "url": "some-url",
+        },
     }
     for loader_type, kwargs in loader_input.items():
         kwargs["storage"] = swh_loader_config["storage"]
@@ -49,9 +52,7 @@ def _write_usage(command, args, max_width=80):
 
 
 def test_run_help(swh_config):
-    """Usage message should contain list of available loaders
-
-    """
+    """Usage message should contain list of available loaders"""
     runner = CliRunner()
 
     result = runner.invoke(loader_cli, ["run", "-h"])
@@ -66,9 +67,7 @@ def test_run_help(swh_config):
 
 
 def test_run_with_configuration_failure(tmp_path):
-    """Triggering a load should fail since configuration is incomplete
-
-    """
+    """Triggering a load should fail since configuration is incomplete"""
     runner = CliRunner()
 
     conf_path = os.path.join(str(tmp_path), "cli.yml")
@@ -78,28 +77,37 @@ def test_run_with_configuration_failure(tmp_path):
     with pytest.raises(ValueError, match="Missing storage"):
         runner.invoke(
             loader_cli,
-            ["-C", conf_path, "run", "pypi", "url=https://some-url",],
+            [
+                "-C",
+                conf_path,
+                "run",
+                "pypi",
+                "url=https://some-url",
+            ],
             catch_exceptions=False,
         )
 
 
 def test_run_pypi(mocker, swh_config):
-    """Triggering a load should be ok
-
-    """
+    """Triggering a load should be ok"""
     mock_loader = mocker.patch("swh.loader.package.pypi.loader.PyPILoader.load")
     runner = CliRunner()
     result = runner.invoke(
-        loader_cli, ["-C", swh_config, "run", "pypi", "url=https://some-url",]
+        loader_cli,
+        [
+            "-C",
+            swh_config,
+            "run",
+            "pypi",
+            "url=https://some-url",
+        ],
     )
     assert result.exit_code == 0
     mock_loader.assert_called_once_with()
 
 
 def test_run_with_visit_date(mocker, swh_config):
-    """iso visit_date parameter should be parsed as datetime
-
-    """
+    """iso visit_date parameter should be parsed as datetime"""
     mock_loader = mocker.patch("swh.loader.cli.get_loader")
 
     runner = CliRunner()
@@ -120,9 +128,7 @@ def test_run_with_visit_date(mocker, swh_config):
 
 
 def test_list_help(mocker, swh_config):
-    """Usage message should contain list of available loaders
-
-    """
+    """Usage message should contain list of available loaders"""
     runner = CliRunner()
     result = runner.invoke(loader_cli, ["list", "--help"])
     assert result.exit_code == 0
@@ -140,9 +146,7 @@ Options:
 
 
 def test_list_help_npm(mocker, swh_config):
-    """Triggering a load should be ok
-
-    """
+    """Triggering a load should be ok"""
     runner = CliRunner()
     result = runner.invoke(loader_cli, ["list", "npm"])
     assert result.exit_code == 0

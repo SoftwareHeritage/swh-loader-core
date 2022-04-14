@@ -47,7 +47,7 @@ def swh_config(swh_loader_config, monkeypatch, tmp_path) -> str:
 @pytest.fixture(autouse=True, scope="session")
 def swh_proxy():
     """Automatically inject this fixture in all tests to ensure no outside
-       connection takes place.
+    connection takes place.
 
     """
     os.environ["http_proxy"] = "http://localhost:999"

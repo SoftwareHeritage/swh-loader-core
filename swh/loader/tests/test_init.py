@@ -111,7 +111,10 @@ REVISION = Revision(
     type=RevisionType.GIT,
     directory=DIRECTORY.id,
     metadata={
-        "checksums": {"sha1": "tarball-sha1", "sha256": "tarball-sha256",},
+        "checksums": {
+            "sha1": "tarball-sha1",
+            "sha256": "tarball-sha256",
+        },
         "signed-off-by": "some-dude",
     },
     extra_headers=(
@@ -127,7 +130,9 @@ RELEASE = Release(
     id=hash_to_bytes("3e9050196aa288264f2a9d279d6abab8b158448b"),
     name=b"v0.0.2",
     author=Person(
-        name=b"tony", email=b"tony@ardumont.fr", fullname=b"tony <tony@ardumont.fr>",
+        name=b"tony",
+        email=b"tony@ardumont.fr",
+        fullname=b"tony <tony@ardumont.fr>",
     ),
     date=TimestampWithTimezone.from_datetime(
         datetime.datetime(2021, 10, 15, 22, 26, 53, tzinfo=datetime.timezone.utc)
@@ -143,10 +148,17 @@ SNAPSHOT = Snapshot(
     id=hash_to_bytes("2498dbf535f882bc7f9a18fb16c9ad27fda7bab7"),
     branches={
         b"release/0.1.0": SnapshotBranch(
-            target=RELEASE.id, target_type=TargetType.RELEASE,
+            target=RELEASE.id,
+            target_type=TargetType.RELEASE,
         ),
-        b"HEAD": SnapshotBranch(target=REVISION.id, target_type=TargetType.REVISION,),
-        b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+        b"HEAD": SnapshotBranch(
+            target=REVISION.id,
+            target_type=TargetType.REVISION,
+        ),
+        b"alias": SnapshotBranch(
+            target=b"HEAD",
+            target_type=TargetType.ALIAS,
+        ),
         b"evaluation": SnapshotBranch(  # branch dedicated to not exist in storage
             target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
             target_type=TargetType.REVISION,
@@ -172,9 +184,7 @@ def mock_storage(mocker):
 
 
 def test_assert_last_visit_matches_raise(mock_storage, mocker):
-    """Not finding origin visit_and_statu should raise
-
-    """
+    """Not finding origin visit_and_statu should raise"""
     # overwrite so we raise because we do not find the right visit
     mock_storage.return_value = None
 
@@ -185,9 +195,7 @@ def test_assert_last_visit_matches_raise(mock_storage, mocker):
 
 
 def test_assert_last_visit_matches_wrong_status(mock_storage, mocker):
-    """Wrong visit detected should raise AssertionError
-
-    """
+    """Wrong visit detected should raise AssertionError"""
     expected_status = "partial"
     assert ORIGIN_VISIT_STATUS.status != expected_status
     with pytest.raises(AssertionError, match="Visit_status has status"):
@@ -197,9 +205,7 @@ def test_assert_last_visit_matches_wrong_status(mock_storage, mocker):
 
 
 def test_assert_last_visit_matches_wrong_type(mock_storage, mocker):
-    """Wrong visit detected should raise AssertionError
-
-    """
+    """Wrong visit detected should raise AssertionError"""
     expected_type = "git"
     assert ORIGIN_VISIT.type != expected_type
     with pytest.raises(AssertionError, match="Visit has type"):
@@ -214,9 +220,7 @@ def test_assert_last_visit_matches_wrong_type(mock_storage, mocker):
 
 
 def test_assert_last_visit_matches_wrong_snapshot(mock_storage, mocker):
-    """Wrong visit detected should raise AssertionError
-
-    """
+    """Wrong visit detected should raise AssertionError"""
     expected_snapshot_id = hash_to_bytes("e92cc0710eb6cf9efd5b920a8453e1e07157b6cd")
     assert ORIGIN_VISIT_STATUS.snapshot != expected_snapshot_id
 
@@ -232,9 +236,7 @@ def test_assert_last_visit_matches_wrong_snapshot(mock_storage, mocker):
 
 
 def test_assert_last_visit_matches(mock_storage, mocker):
-    """Correct visit detected should return the visit_status
-
-    """
+    """Correct visit detected should return the visit_status"""
     visit_type = ORIGIN_VISIT.type
     visit_status = ORIGIN_VISIT_STATUS.status
     visit_snapshot = ORIGIN_VISIT_STATUS.snapshot
@@ -373,7 +375,8 @@ def test_check_snapshot_failures(swh_storage):
         id=hash_to_bytes(snap_id_hex),
         branches={
             b"master": SnapshotBranch(
-                target=hash_to_bytes(hash_hex), target_type=TargetType.REVISION,
+                target=hash_to_bytes(hash_hex),
+                target_type=TargetType.REVISION,
             ),
         },
     )
@@ -410,7 +413,10 @@ def test_check_snapshot_failures(swh_storage):
     snapshot0 = Snapshot(
         id=hash_to_bytes("123666f535f882bc7f9a18fb16c9ad27fda7bab7"),
         branches={
-            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"alias": SnapshotBranch(
+                target=b"HEAD",
+                target_type=TargetType.ALIAS,
+            ),
         },
     )
     swh_storage.snapshot_add([snapshot0])
@@ -426,9 +432,13 @@ def test_check_snapshot_failures(swh_storage):
     snapshot1 = Snapshot(
         id=hash_to_bytes("456666f535f882bc7f9a18fb16c9ad27fda7bab7"),
         branches={
-            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"alias": SnapshotBranch(
+                target=b"HEAD",
+                target_type=TargetType.ALIAS,
+            ),
             b"HEAD": SnapshotBranch(
-                target=REVISION.id, target_type=TargetType.REVISION,
+                target=REVISION.id,
+                target_type=TargetType.REVISION,
             ),
         },
     )
@@ -449,9 +459,13 @@ def test_check_snapshot_failures(swh_storage):
     snapshot2 = Snapshot(
         id=hash_to_bytes("987123f535f882bc7f9a18fb16c9ad27fda7bab7"),
         branches={
-            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"alias": SnapshotBranch(
+                target=b"HEAD",
+                target_type=TargetType.ALIAS,
+            ),
             b"HEAD": SnapshotBranch(
-                target=REVISION.id, target_type=TargetType.REVISION,
+                target=REVISION.id,
+                target_type=TargetType.REVISION,
             ),
         },
     )
@@ -475,9 +489,13 @@ def test_check_snapshot_failures(swh_storage):
     snapshot3 = Snapshot(
         id=hash_to_bytes("091456f535f882bc7f9a18fb16c9ad27fda7bab7"),
         branches={
-            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"alias": SnapshotBranch(
+                target=b"HEAD",
+                target_type=TargetType.ALIAS,
+            ),
             b"HEAD": SnapshotBranch(
-                target=REVISION.id, target_type=TargetType.REVISION,
+                target=REVISION.id,
+                target_type=TargetType.REVISION,
             ),
         },
     )
@@ -494,12 +512,17 @@ def test_check_snapshot_failures(swh_storage):
     snapshot4 = Snapshot(
         id=hash_to_bytes("789666f535f882bc7f9a18fb16c9ad27fda7bab7"),
         branches={
-            b"alias": SnapshotBranch(target=b"HEAD", target_type=TargetType.ALIAS,),
+            b"alias": SnapshotBranch(
+                target=b"HEAD",
+                target_type=TargetType.ALIAS,
+            ),
             b"HEAD": SnapshotBranch(
-                target=REVISION.id, target_type=TargetType.REVISION,
+                target=REVISION.id,
+                target_type=TargetType.REVISION,
             ),
             b"release/0.1.0": SnapshotBranch(
-                target=RELEASE.id, target_type=TargetType.RELEASE,
+                target=RELEASE.id,
+                target_type=TargetType.RELEASE,
             ),
         },
     )

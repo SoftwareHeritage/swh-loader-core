@@ -108,13 +108,16 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
 
     def get_metadata_authority(self):
         return MetadataAuthority(
-            type=MetadataAuthorityType.FORGE, url=self.url, metadata={},
+            type=MetadataAuthorityType.FORGE,
+            url=self.url,
+            metadata={},
         )
 
     def get_extrinsic_snapshot_metadata(self):
         return [
             RawExtrinsicMetadataCore(
-                format="nixguix-sources-json", metadata=self.raw_sources(),
+                format="nixguix-sources-json",
+                metadata=self.raw_sources(),
             ),
         ]
 
@@ -199,7 +202,9 @@ def parse_sources(raw_sources: bytes) -> Dict[str, Any]:
     return json.loads(raw_sources.decode("utf-8"))
 
 
-def make_pattern_unsupported_file_extension(unsupported_file_extensions: List[str],):
+def make_pattern_unsupported_file_extension(
+    unsupported_file_extensions: List[str],
+):
     """Make a regexp pattern for unsupported file extension out of a list
     of unsupported archive extension list.
 

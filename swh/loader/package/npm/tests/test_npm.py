@@ -34,7 +34,10 @@ from swh.storage.interface import PagedResult
 
 @pytest.fixture
 def org_api_info(datadir) -> bytes:
-    with open(os.path.join(datadir, "https_replicate.npmjs.com", "org"), "rb",) as f:
+    with open(
+        os.path.join(datadir, "https_replicate.npmjs.com", "org"),
+        "rb",
+    ) as f:
         return f.read()
 
 
@@ -46,18 +49,55 @@ def test_npm_author_str():
             "Al from quantum leap",
         ),
         ([], ""),
-        ({"name": "groot", "email": "groot@galaxy.org",}, "groot <groot@galaxy.org>"),
-        ({"name": "somebody",}, "somebody"),
+        (
+            {
+                "name": "groot",
+                "email": "groot@galaxy.org",
+            },
+            "groot <groot@galaxy.org>",
+        ),
+        (
+            {
+                "name": "somebody",
+            },
+            "somebody",
+        ),
         ({"email": "no@one.org"}, " <no@one.org>"),  # note first elt is an extra blank
-        ({"name": "no one", "email": None,}, "no one"),
-        ({"email": None,}, ""),
+        (
+            {
+                "name": "no one",
+                "email": None,
+            },
+            "no one",
+        ),
+        (
+            {
+                "email": None,
+            },
+            "",
+        ),
         ({"name": None}, ""),
-        ({"name": None, "email": None,}, ""),
+        (
+            {
+                "name": None,
+                "email": None,
+            },
+            "",
+        ),
         ({}, ""),
         (None, None),
-        ({"name": []}, "",),
         (
-            {"name": ["Susan McSween", "William H. Bonney", "Doc Scurlock",]},
+            {"name": []},
+            "",
+        ),
+        (
+            {
+                "name": [
+                    "Susan McSween",
+                    "William H. Bonney",
+                    "Doc Scurlock",
+                ]
+            },
             "Susan McSween",
         ),
         (None, None),
@@ -336,7 +376,8 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
             **{
                 b"releases/"
                 + version_name.encode(): SnapshotBranch(
-                    target=hash_to_bytes(version_id), target_type=TargetType.RELEASE,
+                    target=hash_to_bytes(version_id),
+                    target_type=TargetType.RELEASE,
                 )
                 for (version_name, version_id) in versions
             },
@@ -372,7 +413,8 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
     assert list(swh_storage.release_missing(_expected_new_releases_first_visit)) == []
 
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://npmjs.com/",
+        type=MetadataAuthorityType.FORGE,
+        url="https://npmjs.com/",
     )
 
     for (version_name, release_id) in versions:
@@ -380,17 +422,20 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         assert release.target_type == ModelObjectType.DIRECTORY
         directory_id = release.target
         directory_swhid = ExtendedSWHID(
-            object_type=ExtendedObjectType.DIRECTORY, object_id=directory_id,
+            object_type=ExtendedObjectType.DIRECTORY,
+            object_id=directory_id,
         )
         release_swhid = CoreSWHID(
-            object_type=ObjectType.RELEASE, object_id=hash_to_bytes(release_id),
+            object_type=ObjectType.RELEASE,
+            object_id=hash_to_bytes(release_id),
         )
         expected_metadata = [
             RawExtrinsicMetadata(
                 target=directory_swhid,
                 authority=metadata_authority,
                 fetcher=MetadataFetcher(
-                    name="swh.loader.package.npm.loader.NpmLoader", version=__version__,
+                    name="swh.loader.package.npm.loader.NpmLoader",
+                    version=__version__,
                 ),
                 discovery_date=loader.visit_date,
                 format="replicate-npm-package-json",
@@ -402,8 +447,12 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
             )
         ]
         assert swh_storage.raw_extrinsic_metadata_get(
-            directory_swhid, metadata_authority,
-        ) == PagedResult(next_page_token=None, results=expected_metadata,)
+            directory_swhid,
+            metadata_authority,
+        ) == PagedResult(
+            next_page_token=None,
+            results=expected_metadata,
+        )
 
     stats = get_stats(swh_storage)
 
@@ -561,7 +610,8 @@ def test_npm_loader_duplicate_shasum(swh_storage, requests_mock_datadir):
             **{
                 b"releases/"
                 + version_name.encode(): SnapshotBranch(
-                    target=hash_to_bytes(version_id), target_type=TargetType.RELEASE,
+                    target=hash_to_bytes(version_id),
+                    target_type=TargetType.RELEASE,
                 )
                 for (version_name, version_id) in versions
             },
@@ -617,9 +667,7 @@ def test_npm_loader_duplicate_shasum(swh_storage, requests_mock_datadir):
 
 
 def test_npm_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_datadir):
-    """Skip artifact with no intrinsic metadata during ingestion
-
-    """
+    """Skip artifact with no intrinsic metadata during ingestion"""
     package = "nativescript-telerik-analytics"
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)
@@ -627,7 +675,8 @@ def test_npm_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_data
     actual_load_status = loader.load()
     # no branch as one artifact without any intrinsic metadata
     expected_snapshot = Snapshot(
-        id=hash_to_bytes("1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"), branches={},
+        id=hash_to_bytes("1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"),
+        branches={},
     )
     assert actual_load_status == {
         "status": "eventful",
@@ -642,9 +691,7 @@ def test_npm_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_data
 
 
 def test_npm_artifact_with_no_upload_time(swh_storage, requests_mock_datadir):
-    """With no time upload, artifact is skipped
-
-    """
+    """With no time upload, artifact is skipped"""
     package = "jammit-no-time"
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)
@@ -652,7 +699,8 @@ def test_npm_artifact_with_no_upload_time(swh_storage, requests_mock_datadir):
     actual_load_status = loader.load()
     # no branch as one artifact without any intrinsic metadata
     expected_snapshot = Snapshot(
-        id=hash_to_bytes("1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"), branches={},
+        id=hash_to_bytes("1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"),
+        branches={},
     )
     assert actual_load_status == {
         "status": "uneventful",
@@ -667,9 +715,7 @@ def test_npm_artifact_with_no_upload_time(swh_storage, requests_mock_datadir):
 
 
 def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
-    """With no time upload, artifact is skipped
-
-    """
+    """With no time upload, artifact is skipped"""
     package = "jammit-express"
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)
@@ -704,9 +750,7 @@ def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
 
 
 def test_npm_no_artifact(swh_storage, requests_mock_datadir):
-    """If no artifacts at all is found for origin, the visit fails completely
-
-    """
+    """If no artifacts at all is found for origin, the visit fails completely"""
     package = "catify"
     url = package_url(package)
     loader = NpmLoader(swh_storage, url)

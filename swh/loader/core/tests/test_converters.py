@@ -12,9 +12,7 @@ from swh.model.model import Content, SkippedContent
 
 
 def tmpfile_with_content(fromdir, contentfile):
-    """Create a temporary file with content contentfile in directory fromdir.
-
-    """
+    """Create a temporary file with content contentfile in directory fromdir."""
     tmpfilepath = tempfile.mktemp(
         suffix=".swh", prefix="tmp-file-for-test", dir=str(fromdir)
     )
@@ -78,7 +76,9 @@ def test_content_for_storage_too_long(tmpdir):
 
     # when
     content = converters.content_for_storage(
-        obj, max_content_size=len(data) - 1, origin_url=expected_content.origin,
+        obj,
+        max_content_size=len(data) - 1,
+        origin_url=expected_content.origin,
     )
 
     # then

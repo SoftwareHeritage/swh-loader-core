@@ -213,8 +213,8 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         url = self.get_enclosed_single_line_field("url.src:", version)
         if url is None:
             raise ValueError(
-                f"can't get field url.src: for version {version} of package {self.opam_package} \
-                (at url {self.url}) from `opam show`"
+                f"can't get field url.src: for version {version} of package {self.opam_package}"
+                f" (at url {self.url}) from `opam show`"
             )
 
         authors_field = self.get_enclosed_single_line_field("authors:", version)
@@ -237,13 +237,17 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
             version=version,
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
-                    metadata=metadata, format="opam-package-definition",
+                    metadata=metadata,
+                    format="opam-package-definition",
                 )
             ],
         )
 
     def build_release(
-        self, p_info: OpamPackageInfo, uncompressed_path: str, directory: Sha1Git,
+        self,
+        p_info: OpamPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
     ) -> Optional[Release]:
 
         msg = (

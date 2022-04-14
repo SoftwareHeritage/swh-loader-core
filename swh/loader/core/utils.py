@@ -109,7 +109,7 @@ def clone_with_timeout(
 
 def parse_visit_date(visit_date: Optional[Union[datetime, str]]) -> Optional[datetime]:
     """Convert visit date from either None, a string or a datetime to either None or
-       datetime.
+    datetime.
 
     """
     if visit_date is None:

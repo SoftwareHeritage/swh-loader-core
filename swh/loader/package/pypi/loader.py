@@ -62,7 +62,8 @@ class PyPIPackageInfo(BasePackageInfo):
             upload_time=metadata["upload_time"],
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
-                    format="pypi-project-json", metadata=json.dumps(metadata).encode(),
+                    format="pypi-project-json",
+                    metadata=json.dumps(metadata).encode(),
                 )
             ],
         )
@@ -72,9 +73,7 @@ class PyPIPackageInfo(BasePackageInfo):
 
 
 class PyPILoader(PackageLoader[PyPIPackageInfo]):
-    """Load pypi origin's artifact releases into swh archive.
-
-    """
+    """Load pypi origin's artifact releases into swh archive."""
 
     visit_type = "pypi"
 
@@ -93,9 +92,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
 
     @cached_method
     def info(self) -> Dict:
-        """Return the project metadata information (fetched from pypi registry)
-
-        """
+        """Return the project metadata information (fetched from pypi registry)"""
         return json.loads(self._raw_info())
 
     def get_versions(self) -> Sequence[str]:

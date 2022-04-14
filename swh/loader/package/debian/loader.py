@@ -123,9 +123,7 @@ class IntrinsicPackageMetadata:
 
 
 class DebianLoader(PackageLoader[DebianPackageInfo]):
-    """Load debian origins into swh archive.
-
-    """
+    """Load debian origins into swh archive."""
 
     visit_type = "deb"
 
@@ -180,7 +178,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
     def get_versions(self) -> Sequence[str]:
         """Returns the keys of the packages input (e.g.
-           stretch/contrib/0.7.2-3, etc...)
+        stretch/contrib/0.7.2-3, etc...)
 
         """
         return list(self.packages.keys())
@@ -217,7 +215,10 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         return extract_package(dl_artifacts, dest=dest)
 
     def build_release(
-        self, p_info: DebianPackageInfo, uncompressed_path: str, directory: Sha1Git,
+        self,
+        p_info: DebianPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
     ) -> Optional[Release]:
         dsc_url, dsc_name = dsc_information(p_info)
         if not dsc_name:
@@ -367,7 +368,11 @@ def extract_package(dl_artifacts: List[Tuple[str, Mapping]], dest: str) -> str:
     logfile = path.join(dest, "extract.log")
     logger.debug(
         "extract Debian source package %s in %s" % (dsc_path, destdir),
-        extra={"swh_type": "deb_extract", "swh_dsc": dsc_path, "swh_destdir": destdir,},
+        extra={
+            "swh_type": "deb_extract",
+            "swh_dsc": dsc_path,
+            "swh_destdir": destdir,
+        },
     )
 
     cmd = [

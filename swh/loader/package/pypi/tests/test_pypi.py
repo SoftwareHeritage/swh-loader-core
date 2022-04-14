@@ -39,7 +39,8 @@ from swh.storage.interface import PagedResult
 @pytest.fixture
 def _0805nexter_api_info(datadir) -> bytes:
     with open(
-        os.path.join(datadir, "https_pypi.org", "pypi_0805nexter_json"), "rb",
+        os.path.join(datadir, "https_pypi.org", "pypi_0805nexter_json"),
+        "rb",
     ) as f:
         return f.read()
 
@@ -67,7 +68,11 @@ def test_pypi_author_empty_email():
     }
     actual_author = author(data)
 
-    expected_author = Person(fullname=b"i-am-groot", name=b"i-am-groot", email=b"",)
+    expected_author = Person(
+        fullname=b"i-am-groot",
+        name=b"i-am-groot",
+        email=b"",
+    )
 
     assert actual_author == expected_author
 
@@ -80,7 +85,9 @@ def test_pypi_author_empty_name():
     actual_author = author(data)
 
     expected_author = Person(
-        fullname=b" <iam@groot.org>", name=b"", email=b"iam@groot.org",
+        fullname=b" <iam@groot.org>",
+        name=b"",
+        email=b"iam@groot.org",
     )
 
     assert actual_author == expected_author
@@ -208,9 +215,7 @@ requests_mock_datadir_missing_all = requests_mock_datadir_factory(
 
 
 def test_pypi_no_release_artifact(swh_storage, requests_mock_datadir_missing_all):
-    """Load a pypi project with all artifacts missing ends up with no snapshot
-
-    """
+    """Load a pypi project with all artifacts missing ends up with no snapshot"""
     url = "https://pypi.org/project/0805nexter"
     loader = PyPILoader(swh_storage, url)
 
@@ -238,9 +243,7 @@ def test_pypi_no_release_artifact(swh_storage, requests_mock_datadir_missing_all
 
 
 def test_pypi_fail__load_snapshot(swh_storage, requests_mock_datadir):
-    """problem during loading: {visit: failed, status: failed, no snapshot}
-
-    """
+    """problem during loading: {visit: failed, status: failed, no snapshot}"""
     url = "https://pypi.org/project/0805nexter"
     with patch(
         "swh.loader.package.pypi.loader.PyPILoader._load_snapshot",
@@ -335,14 +338,16 @@ def test_pypi_release_metadata_structure(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),
         branches={
             b"HEAD": SnapshotBranch(
-                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
+                target=b"releases/1.2.0",
+                target_type=TargetType.ALIAS,
             ),
             b"releases/1.1.0": SnapshotBranch(
                 target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
-                target=expected_release_id, target_type=TargetType.RELEASE,
+                target=expected_release_id,
+                target_type=TargetType.RELEASE,
             ),
         },
     )
@@ -363,14 +368,16 @@ def test_pypi_release_metadata_structure(
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url="https://pypi.org/",
+        type=MetadataAuthorityType.FORGE,
+        url="https://pypi.org/",
     )
     expected_metadata = [
         RawExtrinsicMetadata(
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.pypi.loader.PyPILoader", version=__version__,
+                name="swh.loader.package.pypi.loader.PyPILoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="pypi-project-json",
@@ -382,16 +389,18 @@ def test_pypi_release_metadata_structure(
         )
     ]
     assert swh_storage.raw_extrinsic_metadata_get(
-        directory_swhid, metadata_authority,
-    ) == PagedResult(next_page_token=None, results=expected_metadata,)
+        directory_swhid,
+        metadata_authority,
+    ) == PagedResult(
+        next_page_token=None,
+        results=expected_metadata,
+    )
 
 
 def test_pypi_visit_with_missing_artifact(
     swh_storage, requests_mock_datadir_missing_one
 ):
-    """Load a pypi project with some missing artifacts ends up with 1 snapshot
-
-    """
+    """Load a pypi project with some missing artifacts ends up with 1 snapshot"""
     url = "https://pypi.org/project/0805nexter"
     loader = PyPILoader(swh_storage, url)
 
@@ -403,7 +412,11 @@ def test_pypi_visit_with_missing_artifact(
     }
 
     assert_last_visit_matches(
-        swh_storage, url, status="partial", type="pypi", snapshot=expected_snapshot_id,
+        swh_storage,
+        url,
+        status="partial",
+        type="pypi",
+        snapshot=expected_snapshot_id,
     )
 
     expected_snapshot = Snapshot(
@@ -414,7 +427,8 @@ def test_pypi_visit_with_missing_artifact(
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
+                target=b"releases/1.2.0",
+                target_type=TargetType.ALIAS,
             ),
         },
     )
@@ -435,9 +449,7 @@ def test_pypi_visit_with_missing_artifact(
 
 
 def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
-    """With no prior visit, load a pypi project ends up with 1 snapshot
-
-    """
+    """With no prior visit, load a pypi project ends up with 1 snapshot"""
     url = "https://pypi.org/project/0805nexter"
     loader = PyPILoader(swh_storage, url)
 
@@ -464,7 +476,8 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
+                target=b"releases/1.2.0",
+                target_type=TargetType.ALIAS,
             ),
         },
     )
@@ -484,9 +497,7 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
 
 
 def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir):
-    """Multiple visits with no changes results in 1 same snapshot
-
-    """
+    """Multiple visits with no changes results in 1 same snapshot"""
     url = "https://pypi.org/project/0805nexter"
     loader = PyPILoader(swh_storage, url)
 
@@ -512,7 +523,8 @@ def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir)
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/1.2.0", target_type=TargetType.ALIAS,
+                target=b"releases/1.2.0",
+                target_type=TargetType.ALIAS,
             ),
         },
     )
@@ -551,9 +563,7 @@ def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir)
 
 
 def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
-    """With prior visit, 2nd load will result with a different snapshot
-
-    """
+    """With prior visit, 2nd load will result with a different snapshot"""
     url = "https://pypi.org/project/0805nexter"
     loader = PyPILoader(swh_storage, url)
 
@@ -614,7 +624,8 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/1.3.0", target_type=TargetType.ALIAS,
+                target=b"releases/1.3.0",
+                target_type=TargetType.ALIAS,
             ),
         },
     )
@@ -657,9 +668,7 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
 
 
 def test_pypi_visit_1_release_with_2_artifacts(swh_storage, requests_mock_datadir):
-    """With no prior visit, load a pypi project ends up with 1 snapshot
-
-    """
+    """With no prior visit, load a pypi project ends up with 1 snapshot"""
     url = "https://pypi.org/project/nexter"
     loader = PyPILoader(swh_storage, url)
 
@@ -691,9 +700,7 @@ def test_pypi_visit_1_release_with_2_artifacts(swh_storage, requests_mock_datadi
 
 
 def test_pypi_artifact_with_no_intrinsic_metadata(swh_storage, requests_mock_datadir):
-    """Skip artifact with no intrinsic metadata during ingestion
-
-    """
+    """Skip artifact with no intrinsic metadata during ingestion"""
     url = "https://pypi.org/project/upymenu"
     loader = PyPILoader(swh_storage, url)
 
@@ -785,7 +792,9 @@ def test_filter_out_invalid_sdists(swh_storage, requests_mock):
     requests_mock.get(
         json_url,
         json={
-            "info": {"name": project_name,},
+            "info": {
+                "name": project_name,
+            },
             "releases": {
                 version: [
                     {
