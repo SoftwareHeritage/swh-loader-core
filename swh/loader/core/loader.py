@@ -11,6 +11,8 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import sentry_sdk
 
+import sentry_sdk
+
 from swh.core.config import load_from_envvar
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.exception import NotFound
@@ -321,6 +323,7 @@ class BaseLoader:
         except Exception:
             msg = "Cleaning up dangling data failed! Continue loading."
             self.log.warning(msg)
+            sentry_sdk.capture_exception()
 
         self._store_origin_visit()
 
@@ -388,6 +391,7 @@ class BaseLoader:
                     },
                 },
             )
+            sentry_sdk.capture_exception()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
                 visit=self.visit.visit,
