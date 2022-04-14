@@ -97,9 +97,7 @@ class DepositPackageInfo(BasePackageInfo):
 
 
 class DepositLoader(PackageLoader[DepositPackageInfo]):
-    """Load a deposited artifact into swh archive.
-
-    """
+    """Load a deposited artifact into swh archive."""
 
     visit_type = "deposit"
 
@@ -161,7 +159,9 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
     def get_metadata_fetcher(self) -> MetadataFetcher:
         tool = self.metadata()["tool"]
         return MetadataFetcher(
-            name=tool["name"], version=tool["version"], metadata=tool["configuration"],
+            name=tool["name"],
+            version=tool["version"],
+            metadata=tool["configuration"],
         )
 
     def get_package_info(
@@ -178,13 +178,14 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
     def download_package(
         self, p_info: DepositPackageInfo, tmpdir: str
     ) -> List[Tuple[str, Mapping]]:
-        """Override to allow use of the dedicated deposit client
-
-        """
+        """Override to allow use of the dedicated deposit client"""
         return [self.client.archive_get(self.deposit_id, tmpdir, p_info.filename)]
 
     def build_release(
-        self, p_info: DepositPackageInfo, uncompressed_path: str, directory: Sha1Git,
+        self,
+        p_info: DepositPackageInfo,
+        uncompressed_path: str,
+        directory: Sha1Git,
     ) -> Optional[Release]:
         message = (
             f"{p_info.client}: Deposit {p_info.id} in collection {p_info.collection}"
@@ -256,7 +257,9 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         try:
             if not success:
                 self.client.status_update(
-                    self.deposit_id, status="failed", errors=errors,
+                    self.deposit_id,
+                    status="failed",
+                    errors=errors,
                 )
                 return r
 
@@ -291,9 +294,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
 
 
 def parse_author(author) -> Person:
-    """See prior fixme
-
-    """
+    """See prior fixme"""
     return Person(
         fullname=author["fullname"].encode("utf-8"),
         name=author["name"].encode("utf-8"),
@@ -302,9 +303,7 @@ def parse_author(author) -> Person:
 
 
 class ApiClient:
-    """Private Deposit Api client
-
-    """
+    """Private Deposit Api client"""
 
     def __init__(self, url, auth: Optional[Mapping[str, str]]):
         self.base_url = url.rstrip("/")
@@ -329,9 +328,7 @@ class ApiClient:
     def archive_get(
         self, deposit_id: Union[int, str], tmpdir: str, filename: str
     ) -> Tuple[str, Dict]:
-        """Retrieve deposit's archive artifact locally
-
-        """
+        """Retrieve deposit's archive artifact locally"""
         url = f"{self.base_url}/{deposit_id}/raw/"
         return download(url, dest=tmpdir, filename=filename, auth=self.auth)
 
@@ -339,9 +336,7 @@ class ApiClient:
         return f"{self.base_url}/{deposit_id}/meta/"
 
     def metadata_get(self, deposit_id: Union[int, str]) -> Dict[str, Any]:
-        """Retrieve deposit's metadata artifact as json
-
-        """
+        """Retrieve deposit's metadata artifact as json"""
         url = self.metadata_url(deposit_id)
         r = self.do("get", url)
         if r.ok:
@@ -362,7 +357,7 @@ class ApiClient:
         origin_url: Optional[str] = None,
     ):
         """Update deposit's information including status, and persistent
-           identifiers result of the loading.
+        identifiers result of the loading.
 
         """
         url = f"{self.base_url}/{deposit_id}/update/"

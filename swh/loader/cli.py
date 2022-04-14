@@ -56,14 +56,15 @@ def get_loader(name: str, **kwargs) -> Any:
     "--config-file",
     "-C",
     default=None,
-    type=click.Path(exists=True, dir_okay=False,),
+    type=click.Path(
+        exists=True,
+        dir_okay=False,
+    ),
     help="Configuration file.",
 )
 @click.pass_context
 def loader(ctx, config_file):
-    """Loader cli tools
-
-    """
+    """Loader cli tools"""
     from os import environ
 
     from swh.core.config import read

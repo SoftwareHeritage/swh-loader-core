@@ -182,7 +182,10 @@ def test_clean_sources_invalid_sources(swh_storage, requests_mock_datadir):
         "sources": valid_sources
         + [
             # integrity is missing
-            {"type": "url", "urls": ["my-url.tgz"],},
+            {
+                "type": "url",
+                "urls": ["my-url.tgz"],
+            },
             # urls is not a list
             {"type": "url", "urls": "my-url.zip", "integrity": "my-integrity"},
             # type is not url
@@ -327,7 +330,8 @@ def test_loader_one_visit(swh_storage, requests_mock_datadir, raw_sources):
         object_type=ExtendedObjectType.SNAPSHOT, object_id=visit_status.snapshot
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url=sources_url,
+        type=MetadataAuthorityType.FORGE,
+        url=sources_url,
     )
     expected_metadata = [
         RawExtrinsicMetadata(
@@ -344,8 +348,12 @@ def test_loader_one_visit(swh_storage, requests_mock_datadir, raw_sources):
         )
     ]
     assert swh_storage.raw_extrinsic_metadata_get(
-        snapshot_swhid, metadata_authority,
-    ) == PagedResult(next_page_token=None, results=expected_metadata,)
+        snapshot_swhid,
+        metadata_authority,
+    ) == PagedResult(
+        next_page_token=None,
+        results=expected_metadata,
+    )
 
 
 def test_uncompress_failure(swh_storage, requests_mock_datadir):
@@ -581,9 +589,7 @@ def test_raise_exception(swh_storage, requests_mock_datadir, mocker):
 def test_load_nixguix_one_common_artifact_from_other_loader(
     swh_storage, datadir, requests_mock_datadir_visits, caplog
 ):
-    """Misformatted revision should be caught and logged, then loading continues
-
-    """
+    """Misformatted revision should be caught and logged, then loading continues"""
     caplog.set_level(logging.ERROR, "swh.loader.package.nixguix.loader")
 
     # 1. first ingest with for example the archive loader

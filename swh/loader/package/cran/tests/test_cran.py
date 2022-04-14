@@ -39,7 +39,8 @@ SNAPSHOT = Snapshot(
             target=b"releases/2.22-6", target_type=TargetType.ALIAS
         ),
         b"releases/2.22-6": SnapshotBranch(
-            target=RELEASE_ID, target_type=TargetType.RELEASE,
+            target=RELEASE_ID,
+            target_type=TargetType.RELEASE,
         ),
     },
 )
@@ -301,7 +302,11 @@ def test_cran_2_visits_same_origin(swh_storage, requests_mock_datadir):
     }
 
     assert_last_visit_matches(
-        swh_storage, origin_url, status="full", type="cran", snapshot=SNAPSHOT.id,
+        swh_storage,
+        origin_url,
+        status="full",
+        type="cran",
+        snapshot=SNAPSHOT.id,
     )
 
     visit_stats2 = get_stats(swh_storage)
@@ -364,14 +369,15 @@ def test_cran_parse_debian_control_unicode_issue(datadir):
 
 @pytest.mark.parametrize(
     "method_name",
-    ["build_extrinsic_snapshot_metadata", "build_extrinsic_origin_metadata",],
+    [
+        "build_extrinsic_snapshot_metadata",
+        "build_extrinsic_origin_metadata",
+    ],
 )
 def test_cran_fail_to_build_or_load_extrinsic_metadata(
     method_name, swh_storage, requests_mock_datadir
 ):
-    """problem during loading: {visit: failed, status: failed, no snapshot}
-
-    """
+    """problem during loading: {visit: failed, status: failed, no snapshot}"""
     version = "2.22-6"
     base_url = "https://cran.r-project.org"
     origin_url = f"{base_url}/Packages/Recommended_KernSmooth/index.html"

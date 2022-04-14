@@ -18,7 +18,7 @@ ORIGIN = Origin(url="some-url")
 
 class DummyLoader:
     """Base Loader to overload and simplify the base class (technical: to avoid repetition
-       in other *Loader classes)"""
+    in other *Loader classes)"""
 
     def cleanup(self):
         pass
@@ -39,15 +39,15 @@ class DummyLoader:
         self.visit_type = "git"
         self.storage.origin_add([ORIGIN])
         visit = OriginVisit(
-            origin=self.origin_url, date=self.visit_date, type=self.visit_type,
+            origin=self.origin_url,
+            date=self.visit_date,
+            type=self.visit_type,
         )
         self.visit = self.storage.origin_visit_add([visit])[0]
 
 
 class DummyDVCSLoader(DummyLoader, DVCSLoader):
-    """DVCS Loader that does nothing in regards to DAG objects.
-
-    """
+    """DVCS Loader that does nothing in regards to DAG objects."""
 
     def get_contents(self):
         return []
@@ -69,9 +69,7 @@ class DummyDVCSLoader(DummyLoader, DVCSLoader):
 
 
 class DummyBaseLoader(DummyLoader, BaseLoader):
-    """Buffered loader will send new data when threshold is reached
-
-    """
+    """Buffered loader will send new data when threshold is reached"""
 
     def store_data(self):
         pass
@@ -177,7 +175,10 @@ def test_dvcs_loader_exc_partial_visit(swh_storage, caplog):
 
     # still resulted in a partial visit with a snapshot (somehow)
     _check_load_failure(
-        caplog, loader, RuntimeError, "Failed to get contents!",
+        caplog,
+        loader,
+        RuntimeError,
+        "Failed to get contents!",
     )
 
 
@@ -215,9 +216,7 @@ def test_dvcs_loader_storage_exc_failed_visit(swh_storage, caplog):
 
 
 class DummyDVCSLoaderNotFound(DummyDVCSLoader, BaseLoader):
-    """A loader which raises a not_found exception during the prepare method call
-
-    """
+    """A loader which raises a not_found exception during the prepare method call"""
 
     def prepare(*args, **kwargs):
         raise NotFound("Unknown origin!")

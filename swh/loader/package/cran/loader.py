@@ -152,9 +152,7 @@ def extract_intrinsic_metadata(dir_path: str) -> Dict[str, Any]:
 
 
 def parse_date(date: Optional[str]) -> Optional[TimestampWithTimezone]:
-    """Parse a date into a datetime
-
-    """
+    """Parse a date into a datetime"""
     assert not date or isinstance(date, str)
     dt: Optional[datetime.datetime] = None
     if not date:

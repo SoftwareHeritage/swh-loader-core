@@ -34,7 +34,7 @@ DEPOSIT_URL = "https://deposit.softwareheritage.org/1/private"
 @pytest.fixture
 def requests_mock_datadir(requests_mock_datadir):
     """Enhance default mock data to mock put requests as the loader does some
-       internal update queries there.
+    internal update queries there.
 
     """
     requests_mock_datadir.put(re.compile("https"))
@@ -54,9 +54,7 @@ def test_deposit_init_ok(swh_storage, deposit_client, swh_loader_config):
 
 
 def test_deposit_from_configfile(swh_config):
-    """Ensure the deposit instantiation is ok
-
-    """
+    """Ensure the deposit instantiation is ok"""
     loader = DepositLoader.from_configfile(
         url="some-url", deposit_id="666", default_filename="archive.zip"
     )
@@ -100,16 +98,16 @@ def test_deposit_loading_unknown_deposit(
 
 
 requests_mock_datadir_missing_one = requests_mock_datadir_factory(
-    ignore_urls=[f"{DEPOSIT_URL}/666/raw/",]
+    ignore_urls=[
+        f"{DEPOSIT_URL}/666/raw/",
+    ]
 )
 
 
 def test_deposit_loading_failure_to_retrieve_1_artifact(
     swh_storage, deposit_client, requests_mock_datadir_missing_one
 ):
-    """Deposit with missing artifact ends up with an uneventful/partial visit
-
-    """
+    """Deposit with missing artifact ends up with an uneventful/partial visit"""
     # private api url form: 'https://deposit.s.o/1/private/hal/666/raw/'
     url = "some-url-2"
     deposit_id = 666
@@ -188,7 +186,10 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
-            b"HEAD": SnapshotBranch(target=release_id, target_type=TargetType.RELEASE,),
+            b"HEAD": SnapshotBranch(
+                target=release_id,
+                target_type=TargetType.RELEASE,
+            ),
         },
     )
     check_snapshot(expected_snapshot, storage=loader.storage)
@@ -216,7 +217,10 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
 
     # check metadata
 
-    fetcher = MetadataFetcher(name="swh-deposit", version="0.0.1",)
+    fetcher = MetadataFetcher(
+        name="swh-deposit",
+        version="0.0.1",
+    )
 
     authority = MetadataAuthority(
         type=MetadataAuthorityType.DEPOSIT_CLIENT,
@@ -286,9 +290,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
 
 
 def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir):
-    """Field dates should be se appropriately
-
-    """
+    """Field dates should be se appropriately"""
     external_id = "some-external-id"
     url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
     deposit_id = 777
@@ -353,7 +355,10 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         "configuration": {"sword_version": "2"},
     }
 
-    fetcher = MetadataFetcher(name="swh-deposit", version="0.0.1",)
+    fetcher = MetadataFetcher(
+        name="swh-deposit",
+        version="0.0.1",
+    )
 
     authority = MetadataAuthority(
         type=MetadataAuthorityType.DEPOSIT_CLIENT,
@@ -528,7 +533,10 @@ def test_deposit_loading_ok_release_notes(
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
-            b"HEAD": SnapshotBranch(target=release_id, target_type=TargetType.RELEASE,),
+            b"HEAD": SnapshotBranch(
+                target=release_id,
+                target_type=TargetType.RELEASE,
+            ),
         },
     )
     check_snapshot(expected_snapshot, storage=loader.storage)

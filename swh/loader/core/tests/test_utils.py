@@ -39,9 +39,7 @@ def prepare_arborescence_from(tmpdir, folder_names):
 
 
 def assert_dirs(actual_dirs, expected_dirs):
-    """Assert that the directory actual and expected match
-
-    """
+    """Assert that the directory actual and expected match"""
     for d in actual_dirs:
         assert d in expected_dirs
     assert len(actual_dirs) == len(expected_dirs)
@@ -55,11 +53,13 @@ def test_clean_dangling_folders_0(tmpdir):
 
 @patch("swh.loader.core.utils.psutil.pid_exists", return_value=False)
 def test_clean_dangling_folders_1(mock_pid_exists, tmpdir):
-    """Folder which matches pattern with dead pid are cleaned up
-
-    """
+    """Folder which matches pattern with dead pid are cleaned up"""
     rootpath, dangling = prepare_arborescence_from(
-        tmpdir, ["something", "swh.loader.svn-4321.noisynoise",]
+        tmpdir,
+        [
+            "something",
+            "swh.loader.svn-4321.noisynoise",
+        ],
     )
 
     clean_dangling_folders(rootpath, "swh.loader.svn")
@@ -71,18 +71,26 @@ def test_clean_dangling_folders_1(mock_pid_exists, tmpdir):
 
 @patch("swh.loader.core.utils.psutil.pid_exists", return_value=True)
 def test_clean_dangling_folders_2(mock_pid_exists, tmpdir):
-    """Folder which matches pattern with live pid are skipped
-
-    """
+    """Folder which matches pattern with live pid are skipped"""
     rootpath, dangling = prepare_arborescence_from(
-        tmpdir, ["something", "swh.loader.hg-1234.noisynoise",]
+        tmpdir,
+        [
+            "something",
+            "swh.loader.hg-1234.noisynoise",
+        ],
     )
 
     clean_dangling_folders(rootpath, "swh.loader.hg")
 
     actual_dirs = os.listdir(rootpath)
     mock_pid_exists.assert_called_once_with(1234)
-    assert_dirs(actual_dirs, ["something", "swh.loader.hg-1234.noisynoise",])
+    assert_dirs(
+        actual_dirs,
+        [
+            "something",
+            "swh.loader.hg-1234.noisynoise",
+        ],
+    )
 
 
 @patch("swh.loader.core.utils.psutil.pid_exists", return_value=False)
@@ -91,12 +99,16 @@ def test_clean_dangling_folders_2(mock_pid_exists, tmpdir):
     side_effect=ValueError("Could not remove for reasons"),
 )
 def test_clean_dangling_folders_3(mock_rmtree, mock_pid_exists, tmpdir):
-    """Error in trying to clean dangling folders are skipped
-
-    """
+    """Error in trying to clean dangling folders are skipped"""
     path1 = "thingy"
     path2 = "swh.loader.git-1468.noisy"
-    rootpath, dangling = prepare_arborescence_from(tmpdir, [path1, path2,])
+    rootpath, dangling = prepare_arborescence_from(
+        tmpdir,
+        [
+            path1,
+            path2,
+        ],
+    )
 
     clean_dangling_folders(rootpath, "swh.loader.git")
 
@@ -155,7 +167,11 @@ VISIT_DATE = datetime(2021, 2, 17, 15, 50, 4, 518963)
 
 @pytest.mark.parametrize(
     "input_visit_date,expected_date",
-    [(None, None), (VISIT_DATE, VISIT_DATE), (VISIT_DATE_STR, VISIT_DATE),],
+    [
+        (None, None),
+        (VISIT_DATE, VISIT_DATE),
+        (VISIT_DATE_STR, VISIT_DATE),
+    ],
 )
 def test_utils_parse_visit_date(input_visit_date, expected_date):
     assert parse_visit_date(input_visit_date) == expected_date

@@ -158,9 +158,13 @@ def test_opam_loader_one_version(
     expected_snapshot = Snapshot(
         id=expected_snapshot_id,
         branches={
-            b"HEAD": SnapshotBranch(target=b"agrid.0.1", target_type=TargetType.ALIAS,),
+            b"HEAD": SnapshotBranch(
+                target=b"agrid.0.1",
+                target_type=TargetType.ALIAS,
+            ),
             b"agrid.0.1": SnapshotBranch(
-                target=release_id, target_type=TargetType.RELEASE,
+                target=release_id,
+                target_type=TargetType.RELEASE,
             ),
         },
     )
@@ -224,7 +228,8 @@ def test_opam_loader_many_version(
         id=expected_snapshot_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target=b"directories.0.3", target_type=TargetType.ALIAS,
+                target=b"directories.0.3",
+                target_type=TargetType.ALIAS,
             ),
             b"directories.0.1": SnapshotBranch(
                 target=hash_to_bytes("1c88d466b3d57a619e296999322d096fa37bb1c2"),
@@ -288,7 +293,8 @@ def test_opam_release(
         version="0.1",
         directory_extrinsic_metadata=[
             RawExtrinsicMetadataCore(
-                metadata=OCB_METADATA, format="opam-package-definition",
+                metadata=OCB_METADATA,
+                format="opam-package-definition",
             )
         ],
     )
@@ -301,9 +307,13 @@ def test_opam_release(
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),
         branches={
-            b"HEAD": SnapshotBranch(target=b"ocb.0.1", target_type=TargetType.ALIAS,),
+            b"HEAD": SnapshotBranch(
+                target=b"ocb.0.1",
+                target_type=TargetType.ALIAS,
+            ),
             b"ocb.0.1": SnapshotBranch(
-                target=release_id, target_type=TargetType.RELEASE,
+                target=release_id,
+                target_type=TargetType.RELEASE,
             ),
         },
     )
@@ -350,9 +360,13 @@ def test_opam_metadata(
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),
         branches={
-            b"HEAD": SnapshotBranch(target=b"ocb.0.1", target_type=TargetType.ALIAS,),
+            b"HEAD": SnapshotBranch(
+                target=b"ocb.0.1",
+                target_type=TargetType.ALIAS,
+            ),
             b"ocb.0.1": SnapshotBranch(
-                target=expected_release_id, target_type=TargetType.RELEASE,
+                target=expected_release_id,
+                target_type=TargetType.RELEASE,
             ),
         },
     )
@@ -373,14 +387,16 @@ def test_opam_metadata(
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
     metadata_authority = MetadataAuthority(
-        type=MetadataAuthorityType.FORGE, url=opam_url,
+        type=MetadataAuthorityType.FORGE,
+        url=opam_url,
     )
     expected_metadata = [
         RawExtrinsicMetadata(
             target=directory_swhid,
             authority=metadata_authority,
             fetcher=MetadataFetcher(
-                name="swh.loader.package.opam.loader.OpamLoader", version=__version__,
+                name="swh.loader.package.opam.loader.OpamLoader",
+                version=__version__,
             ),
             discovery_date=loader.visit_date,
             format="opam-package-definition",
@@ -390,5 +406,9 @@ def test_opam_metadata(
         )
     ]
     assert swh_storage.raw_extrinsic_metadata_get(
-        directory_swhid, metadata_authority,
-    ) == PagedResult(next_page_token=None, results=expected_metadata,)
+        directory_swhid,
+        metadata_authority,
+    ) == PagedResult(
+        next_page_token=None,
+        results=expected_metadata,
+    )

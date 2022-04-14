@@ -62,9 +62,7 @@ class ArchivePackageInfo(BasePackageInfo):
 
 
 class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
-    """Load archive origin's artifact files into swh archive
-
-    """
+    """Load archive origin's artifact files into swh archive"""
 
     visit_type = "tar"
 

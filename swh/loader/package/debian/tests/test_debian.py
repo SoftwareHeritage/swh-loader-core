@@ -110,10 +110,12 @@ PACKAGES_PER_VERSION = {
 
 
 def test_debian_first_visit(swh_storage, requests_mock_datadir):
-    """With no prior visit, load a gnu project ends up with 1 snapshot
-
-    """
-    loader = DebianLoader(swh_storage, URL, packages=PACKAGE_PER_VERSION,)
+    """With no prior visit, load a gnu project ends up with 1 snapshot"""
+    loader = DebianLoader(
+        swh_storage,
+        URL,
+        packages=PACKAGE_PER_VERSION,
+    )
 
     actual_load_status = loader.load()
     expected_snapshot_id = "f9e4d0d200433dc998ad2ca40ee1244785fe6ed1"
@@ -136,7 +138,8 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=release_id,
+                target_type=TargetType.RELEASE,
+                target=release_id,
             )
         },
     )  # different than the previous loader as no release is done
@@ -182,10 +185,12 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
 
 
 def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadir):
-    """With no prior visit, load a debian project ends up with 1 snapshot
-
-    """
-    loader = DebianLoader(swh_storage, URL, packages=PACKAGE_PER_VERSION,)
+    """With no prior visit, load a debian project ends up with 1 snapshot"""
+    loader = DebianLoader(
+        swh_storage,
+        URL,
+        packages=PACKAGE_PER_VERSION,
+    )
 
     actual_load_status = loader.load()
 
@@ -467,7 +472,11 @@ def test_debian_get_intrinsic_package_metadata(
 
 
 def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
-    loader = DebianLoader(swh_storage, URL, packages=PACKAGES_PER_VERSION,)
+    loader = DebianLoader(
+        swh_storage,
+        URL,
+        packages=PACKAGES_PER_VERSION,
+    )
 
     actual_load_status = loader.load()
     expected_snapshot_id = "474c0e3d5796d15363031c333533527d659c559e"

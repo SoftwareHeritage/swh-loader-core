@@ -13,7 +13,8 @@ def test_tasks_cran_loader(
     res = swh_scheduler_celery_app.send_task(
         "swh.loader.package.cran.tasks.LoadCRAN",
         kwargs=dict(
-            url="some-url", artifacts=[{"version": "1.2.3", "url": "artifact-url"}],
+            url="some-url",
+            artifacts=[{"version": "1.2.3", "url": "artifact-url"}],
         ),
     )
     assert res
