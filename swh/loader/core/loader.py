@@ -238,13 +238,6 @@ class BaseLoader:
         """
         raise NotImplementedError
 
-    def store_metadata(self) -> None:
-        """Store fetched metadata in the database.
-
-        For more information, see implementation in :class:`DepositLoader`.
-        """
-        pass
-
     def load_status(self) -> Dict[str, str]:
         """Detailed loading status.
 
@@ -334,7 +327,6 @@ class BaseLoader:
                 if not more_data_to_fetch:
                     break
 
-            self.store_metadata()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
                 visit=self.visit.visit,
