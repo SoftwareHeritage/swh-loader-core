@@ -85,7 +85,7 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
     # base class.
     @cached_method
     def raw_sources(self):
-        return retrieve_sources(self.url)
+        return retrieve_sources(self.origin.url)
 
     @cached_method
     def supported_sources(self):
@@ -109,7 +109,7 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
     def get_metadata_authority(self):
         return MetadataAuthority(
             type=MetadataAuthorityType.FORGE,
-            url=self.url,
+            url=self.origin.url,
             metadata={},
         )
 

@@ -56,7 +56,7 @@ class BaseLoader:
     """
 
     visit_date: Optional[datetime.datetime]
-    origin: Optional[Origin]
+    origin: Origin
     origin_metadata: Dict[str, Any]
     loaded_snapshot_id: Optional[Sha1Git]
 
@@ -83,7 +83,6 @@ class BaseLoader:
 
         # possibly overridden in self.prepare method
         self.visit_date = None
-        self.origin = None
 
         if not hasattr(self, "visit_type"):
             self.visit_type: Optional[str] = None

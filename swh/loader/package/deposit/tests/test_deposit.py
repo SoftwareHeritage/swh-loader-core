@@ -48,7 +48,7 @@ def test_deposit_init_ok(swh_storage, deposit_client, swh_loader_config):
         swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
     )  # Something that does not exist
 
-    assert loader.url == url
+    assert loader.origin.url == url
     assert loader.client is not None
     assert loader.client.base_url == swh_loader_config["deposit"]["url"]
 

@@ -134,7 +134,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         if not os.path.exists(package_dir):
             raise ValueError(
                 f"can't get versions for package {self.opam_package} "
-                f"(at url {self.url})."
+                f"(at url {self.origin.url})."
             )
 
         versions = [
@@ -143,7 +143,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         if not versions:
             raise ValueError(
                 f"can't get versions for package {self.opam_package} "
-                f"(at url {self.url})"
+                f"(at url {self.origin.url})"
             )
         versions.sort()
         return versions
@@ -214,7 +214,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         if url is None:
             raise ValueError(
                 f"can't get field url.src: for version {version} of package {self.opam_package}"
-                f" (at url {self.url}) from `opam show`"
+                f" (at url {self.origin.url}) from `opam show`"
             )
 
         authors_field = self.get_enclosed_single_line_field("authors:", version)
