@@ -84,7 +84,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
         max_content_size: Optional[int] = None,
     ):
         super().__init__(storage=storage, url=url, max_content_size=max_content_size)
-        self.provider_url = pypi_api_url(self.url)
+        self.provider_url = pypi_api_url(self.origin.url)
 
     @cached_method
     def _raw_info(self) -> bytes:
@@ -102,7 +102,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
         return self.info()["info"]["version"]
 
     def get_metadata_authority(self):
-        p_url = urlparse(self.url)
+        p_url = urlparse(self.origin.url)
         return MetadataAuthority(
             type=MetadataAuthorityType.FORGE,
             url=f"{p_url.scheme}://{p_url.netloc}/",

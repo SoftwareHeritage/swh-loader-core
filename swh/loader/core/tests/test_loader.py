@@ -11,14 +11,41 @@ from swh.loader.core.loader import BaseLoader, DVCSLoader
 from swh.loader.exception import NotFound
 from swh.loader.tests import assert_last_visit_matches
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import Origin, OriginVisit, Snapshot
+from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    MetadataFetcher,
+    Origin,
+    RawExtrinsicMetadata,
+    Snapshot,
+)
 
 ORIGIN = Origin(url="some-url")
+
+METADATA_AUTHORITY = MetadataAuthority(
+    type=MetadataAuthorityType.FORGE, url="http://example.org/"
+)
+REMD = RawExtrinsicMetadata(
+    target=ORIGIN.swhid(),
+    discovery_date=datetime.datetime.now(tz=datetime.timezone.utc),
+    authority=METADATA_AUTHORITY,
+    fetcher=MetadataFetcher(
+        name="test fetcher",
+        version="0.0.1",
+    ),
+    format="test-format",
+    metadata=b'{"foo": "bar"}',
+)
 
 
 class DummyLoader:
     """Base Loader to overload and simplify the base class (technical: to avoid repetition
     in other *Loader classes)"""
+
+    visit_type = "git"
+
+    def __init__(self, storage, *args, **kwargs):
+        super().__init__(storage, ORIGIN.url, *args, **kwargs)
 
     def cleanup(self):
         pass
@@ -31,19 +58,6 @@ class DummyLoader:
 
     def get_snapshot_id(self):
         return None
-
-    def prepare_origin_visit(self, *args, **kwargs):
-        self.origin = ORIGIN
-        self.origin_url = ORIGIN.url
-        self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
-        self.visit_type = "git"
-        self.storage.origin_add([ORIGIN])
-        visit = OriginVisit(
-            origin=self.origin_url,
-            date=self.visit_date,
-            type=self.visit_type,
-        )
-        self.visit = self.storage.origin_visit_add([visit])[0]
 
 
 class DummyDVCSLoader(DummyLoader, DVCSLoader):
