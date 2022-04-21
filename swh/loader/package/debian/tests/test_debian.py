@@ -471,11 +471,11 @@ def test_debian_get_intrinsic_package_metadata(
     )
 
 
-def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
+def _check_debian_loading(swh_storage, packages):
     loader = DebianLoader(
         swh_storage,
         URL,
-        packages=PACKAGES_PER_VERSION,
+        packages=packages,
     )
 
     actual_load_status = loader.load()
@@ -508,6 +508,10 @@ def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
     )
 
     check_snapshot(expected_snapshot, swh_storage)
+
+
+def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
+    _check_debian_loading(swh_storage, PACKAGES_PER_VERSION)
 
 
 def test_debian_loader_only_md5_sum_in_dsc(swh_storage, requests_mock_datadir):
@@ -517,35 +521,14 @@ def test_debian_loader_only_md5_sum_in_dsc(swh_storage, requests_mock_datadir):
         for package_data in package_files["files"].values():
             del package_data["sha256"]
 
-    loader = DebianLoader(swh_storage, URL, packages=packages_per_version)
+    _check_debian_loading(swh_storage, packages_per_version)
 
-    actual_load_status = loader.load()
-    expected_snapshot_id = "474c0e3d5796d15363031c333533527d659c559e"
-    assert actual_load_status == {
-        "status": "eventful",
-        "snapshot_id": expected_snapshot_id,
-    }
 
-    assert_last_visit_matches(
-        swh_storage,
-        URL,
-        status="full",
-        type="deb",
-        snapshot=hash_to_bytes(expected_snapshot_id),
-    )
+def test_debian_loader_no_md5_sum_in_dsc(swh_storage, requests_mock_datadir):
 
-    expected_snapshot = Snapshot(
-        id=hash_to_bytes(expected_snapshot_id),
-        branches={
-            b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.RELEASE,
-                target=hash_to_bytes("de96ae3d3e136f5c1709117059e2a2c05b8ee5ae"),
-            ),
-            b"releases/buster/contrib/0.7.2-4": SnapshotBranch(
-                target_type=TargetType.RELEASE,
-                target=hash_to_bytes("11824484c585319302ea4fde4917faf78dfb1973"),
-            ),
-        },
-    )
+    packages_per_version = deepcopy(PACKAGES_PER_VERSION)
+    for package_files in packages_per_version.values():
+        for package_data in package_files["files"].values():
+            del package_data["md5sum"]
 
-    check_snapshot(expected_snapshot, swh_storage)
+    _check_debian_loading(swh_storage, packages_per_version)

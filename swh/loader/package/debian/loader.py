@@ -302,7 +302,9 @@ def download_package(p_info: DebianPackageInfo, tmpdir: Any) -> Mapping[str, Any
     for filename, fileinfo in p_info.files.items():
         uri = fileinfo.uri
         logger.debug("fileinfo: %s", fileinfo)
-        extrinsic_hashes = {"md5": fileinfo.md5sum}
+        extrinsic_hashes = {}
+        if fileinfo.md5sum:
+            extrinsic_hashes["md5"] = fileinfo.md5sum
         if fileinfo.sha256:
             extrinsic_hashes["sha256"] = fileinfo.sha256
         if fileinfo.sha1:
