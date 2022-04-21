@@ -55,19 +55,21 @@ class BaseLoader:
 
     """
 
-    visit_date: Optional[datetime.datetime]
+    visit_type: str
     origin: Origin
     loaded_snapshot_id: Optional[Sha1Git]
 
     def __init__(
         self,
         storage: StorageInterface,
+        origin_url: str,
         logging_class: Optional[str] = None,
         save_data_path: Optional[str] = None,
         max_content_size: Optional[int] = None,
     ):
         super().__init__()
         self.storage = storage
+        self.origin = Origin(url=origin_url)
         self.max_content_size = int(max_content_size) if max_content_size else None
 
         if logging_class is None:
@@ -81,10 +83,7 @@ class BaseLoader:
         _log.setLevel(logging.WARN)
 
         # possibly overridden in self.prepare method
-        self.visit_date = None
-
-        if not hasattr(self, "visit_type"):
-            self.visit_type: Optional[str] = None
+        self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
 
         self.loaded_snapshot_id = None
 
@@ -140,7 +139,7 @@ class BaseLoader:
     def get_save_data_path(self) -> str:
         """The path to which we archive the loader's raw data"""
         if not hasattr(self, "__save_data_path"):
-            year = str(self.visit_date.year)  # type: ignore
+            year = str(self.visit_date.year)
 
             assert self.origin
             url = self.origin.url.encode("utf-8")
@@ -166,22 +165,11 @@ class BaseLoader:
         """Last step executed by the loader."""
         raise NotImplementedError
 
-    def prepare_origin_visit(self) -> None:
-        """First step executed by the loader to prepare origin and visit
-        references. Set/update self.origin, and
-        optionally self.origin_url, self.visit_date.
-
-        """
-        raise NotImplementedError
-
     def _store_origin_visit(self) -> None:
         """Store origin and visit references. Sets the self.visit references."""
         assert self.origin
         self.storage.origin_add([self.origin])
 
-        if not self.visit_date:  # now as default visit_date if not provided
-            self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
-        assert isinstance(self.visit_date, datetime.datetime)
         assert isinstance(self.visit_type, str)
         self.visit = list(
             self.storage.origin_visit_add(
@@ -281,18 +269,16 @@ class BaseLoader:
     def load(self) -> Dict[str, str]:
         r"""Loading logic for the loader to follow:
 
-        - 1. Call :meth:`prepare_origin_visit` to prepare the
-             origin and visit we will associate loading data to
-        - 2. Store the actual ``origin_visit`` to storage
-        - 3. Call :meth:`prepare` to prepare any eventual state
-        - 4. Call :meth:`get_origin` to get the origin we work with and store
+        - Store the actual ``origin_visit`` to storage
+        - Call :meth:`prepare` to prepare any eventual state
+        - Call :meth:`get_origin` to get the origin we work with and store
 
         - while True:
 
-          - 5. Call :meth:`fetch_data` to fetch the data to store
-          - 6. Call :meth:`store_data` to store the data
+          - Call :meth:`fetch_data` to fetch the data to store
+          - Call :meth:`store_data` to store the data
 
-        - 7. Call :meth:`cleanup` to clean up any eventual state put in place
+        - Call :meth:`cleanup` to clean up any eventual state put in place
              in :meth:`prepare` method.
 
         """
@@ -302,12 +288,8 @@ class BaseLoader:
             msg = "Cleaning up dangling data failed! Continue loading."
             self.log.warning(msg)
 
-        self.prepare_origin_visit()
         self._store_origin_visit()
 
-        assert (
-            self.origin
-        ), "The method `prepare_origin_visit` call should set the origin (Origin)"
         assert (
             self.visit.visit
         ), "The method `_store_origin_visit` should set the visit (OriginVisit)"

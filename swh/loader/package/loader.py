@@ -169,8 +169,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             url: Origin url to load data from
 
         """
-        super().__init__(storage=storage, max_content_size=max_content_size)
-        self.origin = Origin(url=url)
+        super().__init__(
+            storage=storage, origin_url=url, max_content_size=max_content_size
+        )
         self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
 
     def get_versions(self) -> Sequence[str]:
