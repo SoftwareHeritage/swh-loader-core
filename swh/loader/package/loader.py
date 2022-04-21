@@ -151,16 +151,7 @@ TPackageInfo = TypeVar("TPackageInfo", bound=BasePackageInfo)
 
 
 class PackageLoader(BaseLoader, Generic[TPackageInfo]):
-    # Origin visit type (str) set by the loader
-    visit_type = ""
-    visit_date: datetime.datetime
-
-    def __init__(
-        self,
-        storage: StorageInterface,
-        url: str,
-        max_content_size: Optional[int] = None,
-    ):
+    def __init__(self, storage: StorageInterface, url: str, **kwargs: Any):
         """Loader's constructor. This raises exception if the minimal required
            configuration is missing (cf. fn:`check` method).
 
@@ -169,10 +160,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             url: Origin url to load data from
 
         """
-        super().__init__(
-            storage=storage, origin_url=url, max_content_size=max_content_size
-        )
-        self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
+        super().__init__(storage=storage, origin_url=url, **kwargs)
 
     def get_versions(self) -> Sequence[str]:
         """Return the list of all published package versions.

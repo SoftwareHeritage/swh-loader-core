@@ -88,6 +88,8 @@ ORIGIN_METADATA = [
 
 
 class MetadataTestLoader(PackageLoader[BasePackageInfo]):
+    visit_type = "metadata-test"
+
     def get_versions(self) -> Sequence[str]:
         return ["v1.0.0"]
 

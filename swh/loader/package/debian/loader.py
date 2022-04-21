@@ -132,7 +132,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         storage: StorageInterface,
         url: str,
         packages: Mapping[str, Any],
-        max_content_size: Optional[int] = None,
+        **kwargs: Any,
     ):
         """Debian Loader implementation.
 
@@ -173,7 +173,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
               }
 
         """
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
         self.packages = packages
 
     def get_versions(self) -> Sequence[str]:
