@@ -185,7 +185,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
     def get_package_info(self, version: str) -> Iterator[Tuple[str, MavenPackageInfo]]:
         a_metadata = self.version_artifact[version]
         yield release_name(a_metadata["version"]), MavenPackageInfo.from_metadata(
-            self.url, a_metadata
+            self.origin.url, a_metadata
         )
 
     def build_release(

@@ -169,8 +169,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             url: Origin url to load data from
 
         """
-        super().__init__(storage=storage, max_content_size=max_content_size)
-        self.url = url
+        super().__init__(
+            storage=storage, origin_url=url, max_content_size=max_content_size
+        )
         self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
 
     def get_versions(self) -> Sequence[str]:
@@ -222,7 +223,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
     def last_snapshot(self) -> Optional[Snapshot]:
         """Retrieve the last snapshot out of the last visit."""
-        return snapshot_get_latest(self.storage, self.url)
+        return snapshot_get_latest(self.storage, self.origin.url)
 
     def new_packageinfo_to_extid(self, p_info: TPackageInfo) -> Optional[PartialExtID]:
         return p_info.extid()
@@ -459,7 +460,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             snapshot_id = snapshot.id
         assert visit.visit
         visit_status = OriginVisitStatus(
-            origin=self.url,
+            origin=self.origin.url,
             visit=visit.visit,
             type=self.visit_type,
             date=now(),
@@ -534,14 +535,14 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         failed_branches: List[str] = []
 
         # Prepare origin and origin_visit
-        origin = Origin(url=self.url)
+        origin = Origin(url=self.origin.url)
         try:
             self.storage.origin_add([origin])
             visit = list(
                 self.storage.origin_visit_add(
                     [
                         OriginVisit(
-                            origin=self.url,
+                            origin=self.origin.url,
                             date=self.visit_date,
                             type=self.visit_type,
                         )
@@ -549,7 +550,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 )
             )[0]
         except Exception as e:
-            logger.exception("Failed to initialize origin_visit for %s", self.url)
+            logger.exception(
+                "Failed to initialize origin_visit for %s", self.origin.url
+            )
             sentry_sdk.capture_exception(e)
             return {"status": "failed"}
 
@@ -559,7 +562,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             last_snapshot = self.last_snapshot()
             logger.debug("last snapshot: %s", last_snapshot)
         except Exception as e:
-            logger.exception("Failed to get previous state for %s", self.url)
+            logger.exception("Failed to get previous state for %s", self.origin.url)
             sentry_sdk.capture_exception(e)
             return self.finalize_visit(
                 snapshot=snapshot,
@@ -660,7 +663,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     self.storage.clear_buffers()
                     load_exceptions.append(e)
                     sentry_sdk.capture_exception(e)
-                    error = f"Failed to load branch {branch_name} for {self.url}"
+                    error = f"Failed to load branch {branch_name} for {self.origin.url}"
                     logger.exception(error)
                     failed_branches.append(branch_name)
                     errors.append(f"{error}: {e}")
@@ -736,7 +739,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             )
             self.storage.flush()
         except Exception as e:
-            error = f"Failed to build snapshot for origin {self.url}"
+            error = f"Failed to build snapshot for origin {self.origin.url}"
             logger.exception(error)
             errors.append(f"{error}: {e}")
             sentry_sdk.capture_exception(e)
@@ -748,7 +751,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 metadata_objects = self.build_extrinsic_snapshot_metadata(snapshot.id)
                 self._load_metadata_objects(metadata_objects)
             except Exception as e:
-                error = f"Failed to load extrinsic snapshot metadata for {self.url}"
+                error = (
+                    f"Failed to load extrinsic snapshot metadata for {self.origin.url}"
+                )
                 logger.exception(error)
                 errors.append(f"{error}: {e}")
                 sentry_sdk.capture_exception(e)
@@ -759,7 +764,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             metadata_objects = self.build_extrinsic_origin_metadata()
             self._load_metadata_objects(metadata_objects)
         except Exception as e:
-            error = f"Failed to load extrinsic origin metadata for {self.url}"
+            error = f"Failed to load extrinsic origin metadata for {self.origin.url}"
             logger.exception(error)
             errors.append(f"{error}: {e}")
             sentry_sdk.capture_exception(e)
@@ -843,7 +848,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             fetcher=self.get_metadata_fetcher(),
             format="original-artifacts-json",
             metadata=json.dumps(metadata).encode(),
-            origin=self.url,
+            origin=self.origin.url,
             release=release.swhid(),
         )
         self._load_metadata_objects([original_artifact_metadata])
@@ -960,7 +965,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         for item in metadata_items:
             metadata_objects.append(
                 RawExtrinsicMetadata(
-                    target=Origin(self.url).swhid(),
+                    target=self.origin.swhid(),
                     discovery_date=item.discovery_date or self.visit_date,
                     authority=authority,
                     fetcher=fetcher,
@@ -1002,7 +1007,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     fetcher=fetcher,
                     format=item.format,
                     metadata=item.metadata,
-                    origin=self.url,
+                    origin=self.origin.url,
                 )
             )
 
@@ -1035,7 +1040,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     fetcher=fetcher,
                     format=item.format,
                     metadata=item.metadata,
-                    origin=self.url,
+                    origin=self.origin.url,
                     release=CoreSWHID(
                         object_type=ObjectType.RELEASE, object_id=release_id
                     ),
@@ -1088,7 +1093,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         try:
             self.storage.extid_add(list(extids))
         except Exception as e:
-            logger.exception("Failed to load new ExtIDs for %s", self.url)
+            logger.exception("Failed to load new ExtIDs for %s", self.origin.url)
             sentry_sdk.capture_exception(e)
             # No big deal, it just means the next visit will load the same versions
             # again.

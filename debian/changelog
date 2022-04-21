@@ -1,8 +1,14 @@
-swh-loader-core (2.6.2-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (3.0.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 3.0.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-04-21 10:27:07 +0200)
+  * Upstream changes:     - v3.0.0     - * Remove unused function
+    BaseLoader.store_metadata.     - * Remove unused
+    BaseLoader.origin_metadata attribute     - * Replace self.url with
+    self.origin.url in package loaders     - * BaseLoader: Add
+    'origin_url' argument and remove 'prepare_origin_visit' method
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 14 Apr 2022 09:56:01 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 21 Apr 2022 08:31:52 +0000
 
 swh-loader-core (2.6.2-1~swh1) unstable-swh; urgency=medium
 
