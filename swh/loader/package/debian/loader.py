@@ -185,7 +185,9 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, DebianPackageInfo]]:
         meta = self.packages[version]
-        p_info = DebianPackageInfo.from_metadata(meta, url=self.url, version=version)
+        p_info = DebianPackageInfo.from_metadata(
+            meta, url=self.origin.url, version=version
+        )
         yield release_name(version), p_info
 
     def download_package(

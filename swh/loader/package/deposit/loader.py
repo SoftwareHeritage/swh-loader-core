@@ -169,7 +169,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
     ) -> Iterator[Tuple[str, DepositPackageInfo]]:
         p_info = DepositPackageInfo.from_metadata(
             self.metadata(),
-            url=self.url,
+            url=self.origin.url,
             filename=self.default_filename,
             version=version,
         )
@@ -285,7 +285,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
                 release_id=hash_to_hex(rel_id),
                 directory_id=hash_to_hex(release.target),
                 snapshot_id=r["snapshot_id"],
-                origin_url=self.url,
+                origin_url=self.origin.url,
             )
         except Exception:
             logger.exception("Problem when trying to update the deposit's status")
