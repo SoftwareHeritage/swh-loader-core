@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2021  The Software Heritage developers
+# Copyright (C) 2015-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -57,7 +57,6 @@ class BaseLoader:
 
     visit_date: Optional[datetime.datetime]
     origin: Origin
-    origin_metadata: Dict[str, Any]
     loaded_snapshot_id: Optional[Sha1Git]
 
     def __init__(
@@ -87,7 +86,6 @@ class BaseLoader:
         if not hasattr(self, "visit_type"):
             self.visit_type: Optional[str] = None
 
-        self.origin_metadata = {}
         self.loaded_snapshot_id = None
 
         if save_data_path:
