@@ -7,9 +7,12 @@ import datetime
 import hashlib
 import logging
 import os
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, List, Optional
+
+import sentry_sdk
 
 from swh.core.config import load_from_envvar
+from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.exception import NotFound
 from swh.model.model import (
     BaseContent,
@@ -18,6 +21,7 @@ from swh.model.model import (
     Origin,
     OriginVisit,
     OriginVisitStatus,
+    RawExtrinsicMetadata,
     Release,
     Revision,
     Sha1Git,
@@ -53,6 +57,13 @@ class BaseLoader:
     - :class:`PyPILoader`
     - :class:`NpmLoader`
 
+    Args:
+      lister_name: Name of the lister which triggered this load.
+        If provided, the loader will try to use the forge's API to retrieve extrinsic
+        metadata
+      lister_instance_name: Name of the lister instance which triggered this load.
+        Must be None iff lister_name is, but it may be the empty string for listers
+        with a single instance.
     """
 
     visit_type: str
@@ -66,11 +77,27 @@ class BaseLoader:
         logging_class: Optional[str] = None,
         save_data_path: Optional[str] = None,
         max_content_size: Optional[int] = None,
+        lister_name: Optional[str] = None,
+        lister_instance_name: Optional[str] = None,
+        metadata_fetcher_credentials: CredentialsType = None,
     ):
-        super().__init__()
+        if lister_name == "":
+            raise ValueError("lister_name must not be the empty string")
+        if lister_name is None and lister_instance_name is not None:
+            raise ValueError(
+                f"lister_name is None but lister_instance_name is {lister_instance_name!r}"
+            )
+        if lister_name is not None and lister_instance_name is None:
+            raise ValueError(
+                f"lister_instance_name is None but lister_name is {lister_name!r}"
+            )
+
         self.storage = storage
         self.origin = Origin(url=origin_url)
         self.max_content_size = int(max_content_size) if max_content_size else None
+        self.lister_name = lister_name
+        self.lister_instance_name = lister_instance_name
+        self.metadata_fetcher_credentials = metadata_fetcher_credentials or {}
 
         if logging_class is None:
             logging_class = "%s.%s" % (
@@ -298,6 +325,24 @@ class BaseLoader:
         )
 
         try:
+            metadata = self.build_extrinsic_origin_metadata()
+            self.load_metadata_objects(metadata)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            # Do not fail the whole task if this is the only failure
+            self.log.exception(
+                "Failure while loading extrinsic origin metadata.",
+                extra={
+                    "swh_task_args": [],
+                    "swh_task_kwargs": {
+                        "origin": self.origin.url,
+                        "lister_name": self.lister_name,
+                        "lister_instance_name": self.lister_instance_name,
+                    },
+                },
+            )
+
+        try:
             self.prepare()
 
             while True:
@@ -329,7 +374,11 @@ class BaseLoader:
                 status,
                 extra={
                     "swh_task_args": [],
-                    "swh_task_kwargs": {"origin": self.origin.url},
+                    "swh_task_kwargs": {
+                        "origin": self.origin.url,
+                        "lister_name": self.lister_name,
+                        "lister_instance_name": self.lister_instance_name,
+                    },
                 },
             )
             visit_status = OriginVisitStatus(
@@ -348,6 +397,43 @@ class BaseLoader:
             self.cleanup()
 
         return self.load_status()
+
+    def load_metadata_objects(
+        self, metadata_objects: List[RawExtrinsicMetadata]
+    ) -> None:
+        if not metadata_objects:
+            return
+
+        authorities = {mo.authority for mo in metadata_objects}
+        self.storage.metadata_authority_add(list(authorities))
+
+        fetchers = {mo.fetcher for mo in metadata_objects}
+        self.storage.metadata_fetcher_add(list(fetchers))
+
+        self.storage.raw_extrinsic_metadata_add(metadata_objects)
+
+    def build_extrinsic_origin_metadata(self) -> List[RawExtrinsicMetadata]:
+        """Builds a list of full RawExtrinsicMetadata objects, using
+        a metadata fetcher returned by :func:`get_fetcher_classes`."""
+        if self.lister_name is None:
+            self.log.debug("lister_not provided, skipping extrinsic origin metadata")
+            return []
+
+        assert (
+            self.lister_instance_name is not None
+        ), "lister_instance_name is None, but lister_name is not"
+
+        metadata = []
+        for cls in get_fetchers_for_lister(self.lister_name):
+            metadata_fetcher = cls(
+                origin=self.origin,
+                lister_name=self.lister_name,
+                lister_instance_name=self.lister_instance_name,
+                credentials=self.metadata_fetcher_credentials,
+            )
+            metadata.extend(metadata_fetcher.get_origin_metadata())
+
+        return metadata
 
 
 class DVCSLoader(BaseLoader):
