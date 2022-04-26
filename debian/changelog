@@ -1,3 +1,14 @@
+swh-loader-core (3.1.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 3.1.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-04-26 11:36:30 +0200)
+  * Upstream changes:     - v3.1.0     - * package loaders: Simplify
+    initialization     - * BaseLoader: Add hook to call metadata
+    fetchers before loading an origin     - * pre-commit maintenance
+    - * debian: Fix loading when md5sum is missing in dsc file
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 26 Apr 2022 09:41:57 +0000
+
 swh-loader-core (3.0.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 3.0.0     - (tagged by Valentin Lorentz
