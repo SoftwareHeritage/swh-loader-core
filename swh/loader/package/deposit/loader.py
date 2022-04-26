@@ -107,8 +107,8 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         url: str,
         deposit_id: str,
         deposit_client: "ApiClient",
-        max_content_size: Optional[int] = None,
         default_filename: str = "archive.tar",
+        **kwargs: Any,
     ):
         """Constructor
 
@@ -118,7 +118,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             deposit_client: Deposit api client
 
         """
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
 
         self.deposit_id = deposit_id
         self.client = deposit_client

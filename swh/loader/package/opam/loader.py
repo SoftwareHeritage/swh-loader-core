@@ -6,7 +6,7 @@
 import io
 import os
 from subprocess import PIPE, Popen, call
-from typing import Iterator, List, Optional, Tuple
+from typing import Any, Iterator, List, Optional, Tuple
 
 import attr
 
@@ -91,10 +91,10 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         opam_instance: str,
         opam_url: str,
         opam_package: str,
-        max_content_size: Optional[int] = None,
         initialize_opam_root: bool = False,
+        **kwargs: Any,
     ):
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
 
         self.opam_root = opam_root
         self.opam_instance = opam_instance

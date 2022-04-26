@@ -16,7 +16,6 @@ from typing import (
     Any,
     Dict,
     Generic,
-    Iterable,
     Iterator,
     List,
     Mapping,
@@ -151,16 +150,7 @@ TPackageInfo = TypeVar("TPackageInfo", bound=BasePackageInfo)
 
 
 class PackageLoader(BaseLoader, Generic[TPackageInfo]):
-    # Origin visit type (str) set by the loader
-    visit_type = ""
-    visit_date: datetime.datetime
-
-    def __init__(
-        self,
-        storage: StorageInterface,
-        url: str,
-        max_content_size: Optional[int] = None,
-    ):
+    def __init__(self, storage: StorageInterface, url: str, **kwargs: Any):
         """Loader's constructor. This raises exception if the minimal required
            configuration is missing (cf. fn:`check` method).
 
@@ -169,10 +159,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             url: Origin url to load data from
 
         """
-        super().__init__(
-            storage=storage, origin_url=url, max_content_size=max_content_size
-        )
-        self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
+        super().__init__(storage=storage, origin_url=url, **kwargs)
 
     def get_versions(self) -> Sequence[str]:
         """Return the list of all published package versions.
@@ -749,7 +736,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         if snapshot:
             try:
                 metadata_objects = self.build_extrinsic_snapshot_metadata(snapshot.id)
-                self._load_metadata_objects(metadata_objects)
+                self.load_metadata_objects(metadata_objects)
             except Exception as e:
                 error = (
                     f"Failed to load extrinsic snapshot metadata for {self.origin.url}"
@@ -762,7 +749,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         try:
             metadata_objects = self.build_extrinsic_origin_metadata()
-            self._load_metadata_objects(metadata_objects)
+            self.load_metadata_objects(metadata_objects)
         except Exception as e:
             error = f"Failed to load extrinsic origin metadata for {self.origin.url}"
             logger.exception(error)
@@ -851,7 +838,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             origin=self.origin.url,
             release=release.swhid(),
         )
-        self._load_metadata_objects([original_artifact_metadata])
+        self.load_metadata_objects([original_artifact_metadata])
 
         logger.debug("Release: %s", release)
 
@@ -1058,34 +1045,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         metadata_objects = self.build_extrinsic_directory_metadata(
             p_info, release_id, directory_id
         )
-        self._load_metadata_objects(metadata_objects)
-
-    def _load_metadata_objects(
-        self, metadata_objects: List[RawExtrinsicMetadata]
-    ) -> None:
-        if not metadata_objects:
-            # If this package loader doesn't write metadata, no need to require
-            # an implementation for get_metadata_authority.
-            return
-
-        self._create_authorities(mo.authority for mo in metadata_objects)
-        self._create_fetchers(mo.fetcher for mo in metadata_objects)
-
-        self.storage.raw_extrinsic_metadata_add(metadata_objects)
-
-    def _create_authorities(self, authorities: Iterable[MetadataAuthority]) -> None:
-        deduplicated_authorities = {
-            (authority.type, authority.url): authority for authority in authorities
-        }
-        if authorities:
-            self.storage.metadata_authority_add(list(deduplicated_authorities.values()))
-
-    def _create_fetchers(self, fetchers: Iterable[MetadataFetcher]) -> None:
-        deduplicated_fetchers = {
-            (fetcher.name, fetcher.version): fetcher for fetcher in fetchers
-        }
-        if fetchers:
-            self.storage.metadata_fetcher_add(list(deduplicated_fetchers.values()))
+        self.load_metadata_objects(metadata_objects)
 
     def _load_extids(self, extids: Set[ExtID]) -> None:
         if not extids:

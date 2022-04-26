@@ -77,13 +77,8 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
 
     visit_type = "pypi"
 
-    def __init__(
-        self,
-        storage: StorageInterface,
-        url: str,
-        max_content_size: Optional[int] = None,
-    ):
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+    def __init__(self, storage: StorageInterface, url: str, **kwargs):
+        super().__init__(storage=storage, url=url, **kwargs)
         self.provider_url = pypi_api_url(self.origin.url)
 
     @cached_method

@@ -75,9 +75,9 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
         storage: StorageInterface,
         url: str,
         unsupported_file_extensions: List[str] = [],
-        max_content_size: Optional[int] = None,
+        **kwargs: Any,
     ):
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
         self.provider_url = url
         self.unsupported_file_extensions = unsupported_file_extensions
 
