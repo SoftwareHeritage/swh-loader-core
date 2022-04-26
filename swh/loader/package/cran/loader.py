@@ -51,11 +51,7 @@ class CRANLoader(PackageLoader[CRANPackageInfo]):
     visit_type = "cran"
 
     def __init__(
-        self,
-        storage: StorageInterface,
-        url: str,
-        artifacts: List[Dict],
-        max_content_size: Optional[int] = None,
+        self, storage: StorageInterface, url: str, artifacts: List[Dict], **kwargs: Any
     ):
         """Loader constructor.
 
@@ -64,7 +60,7 @@ class CRANLoader(PackageLoader[CRANPackageInfo]):
             artifacts: List of associated artifact for the origin url
 
         """
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
         # explicit what we consider the artifact identity
         self.artifacts = artifacts
 

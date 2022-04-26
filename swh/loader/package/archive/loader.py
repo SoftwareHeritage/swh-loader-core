@@ -72,8 +72,8 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
         url: str,
         artifacts: Sequence[Dict[str, Any]],
         extid_manifest_format: Optional[str] = None,
-        max_content_size: Optional[int] = None,
         snapshot_append: bool = False,
+        **kwargs: Any,
     ):
         f"""Loader constructor.
 
@@ -101,7 +101,7 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
                 the new snapshot created by the loader
 
         """
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
         self.artifacts = artifacts  # assume order is enforced in the lister
         self.extid_manifest_format = (
             None

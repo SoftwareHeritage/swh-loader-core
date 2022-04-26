@@ -6,6 +6,9 @@
 import datetime
 import hashlib
 import logging
+from unittest.mock import MagicMock
+
+import pytest
 
 from swh.loader.core.loader import BaseLoader, DVCSLoader
 from swh.loader.exception import NotFound
@@ -19,6 +22,7 @@ from swh.model.model import (
     RawExtrinsicMetadata,
     Snapshot,
 )
+import swh.storage.exc
 
 ORIGIN = Origin(url="some-url")
 
@@ -89,6 +93,16 @@ class DummyBaseLoader(DummyLoader, BaseLoader):
         pass
 
 
+class DummyMetadataFetcher:
+    SUPPORTED_LISTERS = {"fake-lister"}
+
+    def __init__(self, origin, credentials, lister_name, lister_instance_name):
+        pass
+
+    def get_origin_metadata(self):
+        return [REMD]
+
+
 def test_base_loader(swh_storage):
     loader = DummyBaseLoader(swh_storage)
     result = loader.load()
@@ -99,6 +113,49 @@ def test_base_loader_with_config(swh_storage):
     loader = DummyBaseLoader(swh_storage, "logger-name")
     result = loader.load()
     assert result == {"status": "eventful"}
+
+
+def test_base_loader_with_known_lister_name(swh_storage, mocker):
+    fetcher_cls = MagicMock(wraps=DummyMetadataFetcher)
+    fetcher_cls.SUPPORTED_LISTERS = DummyMetadataFetcher.SUPPORTED_LISTERS
+    mocker.patch(
+        "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
+    )
+
+    loader = DummyBaseLoader(
+        swh_storage, lister_name="fake-lister", lister_instance_name=""
+    )
+    result = loader.load()
+    assert result == {"status": "eventful"}
+
+    fetcher_cls.assert_called_once()
+    fetcher_cls.assert_called_once_with(
+        origin=ORIGIN,
+        credentials={},
+        lister_name="fake-lister",
+        lister_instance_name="",
+    )
+    assert swh_storage.raw_extrinsic_metadata_get(
+        ORIGIN.swhid(), METADATA_AUTHORITY
+    ).results == [REMD]
+
+
+def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
+    fetcher_cls = MagicMock(wraps=DummyMetadataFetcher)
+    fetcher_cls.SUPPORTED_LISTERS = DummyMetadataFetcher.SUPPORTED_LISTERS
+    mocker.patch(
+        "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
+    )
+
+    loader = DummyBaseLoader(
+        swh_storage, lister_name="other-lister", lister_instance_name=""
+    )
+    result = loader.load()
+    assert result == {"status": "eventful"}
+
+    fetcher_cls.assert_not_called()
+    with pytest.raises(swh.storage.exc.StorageArgumentException):
+        swh_storage.raw_extrinsic_metadata_get(ORIGIN.swhid(), METADATA_AUTHORITY)
 
 
 def test_dvcs_loader(swh_storage):
