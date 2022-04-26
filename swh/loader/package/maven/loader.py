@@ -8,7 +8,7 @@ import json
 import logging
 from os import path
 import string
-from typing import Iterator, List, Optional, Sequence, Tuple
+from typing import Any, Iterator, List, Optional, Sequence, Tuple
 
 import attr
 import iso8601
@@ -110,7 +110,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         storage: StorageInterface,
         url: str,
         artifacts: Sequence[ArtifactDict],
-        max_content_size: Optional[int] = None,
+        **kwargs: Any,
     ):
         """Loader constructor.
 
@@ -123,7 +123,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
             artifacts: List of single artifact information
 
         """
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
         self.artifacts = artifacts  # assume order is enforced in the lister
         self.version_artifact = {
             jar["version"]: jar for jar in artifacts if jar["version"]

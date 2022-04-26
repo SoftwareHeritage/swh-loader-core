@@ -101,18 +101,13 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
 
     visit_type = "npm"
 
-    def __init__(
-        self,
-        storage: StorageInterface,
-        url: str,
-        max_content_size: Optional[int] = None,
-    ):
+    def __init__(self, storage: StorageInterface, url: str, **kwargs: Any):
         """Constructor
 
         Args
             str: origin url (e.g. https://www.npmjs.com/package/<package-name>)
         """
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
         self.package_name = url.split("https://www.npmjs.com/package/")[1]
         safe_name = quote(self.package_name, safe="")
         self.provider_url = f"https://replicate.npmjs.com/{safe_name}/"

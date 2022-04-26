@@ -54,6 +54,8 @@ class StubPackageInfo(BasePackageInfo):
 
 
 class StubPackageLoader(PackageLoader[StubPackageInfo]):
+    visit_type = "stub"
+
     def get_versions(self):
         return ["v1.0", "v2.0", "v3.0", "v4.0"]
 

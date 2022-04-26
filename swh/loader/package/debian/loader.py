@@ -132,7 +132,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         storage: StorageInterface,
         url: str,
         packages: Mapping[str, Any],
-        max_content_size: Optional[int] = None,
+        **kwargs: Any,
     ):
         """Debian Loader implementation.
 
@@ -173,7 +173,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
               }
 
         """
-        super().__init__(storage=storage, url=url, max_content_size=max_content_size)
+        super().__init__(storage=storage, url=url, **kwargs)
         self.packages = packages
 
     def get_versions(self) -> Sequence[str]:
@@ -302,7 +302,9 @@ def download_package(p_info: DebianPackageInfo, tmpdir: Any) -> Mapping[str, Any
     for filename, fileinfo in p_info.files.items():
         uri = fileinfo.uri
         logger.debug("fileinfo: %s", fileinfo)
-        extrinsic_hashes = {"md5": fileinfo.md5sum}
+        extrinsic_hashes = {}
+        if fileinfo.md5sum:
+            extrinsic_hashes["md5"] = fileinfo.md5sum
         if fileinfo.sha256:
             extrinsic_hashes["sha256"] = fileinfo.sha256
         if fileinfo.sha1:
