@@ -33,6 +33,9 @@ class MetadataFetcherProtocol(Protocol):
     def get_origin_metadata(self) -> List[RawExtrinsicMetadata]:
         ...
 
+    def get_parent_origins(self) -> List[Origin]:
+        ...
+
 
 @functools.lru_cache()
 def _fetchers() -> List[Type[MetadataFetcherProtocol]]:
