@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from swh.loader.core.loader import BaseLoader, DVCSLoader
+from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound
 from swh.loader.tests import assert_last_visit_matches
 from swh.model.hashutil import hash_to_bytes
@@ -25,6 +26,7 @@ from swh.model.model import (
 import swh.storage.exc
 
 ORIGIN = Origin(url="some-url")
+PARENT_ORIGIN = Origin(url="base-origin-url")
 
 METADATA_AUTHORITY = MetadataAuthority(
     type=MetadataAuthorityType.FORGE, url="http://example.org/"
@@ -102,6 +104,31 @@ class DummyMetadataFetcher:
     def get_origin_metadata(self):
         return [REMD]
 
+    def get_parent_origins(self):
+        return []
+
+
+class DummyMetadataFetcherWithFork:
+    SUPPORTED_LISTERS = {"fake-lister"}
+
+    def __init__(self, origin, credentials, lister_name, lister_instance_name):
+        pass
+
+    def get_origin_metadata(self):
+        return [REMD]
+
+    def get_parent_origins(self):
+        return [PARENT_ORIGIN]
+
+
+def test_types():
+    assert isinstance(
+        DummyMetadataFetcher(None, None, None, None), MetadataFetcherProtocol
+    )
+    assert isinstance(
+        DummyMetadataFetcherWithFork(None, None, None, None), MetadataFetcherProtocol
+    )
+
 
 def test_base_loader(swh_storage):
     loader = DummyBaseLoader(swh_storage)
@@ -138,6 +165,7 @@ def test_base_loader_with_known_lister_name(swh_storage, mocker):
     assert swh_storage.raw_extrinsic_metadata_get(
         ORIGIN.swhid(), METADATA_AUTHORITY
     ).results == [REMD]
+    assert loader.parent_origins == []
 
 
 def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
@@ -156,6 +184,32 @@ def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
     fetcher_cls.assert_not_called()
     with pytest.raises(swh.storage.exc.StorageArgumentException):
         swh_storage.raw_extrinsic_metadata_get(ORIGIN.swhid(), METADATA_AUTHORITY)
+
+
+def test_base_loader_forked_origin(swh_storage, mocker):
+    fetcher_cls = MagicMock(wraps=DummyMetadataFetcherWithFork)
+    fetcher_cls.SUPPORTED_LISTERS = DummyMetadataFetcherWithFork.SUPPORTED_LISTERS
+    mocker.patch(
+        "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
+    )
+
+    loader = DummyBaseLoader(
+        swh_storage, lister_name="fake-lister", lister_instance_name=""
+    )
+    result = loader.load()
+    assert result == {"status": "eventful"}
+
+    fetcher_cls.assert_called_once()
+    fetcher_cls.assert_called_once_with(
+        origin=ORIGIN,
+        credentials={},
+        lister_name="fake-lister",
+        lister_instance_name="",
+    )
+    assert swh_storage.raw_extrinsic_metadata_get(
+        ORIGIN.swhid(), METADATA_AUTHORITY
+    ).results == [REMD]
+    assert loader.parent_origins == [PARENT_ORIGIN]
 
 
 def test_dvcs_loader(swh_storage):
