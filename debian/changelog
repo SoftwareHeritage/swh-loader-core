@@ -1,8 +1,12 @@
-swh-loader-core (3.1.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (3.2.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 3.2.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-04-27 16:26:36 +0200)
+  * Upstream changes:     - v3.2.0     - * Store the result of
+    MetadataFetcher.get_parent_origins     - * cli: Pass
+    metadata_fetcher_credentials from the config to the loader
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 26 Apr 2022 09:44:27 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 27 Apr 2022 14:31:04 +0000
 
 swh-loader-core (3.1.0-1~swh1) unstable-swh; urgency=medium
 

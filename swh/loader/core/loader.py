@@ -70,6 +70,11 @@ class BaseLoader:
     origin: Origin
     loaded_snapshot_id: Optional[Sha1Git]
 
+    parent_origins: Optional[List[Origin]]
+    """If the given origin is a "forge fork" (ie. created with the "Fork" button
+    of GitHub-like forges), :meth:`build_extrinsic_origin_metadata` sets this to
+    a list of origins it was forked from; closest parent first."""
+
     def __init__(
         self,
         storage: StorageInterface,
@@ -121,6 +126,8 @@ class BaseLoader:
                 raise PermissionError("Permission denied: %r" % path)
 
         self.save_data_path = save_data_path
+
+        self.parent_origins = None
 
     @classmethod
     def from_config(cls, storage: Dict[str, Any], **config: Any):
@@ -432,6 +439,8 @@ class BaseLoader:
                 credentials=self.metadata_fetcher_credentials,
             )
             metadata.extend(metadata_fetcher.get_origin_metadata())
+            if self.parent_origins is None:
+                self.parent_origins = metadata_fetcher.get_parent_origins()
 
         return metadata
 
