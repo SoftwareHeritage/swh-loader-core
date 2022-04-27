@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -9,6 +9,6 @@ from swh.loader.package.npm.loader import NpmLoader
 
 
 @shared_task(name=__name__ + ".LoadNpm")
-def load_npm(*, url: str):
+def load_npm(**kwargs):
     """Load Npm package"""
-    return NpmLoader.from_configfile(url=url).load()
+    return NpmLoader.from_configfile(**kwargs).load()
