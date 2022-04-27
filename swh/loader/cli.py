@@ -102,7 +102,13 @@ def run(ctx, type, url, options):
         visit_date = iso8601.parse_date(visit_date)
         kw["visit_date"] = visit_date
 
-    loader = get_loader(type, url=url, storage=conf["storage"], **kw)
+    loader = get_loader(
+        type,
+        url=url,
+        storage=conf["storage"],
+        metadata_fetcher_credentials=conf.get("metadata_fetcher_credentials"),
+        **kw,
+    )
     result = loader.load()
     msg = f"{result} for origin '{url}'"
     directory = kw.get("directory")
