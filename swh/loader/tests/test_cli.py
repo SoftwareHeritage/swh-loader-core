@@ -124,6 +124,7 @@ def test_run_with_visit_date(mocker, swh_config):
         storage={"cls": "memory"},
         url="https://some-url",
         visit_date=expected_parsed_date,
+        metadata_fetcher_credentials=None,
     )
 
 
