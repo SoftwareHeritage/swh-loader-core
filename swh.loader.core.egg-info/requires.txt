@@ -5,6 +5,7 @@ pkginfo
 python-debian
 python-dateutil
 typing-extensions
+toml
 swh.core>=0.3
 swh.model>=4.4.0
 swh.objstorage>=0.2.2

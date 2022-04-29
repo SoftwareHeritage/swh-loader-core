@@ -18,6 +18,7 @@ repos:
       - id: codespell
         name: Check source code spelling
         exclude: ^(swh/loader/package/.*[/]+tests/data/.*)$
+        args: [-L crate]
         entry: codespell --ignore-words-list=iff
         stages: [commit]
 
