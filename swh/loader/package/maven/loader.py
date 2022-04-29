@@ -1,7 +1,9 @@
-# Copyright (C) 2021  The Software Heritage developers
+# Copyright (C) 2021-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
+
+from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
@@ -81,8 +83,9 @@ class MavenPackageInfo(BasePackageInfo):
     EXTID_VERSION = 0
 
     @classmethod
-    def from_metadata(cls, url: str, a_metadata: ArtifactDict) -> "MavenPackageInfo":
+    def from_metadata(cls, a_metadata: ArtifactDict) -> MavenPackageInfo:
         time = iso8601.parse_date(a_metadata["time"]).astimezone(tz=timezone.utc)
+        url = a_metadata["url"]
         return cls(
             url=url,
             filename=a_metadata.get("filename") or path.split(url)[-1],
@@ -184,9 +187,8 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, MavenPackageInfo]]:
         a_metadata = self.version_artifact[version]
-        yield release_name(a_metadata["version"]), MavenPackageInfo.from_metadata(
-            self.origin.url, a_metadata
-        )
+        rel_name = release_name(a_metadata["version"])
+        yield rel_name, MavenPackageInfo.from_metadata(a_metadata)
 
     def build_release(
         self, p_info: MavenPackageInfo, uncompressed_path: str, directory: Sha1Git
