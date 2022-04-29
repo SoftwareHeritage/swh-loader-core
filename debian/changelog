@@ -1,3 +1,13 @@
+swh-loader-core (3.3.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 3.3.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-04-29 14:46:13
+    +0200)
+  * Upstream changes:     - v3.3.0     - Rust lang, Crates loader     -
+    package/maven: Fix jar archive download after changes in lister
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 29 Apr 2022 12:51:12 +0000
+
 swh-loader-core (3.2.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 3.2.0     - (tagged by Valentin Lorentz
