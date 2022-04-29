@@ -209,43 +209,46 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         self,
         storage: StorageInterface,
         url: str,
-        package_name: str,
-        version: str,
-        checksum: Optional[str] = None,
+        artifacts: List[Dict[str, Any]],
         max_content_size: Optional[int] = None,
     ):
         """Constructor
 
         Args:
 
-            url : str
-                Origin url (e.g.
-                https://static.crates.io/crates/<name>/<name>-<version>.crate)
+            url:
+                Origin url, (e.g. https://crates.io/api/v1/crates/<package_name>)
 
-            package_name : str
-                Crate package name
+            artifacts:
+                A list of dict listing all existing released versions for a
+                package (Usually set with crates lister `extra_loader_arguments`).
+                Each line is a dict that should have an `url`
+                (where to download package specific version) and a `version` entry.
 
-            version : str
-                Crate package version
 
-            checksum : str, optional
-                Checksum for the package file to download
-        """
+                Example::
+
+                    [
+                        {
+                            "version": <version>,
+                            "url": "https://static.crates.io/crates/<package_name>/<package_name>-<version>.crate",
+                        }
+                    ]
+        """  # noqa
         super().__init__(storage=storage, url=url, max_content_size=max_content_size)
-        self.name = package_name
-        self.provider_url = f"https://crates.io/api/v1/crates/{self.name}"
-        # Check consistency of name, version, url
-        filename = urlparse(url).path.split("/")[-1]
-        assert f"{self.name}-{version}.crate" == filename
+        self.url = url
+        self.artifacts: Dict[str, Dict] = {
+            artifact["version"]: artifact for artifact in artifacts
+        }
 
     @cached_method
     def _raw_info(self) -> bytes:
-        """Get crate metadata (fetched from http api endpoint set as self.provider_url)
+        """Get crate metadata (fetched from http api endpoint set as self.url)
 
         Returns:
             Content response as bytes. Content response is a json document.
         """
-        return api_info(self.provider_url)
+        return api_info(self.url)
 
     @cached_method
     def info(self) -> Dict:
@@ -263,7 +266,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = [version["num"] for version in self.info()["versions"]]
+        versions = list(self.artifacts.keys())
         versions.sort(key=StrictVersion)
         return versions
 
@@ -277,7 +280,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
 
                 "0.1.2"
         """
-        return self.info()["crate"]["newest_version"]
+        return self.get_versions()[-1]
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, CratesPackageInfo]]:
         """Get release name and package information from version
@@ -288,13 +291,14 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         Returns:
             Iterator of tuple (release_name, p_info)
         """
-        filename = f"{self.name}-{version}.crate"
-        url = f"https://static.crates.io/crates/{self.name}/{self.name}-{version}.crate"
+        artifact = self.artifacts[version]
+        filename = artifact["filename"]
+        package_name = urlparse(self.url).path.split("/")[-1]
+        url = artifact["url"]
 
         # Get extrinsic metadata from http api
-
-        # Raw crate info
         e_metadata = ExtrinsicPackageMetadata(**self.info())  # type: ignore[misc]
+
         # Extract crate info for current version (One .crate file for a given version)
         (crate_version,) = [
             crate for crate in e_metadata["versions"] if crate["num"] == version
@@ -304,7 +308,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         )
 
         p_info = CratesPackageInfo(
-            name=self.name,
+            name=package_name,
             filename=filename,
             url=url,
             version=version,
@@ -324,7 +328,6 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         # Get only corresponding key of IntrinsicPackageMetadata
         i_metadata_keys = [k for k in IntrinsicPackageMetadata.__annotations__.keys()]
         # We use data only from "package" entry
-
         i_metadata = {
             k: v for k, v in i_metadata_raw["package"].items() if k in i_metadata_keys
         }
