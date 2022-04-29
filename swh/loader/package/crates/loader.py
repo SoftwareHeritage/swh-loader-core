@@ -24,11 +24,7 @@ class ExtrinsicPackageMetadata(TypedDict):
 
     We set only the keys we need according to what is available when querying
     https://crates.io/api/v1/crates/<name>, where `name` is the name of the crate
-    package.
-
-    Json response example for https://crates.io/api/v1/crates/hg-core :
-
-    .. literalinclude:: ../../swh/loader/package/crates/tests/data/https_crates.io/api_v1_crates_hg-core
+    package (see JSON response example at https://crates.io/api/v1/crates/hg-core).
 
     Usage example:
 
