@@ -9,7 +9,7 @@ from swh.loader.package.maven.loader import MavenLoader
 
 
 @shared_task(name=__name__ + ".LoadMaven")
-def load_maven(*, url=None, artifacts=None):
+def load_maven(**kwargs):
     """Load maven jar artifacts."""
-    loader = MavenLoader.from_configfile(url=url, artifacts=artifacts)
+    loader = MavenLoader.from_configfile(**kwargs)
     return loader.load()

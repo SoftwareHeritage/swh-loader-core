@@ -57,6 +57,7 @@ setup(
         [swh.workers]
         loader.archive=swh.loader.package.archive:register
         loader.cran=swh.loader.package.cran:register
+        loader.crates=swh.loader.package.crates:register
         loader.debian=swh.loader.package.debian:register
         loader.deposit=swh.loader.package.deposit:register
         loader.nixguix=swh.loader.package.nixguix:register
