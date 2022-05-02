@@ -6,7 +6,8 @@
 import datetime
 import hashlib
 import logging
-from unittest.mock import MagicMock
+import time
+from unittest.mock import MagicMock, call
 
 import pytest
 
@@ -275,6 +276,80 @@ def _check_load_failure(caplog, loader, exc_class, exc_text, status="partial"):
         assert visit.snapshot is None
         # But that the snapshot didn't get loaded
         assert loader.loaded_snapshot_id is None
+
+
+@pytest.mark.parametrize("success", [True, False])
+def test_loader_timings(swh_storage, mocker, success):
+    current_time = time.time()
+    mocker.patch("time.monotonic", side_effect=lambda: current_time)
+    mocker.patch("swh.core.statsd.monotonic", side_effect=lambda: current_time)
+
+    runtimes = {
+        "pre_cleanup": 2.0,
+        "build_extrinsic_origin_metadata": 3.0,
+        "prepare": 5.0,
+        "fetch_data": 7.0,
+        "store_data": 11.0,
+        "post_load": 13.0,
+        "flush": 17.0,
+        "cleanup": 23.0,
+    }
+
+    class TimedLoader(BaseLoader):
+        visit_type = "my-visit-type"
+
+        def __getattribute__(self, method_name):
+            if method_name == "visit_status" and not success:
+
+                def crashy():
+                    raise Exception("oh no")
+
+                return crashy
+
+            if method_name not in runtimes:
+                return super().__getattribute__(method_name)
+
+            def meth(*args, **kwargs):
+                nonlocal current_time
+                current_time += runtimes[method_name]
+
+            return meth
+
+    statsd_report = mocker.patch("swh.core.statsd.statsd._report")
+
+    loader = TimedLoader(swh_storage, origin_url="http://example.org/hello.git")
+    loader.load()
+
+    if success:
+        expected_tags = {
+            "post_load": {"success": True, "status": "full"},
+            "flush": {"success": True, "status": "full"},
+            "cleanup": {"success": True, "status": "full"},
+        }
+    else:
+        expected_tags = {
+            "post_load": {"success": False, "status": "failed"},
+            "flush": {"success": False, "status": "failed"},
+            "cleanup": {"success": False, "status": "failed"},
+        }
+
+    # note that this is a list equality, so order of entries in 'runtimes' matters.
+    # This is not perfect, but call() objects are not hashable so it's simpler this way,
+    # even if not perfect.
+    assert statsd_report.mock_calls == [
+        call(
+            "swh_loader_operation_duration_seconds",
+            "ms",
+            value * 1000,
+            {
+                "visit_type": "my-visit-type",
+                "operation": key,
+                **expected_tags.get(key, {}),
+            },
+            1,
+        )
+        for (key, value) in runtimes.items()
+    ]
 
 
 class DummyDVCSLoaderExc(DummyDVCSLoader):
