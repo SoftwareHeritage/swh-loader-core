@@ -20,6 +20,7 @@ class MetadataFetcherProtocol(Protocol):
     to loaders, via setuptools entrypoints."""
 
     SUPPORTED_LISTERS: Set[str]
+    FETCHER_NAME: str
 
     def __init__(
         self,

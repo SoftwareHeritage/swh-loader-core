@@ -97,7 +97,8 @@ class DummyBaseLoader(DummyLoader, BaseLoader):
 
 
 class DummyMetadataFetcher:
-    SUPPORTED_LISTERS = {"fake-lister"}
+    SUPPORTED_LISTERS = {"fake-forge"}
+    FETCHER_NAME = "fake-forge"
 
     def __init__(self, origin, credentials, lister_name, lister_instance_name):
         pass
@@ -110,7 +111,8 @@ class DummyMetadataFetcher:
 
 
 class DummyMetadataFetcherWithFork:
-    SUPPORTED_LISTERS = {"fake-lister"}
+    SUPPORTED_LISTERS = {"fake-forge"}
+    FETCHER_NAME = "fake-forge"
 
     def __init__(self, origin, credentials, lister_name, lister_instance_name):
         pass
@@ -146,12 +148,14 @@ def test_base_loader_with_config(swh_storage):
 def test_base_loader_with_known_lister_name(swh_storage, mocker):
     fetcher_cls = MagicMock(wraps=DummyMetadataFetcher)
     fetcher_cls.SUPPORTED_LISTERS = DummyMetadataFetcher.SUPPORTED_LISTERS
+    fetcher_cls.FETCHER_NAME = "fake-forge"
     mocker.patch(
         "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
     )
+    statsd_report = mocker.patch("swh.core.statsd.statsd._report")
 
     loader = DummyBaseLoader(
-        swh_storage, lister_name="fake-lister", lister_instance_name=""
+        swh_storage, lister_name="fake-forge", lister_instance_name=""
     )
     result = loader.load()
     assert result == {"status": "eventful"}
@@ -160,13 +164,34 @@ def test_base_loader_with_known_lister_name(swh_storage, mocker):
     fetcher_cls.assert_called_once_with(
         origin=ORIGIN,
         credentials={},
-        lister_name="fake-lister",
+        lister_name="fake-forge",
         lister_instance_name="",
     )
     assert swh_storage.raw_extrinsic_metadata_get(
         ORIGIN.swhid(), METADATA_AUTHORITY
     ).results == [REMD]
     assert loader.parent_origins == []
+
+    assert [
+        call("swh_loader_metadata_fetchers_sum", "c", 1, {"visit_type": "git"}, 1),
+        call("swh_loader_metadata_fetchers_count", "c", 1, {"visit_type": "git"}, 1),
+        call(
+            "swh_loader_metadata_parent_origins_sum",
+            "c",
+            0,
+            {"fetcher": "fake-forge", "visit_type": "git"},
+            1,
+        ),
+        call(
+            "swh_loader_metadata_parent_origins_count",
+            "c",
+            1,
+            {"fetcher": "fake-forge", "visit_type": "git"},
+            1,
+        ),
+        call("swh_loader_metadata_objects_sum", "c", 1, {"visit_type": "git"}, 1),
+        call("swh_loader_metadata_objects_count", "c", 1, {"visit_type": "git"}, 1),
+    ] == [c for c in statsd_report.mock_calls if "_metadata_" in c[1][0]]
 
 
 def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
@@ -190,12 +215,14 @@ def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
 def test_base_loader_forked_origin(swh_storage, mocker):
     fetcher_cls = MagicMock(wraps=DummyMetadataFetcherWithFork)
     fetcher_cls.SUPPORTED_LISTERS = DummyMetadataFetcherWithFork.SUPPORTED_LISTERS
+    fetcher_cls.FETCHER_NAME = "fake-forge"
     mocker.patch(
         "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
     )
+    statsd_report = mocker.patch("swh.core.statsd.statsd._report")
 
     loader = DummyBaseLoader(
-        swh_storage, lister_name="fake-lister", lister_instance_name=""
+        swh_storage, lister_name="fake-forge", lister_instance_name=""
     )
     result = loader.load()
     assert result == {"status": "eventful"}
@@ -204,13 +231,34 @@ def test_base_loader_forked_origin(swh_storage, mocker):
     fetcher_cls.assert_called_once_with(
         origin=ORIGIN,
         credentials={},
-        lister_name="fake-lister",
+        lister_name="fake-forge",
         lister_instance_name="",
     )
     assert swh_storage.raw_extrinsic_metadata_get(
         ORIGIN.swhid(), METADATA_AUTHORITY
     ).results == [REMD]
     assert loader.parent_origins == [PARENT_ORIGIN]
+
+    assert [
+        call("swh_loader_metadata_fetchers_sum", "c", 1, {"visit_type": "git"}, 1),
+        call("swh_loader_metadata_fetchers_count", "c", 1, {"visit_type": "git"}, 1),
+        call(
+            "swh_loader_metadata_parent_origins_sum",
+            "c",
+            1,
+            {"fetcher": "fake-forge", "visit_type": "git"},
+            1,
+        ),
+        call(
+            "swh_loader_metadata_parent_origins_count",
+            "c",
+            1,
+            {"fetcher": "fake-forge", "visit_type": "git"},
+            1,
+        ),
+        call("swh_loader_metadata_objects_sum", "c", 1, {"visit_type": "git"}, 1),
+        call("swh_loader_metadata_objects_count", "c", 1, {"visit_type": "git"}, 1),
+    ] == [c for c in statsd_report.mock_calls if "_metadata_" in c[1][0]]
 
 
 def test_dvcs_loader(swh_storage):

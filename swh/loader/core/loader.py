@@ -467,17 +467,30 @@ class BaseLoader:
         ), "lister_instance_name is None, but lister_name is not"
 
         metadata = []
-        for cls in get_fetchers_for_lister(self.lister_name):
+
+        fetcher_classes = get_fetchers_for_lister(self.lister_name)
+
+        self.statsd_average("metadata_fetchers", len(fetcher_classes))
+
+        for cls in fetcher_classes:
             metadata_fetcher = cls(
                 origin=self.origin,
                 lister_name=self.lister_name,
                 lister_instance_name=self.lister_instance_name,
                 credentials=self.metadata_fetcher_credentials,
             )
-            with self.statsd_timed("fetch_one_metadata"):
+            with self.statsd_timed(
+                "fetch_one_metadata", tags={"fetcher": cls.FETCHER_NAME}
+            ):
                 metadata.extend(metadata_fetcher.get_origin_metadata())
             if self.parent_origins is None:
                 self.parent_origins = metadata_fetcher.get_parent_origins()
+                self.statsd_average(
+                    "metadata_parent_origins",
+                    len(self.parent_origins),
+                    tags={"fetcher": cls.FETCHER_NAME},
+                )
+        self.statsd_average("metadata_objects", len(metadata))
 
         return metadata
 
@@ -494,6 +507,17 @@ class BaseLoader:
             f"{STATSD_PREFIX}_operation_duration_seconds",
             value,
             tags={"visit_type": self.visit_type, "operation": name, **tags},
+        )
+
+    def statsd_average(self, name, value, tags={}):
+        statsd.increment(
+            f"{STATSD_PREFIX}_{name}_sum",
+            value,
+            tags={"visit_type": self.visit_type, **tags},
+        )
+        statsd.increment(
+            f"{STATSD_PREFIX}_{name}_count",
+            tags={"visit_type": self.visit_type, **tags},
         )
 
 
