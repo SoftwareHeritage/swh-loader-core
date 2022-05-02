@@ -11,8 +11,6 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import sentry_sdk
 
-import sentry_sdk
-
 from swh.core.config import load_from_envvar
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.exception import NotFound
