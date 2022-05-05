@@ -3,18 +3,17 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import contextlib
 import datetime
 import hashlib
 import logging
 import os
 import time
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, ContextManager, Dict, Iterable, List, Optional, Union
 
 import sentry_sdk
 
 from swh.core.config import load_from_envvar
-from swh.core.statsd import statsd
+from swh.core.statsd import Statsd
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.exception import NotFound
 from swh.model.model import (
@@ -38,8 +37,6 @@ from swh.storage.utils import now
 DEFAULT_CONFIG: Dict[str, Any] = {
     "max_content_size": 100 * 1024 * 1024,
 }
-
-STATSD_PREFIX = "swh_loader"
 
 
 class BaseLoader:
@@ -133,6 +130,10 @@ class BaseLoader:
         self.save_data_path = save_data_path
 
         self.parent_origins = None
+
+        self.statsd = Statsd(
+            namespace="swh_loader", constant_tags={"visit_type": self.visit_type}
+        )
 
     @classmethod
     def from_config(cls, storage: Dict[str, Any], **config: Any):
@@ -494,31 +495,32 @@ class BaseLoader:
 
         return metadata
 
-    @contextlib.contextmanager
-    def statsd_timed(self, name, tags={}):
-        with statsd.timed(
-            f"{STATSD_PREFIX}_operation_duration_seconds",
-            tags={"visit_type": self.visit_type, "operation": name, **tags},
-        ):
-            yield
-
-    def statsd_timing(self, name, value, tags={}):
-        statsd.timing(
-            f"{STATSD_PREFIX}_operation_duration_seconds",
-            value,
-            tags={"visit_type": self.visit_type, "operation": name, **tags},
+    def statsd_timed(self, name: str, tags: Dict[str, Any] = {}) -> ContextManager:
+        """
+        Wrapper for :meth:`swh.core.statsd.Statsd.timed`, which uses the standard
+        metric name and tags for loaders.
+        """
+        return self.statsd.timed(
+            "operation_duration_seconds", tags={"operation": name, **tags}
         )
 
-    def statsd_average(self, name, value, tags={}):
-        statsd.increment(
-            f"{STATSD_PREFIX}_{name}_sum",
-            value,
-            tags={"visit_type": self.visit_type, **tags},
+    def statsd_timing(self, name: str, value: float, tags: Dict[str, Any] = {}) -> None:
+        """
+        Wrapper for :meth:`swh.core.statsd.Statsd.timing`, which uses the standard
+        metric name and tags for loaders.
+        """
+        self.statsd.timing(
+            "operation_duration_seconds", value, tags={"operation": name, **tags}
         )
-        statsd.increment(
-            f"{STATSD_PREFIX}_{name}_count",
-            tags={"visit_type": self.visit_type, **tags},
-        )
+
+    def statsd_average(
+        self, name: str, value: Union[int, float], tags: Dict[str, Any] = {}
+    ) -> None:
+        """Increments both ``{name}_sum`` (by the ``value``) and ``{name}_count``
+        (by ``1``), allowing to prometheus to compute the average ``value`` over
+        time."""
+        self.statsd.increment(f"{name}_sum", value, tags=tags)
+        self.statsd.increment(f"{name}_count", tags=tags)
 
 
 class DVCSLoader(BaseLoader):

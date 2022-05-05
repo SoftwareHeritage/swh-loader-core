@@ -152,11 +152,11 @@ def test_base_loader_with_known_lister_name(swh_storage, mocker):
     mocker.patch(
         "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
     )
-    statsd_report = mocker.patch("swh.core.statsd.statsd._report")
 
     loader = DummyBaseLoader(
         swh_storage, lister_name="fake-forge", lister_instance_name=""
     )
+    statsd_report = mocker.patch.object(loader.statsd, "_report")
     result = loader.load()
     assert result == {"status": "eventful"}
 
@@ -173,25 +173,15 @@ def test_base_loader_with_known_lister_name(swh_storage, mocker):
     assert loader.parent_origins == []
 
     assert [
-        call("swh_loader_metadata_fetchers_sum", "c", 1, {"visit_type": "git"}, 1),
-        call("swh_loader_metadata_fetchers_count", "c", 1, {"visit_type": "git"}, 1),
-        call(
-            "swh_loader_metadata_parent_origins_sum",
-            "c",
-            0,
-            {"fetcher": "fake-forge", "visit_type": "git"},
-            1,
-        ),
-        call(
-            "swh_loader_metadata_parent_origins_count",
-            "c",
-            1,
-            {"fetcher": "fake-forge", "visit_type": "git"},
-            1,
-        ),
-        call("swh_loader_metadata_objects_sum", "c", 1, {"visit_type": "git"}, 1),
-        call("swh_loader_metadata_objects_count", "c", 1, {"visit_type": "git"}, 1),
-    ] == [c for c in statsd_report.mock_calls if "_metadata_" in c[1][0]]
+        call("metadata_fetchers_sum", "c", 1, {}, 1),
+        call("metadata_fetchers_count", "c", 1, {}, 1),
+        call("metadata_parent_origins_sum", "c", 0, {"fetcher": "fake-forge"}, 1),
+        call("metadata_parent_origins_count", "c", 1, {"fetcher": "fake-forge"}, 1),
+        call("metadata_objects_sum", "c", 1, {}, 1),
+        call("metadata_objects_count", "c", 1, {}, 1),
+    ] == [c for c in statsd_report.mock_calls if "metadata_" in c[1][0]]
+    assert loader.statsd.namespace == "swh_loader"
+    assert loader.statsd.constant_tags == {"visit_type": "git"}
 
 
 def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
@@ -219,11 +209,11 @@ def test_base_loader_forked_origin(swh_storage, mocker):
     mocker.patch(
         "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
     )
-    statsd_report = mocker.patch("swh.core.statsd.statsd._report")
 
     loader = DummyBaseLoader(
         swh_storage, lister_name="fake-forge", lister_instance_name=""
     )
+    statsd_report = mocker.patch.object(loader.statsd, "_report")
     result = loader.load()
     assert result == {"status": "eventful"}
 
@@ -240,25 +230,15 @@ def test_base_loader_forked_origin(swh_storage, mocker):
     assert loader.parent_origins == [PARENT_ORIGIN]
 
     assert [
-        call("swh_loader_metadata_fetchers_sum", "c", 1, {"visit_type": "git"}, 1),
-        call("swh_loader_metadata_fetchers_count", "c", 1, {"visit_type": "git"}, 1),
-        call(
-            "swh_loader_metadata_parent_origins_sum",
-            "c",
-            1,
-            {"fetcher": "fake-forge", "visit_type": "git"},
-            1,
-        ),
-        call(
-            "swh_loader_metadata_parent_origins_count",
-            "c",
-            1,
-            {"fetcher": "fake-forge", "visit_type": "git"},
-            1,
-        ),
-        call("swh_loader_metadata_objects_sum", "c", 1, {"visit_type": "git"}, 1),
-        call("swh_loader_metadata_objects_count", "c", 1, {"visit_type": "git"}, 1),
-    ] == [c for c in statsd_report.mock_calls if "_metadata_" in c[1][0]]
+        call("metadata_fetchers_sum", "c", 1, {}, 1),
+        call("metadata_fetchers_count", "c", 1, {}, 1),
+        call("metadata_parent_origins_sum", "c", 1, {"fetcher": "fake-forge"}, 1),
+        call("metadata_parent_origins_count", "c", 1, {"fetcher": "fake-forge"}, 1),
+        call("metadata_objects_sum", "c", 1, {}, 1),
+        call("metadata_objects_count", "c", 1, {}, 1),
+    ] == [c for c in statsd_report.mock_calls if "metadata_" in c[1][0]]
+    assert loader.statsd.namespace == "swh_loader"
+    assert loader.statsd.constant_tags == {"visit_type": "git"}
 
 
 def test_dvcs_loader(swh_storage):
@@ -363,9 +343,8 @@ def test_loader_timings(swh_storage, mocker, success):
 
             return meth
 
-    statsd_report = mocker.patch("swh.core.statsd.statsd._report")
-
     loader = TimedLoader(swh_storage, origin_url="http://example.org/hello.git")
+    statsd_report = mocker.patch.object(loader.statsd, "_report")
     loader.load()
 
     if success:
@@ -386,18 +365,16 @@ def test_loader_timings(swh_storage, mocker, success):
     # even if not perfect.
     assert statsd_report.mock_calls == [
         call(
-            "swh_loader_operation_duration_seconds",
+            "operation_duration_seconds",
             "ms",
             value * 1000,
-            {
-                "visit_type": "my-visit-type",
-                "operation": key,
-                **expected_tags.get(key, {}),
-            },
+            {"operation": key, **expected_tags.get(key, {})},
             1,
         )
         for (key, value) in runtimes.items()
     ]
+    assert loader.statsd.namespace == "swh_loader"
+    assert loader.statsd.constant_tags == {"visit_type": "my-visit-type"}
 
 
 class DummyDVCSLoaderExc(DummyDVCSLoader):
