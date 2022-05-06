@@ -150,8 +150,8 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
         return list(self.version_artifact)
 
     def get_default_version(self) -> str:
-        # Default version is the last item
-        return self.artifacts[-1]["version"]
+        # Default version is the one of the most recent artifact
+        return max(self.artifacts, key=lambda a: a["time"])["version"]
 
     def get_metadata_authority(self):
         return MetadataAuthority(type=MetadataAuthorityType.FORGE, url=self.base_url)

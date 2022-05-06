@@ -323,9 +323,17 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 )
             }
             if missing_releases:
-                logger.error(
-                    "Found ExtIDs pointing to missing releases: %s", missing_releases
-                )
+
+                err_message = "Found ExtIDs pointing to missing releases"
+
+                logger.error(err_message + ": %s", missing_releases)
+
+                with sentry_sdk.push_scope() as scope:
+                    scope.set_extra(
+                        "missing_releases", [str(x) for x in missing_releases]
+                    )
+                    sentry_sdk.capture_message(err_message, "error")
+
             release_extid_targets -= missing_releases
 
             extid_target2 = self.select_extid_target(p_info, release_extid_targets)
@@ -575,6 +583,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 errors=[str(e)],
             )
         except Exception as e:
+            sentry_sdk.capture_exception(e)
             return self.finalize_visit(
                 snapshot=snapshot,
                 visit=visit,
@@ -880,7 +889,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         # Deal with extra-branches
         for name, branch_target in extra_branches.items():
             if name in branches:
-                logger.error("Extra branch '%s' has been ignored", name)
+                error_message = f"Extra branch '{name!r}' has been ignored"
+                logger.error(error_message)
+                sentry_sdk.capture_message(error_message, "error")
             else:
                 branches[name] = branch_target
 

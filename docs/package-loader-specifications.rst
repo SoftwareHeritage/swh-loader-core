@@ -39,7 +39,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``metadata.get(​"Date")``
      - metadata is intrinsic
    * - crates
-     - passed as arg
+     - ``p_info.​version``
      - ``release_name(​version, filename)``
      - =version
      - Synthetic release for Crate source package {p_info.name} version {p_info.version} {description}

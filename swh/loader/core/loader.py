@@ -7,11 +7,13 @@ import datetime
 import hashlib
 import logging
 import os
-from typing import Any, Dict, Iterable, List, Optional
+import time
+from typing import Any, ContextManager, Dict, Iterable, List, Optional, Union
 
 import sentry_sdk
 
 from swh.core.config import load_from_envvar
+from swh.core.statsd import Statsd
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.exception import NotFound
 from swh.model.model import (
@@ -128,6 +130,10 @@ class BaseLoader:
         self.save_data_path = save_data_path
 
         self.parent_origins = None
+
+        self.statsd = Statsd(
+            namespace="swh_loader", constant_tags={"visit_type": self.visit_type}
+        )
 
     @classmethod
     def from_config(cls, storage: Dict[str, Any], **config: Any):
@@ -317,10 +323,12 @@ class BaseLoader:
 
         """
         try:
-            self.pre_cleanup()
+            with self.statsd_timed("pre_cleanup"):
+                self.pre_cleanup()
         except Exception:
             msg = "Cleaning up dangling data failed! Continue loading."
             self.log.warning(msg)
+            sentry_sdk.capture_exception()
 
         self._store_origin_visit()
 
@@ -332,7 +340,8 @@ class BaseLoader:
         )
 
         try:
-            metadata = self.build_extrinsic_origin_metadata()
+            with self.statsd_timed("build_extrinsic_origin_metadata"):
+                metadata = self.build_extrinsic_origin_metadata()
             self.load_metadata_objects(metadata)
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -349,26 +358,44 @@ class BaseLoader:
                 },
             )
 
+        total_time_fetch_data = 0.0
+        total_time_store_data = 0.0
+
         try:
-            self.prepare()
+            with self.statsd_timed("prepare"):
+                self.prepare()
 
             while True:
+                t1 = time.monotonic()
                 more_data_to_fetch = self.fetch_data()
+                t2 = time.monotonic()
+                total_time_fetch_data += t2 - t1
                 self.store_data()
+                t3 = time.monotonic()
+                total_time_store_data += t3 - t2
                 if not more_data_to_fetch:
                     break
 
+            self.statsd_timing("fetch_data", total_time_fetch_data * 1000.0)
+            self.statsd_timing("store_data", total_time_store_data * 1000.0)
+
+            status = self.visit_status()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
                 visit=self.visit.visit,
                 type=self.visit_type,
                 date=now(),
-                status=self.visit_status(),
+                status=status,
                 snapshot=self.loaded_snapshot_id,
             )
             self.storage.origin_visit_status_add([visit_status])
-            self.post_load()
+            success = True
+            with self.statsd_timed(
+                "post_load", tags={"success": success, "status": status}
+            ):
+                self.post_load()
         except Exception as e:
+            success = False
             if isinstance(e, NotFound):
                 status = "not_found"
                 task_status = "uneventful"
@@ -388,6 +415,7 @@ class BaseLoader:
                     },
                 },
             )
+            sentry_sdk.capture_exception()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
                 visit=self.visit.visit,
@@ -397,11 +425,20 @@ class BaseLoader:
                 snapshot=self.loaded_snapshot_id,
             )
             self.storage.origin_visit_status_add([visit_status])
-            self.post_load(success=False)
+            with self.statsd_timed(
+                "post_load", tags={"success": success, "status": status}
+            ):
+                self.post_load(success=success)
             return {"status": task_status}
         finally:
-            self.flush()
-            self.cleanup()
+            with self.statsd_timed(
+                "flush", tags={"success": success, "status": status}
+            ):
+                self.flush()
+            with self.statsd_timed(
+                "cleanup", tags={"success": success, "status": status}
+            ):
+                self.cleanup()
 
         return self.load_status()
 
@@ -431,18 +468,59 @@ class BaseLoader:
         ), "lister_instance_name is None, but lister_name is not"
 
         metadata = []
-        for cls in get_fetchers_for_lister(self.lister_name):
+
+        fetcher_classes = get_fetchers_for_lister(self.lister_name)
+
+        self.statsd_average("metadata_fetchers", len(fetcher_classes))
+
+        for cls in fetcher_classes:
             metadata_fetcher = cls(
                 origin=self.origin,
                 lister_name=self.lister_name,
                 lister_instance_name=self.lister_instance_name,
                 credentials=self.metadata_fetcher_credentials,
             )
-            metadata.extend(metadata_fetcher.get_origin_metadata())
+            with self.statsd_timed(
+                "fetch_one_metadata", tags={"fetcher": cls.FETCHER_NAME}
+            ):
+                metadata.extend(metadata_fetcher.get_origin_metadata())
             if self.parent_origins is None:
                 self.parent_origins = metadata_fetcher.get_parent_origins()
+                self.statsd_average(
+                    "metadata_parent_origins",
+                    len(self.parent_origins),
+                    tags={"fetcher": cls.FETCHER_NAME},
+                )
+        self.statsd_average("metadata_objects", len(metadata))
 
         return metadata
+
+    def statsd_timed(self, name: str, tags: Dict[str, Any] = {}) -> ContextManager:
+        """
+        Wrapper for :meth:`swh.core.statsd.Statsd.timed`, which uses the standard
+        metric name and tags for loaders.
+        """
+        return self.statsd.timed(
+            "operation_duration_seconds", tags={"operation": name, **tags}
+        )
+
+    def statsd_timing(self, name: str, value: float, tags: Dict[str, Any] = {}) -> None:
+        """
+        Wrapper for :meth:`swh.core.statsd.Statsd.timing`, which uses the standard
+        metric name and tags for loaders.
+        """
+        self.statsd.timing(
+            "operation_duration_seconds", value, tags={"operation": name, **tags}
+        )
+
+    def statsd_average(
+        self, name: str, value: Union[int, float], tags: Dict[str, Any] = {}
+    ) -> None:
+        """Increments both ``{name}_sum`` (by the ``value``) and ``{name}_count``
+        (by ``1``), allowing to prometheus to compute the average ``value`` over
+        time."""
+        self.statsd.increment(f"{name}_sum", value, tags=tags)
+        self.statsd.increment(f"{name}_count", tags=tags)
 
 
 class DVCSLoader(BaseLoader):
