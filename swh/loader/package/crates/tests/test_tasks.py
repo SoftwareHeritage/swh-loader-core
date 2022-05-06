@@ -13,9 +13,8 @@ def test_tasks_crates_loader(
     res = swh_scheduler_celery_app.send_task(
         "swh.loader.package.crates.tasks.LoadCrates",
         kwargs=dict(
-            url="some-url/crates/some-package/some-package-0.0.1.crate",
-            package_name="some-package",
-            version="0.0.1",
+            url="some-url/api/v1/crates/some-package",
+            artifacts=[{"version": "0.0.1", "url": "some-package-0.0.1.crate"}],
         ),
     )
     assert res

@@ -2,6 +2,8 @@
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
+import pytest
+
 from swh.loader.package.crates.loader import CratesLoader
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
@@ -17,16 +19,86 @@ from swh.model.model import (
 
 CRATES_EXTRA = [
     {
-        "name": "hg-core",
-        "version": "0.0.1",
-        "url": "https://static.crates.io/crates/hg-core/hg-core-0.0.1.crate",
-        "checksum": "7fe168efadebadb9da6a329fdc027036e233b662285730cad27220e11e53c384",
+        "url": "https://crates.io/api/v1/crates/hg-core",
+        "artifacts": [
+            {
+                "checksums": {
+                    "sha256": "48a45b46c2a8c38348adb1205b13c3c5eb0174e0c0fec52cc88e9fb1de14c54d",  # noqa: B950
+                },
+                "filename": "hg-core-0.0.1.crate",
+                "url": "https://static.crates.io/crates/hg-core/hg-core-0.0.1.crate",
+                "version": "0.0.1",
+            },
+        ],
     },
     {
-        "name": "micro-timer",
-        "version": "0.4.0",
-        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.4.0.crate",
-        "checksum": "5de32cb59a062672560d6f0842c4aa7714727457b9fe2daf8987d995a176a405",
+        "url": "https://crates.io/api/v1/crates/micro-timer",
+        "artifacts": [
+            {
+                "checksums": {
+                    "sha256": "69ad8fd116f8af0298ae4e83e587b1600af12709022471e25581c3aeb1da77ce",  # noqa: B950
+                },
+                "filename": "micro-timer-0.1.0.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.1.0.crate",
+                "version": "0.1.0",
+            },
+            {
+                "checksums": {
+                    "sha256": "7b3f65fe0e109daad8d47e1938c9b5f9353efacd86bbe7ff013f84ae7ca758bf",  # noqa: B950
+                },
+                "filename": "micro-timer-0.1.1.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.1.1.crate",
+                "version": "0.1.1",
+            },
+            {
+                "checksums": {
+                    "sha256": "16439fea388f712c1df7737ceb8f784d407844624b4796faf1e1bf8bbaa97445",  # noqa: B950
+                },
+                "filename": "micro-timer-0.1.2.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.1.2.crate",
+                "version": "0.1.2",
+            },
+            {
+                "checksums": {
+                    "sha256": "336b4c0f071d16674747faa4643d742cc096fec2bf8cf01bb1a98d984bedcaf1",  # noqa: B950
+                },
+                "filename": "micro-timer-0.2.0.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.2.0.crate",
+                "version": "0.2.0",
+            },
+            {
+                "checksums": {
+                    "sha256": "987429cd6162a80ed5ff44fc790f5090b1c6d617ac73a2e272965ed91201d79b",  # noqa: B950
+                },
+                "filename": "micro-timer-0.2.1.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.2.1.crate",
+                "version": "0.2.1",
+            },
+            {
+                "checksums": {
+                    "sha256": "25b31d6cb9112984323d05d7a353f272ae5d7a307074f9ab9b25c00121b8c947",  # noqa: B950
+                },
+                "filename": "micro-timer-0.3.0.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.3.0.crate",
+                "version": "0.3.0",
+            },
+            {
+                "checksums": {
+                    "sha256": "2620153e1d903d26b72b89f0e9c48d8c4756cba941c185461dddc234980c298c",  # noqa: B950
+                },
+                "filename": "micro-timer-0.3.1.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.3.1.crate",
+                "version": "0.3.1",
+            },
+            {
+                "checksums": {
+                    "sha256": "5de32cb59a062672560d6f0842c4aa7714727457b9fe2daf8987d995a176a405",  # noqa: B950
+                },
+                "filename": "micro-timer-0.4.0.crate",
+                "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.4.0.crate",
+                "version": "0.4.0",
+            },
+        ],
     },
 ]
 
@@ -35,8 +107,7 @@ def test_get_versions(requests_mock_datadir, swh_storage):
     loader = CratesLoader(
         swh_storage,
         url=CRATES_EXTRA[1]["url"],
-        package_name=CRATES_EXTRA[1]["name"],
-        version=CRATES_EXTRA[1]["version"],
+        artifacts=CRATES_EXTRA[1]["artifacts"],
     )
     assert loader.get_versions() == [
         "0.1.0",
@@ -54,34 +125,37 @@ def test_get_default_version(requests_mock_datadir, swh_storage):
     loader = CratesLoader(
         swh_storage,
         url=CRATES_EXTRA[1]["url"],
-        package_name=CRATES_EXTRA[1]["name"],
-        version=CRATES_EXTRA[1]["version"],
+        artifacts=CRATES_EXTRA[1]["artifacts"],
     )
     assert loader.get_default_version() == "0.4.0"
 
 
-def test_crate_origin_not_found(swh_storage, requests_mock_datadir):
-    url = "https://nowhere-to-run/nowhere-to-hide-0.0.1.crate"
+def test_crate_invalid_origin_archive_not_found(swh_storage, requests_mock_datadir):
+    url = "https://nowhere-to-run/nowhere-to-hide"
     loader = CratesLoader(
         swh_storage,
         url,
-        package_name="nowhere-to-hide",
-        version="0.0.1",
+        artifacts=[
+            {
+                "filename": "nowhere-to-hide-0.0.1.crate",
+                "url": "https://nowhere-to-run/nowhere-to-hide-0.0.1.crate",
+                "version": "0.0.1",
+            },
+        ],
     )
 
-    assert loader.load() == {"status": "failed"}
-
-    assert_last_visit_matches(
-        swh_storage, url, status="not_found", type="crates", snapshot=None
-    )
+    with pytest.raises(Exception):
+        assert loader.load() == {"status": "failed"}
+        assert_last_visit_matches(
+            swh_storage, url, status="not_found", type="crates", snapshot=None
+        )
 
 
 def test_crates_loader_load_one_version(datadir, requests_mock_datadir, swh_storage):
     loader = CratesLoader(
         swh_storage,
         url=CRATES_EXTRA[0]["url"],
-        package_name=CRATES_EXTRA[0]["name"],
-        version=CRATES_EXTRA[0]["version"],
+        artifacts=CRATES_EXTRA[0]["artifacts"],
     )
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
@@ -137,11 +211,10 @@ def test_crates_loader_load_n_versions(datadir, requests_mock_datadir, swh_stora
     url = CRATES_EXTRA[1]["url"]
     loader = CratesLoader(
         swh_storage,
-        url=url,
-        package_name=CRATES_EXTRA[1]["name"],
-        version=CRATES_EXTRA[1]["version"],
-        checksum=CRATES_EXTRA[1]["checksum"],
+        url=CRATES_EXTRA[1]["url"],
+        artifacts=CRATES_EXTRA[1]["artifacts"],
     )
+
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None

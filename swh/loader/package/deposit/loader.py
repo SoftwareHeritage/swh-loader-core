@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 import attr
 import requests
+import sentry_sdk
 
 from swh.core.config import load_from_envvar
 from swh.loader.core.loader import DEFAULT_CONFIG
@@ -241,7 +242,8 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         try:
             self.metadata()
         except ValueError:
-            logger.error(f"Unknown deposit {self.deposit_id}, ignoring")
+            logger.exception(f"Unknown deposit {self.deposit_id}")
+            sentry_sdk.capture_exception()
             return {"status": "failed"}
 
         # Then usual loading
@@ -289,6 +291,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             )
         except Exception:
             logger.exception("Problem when trying to update the deposit's status")
+            sentry_sdk.capture_exception()
             return {"status": "failed"}
         return r
 
@@ -343,7 +346,6 @@ class ApiClient:
             return r.json()
 
         msg = f"Problem when retrieving deposit metadata at {url}"
-        logger.error(msg)
         raise ValueError(msg)
 
     def status_update(
