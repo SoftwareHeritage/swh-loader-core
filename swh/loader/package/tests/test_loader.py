@@ -80,7 +80,7 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
 
 def test_loader_origin_visit_failure(swh_storage):
     """Failure to add origin or origin visit should failed immediately"""
-    loader = PackageLoader(swh_storage, "some-url")
+    loader = StubPackageLoader(swh_storage, "some-url")
     loader.storage = FakeStorage()
 
     actual_load_status = loader.load()
@@ -111,7 +111,7 @@ def test_resolve_object_from_extids() -> None:
     )
     storage.release_add([rel1, rel2])
 
-    loader = PackageLoader(storage, "http://example.org/")  # type: ignore
+    loader = StubPackageLoader(storage, "http://example.org/")
 
     p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
 
@@ -160,7 +160,7 @@ def test_resolve_object_from_extids_missing_target() -> None:
         synthetic=False,
     )
 
-    loader = PackageLoader(storage, "http://example.org/")  # type: ignore
+    loader = StubPackageLoader(storage, "http://example.org/")
 
     p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
 

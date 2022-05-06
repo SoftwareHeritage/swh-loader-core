@@ -1,8 +1,14 @@
-swh-loader-core (3.3.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (3.4.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 3.4.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-05-06 10:36:18 +0200)
+  * Upstream changes:     - v3.4.0     - * crates: Do not literalinclude
+    JSON file in ExtrinsicPackageMetadata doc     - * Add Sentry
+    Captures     - * maven: Use most recent release of a package as
+    default version     - * loader.core: Add statsd timing and metadata
+    metrics
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 29 Apr 2022 12:54:12 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 06 May 2022 08:42:14 +0000
 
 swh-loader-core (3.3.0-1~swh1) unstable-swh; urgency=medium
 

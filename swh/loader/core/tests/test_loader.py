@@ -6,7 +6,8 @@
 import datetime
 import hashlib
 import logging
-from unittest.mock import MagicMock
+import time
+from unittest.mock import MagicMock, call
 
 import pytest
 
@@ -96,7 +97,8 @@ class DummyBaseLoader(DummyLoader, BaseLoader):
 
 
 class DummyMetadataFetcher:
-    SUPPORTED_LISTERS = {"fake-lister"}
+    SUPPORTED_LISTERS = {"fake-forge"}
+    FETCHER_NAME = "fake-forge"
 
     def __init__(self, origin, credentials, lister_name, lister_instance_name):
         pass
@@ -109,7 +111,8 @@ class DummyMetadataFetcher:
 
 
 class DummyMetadataFetcherWithFork:
-    SUPPORTED_LISTERS = {"fake-lister"}
+    SUPPORTED_LISTERS = {"fake-forge"}
+    FETCHER_NAME = "fake-forge"
 
     def __init__(self, origin, credentials, lister_name, lister_instance_name):
         pass
@@ -145,13 +148,15 @@ def test_base_loader_with_config(swh_storage):
 def test_base_loader_with_known_lister_name(swh_storage, mocker):
     fetcher_cls = MagicMock(wraps=DummyMetadataFetcher)
     fetcher_cls.SUPPORTED_LISTERS = DummyMetadataFetcher.SUPPORTED_LISTERS
+    fetcher_cls.FETCHER_NAME = "fake-forge"
     mocker.patch(
         "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
     )
 
     loader = DummyBaseLoader(
-        swh_storage, lister_name="fake-lister", lister_instance_name=""
+        swh_storage, lister_name="fake-forge", lister_instance_name=""
     )
+    statsd_report = mocker.patch.object(loader.statsd, "_report")
     result = loader.load()
     assert result == {"status": "eventful"}
 
@@ -159,13 +164,24 @@ def test_base_loader_with_known_lister_name(swh_storage, mocker):
     fetcher_cls.assert_called_once_with(
         origin=ORIGIN,
         credentials={},
-        lister_name="fake-lister",
+        lister_name="fake-forge",
         lister_instance_name="",
     )
     assert swh_storage.raw_extrinsic_metadata_get(
         ORIGIN.swhid(), METADATA_AUTHORITY
     ).results == [REMD]
     assert loader.parent_origins == []
+
+    assert [
+        call("metadata_fetchers_sum", "c", 1, {}, 1),
+        call("metadata_fetchers_count", "c", 1, {}, 1),
+        call("metadata_parent_origins_sum", "c", 0, {"fetcher": "fake-forge"}, 1),
+        call("metadata_parent_origins_count", "c", 1, {"fetcher": "fake-forge"}, 1),
+        call("metadata_objects_sum", "c", 1, {}, 1),
+        call("metadata_objects_count", "c", 1, {}, 1),
+    ] == [c for c in statsd_report.mock_calls if "metadata_" in c[1][0]]
+    assert loader.statsd.namespace == "swh_loader"
+    assert loader.statsd.constant_tags == {"visit_type": "git"}
 
 
 def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
@@ -189,13 +205,15 @@ def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
 def test_base_loader_forked_origin(swh_storage, mocker):
     fetcher_cls = MagicMock(wraps=DummyMetadataFetcherWithFork)
     fetcher_cls.SUPPORTED_LISTERS = DummyMetadataFetcherWithFork.SUPPORTED_LISTERS
+    fetcher_cls.FETCHER_NAME = "fake-forge"
     mocker.patch(
         "swh.loader.core.metadata_fetchers._fetchers", return_value=[fetcher_cls]
     )
 
     loader = DummyBaseLoader(
-        swh_storage, lister_name="fake-lister", lister_instance_name=""
+        swh_storage, lister_name="fake-forge", lister_instance_name=""
     )
+    statsd_report = mocker.patch.object(loader.statsd, "_report")
     result = loader.load()
     assert result == {"status": "eventful"}
 
@@ -203,13 +221,24 @@ def test_base_loader_forked_origin(swh_storage, mocker):
     fetcher_cls.assert_called_once_with(
         origin=ORIGIN,
         credentials={},
-        lister_name="fake-lister",
+        lister_name="fake-forge",
         lister_instance_name="",
     )
     assert swh_storage.raw_extrinsic_metadata_get(
         ORIGIN.swhid(), METADATA_AUTHORITY
     ).results == [REMD]
     assert loader.parent_origins == [PARENT_ORIGIN]
+
+    assert [
+        call("metadata_fetchers_sum", "c", 1, {}, 1),
+        call("metadata_fetchers_count", "c", 1, {}, 1),
+        call("metadata_parent_origins_sum", "c", 1, {"fetcher": "fake-forge"}, 1),
+        call("metadata_parent_origins_count", "c", 1, {"fetcher": "fake-forge"}, 1),
+        call("metadata_objects_sum", "c", 1, {}, 1),
+        call("metadata_objects_count", "c", 1, {}, 1),
+    ] == [c for c in statsd_report.mock_calls if "metadata_" in c[1][0]]
+    assert loader.statsd.namespace == "swh_loader"
+    assert loader.statsd.constant_tags == {"visit_type": "git"}
 
 
 def test_dvcs_loader(swh_storage):
@@ -275,6 +304,77 @@ def _check_load_failure(caplog, loader, exc_class, exc_text, status="partial"):
         assert visit.snapshot is None
         # But that the snapshot didn't get loaded
         assert loader.loaded_snapshot_id is None
+
+
+@pytest.mark.parametrize("success", [True, False])
+def test_loader_timings(swh_storage, mocker, success):
+    current_time = time.time()
+    mocker.patch("time.monotonic", side_effect=lambda: current_time)
+    mocker.patch("swh.core.statsd.monotonic", side_effect=lambda: current_time)
+
+    runtimes = {
+        "pre_cleanup": 2.0,
+        "build_extrinsic_origin_metadata": 3.0,
+        "prepare": 5.0,
+        "fetch_data": 7.0,
+        "store_data": 11.0,
+        "post_load": 13.0,
+        "flush": 17.0,
+        "cleanup": 23.0,
+    }
+
+    class TimedLoader(BaseLoader):
+        visit_type = "my-visit-type"
+
+        def __getattribute__(self, method_name):
+            if method_name == "visit_status" and not success:
+
+                def crashy():
+                    raise Exception("oh no")
+
+                return crashy
+
+            if method_name not in runtimes:
+                return super().__getattribute__(method_name)
+
+            def meth(*args, **kwargs):
+                nonlocal current_time
+                current_time += runtimes[method_name]
+
+            return meth
+
+    loader = TimedLoader(swh_storage, origin_url="http://example.org/hello.git")
+    statsd_report = mocker.patch.object(loader.statsd, "_report")
+    loader.load()
+
+    if success:
+        expected_tags = {
+            "post_load": {"success": True, "status": "full"},
+            "flush": {"success": True, "status": "full"},
+            "cleanup": {"success": True, "status": "full"},
+        }
+    else:
+        expected_tags = {
+            "post_load": {"success": False, "status": "failed"},
+            "flush": {"success": False, "status": "failed"},
+            "cleanup": {"success": False, "status": "failed"},
+        }
+
+    # note that this is a list equality, so order of entries in 'runtimes' matters.
+    # This is not perfect, but call() objects are not hashable so it's simpler this way,
+    # even if not perfect.
+    assert statsd_report.mock_calls == [
+        call(
+            "operation_duration_seconds",
+            "ms",
+            value * 1000,
+            {"operation": key, **expected_tags.get(key, {})},
+            1,
+        )
+        for (key, value) in runtimes.items()
+    ]
+    assert loader.statsd.namespace == "swh_loader"
+    assert loader.statsd.constant_tags == {"visit_type": "my-visit-type"}
 
 
 class DummyDVCSLoaderExc(DummyDVCSLoader):
