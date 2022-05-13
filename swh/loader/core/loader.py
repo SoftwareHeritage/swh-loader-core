@@ -362,6 +362,8 @@ class BaseLoader:
         total_time_store_data = 0.0
 
         try:
+            # Initially not a success, will be True when actually one
+            success = False
             with self.statsd_timed("prepare"):
                 self.prepare()
 
@@ -395,7 +397,6 @@ class BaseLoader:
             ):
                 self.post_load()
         except Exception as e:
-            success = False
             if isinstance(e, NotFound):
                 status = "not_found"
                 task_status = "uneventful"
