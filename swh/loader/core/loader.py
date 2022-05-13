@@ -396,7 +396,7 @@ class BaseLoader:
                 "post_load", tags={"success": success, "status": status}
             ):
                 self.post_load()
-        except Exception as e:
+        except BaseException as e:
             if isinstance(e, NotFound):
                 status = "not_found"
                 task_status = "uneventful"
@@ -416,7 +416,8 @@ class BaseLoader:
                     },
                 },
             )
-            sentry_sdk.capture_exception()
+            if not isinstance(e, (SystemExit, KeyboardInterrupt)):
+                sentry_sdk.capture_exception()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
                 visit=self.visit.visit,
@@ -430,6 +431,10 @@ class BaseLoader:
                 "post_load", tags={"success": success, "status": status}
             ):
                 self.post_load(success=success)
+            if not isinstance(e, Exception):
+                # e derives from BaseException but not Exception; this is most likely
+                # SystemExit or KeyboardInterrupt, so we should re-raise it.
+                raise
             return {"status": task_status}
         finally:
             with self.statsd_timed(
