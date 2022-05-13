@@ -1,3 +1,13 @@
+swh-loader-core (3.4.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 3.4.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-05-13 10:22:15
+    +0200)
+  * Upstream changes:     - v3.4.1     - Initialize the success boolean
+    early to avoid unbound exception
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 13 May 2022 08:26:59 +0000
+
 swh-loader-core (3.4.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 3.4.0     - (tagged by Valentin Lorentz
