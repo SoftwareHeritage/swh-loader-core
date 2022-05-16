@@ -397,6 +397,7 @@ class BaseLoader:
             ):
                 self.post_load()
         except BaseException as e:
+            success = False
             if isinstance(e, NotFound):
                 status = "not_found"
                 task_status = "uneventful"

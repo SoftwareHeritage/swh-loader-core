@@ -241,6 +241,25 @@ def test_base_loader_forked_origin(swh_storage, mocker):
     assert loader.statsd.constant_tags == {"visit_type": "git"}
 
 
+def test_base_loader_post_load_raise(swh_storage, mocker):
+    loader = DummyBaseLoader(swh_storage)
+    post_load = mocker.patch.object(loader, "post_load")
+
+    # raise exception in post_load when success is True
+    def post_load_method(*args, success=True):
+        if success:
+            raise Exception("Error in post_load")
+
+    post_load.side_effect = post_load_method
+
+    result = loader.load()
+    assert result == {"status": "failed"}
+
+    # ensure post_load has been called twice, once with success to True and
+    # once with success to False as the first post_load call raised exception
+    assert post_load.call_args_list == [mocker.call(), mocker.call(success=False)]
+
+
 def test_dvcs_loader(swh_storage):
     loader = DummyDVCSLoader(swh_storage)
     result = loader.load()
