@@ -336,10 +336,11 @@ def test_loader_timings(swh_storage, mocker, success):
         "build_extrinsic_origin_metadata": 3.0,
         "prepare": 5.0,
         "fetch_data": 7.0,
-        "store_data": 11.0,
-        "post_load": 13.0,
-        "flush": 17.0,
-        "cleanup": 23.0,
+        "process_data": 11.0,
+        "store_data": 13.0,
+        "post_load": 17.0,
+        "flush": 23.0,
+        "cleanup": 27.0,
     }
 
     class TimedLoader(BaseLoader):
