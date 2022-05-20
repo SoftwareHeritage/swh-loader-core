@@ -197,9 +197,11 @@ class BaseLoader:
 
         return self.__save_data_path
 
-    def flush(self) -> None:
-        """Flush any potential buffered data not sent to swh-storage."""
-        self.storage.flush()
+    def flush(self) -> Dict[str, int]:
+        """Flush any potential buffered data not sent to swh-storage.
+        Returns the same value as :meth:`swh.storage.interface.StorageInterface.flush`.
+        """
+        return self.storage.flush()
 
     def cleanup(self) -> None:
         """Last step executed by the loader."""
