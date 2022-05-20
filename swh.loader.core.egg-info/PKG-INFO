@@ -1,16 +1,14 @@
 Metadata-Version: 2.1
 Name: swh.loader.core
-Version: 3.4.1
+Version: 3.5.0
 Summary: Software Heritage Base Loader
 Home-page: https://forge.softwareheritage.org/diffusion/DLDBASE
 Author: Software Heritage developers
 Author-email: swh-devel@inria.fr
-License: UNKNOWN
 Project-URL: Bug Reports, https://forge.softwareheritage.org/maniphest
 Project-URL: Funding, https://www.softwareheritage.org/donate
 Project-URL: Source, https://forge.softwareheritage.org/source/swh-loader-core
 Project-URL: Documentation, https://docs.softwareheritage.org/devel/swh-loader-core/
-Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
@@ -52,5 +50,3 @@ as they often need more advanced conversions and very VCS-specific operations.
 This usually involves getting the branches of a repository and recursively loading
 revisions in the history (and directory trees in these revisions),
 until a known revision is found
-
-

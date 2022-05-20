@@ -1,8 +1,11 @@
-swh-loader-core (3.4.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (3.5.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 3.5.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-05-20 14:19:02 +0200)
+  * Upstream changes:     - v3.5.0     - * BaseLoader.flush: Return the
+    output of storage.flush
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 13 May 2022 08:29:57 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 20 May 2022 12:24:23 +0000
 
 swh-loader-core (3.4.1-1~swh1) unstable-swh; urgency=medium
 
