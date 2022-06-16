@@ -337,7 +337,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         description = extract_description(p_info)
         message = (
             f"Synthetic release for Crate source package {p_info.name} "
-            f"version {p_info.version}\n"
+            f"version {p_info.version}\n\n"
             f"{description}\n"
         )
         # The only way to get a value for updated_at is through extrinsic metadata
