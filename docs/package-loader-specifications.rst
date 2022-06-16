@@ -49,12 +49,12 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - metadata is intrinsic
    * - crates
      - ``p_info.​version``
-     - ``release_name(​version, filename)``
+     - ``release_name(​version, filename) + "\n\n" + i_metadata.description + "\n"``
      - =version
      - Synthetic release for Crate source package {p_info.name} version {p_info.version} {description}
      - true
-     - from intrinsic metadata
-     - from extrinsic metadata
+     - from int metadata
+     - from ext metadata
      - ``i_metadata`` for intrinsic metadata, ``e_metadata`` for extrinsic metadata
    * - debian
      - =``version``
