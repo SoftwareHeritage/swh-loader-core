@@ -20,6 +20,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - author
      - date
      - Notes
+   * - arch
+     - ``p_info.​version``
+     - ``release_name(​version, filename)``
+     - =version
+     - Synthetic release for Arch Linux source package {p_info.name} version {p_info.version} {description}
+     - true
+     - from intrinsic metadata
+     - from extra_loader_arguments['artifacts']
+     - Intrinsic metadata extracted from .PKGINFO file of the package
    * - archive
      - passed as arg
      - ``release_name(​version)``

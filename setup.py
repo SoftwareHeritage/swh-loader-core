@@ -55,6 +55,7 @@ setup(
         [swh.cli.subcommands]
         loader=swh.loader.cli
         [swh.workers]
+        loader.arch=swh.loader.package.arch:register
         loader.archive=swh.loader.package.archive:register
         loader.cran=swh.loader.package.cran:register
         loader.crates=swh.loader.package.crates:register
