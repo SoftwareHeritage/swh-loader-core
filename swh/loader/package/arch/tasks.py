@@ -9,6 +9,6 @@ from swh.loader.package.arch.loader import ArchLoader
 
 
 @shared_task(name=__name__ + ".LoadArch")
-def load_arch(*, url=None, artifacts: list):
+def load_arch(**kwargs):
     """Load Arch Linux packages"""
-    return ArchLoader.from_configfile(url=url, artifacts=artifacts).load()
+    return ArchLoader.from_configfile(**kwargs).load()
