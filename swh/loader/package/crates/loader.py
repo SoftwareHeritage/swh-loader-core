@@ -210,7 +210,6 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         storage: StorageInterface,
         url: str,
         artifacts: List[Dict[str, Any]],
-        max_content_size: Optional[int] = None,
         **kwargs,
     ):
         """Constructor
@@ -236,9 +235,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
                         }
                     ]
         """  # noqa
-        super().__init__(
-            storage=storage, url=url, max_content_size=max_content_size, **kwargs
-        )
+        super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
         self.artifacts: Dict[str, Dict] = {
             artifact["version"]: artifact for artifact in artifacts
