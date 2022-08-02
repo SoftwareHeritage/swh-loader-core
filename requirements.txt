@@ -5,6 +5,7 @@
 psutil
 requests
 iso8601
+looseversion
 pkginfo
 python-debian
 python-dateutil

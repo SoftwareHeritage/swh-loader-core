@@ -1,4 +1,4 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -24,7 +24,16 @@ def crates_listed_origin(crates_lister):
         url="some-url/api/v1/crates/some-package",
         visit_type="crates",
         extra_loader_arguments={
-            "artifacts": [{"version": "0.0.1", "url": "some-package-0.0.1.crate"}],
+            "artifacts": [
+                {
+                    "version": "0.0.1",
+                    "filename": "some-package-0.0.1.crate",
+                    "url": "https://somewhere/some-package-0.0.1.crate",
+                    "checksums": {
+                        "sha256": "5de32cb59a062672560d6f0842c4aa7714727457b9fe2daf8987d995a176a405",  # noqa: B950
+                    },
+                },
+            ],
         },
     )
 

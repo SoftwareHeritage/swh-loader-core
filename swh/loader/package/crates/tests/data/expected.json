@@ -1,0 +1,84 @@
+[
+  {
+    "url": "https://crates.io/api/v1/crates/hg-core",
+    "artifacts": [
+      {
+        "version": "0.0.1",
+        "checksums": {
+          "sha256": "233409cca39eccab8075d3414884a2e9096aa3f7ceb4139685134c9f2561e734"
+        },
+        "filename": "hg-core-0.0.1.crate",
+        "url": "https://static.crates.io/crates/hg-core/hg-core-0.0.1.crate"
+      }
+    ]
+  },
+  {
+    "url": "https://crates.io/api/v1/crates/micro-timer",
+    "artifacts": [
+      {
+        "version": "0.1.0",
+        "checksums": {
+          "sha256": "837c3955f0dfbd1a95f4388e06acb2f1a8030e28d251867e603b6be7b93da783"
+        },
+        "filename": "micro-timer-0.1.0.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.1.0.crate"
+      },
+      {
+        "version": "0.1.1",
+        "checksums": {
+          "sha256": "bfb0e972e961d6bfd8d344ccf05c29ae39b7d817ced30568204495aee4bab519"
+        },
+        "filename": "micro-timer-0.1.1.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.1.1.crate"
+      },
+      {
+        "version": "0.1.2",
+        "checksums": {
+          "sha256": "53251c2ab69c97447b4d6bfb327f7608ba0f7108e4aa3d4f559934d6cd088d11"
+        },
+        "filename": "micro-timer-0.1.2.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.1.2.crate"
+      },
+      {
+        "version": "0.2.0",
+        "checksums": {
+          "sha256": "d5a39e92178f6f0c8acb1111258327eab2447e2ab574e5868e2770ed28940d70"
+        },
+        "filename": "micro-timer-0.2.0.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.2.0.crate"
+      },
+      {
+        "version": "0.2.1",
+        "checksums": {
+          "sha256": "7889cfebb345bd706ecb93e7b67e7e6af1d68ce16e3f0c109bf8b7bcb79e55af"
+        },
+        "filename": "micro-timer-0.2.1.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.2.1.crate"
+      },
+      {
+        "version": "0.3.0",
+        "checksums": {
+          "sha256": "d92b84c26f807891fd492ceecc11ca2bdaf73583665275080ead1c127ed861a4"
+        },
+        "filename": "micro-timer-0.3.0.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.3.0.crate"
+      },
+      {
+        "version": "0.3.1",
+        "checksums": {
+          "sha256": "740acae0cfa83cf78207aab16ba4a41dce7101bca774c63eac8c41fd5ce382a5"
+        },
+        "filename": "micro-timer-0.3.1.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.3.1.crate"
+      },
+      {
+        "version": "0.4.0",
+        "checksums": {
+          "sha256": "475222c2def55b7166390398a0c033ceb9a1cdfe008ff6ebd22773fb2029a60f"
+        },
+        "filename": "micro-timer-0.4.0.crate",
+        "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.4.0.crate"
+      }
+    ]
+  }
+]
