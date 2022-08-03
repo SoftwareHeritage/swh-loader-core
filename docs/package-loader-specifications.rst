@@ -38,6 +38,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ""
      - passed as arg
      -
+   * - aur
+     - ``p_info.​version``
+     - ``release_name(​version, filename)``
+     - =version
+     - Synthetic release for Aur source package {p_info.name} version {p_info.version} {description}
+     - true
+     - ""
+     - from extra_loader_arguments['aur_metadata']
+     - Intrinsic metadata extracted from .SRCINFO file of the package
    * - cran
      - ``metadata.get(​"Version", passed as arg)``
      - ``release_name(​version)``

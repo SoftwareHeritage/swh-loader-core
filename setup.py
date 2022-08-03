@@ -57,6 +57,7 @@ setup(
         [swh.workers]
         loader.arch=swh.loader.package.arch:register
         loader.archive=swh.loader.package.archive:register
+        loader.aur=swh.loader.package.aur:register
         loader.cran=swh.loader.package.cran:register
         loader.crates=swh.loader.package.crates:register
         loader.debian=swh.loader.package.debian:register
