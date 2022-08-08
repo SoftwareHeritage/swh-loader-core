@@ -376,9 +376,11 @@ class BaseLoader:
         total_time_process_data = 0.0
         total_time_store_data = 0.0
 
+        # Initially not a success, will be True when actually one
+        status = "failed"
+        success = False
+
         try:
-            # Initially not a success, will be True when actually one
-            success = False
             with self.statsd_timed("prepare"):
                 self.prepare()
 
