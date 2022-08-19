@@ -27,7 +27,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - Synthetic release for Arch Linux source package {p_info.name} version {p_info.version} {description}
      - true
      - from intrinsic metadata
-     - from extra_loader_arguments['artifacts']
+     - from extra_loader_arguments['arch_metadata']
      - Intrinsic metadata extracted from .PKGINFO file of the package
    * - archive
      - passed as arg

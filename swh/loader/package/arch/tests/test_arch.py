@@ -23,22 +23,30 @@ EXPECTED_PACKAGES = [
         "artifacts": [
             {
                 "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz",  # noqa: B950
+                "version": "1:1.3_20190211-1",
+                "length": 180000,
+                "filename": "dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz",
+            },
+            {
+                "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",  # noqa: B950
+                "version": "1:1.3_20220414-1",
+                "length": 198000,
+                "filename": "dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",
+            },
+        ],
+        "arch_metadata": [
+            {
                 "arch": "x86_64",
                 "repo": "core",
                 "name": "dialog",
                 "version": "1:1.3_20190211-1",
-                "length": 180000,
-                "filename": "dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz",
                 "last_modified": "2019-02-13T08:36:00",
             },
             {
-                "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",  # noqa: B950
                 "arch": "x86_64",
                 "repo": "core",
                 "name": "dialog",
                 "version": "1:1.3_20220414-1",
-                "length": 198000,
-                "filename": "dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",
                 "last_modified": "2022-04-16T03:59:00",
             },
         ],
@@ -48,12 +56,17 @@ EXPECTED_PACKAGES = [
         "artifacts": [
             {
                 "url": "https://uk.mirror.archlinuxarm.org/aarch64/core/gzip-1.12-1-aarch64.pkg.tar.xz",  # noqa: B950
-                "arch": "aarch64",
-                "name": "gzip",
-                "repo": "core",
                 "length": 79640,
                 "version": "1.12-1",
                 "filename": "gzip-1.12-1-aarch64.pkg.tar.xz",
+            }
+        ],
+        "arch_metadata": [
+            {
+                "arch": "aarch64",
+                "name": "gzip",
+                "repo": "core",
+                "version": "1.12-1",
                 "last_modified": "2022-04-07T21:08:14",
             }
         ],
@@ -66,6 +79,7 @@ def test_get_versions(swh_storage):
         swh_storage,
         url=EXPECTED_PACKAGES[0]["url"],
         artifacts=EXPECTED_PACKAGES[0]["artifacts"],
+        arch_metadata=EXPECTED_PACKAGES[0]["arch_metadata"],
     )
 
     assert loader.get_versions() == [
@@ -79,6 +93,7 @@ def test_get_default_version(requests_mock_datadir, swh_storage):
         swh_storage,
         url=EXPECTED_PACKAGES[0]["url"],
         artifacts=EXPECTED_PACKAGES[0]["artifacts"],
+        arch_metadata=EXPECTED_PACKAGES[0]["arch_metadata"],
     )
     assert loader.get_default_version() == "1:1.3_20220414-1"
 
@@ -88,6 +103,7 @@ def test_arch_loader_load_one_version(datadir, requests_mock_datadir, swh_storag
         swh_storage,
         url=EXPECTED_PACKAGES[1]["url"],
         artifacts=EXPECTED_PACKAGES[1]["artifacts"],
+        arch_metadata=EXPECTED_PACKAGES[1]["arch_metadata"],
     )
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
@@ -154,6 +170,7 @@ def test_arch_loader_load_n_versions(datadir, requests_mock_datadir, swh_storage
         swh_storage,
         url=EXPECTED_PACKAGES[0]["url"],
         artifacts=EXPECTED_PACKAGES[0]["artifacts"],
+        arch_metadata=EXPECTED_PACKAGES[0]["arch_metadata"],
     )
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
@@ -216,10 +233,15 @@ def test_arch_invalid_origin_archive_not_found(swh_storage, requests_mock_datadi
                 "filename": "42-0.0.1.pkg.xz",
                 "url": "https://mirror2.nowhere/pkg/42-0.0.1.pkg.xz",
                 "version": "0.0.1",
+                "length": 42,
+            },
+        ],
+        arch_metadata=[
+            {
+                "version": "0.0.1",
                 "arch": "aarch64",
                 "name": "42",
                 "repo": "community",
-                "length": 42,
                 "last_modified": "2022-04-07T21:08:14",
             },
         ],

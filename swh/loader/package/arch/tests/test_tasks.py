@@ -19,10 +19,15 @@ def test_tasks_arch_loader(
                     "version": "0.0.1",
                     "url": "https://somewhere/some-package-0.0.1.pkg.xz",
                     "filename": "some-package-0.0.1.pkg.xz",
+                    "length": 42,
+                }
+            ],
+            arch_metadata=[
+                {
+                    "version": "0.0.1",
                     "arch": "aarch64",
                     "name": "some-package",
                     "repo": "community",
-                    "length": 42,
                     "last_modified": "1970-01-01T21:08:14",
                 }
             ],

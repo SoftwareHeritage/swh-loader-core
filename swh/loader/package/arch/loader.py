@@ -57,6 +57,7 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
         storage: StorageInterface,
         url: str,
         artifacts: List[Dict[str, Any]],
+        arch_metadata: List[Dict[str, Any]],
         **kwargs,
     ):
 
@@ -64,6 +65,9 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
         self.url = url
         self.artifacts: Dict[str, Dict] = {
             artifact["version"]: artifact for artifact in artifacts
+        }
+        self.arch_metadata: Dict[str, Dict] = {
+            metadata["version"]: metadata for metadata in arch_metadata
         }
 
     def get_versions(self) -> Sequence[str]:
@@ -102,14 +106,15 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
             Iterator of tuple (release_name, p_info)
         """
         artifact = self.artifacts[version]
-        assert version == artifact["version"]
+        metadata = self.arch_metadata[version]
+        assert version == artifact["version"] == metadata["version"]
 
         p_info = ArchPackageInfo(
-            name=artifact["name"],
+            name=metadata["name"],
             filename=artifact["filename"],
             url=artifact["url"],
             version=version,
-            last_modified=artifact["last_modified"],
+            last_modified=metadata["last_modified"],
         )
         yield release_name(version, artifact["filename"]), p_info
 
