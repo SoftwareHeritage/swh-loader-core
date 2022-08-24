@@ -65,6 +65,7 @@ setup(
         loader.nixguix=swh.loader.package.nixguix:register
         loader.npm=swh.loader.package.npm:register
         loader.opam=swh.loader.package.opam:register
+        loader.pubdev=swh.loader.package.pubdev:register
         loader.pypi=swh.loader.package.pypi:register
         loader.maven=swh.loader.package.maven:register
     """,

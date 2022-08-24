@@ -122,6 +122,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - from metadata
      - None
      - "{self.opam_package}​.{version}" matches the version names used by opam's backend. metadata is extrinsic
+   * - pubdev
+     - ``p_info.​version``
+     - ``release_name(​version)``
+     - =version
+     - Synthetic release for pub.dev source package {name} version {version} {description}
+     - true
+     - from extrinsic metadata
+     - from extrinsic metadata
+     - name, version and description from intrinsic metadata
    * - pypi
      - ``metadata​["version"]``
      - ``release_name(​version)`` or ``release_name(​version, filename)``
