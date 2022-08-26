@@ -9,6 +9,6 @@ from swh.loader.package.pubdev.loader import PubDevLoader
 
 
 @shared_task(name=__name__ + ".LoadPubDev")
-def load_arch(**kwargs):
+def load_pubdev(**kwargs):
     """Load packages from pub.dev (Dart, Flutter)"""
     return PubDevLoader.from_configfile(**kwargs).load()
