@@ -29,6 +29,9 @@ EXPECTED_PACKAGES = [
     {
         "url": "https://pub.dev/api/packages/authentication",  # empty author
     },
+    {
+        "url": "https://pub.dev/api/packages/abstract_io",  # loose versions names
+    },
 ]
 
 
@@ -41,6 +44,15 @@ def test_get_versions(requests_mock_datadir, swh_storage):
         "1.0.0",
         "3.8.2",
     ]
+
+
+def test_get_loose_versions(requests_mock_datadir, swh_storage):
+    """Sometimes version name does not follow semver"""
+    loader = PubDevLoader(
+        swh_storage,
+        url=EXPECTED_PACKAGES[4]["url"],
+    )
+    assert loader.get_versions() == ["0.1.2+4", "0.1.2+5", "0.1.2+6"]
 
 
 def test_get_default_version(requests_mock_datadir, swh_storage):
