@@ -113,6 +113,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - original author
      - ``<codemeta: dateCreated>`` from SWORD XML
      - revisions had parents
+   * - hackage
+     - ``p_info.​version``
+     - ``release_name(​version)``
+     - =version
+     - Synthetic release for Haskell source package {p_info.name} version {p_info.version}
+     - true
+     - intrinsic metadata if any else from extrinsic metadata
+     - from extrinsic metadata
+     - ""
    * - maven-loader
      - passed as arg
      - HEAD

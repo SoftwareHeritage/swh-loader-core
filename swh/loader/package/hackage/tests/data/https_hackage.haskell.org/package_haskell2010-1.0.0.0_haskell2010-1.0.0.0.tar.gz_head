@@ -1,0 +1,18 @@
+HTTP/1.1 200 OK
+Connection: keep-alive
+Content-Length: 24960
+Server: nginx/1.18.0 (Ubuntu)
+Content-Type: application/x-gzip
+Cache-Control: public, no-transform, max-age=2592000
+Content-MD5: Lo49CA/TkSGUqibfgleNjw==
+ETag: "5bf57c0d9c4c578083f2862d91bbf38c"
+Last-modified: Wed, 25 Sep 2013 20:46:11 GMT
+Accept-Ranges: bytes
+Date: Mon, 17 Oct 2022 12:50:09 GMT
+Via: 1.1 varnish
+Age: 1210
+X-Served-By: cache-cdg20723-CDG
+X-Cache: HIT
+X-Cache-Hits: 1
+X-Timer: S1666011010.861553,VS0,VE1
+

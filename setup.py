@@ -67,6 +67,7 @@ setup(
         loader.debian=swh.loader.package.debian:register
         loader.deposit=swh.loader.package.deposit:register
         loader.golang=swh.loader.package.golang:register
+        loader.hackage=swh.loader.package.hackage:register
         loader.nixguix=swh.loader.package.nixguix:register
         loader.npm=swh.loader.package.npm:register
         loader.opam=swh.loader.package.opam:register
