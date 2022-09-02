@@ -13,7 +13,7 @@ def test_tasks_pubdev_loader(
     res = swh_scheduler_celery_app.send_task(
         "swh.loader.package.pubdev.tasks.LoadPubDev",
         kwargs=dict(
-            url="some-url/api/packages/some-package",
+            url="https://pub.dev/packages/some-package",
         ),
     )
     assert res

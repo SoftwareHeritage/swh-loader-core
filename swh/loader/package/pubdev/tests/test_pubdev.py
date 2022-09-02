@@ -2,6 +2,9 @@
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
+
+import pytest
+
 from swh.loader.package.pubdev.loader import PubDevLoader
 from swh.loader.package.utils import EMPTY_AUTHOR
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
@@ -18,19 +21,19 @@ from swh.model.model import (
 
 EXPECTED_PACKAGES = [
     {
-        "url": "https://pub.dev/api/packages/Autolinker",  # one version
+        "url": "https://pub.dev/packages/Autolinker",  # one version
     },
     {
-        "url": "https://pub.dev/api/packages/pdf",  # multiple versions
+        "url": "https://pub.dev/packages/pdf",  # multiple versions
     },
     {
-        "url": "https://pub.dev/api/packages/bezier",  # multiple authors
+        "url": "https://pub.dev/packages/bezier",  # multiple authors
     },
     {
-        "url": "https://pub.dev/api/packages/authentication",  # empty author
+        "url": "https://pub.dev/packages/authentication",  # empty author
     },
     {
-        "url": "https://pub.dev/api/packages/abstract_io",  # loose versions names
+        "url": "https://pub.dev/packages/abstract_io",  # loose versions names
     },
 ]
 
@@ -260,11 +263,10 @@ def test_pubdev_loader_empty_author(datadir, requests_mock_datadir, swh_storage)
     assert release.author == EMPTY_AUTHOR
 
 
-def test_pubdev_invalid_origin(swh_storage, requests_mock_datadir):
-    loader = PubDevLoader(
-        swh_storage,
-        "http://nowhere/api/packages/42",
-    )
+def test_pubdev_invalid_origin(swh_storage):
 
-    load_status = loader.load()
-    assert load_status["status"] == "failed"
+    with pytest.raises(AssertionError):
+        PubDevLoader(
+            swh_storage,
+            "http://nowhere/api/packages/42",
+        )

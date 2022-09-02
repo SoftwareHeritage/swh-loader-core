@@ -61,6 +61,8 @@ def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
 class PubDevLoader(PackageLoader[PubDevPackageInfo]):
     visit_type = "pubdev"
 
+    PUBDEV_BASE_URL = "https://pub.dev/"
+
     def __init__(
         self,
         storage: StorageInterface,
@@ -70,9 +72,13 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
 
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
+        assert url.startswith(self.PUBDEV_BASE_URL)
+        self.package_info_url = url.replace(
+            self.PUBDEV_BASE_URL, f"{self.PUBDEV_BASE_URL}api/"
+        )
 
     def _raw_info(self) -> bytes:
-        return api_info(self.url)
+        return api_info(self.package_info_url)
 
     @cached_method
     def info(self) -> Dict:
