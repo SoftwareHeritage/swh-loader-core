@@ -1,3 +1,9 @@
+swh-loader-core (4.0.0-1~swh2) unstable-swh; urgency=medium
+
+  * Update build dependencies and bump new release
+
+ -- Antoine R. Dumont (@ardumont) <ardumont@softwareheritage.org>  Fri, 09 Sep 2022 11:47:53 +0200
+
 swh-loader-core (4.0.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 4.0.0     - (tagged by Antoine R. Dumont
