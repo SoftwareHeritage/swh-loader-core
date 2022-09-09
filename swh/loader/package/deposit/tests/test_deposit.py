@@ -149,8 +149,8 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
         "status": "failed",
         "status_detail": {
             "loading": [
-                "Failed to load branch HEAD for some-url-2: Fail to query "
-                "'https://deposit.softwareheritage.org/1/private/666/raw/'. Reason: 404"
+                "Failed to load branch HEAD for some-url-2: 404 Client Error: None "
+                "for url: https://deposit.softwareheritage.org/1/private/666/raw/"
             ]
         },
     }

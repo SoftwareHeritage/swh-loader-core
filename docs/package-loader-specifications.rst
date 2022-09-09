@@ -20,6 +20,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - author
      - date
      - Notes
+   * - arch
+     - ``p_info.​version``
+     - ``release_name(​version, filename)``
+     - =version
+     - Synthetic release for Arch Linux source package {p_info.name} version {p_info.version} {description}
+     - true
+     - from intrinsic metadata
+     - from extra_loader_arguments['arch_metadata']
+     - Intrinsic metadata extracted from .PKGINFO file of the package
    * - archive
      - passed as arg
      - ``release_name(​version)``
@@ -29,6 +38,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ""
      - passed as arg
      -
+   * - aur
+     - ``p_info.​version``
+     - ``release_name(​version, filename)``
+     - =version
+     - Synthetic release for Aur source package {p_info.name} version {p_info.version} {description}
+     - true
+     - ""
+     - from extra_loader_arguments['aur_metadata']
+     - Intrinsic metadata extracted from .SRCINFO file of the package
    * - cran
      - ``metadata.get(​"Version", passed as arg)``
      - ``release_name(​version)``
@@ -40,12 +58,12 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - metadata is intrinsic
    * - crates
      - ``p_info.​version``
-     - ``release_name(​version, filename)``
+     - ``release_name(​version, filename) + "\n\n" + i_metadata.description + "\n"``
      - =version
      - Synthetic release for Crate source package {p_info.name} version {p_info.version} {description}
      - true
-     - from intrinsic metadata
-     - from extrinsic metadata
+     - from int metadata
+     - from ext metadata
      - ``i_metadata`` for intrinsic metadata, ``e_metadata`` for extrinsic metadata
    * - debian
      - =``version``
@@ -59,6 +77,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
        ``i_version`` is the intrinsic version (eg. ``0.7.2-3``) while ``version``
        contains the debian suite name (eg. ``stretch/contrib/0.7.2-3``) and is
        passed as arg
+   * - golang
+     - ``p_info.​version``
+     - ``release_name(version)``
+     - =version
+     - Synthetic release for Golang source package {p_info.name} version {p_info.version}
+     - true
+     - ""
+     - from ext metadata
+     - Golang offers basically no metadata outside of version and timestamp
    * - deposit
      - HEAD
      - only HEAD
@@ -104,6 +131,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - from metadata
      - None
      - "{self.opam_package}​.{version}" matches the version names used by opam's backend. metadata is extrinsic
+   * - pubdev
+     - ``p_info.​version``
+     - ``release_name(​version)``
+     - =version
+     - Synthetic release for pub.dev source package {name} version {version} {description}
+     - true
+     - from extrinsic metadata
+     - from extrinsic metadata
+     - name, version and description from intrinsic metadata
    * - pypi
      - ``metadata​["version"]``
      - ``release_name(​version)`` or ``release_name(​version, filename)``

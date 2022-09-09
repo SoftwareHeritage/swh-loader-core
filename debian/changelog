@@ -1,8 +1,25 @@
-swh-loader-core (3.5.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (4.0.0-1~swh2) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * Update build dependencies and bump new release
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 20 May 2022 12:27:20 +0000
+ -- Antoine R. Dumont (@ardumont) <ardumont@softwareheritage.org>  Fri, 09 Sep 2022 11:47:53 +0200
+
+swh-loader-core (4.0.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 4.0.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-09-09 09:03:40
+    +0200)
+  * Upstream changes:     - v4.0.0     - New package loader Golang     -
+    New package loader pubdev     - New package loader Arch Linux     -
+    New package loader Arch Linux User     - New package loader Crates
+    - docs: Mention caveats of using archive checksums as ExtID.     -
+    package/utils: Add retry policy to download in case of throttling
+    - package/archive: Handle tarball artifact with null time     -
+    Initialize 'status' before try block     - Always log an error when
+    setting 'failed' status     - Add method process_data(), run between
+    fetch_data() and store_data()
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 09 Sep 2022 07:11:14 +0000
 
 swh-loader-core (3.5.0-1~swh1) unstable-swh; urgency=medium
 

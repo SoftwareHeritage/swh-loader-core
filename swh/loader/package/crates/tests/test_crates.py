@@ -161,8 +161,8 @@ def test_crates_loader_load_one_version(datadir, requests_mock_datadir, swh_stor
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "353cd6858c88ee8210432ea1098993c2e9966561"
-    expected_release_id = "d578833534017430f1b93eb741620899620c2505"
+    expected_snapshot_id = "b3affb4949eb89b244f0e1d1fe235fc1d26bde76"
+    expected_release_id = "237c4cdd44a90e620795e5a07ebcc72bc82487f7"
 
     assert expected_snapshot_id == actual_load_status["snapshot_id"]
 
@@ -195,8 +195,8 @@ def test_crates_loader_load_one_version(datadir, requests_mock_datadir, swh_stor
 
     assert swh_storage.release_get([hash_to_bytes(expected_release_id)])[0] == Release(
         name=b"0.0.1",
-        message=b"Synthetic release for Crate source package hg-core version "
-        b"0.0.1\nMercurial pure Rust core library, with no assumption "
+        message=b"Synthetic release for Crate source package hg-core version 0.0.1\n\n"
+        b"Mercurial pure Rust core library, with no assumption "
         b"on Python bindings (FFI)\n",
         target=hash_to_bytes("674c3b0b54628d55b93a79dc7adf304efc01b371"),
         target_type=ObjectType.DIRECTORY,
@@ -219,42 +219,42 @@ def test_crates_loader_load_n_versions(datadir, requests_mock_datadir, swh_stora
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "016cbbe3bb78424c35b898015a2d80d79359e2ad"
+    expected_snapshot_id = "3f8ca5908a570fa32270b07a0946bcffa88babd5"
     assert expected_snapshot_id == actual_load_status["snapshot_id"]
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/0.4.0/micro-timer-0.4.0.crate": SnapshotBranch(
-                target=hash_to_bytes("3237c1174c4ccfa8e934d1bfd8d80b3a89760e39"),
+                target=hash_to_bytes("b038a927244c852fb3794aecbebdc70f68ddf067"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.3.1/micro-timer-0.3.1.crate": SnapshotBranch(
-                target=hash_to_bytes("8b727a280051cdb90468ede2746e176e6fdf355f"),
+                target=hash_to_bytes("ea331a2ce755e6f0cd9d05c9be52accde68536c4"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.3.0/micro-timer-0.3.0.crate": SnapshotBranch(
-                target=hash_to_bytes("f45ec236ae50fb37e924a3d2cc093e72b6cbf1cd"),
+                target=hash_to_bytes("7ea45f915ace083ed361bb12593625bf4cf1f5f2"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.2.1/micro-timer-0.2.1.crate": SnapshotBranch(
-                target=hash_to_bytes("50a60a2c3696df7cd1b623bd7dbea2c89b994e42"),
+                target=hash_to_bytes("074f27605be8b759e5d7c638f026aac3709f58e5"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.2.0/micro-timer-0.2.0.crate": SnapshotBranch(
-                target=hash_to_bytes("f0592dc0ae05399d872017d0260c45b875cb590e"),
+                target=hash_to_bytes("a1d642aaa54c5361f67e57adbd86e01f3a3276f8"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.1.2/micro-timer-0.1.2.crate": SnapshotBranch(
-                target=hash_to_bytes("9220d7823fc40ab44e3ae3227522e7de672fad3e"),
+                target=hash_to_bytes("60f18ae067ce235bc60243bf5cdaaae474b11978"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.1.1/micro-timer-0.1.1.crate": SnapshotBranch(
-                target=hash_to_bytes("38529b7e355f79fdce31a3ba891e146174e10237"),
+                target=hash_to_bytes("fd6c55dfd016d58647a2d44b29a3fd4e3afa7671"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.1.0/micro-timer-0.1.0.crate": SnapshotBranch(
-                target=hash_to_bytes("5e5e6120af55b65c577e09331df54e70fad5e8b0"),
+                target=hash_to_bytes("3e07559a4b366a397b1ca154e72753ce27223ca1"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(

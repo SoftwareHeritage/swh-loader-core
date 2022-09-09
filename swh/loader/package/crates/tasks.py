@@ -9,6 +9,6 @@ from swh.loader.package.crates.loader import CratesLoader
 
 
 @shared_task(name=__name__ + ".LoadCrates")
-def load_crates(*, url=None, artifacts: list):
+def load_crates(**kwargs):
     """Load Rust crate package"""
-    return CratesLoader.from_configfile(url=url, artifacts=artifacts).load()
+    return CratesLoader.from_configfile(**kwargs).load()

@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -145,7 +145,11 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
             parsed_time = iso8601.parse_date(time)
         else:
             parsed_time = time
-        normalized_time = TimestampWithTimezone.from_datetime(parsed_time)
+        normalized_time = (
+            TimestampWithTimezone.from_datetime(parsed_time)
+            if parsed_time is not None
+            else None
+        )
         msg = f"Synthetic release for archive at {p_info.url}\n"
         return Release(
             name=p_info.version.encode(),
