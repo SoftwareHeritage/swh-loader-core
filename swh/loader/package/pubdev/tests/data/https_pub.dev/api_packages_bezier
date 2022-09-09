@@ -1,0 +1,55 @@
+{
+  "name": "bezier",
+  "latest": {
+    "version": "1.1.5",
+    "pubspec": {
+      "name": "bezier",
+      "version": "1.1.5",
+      "authors": [
+        "Aaron Barrett <aaron@aaronbarrett.com>",
+        "Isaac Barrett <ikebart9999@gmail.com>"
+      ],
+      "description": "A 2D Bézier curve math library. Based heavily on the work of @TheRealPomax <pomax.github.io/bezierjs>.\nLive examples can be found at <www.dartographer.com/bezier>.",
+      "homepage": "https://github.com/aab29/bezier.dart",
+      "environment": {
+        "sdk": ">=2.0.0 <3.0.0"
+      },
+      "dependencies": {
+        "vector_math": "^2.0.0"
+      },
+      "dev_dependencies": {
+        "test": "^1.0.0"
+      }
+    },
+    "archive_url": "https://pub.dartlang.org/packages/bezier/versions/1.1.5.tar.gz",
+    "archive_sha256": "cc5da2fa927b5d347550f78d456cd984b7df78a7f0405119cdab12111e2f9ee8",
+    "published": "2019-12-22T03:17:30.805225Z"
+  },
+  "versions": [
+    {
+      "version": "1.1.5",
+      "pubspec": {
+        "name": "bezier",
+        "version": "1.1.5",
+        "authors": [
+          "Aaron Barrett <aaron@aaronbarrett.com>",
+          "Isaac Barrett <ikebart9999@gmail.com>"
+        ],
+        "description": "A 2D Bézier curve math library. Based heavily on the work of @TheRealPomax <pomax.github.io/bezierjs>.\nLive examples can be found at <www.dartographer.com/bezier>.",
+        "homepage": "https://github.com/aab29/bezier.dart",
+        "environment": {
+          "sdk": ">=2.0.0 <3.0.0"
+        },
+        "dependencies": {
+          "vector_math": "^2.0.0"
+        },
+        "dev_dependencies": {
+          "test": "^1.0.0"
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/bezier/versions/1.1.5.tar.gz",
+      "archive_sha256": "cc5da2fa927b5d347550f78d456cd984b7df78a7f0405119cdab12111e2f9ee8",
+      "published": "2019-12-22T03:17:30.805225Z"
+    }
+  ]
+}

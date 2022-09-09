@@ -1,0 +1,77 @@
+{
+  "name": "authentication",
+  "latest": {
+    "version": "0.0.1",
+    "pubspec": {
+      "name": "authentication",
+      "description": "Persistent user authentication for Flutter with optional backend API integration.",
+      "version": "0.0.1",
+      "author": null,
+      "homepage": null,
+      "environment": {
+        "sdk": ">=2.7.0 <3.0.0",
+        "flutter": ">=1.17.0 <2.0.0"
+      },
+      "dependencies": {
+        "flutter": {
+          "sdk": "flutter"
+        }
+      },
+      "dev_dependencies": {
+        "flutter_test": {
+          "sdk": "flutter"
+        }
+      },
+      "flutter": {
+        "plugin": {
+          "platforms": {
+            "some_platform": {
+              "pluginClass": "somePluginClass"
+            }
+          }
+        }
+      }
+    },
+    "archive_url": "https://pub.dartlang.org/packages/authentication/versions/0.0.1.tar.gz",
+    "archive_sha256": "0179334b346cb67e4e6e3c905e5cc5c8e488a45ebd99fd2be3a7e0476d620d99",
+    "published": "2020-08-13T04:53:34.134687Z"
+  },
+  "versions": [
+    {
+      "version": "0.0.1",
+      "pubspec": {
+        "name": "authentication",
+        "description": "Persistent user authentication for Flutter with optional backend API integration.",
+        "version": "0.0.1",
+        "author": null,
+        "homepage": null,
+        "environment": {
+          "sdk": ">=2.7.0 <3.0.0",
+          "flutter": ">=1.17.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "some_platform": {
+                "pluginClass": "somePluginClass"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/authentication/versions/0.0.1.tar.gz",
+      "archive_sha256": "0179334b346cb67e4e6e3c905e5cc5c8e488a45ebd99fd2be3a7e0476d620d99",
+      "published": "2020-08-13T04:53:34.134687Z"
+    }
+  ]
+}

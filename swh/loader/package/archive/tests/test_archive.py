@@ -1,8 +1,9 @@
-# Copyright (C) 2019-2021 The Software Heritage developers
+# Copyright (C) 2019-2022 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import copy
 import datetime
 import hashlib
 from io import BytesIO
@@ -486,3 +487,16 @@ def test_archive_not_gzipped_tarball(
     snapshot = loader.last_snapshot()
     assert len(snapshot.branches) == 2
     assert b"releases/0.1.0" in snapshot.branches
+
+
+def test_archive_visit_no_time_for_tarball(swh_storage, requests_mock_datadir):
+    artifacts = copy.deepcopy(GNU_ARTIFACTS)
+    for artifact in artifacts:
+        artifact["time"] = None
+
+    loader = ArchiveLoader(swh_storage, URL, artifacts=artifacts)
+
+    actual_load_status = loader.load()
+    assert actual_load_status["status"] == "eventful"
+
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
