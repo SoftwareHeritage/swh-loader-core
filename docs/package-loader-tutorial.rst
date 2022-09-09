@@ -376,6 +376,15 @@ Ideally, this short string is a checksum of the archive, provided by the API
 before downloading the archive itself.
 This is ideal, because this ensures that we detect changes in the package's content
 even if it keeps the same name and version number.
+However, this is only usable when all fields used to generate release objects
+(message, authors, ...) are extracted from the archive.
+
+.. important::
+
+    If release objects are generated from extrinsic fields (ie. not extracted from
+    the archive, such as authorship information added by the package repository)
+    two different package versions with the same tarball would end up with the
+    same release number; causing the loader to create incorrect snapshots.
 
 If this is not the case of the repository you want to load from, skip to the
 next subsection.
@@ -445,6 +454,10 @@ Note that, as mentioned before, this is not perfect because a tarball may be rep
 with a different tarball of exactly the same length and modification time,
 and we won't detect it.
 But this is extremely unlikely, so we consider it to be good enough.
+
+.. important::
+
+    The manifest must cover all fields used to generate Release objects.
 
 
 Alternatively, if this is not good enough for your loader, you can simply not implement

@@ -583,6 +583,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 errors=[str(e)],
             )
         except Exception as e:
+            logger.exception("Failed to get list of versions for %s", self.origin.url)
             sentry_sdk.capture_exception(e)
             return self.finalize_visit(
                 snapshot=snapshot,
@@ -713,6 +714,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         if not tmp_releases:
             # We could not load any releases; fail completely
+            logger.error("Failed to load any release for %s", self.origin.url)
             return self.finalize_visit(
                 snapshot=snapshot,
                 visit=visit,

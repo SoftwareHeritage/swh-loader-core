@@ -1,0 +1,88 @@
+{
+  "name": "pdf",
+  "latest": {
+    "version": "3.8.2",
+    "pubspec": {
+      "name": "pdf",
+      "description": "A pdf producer for Dart. It can create pdf files for both web or flutter.",
+      "homepage": "https://github.com/DavBfr/dart_pdf/tree/master/pdf",
+      "repository": "https://github.com/DavBfr/dart_pdf",
+      "issue_tracker": "https://github.com/DavBfr/dart_pdf/issues",
+      "version": "3.8.2",
+      "environment": {
+        "sdk": ">=2.12.0 <3.0.0"
+      },
+      "dependencies": {
+        "archive": "^3.1.0",
+        "barcode": ">=2.2.0 <3.0.0",
+        "crypto": "^3.0.0",
+        "image": ">=3.0.1 <4.0.0",
+        "meta": ">=1.3.0 <2.0.0",
+        "path_parsing": ">=0.2.0 <2.0.0",
+        "vector_math": "^2.1.0",
+        "xml": ">=5.1.0 <7.0.0"
+      },
+      "dev_dependencies": {
+        "flutter_lints": "^1.0.4",
+        "test": ">=1.16.0 <2.0.0"
+      }
+    },
+    "archive_url": "https://pub.dartlang.org/packages/pdf/versions/3.8.2.tar.gz",
+    "published": "2022-07-25T11:38:25.983876Z"
+  },
+  "versions": [
+    {
+      "version": "1.0.0",
+      "pubspec": {
+        "version": "1.0.0",
+        "name": "pdf",
+        "dependencies": {
+          "ttf_parser": "^1.0.0",
+          "vector_math": "^2.0.7",
+          "meta": "^1.1.5"
+        },
+        "author": "David PHAM-VAN <dev.nfet.net@gmail.com>",
+        "description": "A pdf producer for Dart",
+        "homepage": "https://github.com/davbfr/dart_pdf",
+        "environment": {
+          "sdk": ">=1.8.0 <2.0.0"
+        },
+        "dev_dependencies": {
+          "test": "any"
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/pdf/versions/1.0.0.tar.gz",
+      "published": "2018-07-16T21:12:28.894137Z"
+    },
+    {
+      "version": "3.8.2",
+      "pubspec": {
+        "name": "pdf",
+        "description": "A pdf producer for Dart. It can create pdf files for both web or flutter.",
+        "homepage": "https://github.com/DavBfr/dart_pdf/tree/master/pdf",
+        "repository": "https://github.com/DavBfr/dart_pdf",
+        "issue_tracker": "https://github.com/DavBfr/dart_pdf/issues",
+        "version": "3.8.2",
+        "environment": {
+          "sdk": ">=2.12.0 <3.0.0"
+        },
+        "dependencies": {
+          "archive": "^3.1.0",
+          "barcode": ">=2.2.0 <3.0.0",
+          "crypto": "^3.0.0",
+          "image": ">=3.0.1 <4.0.0",
+          "meta": ">=1.3.0 <2.0.0",
+          "path_parsing": ">=0.2.0 <2.0.0",
+          "vector_math": "^2.1.0",
+          "xml": ">=5.1.0 <7.0.0"
+        },
+        "dev_dependencies": {
+          "flutter_lints": "^1.0.4",
+          "test": ">=1.16.0 <2.0.0"
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/pdf/versions/3.8.2.tar.gz",
+      "published": "2022-07-25T11:38:25.983876Z"
+    }
+  ]
+}

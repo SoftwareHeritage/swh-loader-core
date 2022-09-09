@@ -1,0 +1,93 @@
+{
+  "name": "abstract_io",
+  "latest": {
+    "version": "0.1.2+6",
+    "pubspec": {
+      "name": "abstract_io",
+      "description": "Abstract IO is designed to simplify and generalize saving data both localy and externaly",
+      "version": "0.1.2+6",
+      "author": "Anders Groeschel",
+      "repository": "https://github.com/AndersGroeschel/abstract_io",
+      "homepage": "https://github.com/AndersGroeschel/abstract_io",
+      "environment": {
+        "sdk": ">=2.7.0 <3.0.0"
+      },
+      "dependencies": {
+        "flutter": {
+          "sdk": "flutter"
+        }
+      }
+    },
+    "archive_url": "https://pub.dartlang.org/packages/abstract_io/versions/0.1.2%2B6.tar.gz",
+    "archive_sha256": "9557fd384730d92a046cfccdff9625f2d646657219d5a0e447cb7eb0fdf90f18",
+    "published": "2020-08-03T21:31:05.764846Z"
+  },
+  "versions": [
+    {
+      "version": "0.1.2+4",
+      "pubspec": {
+        "name": "abstract_io",
+        "description": "Abstract IO is designed to simplify and generalize saving data both localy and externaly",
+        "version": "0.1.2+4",
+        "author": "Anders Groeschel",
+        "repository": "https://github.com/AndersGroeschel/abstract_io",
+        "homepage": "https://github.com/AndersGroeschel/abstract_io",
+        "environment": {
+          "sdk": ">=2.7.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/abstract_io/versions/0.1.2%2B4.tar.gz",
+      "archive_sha256": "df687ff2a92774db04a28167ccddbfe9c2fc1ea63c6ae05c3236552fe350bb68",
+      "published": "2020-08-03T20:14:38.116237Z"
+    },
+    {
+      "version": "0.1.2+5",
+      "pubspec": {
+        "name": "abstract_io",
+        "description": "Abstract IO is designed to simplify and generalize saving data both localy and externaly",
+        "version": "0.1.2+5",
+        "author": "Anders Groeschel",
+        "repository": "https://github.com/AndersGroeschel/abstract_io",
+        "homepage": "https://github.com/AndersGroeschel/abstract_io",
+        "environment": {
+          "sdk": ">=2.7.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/abstract_io/versions/0.1.2%2B5.tar.gz",
+      "archive_sha256": "fc9199c2f9879d3c0d140c05a2f8c537561af256d98d209b4ee102e8107ec2b9",
+      "published": "2020-08-03T21:09:20.329418Z"
+    },
+    {
+      "version": "0.1.2+6",
+      "pubspec": {
+        "name": "abstract_io",
+        "description": "Abstract IO is designed to simplify and generalize saving data both localy and externaly",
+        "version": "0.1.2+6",
+        "author": "Anders Groeschel",
+        "repository": "https://github.com/AndersGroeschel/abstract_io",
+        "homepage": "https://github.com/AndersGroeschel/abstract_io",
+        "environment": {
+          "sdk": ">=2.7.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/abstract_io/versions/0.1.2%2B6.tar.gz",
+      "archive_sha256": "9557fd384730d92a046cfccdff9625f2d646657219d5a0e447cb7eb0fdf90f18",
+      "published": "2020-08-03T21:31:05.764846Z"
+    }
+  ]
+}

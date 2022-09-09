@@ -14,6 +14,11 @@ from urllib.parse import unquote, urlsplit
 from urllib.request import urlopen
 
 import requests
+from requests.exceptions import HTTPError
+from tenacity import retry
+from tenacity.before_sleep import before_sleep_log
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_exponential
 
 from swh.loader.exception import NotFound
 from swh.loader.package import DEFAULT_PARAMS
@@ -63,6 +68,26 @@ def _content_disposition_filename(header: str) -> Optional[str]:
     return fname
 
 
+def _retry_if_throttling(retry_state) -> bool:
+    """Custom tenacity retry predicate for handling HTTP responses with
+    status code 429 (too many requests).
+    """
+    attempt = retry_state.outcome
+    if attempt.failed:
+        exception = attempt.exception()
+        return (
+            isinstance(exception, HTTPError) and exception.response.status_code == 429
+        )
+    return False
+
+
+@retry(
+    retry=_retry_if_throttling,
+    wait=wait_exponential(exp_base=10),
+    stop=stop_after_attempt(max_attempt_number=5),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
 def download(
     url: str,
     dest: str,
@@ -104,10 +129,7 @@ def download(
         response_data = itertools.takewhile(bool, chunks)
     else:
         response = requests.get(url, **params, timeout=timeout, stream=True)
-        if response.status_code != 200:
-            raise ValueError(
-                "Fail to query '%s'. Reason: %s" % (url, response.status_code)
-            )
+        response.raise_for_status()
         # update URL to response one as requests follow redirection by default
         # on GET requests
         url = response.url

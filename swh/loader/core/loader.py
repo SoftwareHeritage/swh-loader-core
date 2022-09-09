@@ -257,6 +257,16 @@ class BaseLoader:
         """
         raise NotImplementedError
 
+    def process_data(self) -> bool:
+        """Run any additional processing between fetching and storing the data
+
+        Returns:
+            a value that is interpreted as a boolean. If True, fetch_data needs
+            to be called again to complete loading.
+            Ignored if ``fetch_data`` already returned :const:`False`.
+        """
+        return True
+
     def store_data(self):
         """Store fetched data in the database.
 
@@ -318,6 +328,8 @@ class BaseLoader:
         - while True:
 
           - Call :meth:`fetch_data` to fetch the data to store
+          - Call :meth:`process_data` to optionally run processing between
+            :meth:`fetch_data` and :meth:`store_data`
           - Call :meth:`store_data` to store the data
 
         - Call :meth:`cleanup` to clean up any eventual state put in place
@@ -361,11 +373,14 @@ class BaseLoader:
             )
 
         total_time_fetch_data = 0.0
+        total_time_process_data = 0.0
         total_time_store_data = 0.0
 
+        # Initially not a success, will be True when actually one
+        status = "failed"
+        success = False
+
         try:
-            # Initially not a success, will be True when actually one
-            success = False
             with self.statsd_timed("prepare"):
                 self.prepare()
 
@@ -374,13 +389,19 @@ class BaseLoader:
                 more_data_to_fetch = self.fetch_data()
                 t2 = time.monotonic()
                 total_time_fetch_data += t2 - t1
-                self.store_data()
+
+                more_data_to_fetch = self.process_data() and more_data_to_fetch
                 t3 = time.monotonic()
-                total_time_store_data += t3 - t2
+                total_time_process_data += t3 - t2
+
+                self.store_data()
+                t4 = time.monotonic()
+                total_time_store_data += t4 - t3
                 if not more_data_to_fetch:
                     break
 
             self.statsd_timing("fetch_data", total_time_fetch_data * 1000.0)
+            self.statsd_timing("process_data", total_time_process_data * 1000.0)
             self.statsd_timing("store_data", total_time_store_data * 1000.0)
 
             status = self.visit_status()

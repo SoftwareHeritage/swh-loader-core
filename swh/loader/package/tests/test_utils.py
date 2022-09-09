@@ -11,6 +11,7 @@ from urllib.error import URLError
 from urllib.parse import quote
 
 import pytest
+from requests.exceptions import HTTPError
 
 from swh.loader.exception import NotFound
 import swh.loader.package
@@ -29,10 +30,10 @@ def test_download_fail_to_download(tmp_path, requests_mock):
     status_code = 404
     requests_mock.get(url, status_code=status_code)
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        HTTPError, match=f"{status_code} Client Error: None for url: {url}"
+    ):
         download(url, tmp_path)
-
-    assert e.value.args[0] == "Fail to query '%s'. Reason: %s" % (url, status_code)
 
 
 _filename = "requests-0.0.1.tar.gz"
@@ -234,3 +235,39 @@ def test_release_name():
         ("0.0.2", "something", "releases/0.0.2/something"),
     ]:
         assert release_name(version, filename) == expected_release
+
+
+@pytest.fixture(autouse=True)
+def mock_download_retry_sleep(mocker):
+    mocker.patch.object(download.retry, "sleep")
+
+
+def test_download_retry(mocker, requests_mock, tmp_path):
+    url = f"https://example.org/project/requests/files/{_filename}"
+
+    requests_mock.get(
+        url,
+        [
+            {"status_code": 429},
+            {"status_code": 429},
+            {
+                "text": _data,
+                "headers": {"content-length": str(len(_data))},
+                "status_code": 200,
+            },
+        ],
+    )
+
+    _check_download_ok(url, dest=str(tmp_path))
+
+
+def test_download_retry_reraise(mocker, requests_mock, tmp_path):
+    url = f"https://example.org/project/requests/files/{_filename}"
+
+    requests_mock.get(
+        url,
+        [{"status_code": 429}] * 5,
+    )
+
+    with pytest.raises(HTTPError):
+        _check_download_ok(url, dest=str(tmp_path))
