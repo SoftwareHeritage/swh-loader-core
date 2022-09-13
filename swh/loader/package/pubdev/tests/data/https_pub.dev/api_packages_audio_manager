@@ -1,0 +1,1637 @@
+{
+  "name": "audio_manager",
+  "latest": {
+    "version": "0.8.2",
+    "pubspec": {
+      "name": "audio_manager",
+      "description": "A flutter plugin for music playback, including notification handling.",
+      "version": "0.8.2",
+      "homepage": "https://github.com/jeromexiong/audio_manager",
+      "environment": {
+        "sdk": ">=2.12.0 <3.0.0",
+        "flutter": ">=1.20.0"
+      },
+      "dependencies": {
+        "flutter": {
+          "sdk": "flutter"
+        },
+        "flutter_web_plugins": {
+          "sdk": "flutter"
+        }
+      },
+      "dev_dependencies": {
+        "flutter_test": {
+          "sdk": "flutter"
+        }
+      },
+      "flutter": {
+        "plugin": {
+          "platforms": {
+            "android": {
+              "package": "cc.dync.audio_manager",
+              "pluginClass": "AudioManagerPlugin"
+            },
+            "ios": {
+              "pluginClass": "AudioManagerPlugin"
+            },
+            "web": {
+              "pluginClass": "AudioManagerPlugin",
+              "fileName": "audio_manager_web.dart"
+            }
+          }
+        }
+      }
+    },
+    "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.8.2.tar.gz",
+    "archive_sha256": "6f26b61cc39e258619d0e1bc34500bb7f3926dcc4b6a8c7ea31b67c62381c931",
+    "published": "2021-10-05T11:25:10.278136Z"
+  },
+  "versions": [
+    {
+      "version": "0.0.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.0.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "androidPackage": "cc.dync.audio_manager",
+            "pluginClass": "AudioManagerPlugin"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.0.1.tar.gz",
+      "archive_sha256": "ba1e160e0164bf0c3542ec4c337ba93c177b0c656d7fe0dd93e9353b134c3d82",
+      "published": "2020-01-19T04:03:08.408868Z"
+    },
+    {
+      "version": "0.0.2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.0.2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "androidPackage": "cc.dync.audio_manager",
+            "pluginClass": "AudioManagerPlugin"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.0.2.tar.gz",
+      "archive_sha256": "4aec6c5a7473fd9f4778037c390484a0d59d4fa7e5d2ea50e1700524394ecd41",
+      "published": "2020-01-20T08:17:04.286167Z"
+    },
+    {
+      "version": "0.1.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.1.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "androidPackage": "cc.dync.audio_manager",
+            "pluginClass": "AudioManagerPlugin"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.1.1.tar.gz",
+      "archive_sha256": "9b6cc5524fa4ffa946d5ef133497f0bde004cc8ef0875b66c17b36462ade2ae3",
+      "published": "2020-01-20T08:44:15.151981Z"
+    },
+    {
+      "version": "0.1.2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.1.2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "androidPackage": "cc.dync.audio_manager",
+            "pluginClass": "AudioManagerPlugin"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.1.2.tar.gz",
+      "archive_sha256": "20bbc50d15e3ba9d1d9ebe07813b1504d32118f6bd63f06ca557ac657c048dd3",
+      "published": "2020-01-20T10:10:05.679374Z"
+    },
+    {
+      "version": "0.1.3",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.1.3",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "androidPackage": "cc.dync.audio_manager",
+            "pluginClass": "AudioManagerPlugin"
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.1.3.tar.gz",
+      "archive_sha256": "57d2d9ef50edbc74a0d6d23e64c65d25768e7af8c763c6636215651447e261a3",
+      "published": "2020-01-21T03:26:07.360220Z"
+    },
+    {
+      "version": "0.1.4",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.1.4",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.1.4.tar.gz",
+      "archive_sha256": "53ef60933e9c61ac184f7fea38f54c8354eb74dd08f20bfc661eb9f8ae8f84de",
+      "published": "2020-01-28T12:49:42.158959Z"
+    },
+    {
+      "version": "0.1.5",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.1.5",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.1.5.tar.gz",
+      "archive_sha256": "936481a34a3d8eeedcdd26689281ab52f415d50cf9b586f82da0ee2cd3bc5937",
+      "published": "2020-02-05T11:20:56.408153Z"
+    },
+    {
+      "version": "0.2.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.2.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.2.1.tar.gz",
+      "archive_sha256": "8c673ab6837682efa92db82be185ae63743b7c85fad9af7cb389c68dc7209b80",
+      "published": "2020-02-10T15:34:33.966841Z"
+    },
+    {
+      "version": "0.2.1+3",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.2.1+3",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.2.1%2B3.tar.gz",
+      "archive_sha256": "71bf59872482382826369560337ac40af099b3557ef1f2fe608e5b76aba0ba08",
+      "published": "2020-02-24T04:04:39.484669Z"
+    },
+    {
+      "version": "0.2.1+hotfix.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.2.1+hotfix.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.2.1%2Bhotfix.1.tar.gz",
+      "archive_sha256": "27f896b81f04af7deb8605fdcc58f924805313f8ac08c47f446deb0d615052f1",
+      "published": "2020-02-12T13:16:52.629036Z"
+    },
+    {
+      "version": "0.2.1+hotfix.2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.2.1+hotfix.2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.2.1%2Bhotfix.2.tar.gz",
+      "archive_sha256": "b79bf0ee5cac7d4414f0e7fe18d93467a2c0a815130a69671a8a73d1a4e97370",
+      "published": "2020-02-13T03:50:06.570996Z"
+    },
+    {
+      "version": "0.3.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.3.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.3.1.tar.gz",
+      "archive_sha256": "0dad69cebcb80b920ae7ed3c6b479b030aa4c7cdf84aaf3eddc4e09be70e4f61",
+      "published": "2020-02-24T04:08:56.844608Z"
+    },
+    {
+      "version": "0.3.1+1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.3.1+1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.3.1%2B1.tar.gz",
+      "archive_sha256": "03a1973a8b71741709d65370c5b1ece838bc62f56ea7038263cd8f0ba0d4f1c1",
+      "published": "2020-02-25T04:03:44.708601Z"
+    },
+    {
+      "version": "0.5.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.1.tar.gz",
+      "archive_sha256": "e2e9777c3712cb8aa9fc1b275ad8675b43a3e900adbcb8563624dea6b65ed877",
+      "published": "2020-03-09T09:17:02.774181Z"
+    },
+    {
+      "version": "0.5.1+1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.1+1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.1%2B1.tar.gz",
+      "archive_sha256": "36ce31f26f2ccd39eb1650fc1f29879bad43439ec09b59a9fd3044843ce1d6c7",
+      "published": "2020-03-10T07:33:54.509246Z"
+    },
+    {
+      "version": "0.5.1+2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.1+2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.1%2B2.tar.gz",
+      "archive_sha256": "577ac4b284c27761f96b1fc9e47c057bc34076cd84a9ffd41cdbe037917b9a8e",
+      "published": "2020-03-10T12:28:55.258668Z"
+    },
+    {
+      "version": "0.5.1+3",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.1+3",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.1%2B3.tar.gz",
+      "archive_sha256": "75897f8e2e701b1fa9ad5f29846f2551450e3363981f8f03241cb5279c32b9e8",
+      "published": "2020-03-11T06:24:41.326411Z"
+    },
+    {
+      "version": "0.5.1+4",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.1+4",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.1%2B4.tar.gz",
+      "archive_sha256": "b1505499de4e23e8fd9dfc03e01d98effcb330f28452c0a8d2698c159681ab3f",
+      "published": "2020-03-11T06:37:37.016887Z"
+    },
+    {
+      "version": "0.5.1+5",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.1+5",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.1%2B5.tar.gz",
+      "archive_sha256": "5b1e83f1f0137b34b4a018be1282fde886beb55ba46d0b8b42f403b4ab1de551",
+      "published": "2020-03-12T06:24:21.642494Z"
+    },
+    {
+      "version": "0.5.2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.2.tar.gz",
+      "archive_sha256": "cf5e1165eae2959c016abd43aca5fbef8ddc415d5e7760e7a79ae2d2058861b3",
+      "published": "2020-03-13T06:23:18.744917Z"
+    },
+    {
+      "version": "0.5.2+1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.2+1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.2%2B1.tar.gz",
+      "archive_sha256": "d6faa6e6b8b10a1fd64d1ce625fa8bdf796b0d68872eeed39b476de70f6575e4",
+      "published": "2020-03-17T08:16:05.352849Z"
+    },
+    {
+      "version": "0.5.3",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.3",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.3.tar.gz",
+      "archive_sha256": "f90b2ca7758bb4762da63fb44f50a749860ae650cf46a0da1f2c8a8bf64b3534",
+      "published": "2020-03-19T04:00:25.045092Z"
+    },
+    {
+      "version": "0.5.3+1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.3+1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.3%2B1.tar.gz",
+      "archive_sha256": "4591f420ac5c66a02e5aa72da2c4ac1dafc45c58c20a0301b658fcb4a193ac9f",
+      "published": "2020-03-24T04:01:42.936272Z"
+    },
+    {
+      "version": "0.5.3+2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.3+2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.3%2B2.tar.gz",
+      "archive_sha256": "fe236c0aace46adea45b72cb2c255a8ce0252d7c482312851c673c8a5326ba08",
+      "published": "2020-03-31T07:51:37.161227Z"
+    },
+    {
+      "version": "0.5.3+3",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.3+3",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.3%2B3.tar.gz",
+      "archive_sha256": "5470cdb704ec0b0db2ef24dc6abf52a20b22838812ffd72d5fce6bd7d2301ebf",
+      "published": "2020-04-25T11:00:45.370666Z"
+    },
+    {
+      "version": "0.5.4",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.4",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.4.tar.gz",
+      "archive_sha256": "659a90232b4ef8bb5209998540c851220f8bc02909e942745dd1f9dc945fb50a",
+      "published": "2020-04-27T08:16:54.531384Z"
+    },
+    {
+      "version": "0.5.4+1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.4+1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.4%2B1.tar.gz",
+      "archive_sha256": "2c13b30c4a0849e4679fa3674e1cf4f37616c7317c80097b6277ac82a1d77449",
+      "published": "2020-04-28T08:56:53.471649Z"
+    },
+    {
+      "version": "0.5.5",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.5",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.5.tar.gz",
+      "archive_sha256": "6afe114c088b8836cfda95e919ca7a27b194ab38a15652871cbe4a18a2614828",
+      "published": "2020-06-02T17:27:44.185641Z"
+    },
+    {
+      "version": "0.5.5+1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.5+1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.5%2B1.tar.gz",
+      "archive_sha256": "fcd4c89bac8912c0a738d20e616d0c0c7d2660ed66c78d61d6d70707e11d903b",
+      "published": "2020-06-03T12:55:34.627592Z"
+    },
+    {
+      "version": "0.5.5+2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.5+2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.5%2B2.tar.gz",
+      "archive_sha256": "0d8cc98dfea58b6e8c6d1d8e368ce4b78641fc1b0c67c7f6b66be71a2192131b",
+      "published": "2020-06-07T03:01:44.581962Z"
+    },
+    {
+      "version": "0.5.5+3",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.5+3",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.5%2B3.tar.gz",
+      "archive_sha256": "47ae200b33f76c716c3f3cc5b9a01edbda01d4229a3e7809e83eee0ca9d3d67a",
+      "published": "2020-06-11T12:10:22.714748Z"
+    },
+    {
+      "version": "0.5.6",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.6",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.6.tar.gz",
+      "archive_sha256": "999566d6723a81a6790f9211dd88a86e50ac11f576e348961db98d1d312046d9",
+      "published": "2020-10-22T09:34:01.825061Z"
+    },
+    {
+      "version": "0.5.7",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.7",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.7.tar.gz",
+      "archive_sha256": "a7a4bc134d9b2654c22cbde25e9fbc5ef810940d8329072bb6eb3dc0cdb39363",
+      "published": "2020-10-22T14:05:29.407637Z"
+    },
+    {
+      "version": "0.5.7+1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.5.7+1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.5.7%2B1.tar.gz",
+      "archive_sha256": "6cc3a0d629842cd6a69c6a59a90fb9b34cec377ff9ce08960dbe6e5bec5676f5",
+      "published": "2020-10-23T09:58:57.828463Z"
+    },
+    {
+      "version": "0.6.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.6.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "flutter_web_plugins": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "web": {
+                "pluginClass": "AudioManagerPlugin",
+                "fileName": "audio_manager_web.dart"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.6.1.tar.gz",
+      "archive_sha256": "3327db1c1f065bcb434f240899d65dca3590dd28e1ab9fbdb82c79b47238055a",
+      "published": "2020-10-27T08:30:31.727200Z"
+    },
+    {
+      "version": "0.6.2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.6.2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "flutter_web_plugins": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "web": {
+                "pluginClass": "AudioManagerPlugin",
+                "fileName": "audio_manager_web.dart"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.6.2.tar.gz",
+      "archive_sha256": "84240bf9f5b048c696b3d0bc2063d2f6abb60de0a7c23cf6cb8abfe299233dee",
+      "published": "2020-11-26T09:58:23.851983Z"
+    },
+    {
+      "version": "0.7.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.7.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "flutter_web_plugins": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "web": {
+                "pluginClass": "AudioManagerPlugin",
+                "fileName": "audio_manager_web.dart"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.7.1.tar.gz",
+      "archive_sha256": "e12d6734fbe19af96f9916f31b282da8b446d1a77c75326503271730adfd7788",
+      "published": "2021-01-26T09:10:40.222865Z"
+    },
+    {
+      "version": "0.7.2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.7.2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "flutter_web_plugins": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "web": {
+                "pluginClass": "AudioManagerPlugin",
+                "fileName": "audio_manager_web.dart"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.7.2.tar.gz",
+      "archive_sha256": "b343e13e074008531d03502d559543aaa0cb11ec7050431ccb2e3e5e097ff618",
+      "published": "2021-01-27T03:50:37.801441Z"
+    },
+    {
+      "version": "0.7.3",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.7.3",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.1.0 <3.0.0",
+          "flutter": ">=1.12.0 <2.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "flutter_web_plugins": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "web": {
+                "pluginClass": "AudioManagerPlugin",
+                "fileName": "audio_manager_web.dart"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.7.3.tar.gz",
+      "archive_sha256": "8cfaf06e8ff49fa57ab2ef87e05ab813e50ceccffea15efee2c6b71b2c63fe18",
+      "published": "2021-01-27T03:57:26.848937Z"
+    },
+    {
+      "version": "0.8.1",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.8.1",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.12.0 <3.0.0",
+          "flutter": ">=1.20.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "flutter_web_plugins": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "web": {
+                "pluginClass": "AudioManagerPlugin",
+                "fileName": "audio_manager_web.dart"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.8.1.tar.gz",
+      "archive_sha256": "22deaa1d72b07f84eb54fc8cdf643786ede522d3ef76d70ccb8edd3469484e7c",
+      "published": "2021-05-27T09:13:54.510298Z"
+    },
+    {
+      "version": "0.8.2",
+      "pubspec": {
+        "name": "audio_manager",
+        "description": "A flutter plugin for music playback, including notification handling.",
+        "version": "0.8.2",
+        "homepage": "https://github.com/jeromexiong/audio_manager",
+        "environment": {
+          "sdk": ">=2.12.0 <3.0.0",
+          "flutter": ">=1.20.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "flutter_web_plugins": {
+            "sdk": "flutter"
+          }
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          }
+        },
+        "flutter": {
+          "plugin": {
+            "platforms": {
+              "android": {
+                "package": "cc.dync.audio_manager",
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "ios": {
+                "pluginClass": "AudioManagerPlugin"
+              },
+              "web": {
+                "pluginClass": "AudioManagerPlugin",
+                "fileName": "audio_manager_web.dart"
+              }
+            }
+          }
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/audio_manager/versions/0.8.2.tar.gz",
+      "archive_sha256": "6f26b61cc39e258619d0e1bc34500bb7f3926dcc4b6a8c7ea31b67c62381c931",
+      "published": "2021-10-05T11:25:10.278136Z"
+    }
+  ]
+}
