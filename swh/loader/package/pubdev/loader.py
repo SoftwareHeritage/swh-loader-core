@@ -2,12 +2,12 @@
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
-from distutils.version import LooseVersion
 import json
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
 
 import attr
+from packaging.version import parse as parse_version
 import yaml
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
@@ -101,7 +101,7 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
                 ["0.1.1", "0.10.2"]
         """
         versions = list(self.info()["versions"].keys())
-        versions.sort(key=LooseVersion)
+        versions.sort(key=parse_version)
         return versions
 
     def get_default_version(self) -> str:

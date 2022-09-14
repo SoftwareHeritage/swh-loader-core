@@ -12,6 +12,10 @@ from unittest.mock import Mock, call, patch
 import attr
 import pytest
 
+from swh.loader.core.loader import (
+    SENTRY_ORIGIN_URL_TAG_NAME,
+    SENTRY_VISIT_TYPE_TAG_NAME,
+)
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.model.model import (
     Origin,
@@ -518,3 +522,20 @@ def test_no_env_swh_config_filename_raise(monkeypatch):
         AssertionError, match="SWH_CONFIG_FILENAME environment variable is undefined"
     ):
         DummyPackageLoader.from_configfile(url="some-url")
+
+
+class StubPackageLoaderWithError(StubPackageLoader):
+    def get_versions(self, *args, **kwargs):
+        raise Exception("error")
+
+
+def test_loader_sentry_tags_on_error(swh_storage, sentry_events):
+    origin_url = "http://example.org/package/name"
+    loader = StubPackageLoaderWithError(swh_storage, origin_url)
+    loader.load()
+    sentry_tags = sentry_events[0]["tags"]
+    assert sentry_tags.get(SENTRY_ORIGIN_URL_TAG_NAME) == origin_url
+    assert (
+        sentry_tags.get(SENTRY_VISIT_TYPE_TAG_NAME)
+        == StubPackageLoaderWithError.visit_type
+    )
