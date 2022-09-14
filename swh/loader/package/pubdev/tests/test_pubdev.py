@@ -35,6 +35,9 @@ EXPECTED_PACKAGES = [
     {
         "url": "https://pub.dev/packages/abstract_io",  # loose versions names
     },
+    {
+        "url": "https://pub.dev/packages/audio_manager",  # loose ++ versions names
+    },
 ]
 
 
@@ -49,13 +52,64 @@ def test_get_versions(requests_mock_datadir, swh_storage):
     ]
 
 
-def test_get_loose_versions(requests_mock_datadir, swh_storage):
+def test_sort_loose_versions(requests_mock_datadir, swh_storage):
     """Sometimes version name does not follow semver"""
     loader = PubDevLoader(
         swh_storage,
         url=EXPECTED_PACKAGES[4]["url"],
     )
     assert loader.get_versions() == ["0.1.2+4", "0.1.2+5", "0.1.2+6"]
+
+
+def test_sort_loose_versions_1(requests_mock_datadir, swh_storage):
+    """Sometimes version name does not follow semver and mix patterns"""
+    loader = PubDevLoader(
+        swh_storage,
+        url=EXPECTED_PACKAGES[5]["url"],
+    )
+    assert loader.get_versions() == [
+        "0.0.1",
+        "0.0.2",
+        "0.1.1",
+        "0.1.2",
+        "0.1.3",
+        "0.1.4",
+        "0.1.5",
+        "0.2.1",
+        "0.2.1+hotfix.1",
+        "0.2.1+hotfix.2",
+        "0.2.1+3",
+        "0.3.1",
+        "0.3.1+1",
+        "0.5.1",
+        "0.5.1+1",
+        "0.5.1+2",
+        "0.5.1+3",
+        "0.5.1+4",
+        "0.5.1+5",
+        "0.5.2",
+        "0.5.2+1",
+        "0.5.3",
+        "0.5.3+1",
+        "0.5.3+2",
+        "0.5.3+3",
+        "0.5.4",
+        "0.5.4+1",
+        "0.5.5",
+        "0.5.5+1",
+        "0.5.5+2",
+        "0.5.5+3",
+        "0.5.6",
+        "0.5.7",
+        "0.5.7+1",
+        "0.6.1",
+        "0.6.2",
+        "0.7.1",
+        "0.7.2",
+        "0.7.3",
+        "0.8.1",
+        "0.8.2",
+    ]
 
 
 def test_get_default_version(requests_mock_datadir, swh_storage):

@@ -247,6 +247,7 @@ swh/loader/package/pubdev/tests/data/https_pub.dartlang.org/packages_pdf_version
 swh/loader/package/pubdev/tests/data/https_pub.dartlang.org/packages_pdf_versions_3.8.2.tar.gz
 swh/loader/package/pubdev/tests/data/https_pub.dev/api_packages_Autolinker
 swh/loader/package/pubdev/tests/data/https_pub.dev/api_packages_abstract_io
+swh/loader/package/pubdev/tests/data/https_pub.dev/api_packages_audio_manager
 swh/loader/package/pubdev/tests/data/https_pub.dev/api_packages_authentication
 swh/loader/package/pubdev/tests/data/https_pub.dev/api_packages_bezier
 swh/loader/package/pubdev/tests/data/https_pub.dev/api_packages_pdf

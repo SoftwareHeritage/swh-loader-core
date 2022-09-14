@@ -11,7 +11,12 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from swh.loader.core.loader import BaseLoader, DVCSLoader
+from swh.loader.core.loader import (
+    SENTRY_ORIGIN_URL_TAG_NAME,
+    SENTRY_VISIT_TYPE_TAG_NAME,
+    BaseLoader,
+    DVCSLoader,
+)
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound
 from swh.loader.tests import assert_last_visit_matches
@@ -479,3 +484,22 @@ def test_loader_not_found(swh_storage, caplog):
     assert result == {"status": "uneventful"}
 
     _check_load_failure(caplog, loader, NotFound, "Unknown origin!", status="not_found")
+
+
+class DummyLoaderWithError(DummyBaseLoader):
+    def prepare(self, *args, **kwargs):
+        raise Exception("error")
+
+
+class DummyDVCSLoaderWithError(DummyDVCSLoader, BaseLoader):
+    def prepare(self, *args, **kwargs):
+        raise Exception("error")
+
+
+@pytest.mark.parametrize("loader_cls", [DummyLoaderWithError, DummyDVCSLoaderWithError])
+def test_loader_sentry_tags_on_error(swh_storage, sentry_events, loader_cls):
+    loader = loader_cls(swh_storage)
+    loader.load()
+    sentry_tags = sentry_events[0]["tags"]
+    assert sentry_tags.get(SENTRY_ORIGIN_URL_TAG_NAME) == ORIGIN.url
+    assert sentry_tags.get(SENTRY_VISIT_TYPE_TAG_NAME) == DummyLoader.visit_type

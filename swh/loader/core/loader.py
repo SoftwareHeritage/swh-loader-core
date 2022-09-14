@@ -38,6 +38,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "max_content_size": 100 * 1024 * 1024,
 }
 
+SENTRY_ORIGIN_URL_TAG_NAME = "swh.loader.origin_url"
+SENTRY_VISIT_TYPE_TAG_NAME = "swh.loader.visit_type"
+
 
 class BaseLoader:
     """Base class for (D)VCS loaders (e.g Svn, Git, Mercurial, ...) or PackageLoader (e.g
@@ -115,6 +118,9 @@ class BaseLoader:
 
         _log = logging.getLogger("requests.packages.urllib3.connectionpool")
         _log.setLevel(logging.WARN)
+
+        sentry_sdk.set_tag(SENTRY_ORIGIN_URL_TAG_NAME, self.origin.url)
+        sentry_sdk.set_tag(SENTRY_VISIT_TYPE_TAG_NAME, self.visit_type)
 
         # possibly overridden in self.prepare method
         self.visit_date = datetime.datetime.now(tz=datetime.timezone.utc)
