@@ -1,8 +1,13 @@
-swh-loader-core (4.0.0-1~swh2~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (4.1.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 4.1.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-09-14 09:36:57
+    +0200)
+  * Upstream changes:     - v4.1.0     - Pubdev: Ensure we correctly
+    parse and sort release versions     - loader: Add origin URL and
+    visit type as sentry tags
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 09 Sep 2022 09:50:49 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 14 Sep 2022 07:41:42 +0000
 
 swh-loader-core (4.0.0-1~swh2) unstable-swh; urgency=medium
 

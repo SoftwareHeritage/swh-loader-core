@@ -10,3 +10,4 @@ python-debian
 python-dateutil
 typing-extensions
 toml
+packaging
