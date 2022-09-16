@@ -609,12 +609,20 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 errors=[str(e)],
             )
 
+        errors = []
+
         # Get the metadata of each version's package
-        packages_info: List[Tuple[str, TPackageInfo]] = [
-            (branch_name, p_info)
-            for version in versions
-            for (branch_name, p_info) in self.get_package_info(version)
-        ]
+        packages_info: List[Tuple[str, TPackageInfo]] = []
+        for version in versions:
+            try:
+                for branch_name, p_info in self.get_package_info(version):
+                    packages_info.append((branch_name, p_info))
+            except Exception as e:
+                load_exceptions.append(e)
+                sentry_sdk.capture_exception(e)
+                error = f"Failed to get package info for version {version} of {self.origin.url}"
+                logger.exception(error)
+                errors.append(f"{error}: {e}")
 
         # Compute the ExtID of each of these packages
         known_extids = self._get_known_extids([p_info for (_, p_info) in packages_info])
@@ -630,7 +638,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         tmp_releases: Dict[str, List[Tuple[str, Sha1Git]]] = {
             version: [] for version in versions
         }
-        errors = []
+
         for (branch_name, p_info) in packages_info:
             logger.debug("package_info: %s", p_info)
 

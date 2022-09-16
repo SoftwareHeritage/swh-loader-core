@@ -610,3 +610,28 @@ def test_loader_sentry_tags_on_error(swh_storage, sentry_events):
         sentry_tags.get(SENTRY_VISIT_TYPE_TAG_NAME)
         == StubPackageLoaderWithError.visit_type
     )
+
+
+class StubPackageLoaderWithPackageInfoFailure(StubPackageLoader):
+    def get_package_info(self, version):
+        if version == "v2.0":
+            raise Exception("Error when getting package info")
+        else:
+            return super().get_package_info(version)
+
+
+def test_loader_origin_with_package_info_failure(swh_storage, requests_mock_datadir):
+
+    loader = StubPackageLoaderWithPackageInfoFailure(swh_storage, ORIGIN_URL)
+
+    assert loader.load() == {
+        "snapshot_id": "b4cce7081d661fb7f4d7a1db96e8044b752eb0b0",
+        "status": "eventful",
+    }
+
+    assert loader.load_status() == {"status": "eventful"}
+    assert loader.visit_status() == "partial"
+
+    assert set(loader.last_snapshot().branches.keys()) == {
+        f"branch-v{i}.0".encode() for i in (1, 3, 4)
+    }
