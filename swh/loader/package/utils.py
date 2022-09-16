@@ -34,26 +34,6 @@ DOWNLOAD_HASHES = set(["sha1", "sha256", "length"])
 EMPTY_AUTHOR = Person.from_fullname(b"")
 
 
-def api_info(url: str, **extra_params) -> bytes:
-    """Basic api client to retrieve information on project. This deals with
-       fetching json metadata about pypi projects.
-
-    Args:
-        url (str): The api url (e.g PyPI, npm, etc...)
-
-    Raises:
-        NotFound in case of query failures (for some reasons: 404, ...)
-
-    Returns:
-        The associated response's information
-
-    """
-    response = requests.get(url, **{**DEFAULT_PARAMS, **extra_params})
-    if response.status_code != 200:
-        raise NotFound(f"Fail to query '{url}'. Reason: {response.status_code}")
-    return response.content
-
-
 def _content_disposition_filename(header: str) -> Optional[str]:
     fname = None
     fnames = re.findall(r"filename[\*]?=([^;]+)", header)
@@ -81,13 +61,16 @@ def _retry_if_throttling(retry_state) -> bool:
     return False
 
 
-@retry(
+throttling_retry = retry(
     retry=_retry_if_throttling,
     wait=wait_exponential(exp_base=10),
     stop=stop_after_attempt(max_attempt_number=5),
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
+
+
+@throttling_retry
 def download(
     url: str,
     dest: str,
@@ -179,6 +162,29 @@ def download(
     logger.debug("extrinsic_metadata", extrinsic_metadata)
 
     return filepath, extrinsic_metadata
+
+
+@throttling_retry
+def api_info(url: str, **extra_params) -> bytes:
+    """Basic api client to retrieve information, typically JSON metadata,
+     on software package.
+
+    Args:
+        url (str): The api url (e.g PyPI, npm, etc...)
+
+    Raises:
+        NotFound in case of query failures (for some reasons: 404, ...)
+
+    Returns:
+        The associated response's information
+
+    """
+    logger.debug("Fetching %s", url)
+    response = requests.get(url, **{**DEFAULT_PARAMS, **extra_params})
+    if response.status_code == 404:
+        raise NotFound(f"Fail to query '{url}'. Reason: {response.status_code}")
+    response.raise_for_status()
+    return response.content
 
 
 def release_name(version: str, filename: Optional[str] = None) -> str:

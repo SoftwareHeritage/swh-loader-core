@@ -13,7 +13,6 @@ from urllib.parse import quote
 import pytest
 from requests.exceptions import HTTPError
 
-from swh.loader.exception import NotFound
 import swh.loader.package
 from swh.loader.package.utils import api_info, download, release_name
 
@@ -213,10 +212,10 @@ def test_api_info_failure(requests_mock):
     status_code = 400
     requests_mock.get(url, status_code=status_code)
 
-    with pytest.raises(NotFound) as e0:
+    with pytest.raises(
+        HTTPError, match=f"{status_code} Client Error: None for url: {url}"
+    ):
         api_info(url)
-
-    assert e0.value.args[0] == "Fail to query '%s'. Reason: %s" % (url, status_code)
 
 
 def test_api_info(requests_mock):
@@ -271,3 +270,39 @@ def test_download_retry_reraise(mocker, requests_mock, tmp_path):
 
     with pytest.raises(HTTPError):
         _check_download_ok(url, dest=str(tmp_path))
+
+
+@pytest.fixture(autouse=True)
+def mock_api_info_retry_sleep(mocker):
+    mocker.patch.object(api_info.retry, "sleep")
+
+
+def test_api_info_retry(mocker, requests_mock, tmp_path):
+    url = "https://example.org/api/endpoint"
+    json_data = {"foo": "bar"}
+
+    requests_mock.get(
+        url,
+        [
+            {"status_code": 429},
+            {"status_code": 429},
+            {
+                "json": json_data,
+                "status_code": 200,
+            },
+        ],
+    )
+
+    assert json.loads(api_info(url)) == json_data
+
+
+def test_api_info_retry_reraise(mocker, requests_mock, tmp_path):
+    url = "https://example.org/api/endpoint"
+
+    requests_mock.get(
+        url,
+        [{"status_code": 429}] * 5,
+    )
+
+    with pytest.raises(HTTPError, match=f"429 Client Error: None for url: {url}"):
+        api_info(url)
