@@ -5,6 +5,7 @@
 
 import json
 import logging
+import re
 from typing import Iterator, Optional, Sequence, Tuple
 
 import attr
@@ -15,6 +16,10 @@ from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
+
+
+def _uppercase_encode(url: str) -> str:
+    return re.sub("([A-Z]{1})", r"!\1", url).lower()
 
 
 @attr.s
@@ -46,6 +51,7 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
         ), "Go package URL (%s) not from %s" % (url, self.GOLANG_PKG_DEV_URL)
         self.name = url[len(self.GOLANG_PKG_DEV_URL) + 1 :]
         self.url = url.replace(self.GOLANG_PKG_DEV_URL, self.GOLANG_PROXY_URL)
+        self.url = _uppercase_encode(self.url)
 
     def get_versions(self) -> Sequence[str]:
         return api_info(f"{self.url}/@v/list").decode().splitlines()
@@ -55,7 +61,7 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
         return json.loads(latest)["Version"]
 
     def _raw_info(self, version: str) -> dict:
-        url = f"{self.url}/@v/{version}.info"
+        url = f"{self.url}/@v/{_uppercase_encode(version)}.info"
         return json.loads(api_info(url))
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, GolangPackageInfo]]:
