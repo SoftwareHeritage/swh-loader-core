@@ -14,7 +14,7 @@ import pytest
 from requests.exceptions import HTTPError
 
 import swh.loader.package
-from swh.loader.package.utils import api_info, download, release_name
+from swh.loader.package.utils import download, get_url_body, release_name
 
 
 def test_version_generation():
@@ -215,14 +215,14 @@ def test_api_info_failure(requests_mock):
     with pytest.raises(
         HTTPError, match=f"{status_code} Client Error: None for url: {url}"
     ):
-        api_info(url)
+        get_url_body(url)
 
 
 def test_api_info(requests_mock):
     """Fetching json info from pypi project should be ok"""
     url = "https://pypi.org/pypi/requests/json"
     requests_mock.get(url, text='{"version": "0.0.1"}')
-    actual_info = json.loads(api_info(url))
+    actual_info = json.loads(get_url_body(url))
     assert actual_info == {
         "version": "0.0.1",
     }
@@ -274,7 +274,7 @@ def test_download_retry_reraise(mocker, requests_mock, tmp_path):
 
 @pytest.fixture(autouse=True)
 def mock_api_info_retry_sleep(mocker):
-    mocker.patch.object(api_info.retry, "sleep")
+    mocker.patch.object(get_url_body.retry, "sleep")
 
 
 def test_api_info_retry(mocker, requests_mock, tmp_path):
@@ -293,7 +293,7 @@ def test_api_info_retry(mocker, requests_mock, tmp_path):
         ],
     )
 
-    assert json.loads(api_info(url)) == json_data
+    assert json.loads(get_url_body(url)) == json_data
 
 
 def test_api_info_retry_reraise(mocker, requests_mock, tmp_path):
@@ -305,4 +305,4 @@ def test_api_info_retry_reraise(mocker, requests_mock, tmp_path):
     )
 
     with pytest.raises(HTTPError, match=f"429 Client Error: None for url: {url}"):
-        api_info(url)
+        get_url_body(url)

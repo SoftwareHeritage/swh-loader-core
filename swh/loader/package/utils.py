@@ -165,12 +165,12 @@ def download(
 
 
 @throttling_retry
-def api_info(url: str, **extra_params) -> bytes:
-    """Basic api client to retrieve information, typically JSON metadata,
-     on software package.
+def get_url_body(url: str, **extra_params) -> bytes:
+    """Basic HTTP client to retrieve information on software package,
+    typically JSON metadata from a REST API.
 
     Args:
-        url (str): The api url (e.g PyPI, npm, etc...)
+        url (str): An HTTP URL
 
     Raises:
         NotFound in case of query failures (for some reasons: 404, ...)

@@ -11,7 +11,12 @@ from typing import Iterator, Optional, Sequence, Tuple
 import attr
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import EMPTY_AUTHOR, api_info, cached_method, release_name
+from swh.loader.package.utils import (
+    EMPTY_AUTHOR,
+    get_url_body,
+    release_name,
+    cached_method,
+)
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
@@ -54,7 +59,7 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
         self.url = _uppercase_encode(self.url)
 
     def get_versions(self) -> Sequence[str]:
-        versions = api_info(f"{self.url}/@v/list").decode().splitlines()
+        versions = get_url_body(f"{self.url}/@v/list").decode().splitlines()
         # some go packages only have a development version not listed by the endpoint above,
         # so ensure to return it or it will be missed by the golang loader
         default_version = self.get_default_version()
@@ -64,12 +69,12 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
 
     @cached_method
     def get_default_version(self) -> str:
-        latest = api_info(f"{self.url}/@latest")
+        latest = get_url_body(f"{self.url}/@latest")
         return json.loads(latest)["Version"]
 
     def _raw_info(self, version: str) -> dict:
         url = f"{self.url}/@v/{_uppercase_encode(version)}.info"
-        return json.loads(api_info(url))
+        return json.loads(get_url_body(url))
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, GolangPackageInfo]]:
         # Encode the name because creating nested folders can become problematic
