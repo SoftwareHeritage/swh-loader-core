@@ -11,7 +11,7 @@ from typing import Iterator, Optional, Sequence, Tuple
 import attr
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import EMPTY_AUTHOR, api_info, release_name
+from swh.loader.package.utils import EMPTY_AUTHOR, api_info, cached_method, release_name
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
@@ -54,8 +54,15 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
         self.url = _uppercase_encode(self.url)
 
     def get_versions(self) -> Sequence[str]:
-        return api_info(f"{self.url}/@v/list").decode().splitlines()
+        versions = api_info(f"{self.url}/@v/list").decode().splitlines()
+        # some go packages only have a development version not listed by the endpoint above,
+        # so ensure to return it or it will be missed by the golang loader
+        default_version = self.get_default_version()
+        if default_version not in versions:
+            versions.append(default_version)
+        return versions
 
+    @cached_method
     def get_default_version(self) -> str:
         latest = api_info(f"{self.url}/@latest")
         return json.loads(latest)["Version"]
