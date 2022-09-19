@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -7,6 +7,7 @@ import datetime
 import hashlib
 import logging
 import string
+from typing import Optional
 from unittest.mock import Mock, call, patch
 
 import attr
@@ -17,6 +18,7 @@ from swh.loader.core.loader import (
     SENTRY_VISIT_TYPE_TAG_NAME,
 )
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
+from swh.loader.package.utils import EMPTY_AUTHOR
 from swh.model.model import (
     Origin,
     OriginVisit,
@@ -25,6 +27,7 @@ from swh.model.model import (
     Release,
     Revision,
     RevisionType,
+    Sha1Git,
     Snapshot,
     SnapshotBranch,
     TargetType,
@@ -57,6 +60,9 @@ class StubPackageInfo(BasePackageInfo):
     pass
 
 
+ORIGIN_URL = "https://example.org/package/example"
+
+
 class StubPackageLoader(PackageLoader[StubPackageInfo]):
     visit_type = "stub"
 
@@ -64,8 +70,11 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
         return ["v1.0", "v2.0", "v3.0", "v4.0"]
 
     def get_package_info(self, version):
+        filename = f"example-{version}.tar.gz"
         p_info = StubPackageInfo(
-            "http://example.org", f"example-{version}.tar", version=version
+            f"{ORIGIN_URL}/{filename}",
+            filename,
+            version=version,
         )
         extid_type = "extid-type1" if version in ("v1.0", "v2.0") else "extid-type2"
         # Versions 1.0 and 2.0 have an extid of a given type, v3.0 has an extid
@@ -78,8 +87,37 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
         ).start()
         yield (f"branch-{version}", p_info)
 
-    def _load_release(self, p_info, origin):
-        return None
+    def build_release(
+        self, p_info: StubPackageInfo, uncompressed_path: str, directory: Sha1Git
+    ) -> Optional[Release]:
+        msg = (
+            f"Synthetic release for source package {p_info.url} "
+            f"version {p_info.version}\n"
+        )
+
+        return Release(
+            name=p_info.version.encode(),
+            message=msg.encode(),
+            date=None,
+            author=EMPTY_AUTHOR,
+            target_type=ModelObjectType.DIRECTORY,
+            target=directory,
+            synthetic=True,
+        )
+
+
+def test_loader_origin_visit_success(swh_storage, requests_mock_datadir):
+
+    loader = StubPackageLoader(swh_storage, ORIGIN_URL)
+
+    assert loader.load() == {
+        "snapshot_id": "dcb9ecef64af73f2cdac7f5463cb6dece6b1db61",
+        "status": "eventful",
+    }
+
+    assert set(loader.last_snapshot().branches.keys()) == {
+        f"branch-{version}".encode() for version in loader.get_versions()
+    }
 
 
 def test_loader_origin_visit_failure(swh_storage):
@@ -115,7 +153,7 @@ def test_resolve_object_from_extids() -> None:
     )
     storage.release_add([rel1, rel2])
 
-    loader = StubPackageLoader(storage, "http://example.org/")
+    loader = StubPackageLoader(storage, ORIGIN_URL)
 
     p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
 
@@ -164,7 +202,7 @@ def test_resolve_object_from_extids_missing_target() -> None:
         synthetic=False,
     )
 
-    loader = StubPackageLoader(storage, "http://example.org/")
+    loader = StubPackageLoader(storage, ORIGIN_URL)
 
     p_info = Mock(wraps=BasePackageInfo(None, None, None))  # type: ignore
 
@@ -188,7 +226,7 @@ def test_load_get_known_extids() -> None:
     """Checks PackageLoader.load() fetches known extids efficiently"""
     storage = Mock(wraps=get_storage("memory"))
 
-    loader = StubPackageLoader(storage, "http://example.org")
+    loader = StubPackageLoader(storage, ORIGIN_URL)
 
     loader.load()
 
@@ -221,7 +259,7 @@ def test_load_extids() -> None:
     ]
     storage.release_add(rels[0:3])
 
-    origin = "http://example.org"
+    origin = ORIGIN_URL
     rel1_swhid = rels[0].swhid()
     rel2_swhid = rels[1].swhid()
     rel3_swhid = rels[2].swhid()
@@ -251,7 +289,7 @@ def test_load_extids() -> None:
     date = datetime.datetime.now(tz=datetime.timezone.utc)
     storage.origin_add([Origin(url=origin)])
     storage.origin_visit_add(
-        [OriginVisit(origin="http://example.org", visit=1, date=date, type="tar")]
+        [OriginVisit(origin=origin, visit=1, date=date, type="tar")]
     )
     storage.origin_visit_status_add(
         [
@@ -265,7 +303,7 @@ def test_load_extids() -> None:
         ]
     )
 
-    loader = StubPackageLoader(storage, "http://example.org")
+    loader = StubPackageLoader(storage, origin)
     patch.object(
         loader,
         "_load_release",
@@ -280,18 +318,24 @@ def test_load_extids() -> None:
         #       in the storage.
         # v2.0: loaded, because there is already a similar extid, but different type
         call(
-            StubPackageInfo(origin, "example-v2.0.tar", "v2.0"),
+            StubPackageInfo(
+                f"{origin}/example-v2.0.tar.gz", "example-v2.0.tar.gz", "v2.0"
+            ),
             Origin(url=origin),
         ),
         # v3.0: loaded despite having an (extid_type, extid) in storage, because
         #       the target of the extid is not in the previous snapshot
         call(
-            StubPackageInfo(origin, "example-v3.0.tar", "v3.0"),
+            StubPackageInfo(
+                f"{origin}/example-v3.0.tar.gz", "example-v3.0.tar.gz", "v3.0"
+            ),
             Origin(url=origin),
         ),
         # v4.0: loaded, because there isn't its extid
         call(
-            StubPackageInfo(origin, "example-v4.0.tar", "v4.0"),
+            StubPackageInfo(
+                f"{origin}/example-v4.0.tar.gz", "example-v4.0.tar.gz", "v4.0"
+            ),
             Origin(url=origin),
         ),
     ]
@@ -350,7 +394,7 @@ def test_load_upgrade_from_revision_extids(caplog):
 
     storage = get_storage("memory")
 
-    origin = "http://example.org"
+    origin = ORIGIN_URL
     dir1_swhid = CoreSWHID(object_type=ObjectType.DIRECTORY, object_id=b"d" * 20)
     dir2_swhid = CoreSWHID(object_type=ObjectType.DIRECTORY, object_id=b"e" * 20)
 
@@ -407,7 +451,7 @@ def test_load_upgrade_from_revision_extids(caplog):
     date = datetime.datetime.now(tz=datetime.timezone.utc)
     storage.origin_add([Origin(url=origin)])
     storage.origin_visit_add(
-        [OriginVisit(origin="http://example.org", visit=1, date=date, type="tar")]
+        [OriginVisit(origin=origin, visit=1, date=date, type="tar")]
     )
     storage.origin_visit_status_add(
         [
@@ -421,7 +465,7 @@ def test_load_upgrade_from_revision_extids(caplog):
         ]
     )
 
-    loader = StubPackageLoader(storage, "http://example.org")
+    loader = StubPackageLoader(storage, origin)
     patch.object(
         loader,
         "_load_release",
@@ -448,9 +492,19 @@ def test_load_upgrade_from_revision_extids(caplog):
         # v1.0: not loaded because there is already a revision matching it
         # v2.0: loaded, as the revision is missing from the storage even though there
         #       is an extid
-        call(StubPackageInfo(origin, "example-v2.0.tar", "v2.0"), Origin(url=origin)),
+        call(
+            StubPackageInfo(
+                f"{origin}/example-v2.0.tar.gz", "example-v2.0.tar.gz", "v2.0"
+            ),
+            Origin(url=origin),
+        ),
         # v3.0: loaded (did not exist yet)
-        call(StubPackageInfo(origin, "example-v3.0.tar", "v3.0"), Origin(url=origin)),
+        call(
+            StubPackageInfo(
+                f"{origin}/example-v3.0.tar.gz", "example-v3.0.tar.gz", "v3.0"
+            ),
+            Origin(url=origin),
+        ),
     ]
 
     snapshot = Snapshot(
@@ -530,7 +584,7 @@ class StubPackageLoaderWithError(StubPackageLoader):
 
 
 def test_loader_sentry_tags_on_error(swh_storage, sentry_events):
-    origin_url = "http://example.org/package/name"
+    origin_url = ORIGIN_URL
     loader = StubPackageLoaderWithError(swh_storage, origin_url)
     loader.load()
     sentry_tags = sentry_events[0]["tags"]
