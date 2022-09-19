@@ -115,6 +115,9 @@ def test_loader_origin_visit_success(swh_storage, requests_mock_datadir):
         "status": "eventful",
     }
 
+    assert loader.load_status() == {"status": "eventful"}
+    assert loader.visit_status() == "full"
+
     assert set(loader.last_snapshot().branches.keys()) == {
         f"branch-{version}".encode() for version in loader.get_versions()
     }
@@ -128,10 +131,16 @@ def test_loader_origin_visit_failure(swh_storage):
     actual_load_status = loader.load()
     assert actual_load_status == {"status": "failed"}
 
+    assert loader.load_status() == {"status": "failed"}
+    assert loader.visit_status() == "failed"
+
     loader.storage = FakeStorage2()
 
     actual_load_status2 = loader.load()
     assert actual_load_status2 == {"status": "failed"}
+
+    assert loader.load_status() == {"status": "failed"}
+    assert loader.visit_status() == "failed"
 
 
 def test_resolve_object_from_extids() -> None:
@@ -313,6 +322,9 @@ def test_load_extids() -> None:
 
     loader.load()
 
+    assert loader.load_status() == {"status": "eventful"}
+    assert loader.visit_status() == "full"
+
     assert loader._load_release.mock_calls == [  # type: ignore
         # v1.0: not loaded because there is already its (extid_type, extid, rel)
         #       in the storage.
@@ -483,6 +495,9 @@ def test_load_upgrade_from_revision_extids(caplog):
 
     loader.load()
 
+    assert loader.load_status() == {"status": "eventful"}
+    assert loader.visit_status() == "full"
+
     assert len(caplog.records) == 1
     (record,) = caplog.records
     assert record.levelname == "ERROR"
@@ -587,6 +602,8 @@ def test_loader_sentry_tags_on_error(swh_storage, sentry_events):
     origin_url = ORIGIN_URL
     loader = StubPackageLoaderWithError(swh_storage, origin_url)
     loader.load()
+    assert loader.load_status() == {"status": "failed"}
+    assert loader.visit_status() == "failed"
     sentry_tags = sentry_events[0]["tags"]
     assert sentry_tags.get(SENTRY_ORIGIN_URL_TAG_NAME) == origin_url
     assert (
