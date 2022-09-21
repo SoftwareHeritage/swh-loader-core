@@ -14,8 +14,8 @@ from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.loader.package.utils import (
     EMPTY_AUTHOR,
     Person,
-    api_info,
     cached_method,
+    get_url_body,
     release_name,
 )
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
@@ -78,7 +78,7 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
         )
 
     def _raw_info(self) -> bytes:
-        return api_info(self.package_info_url)
+        return get_url_body(self.package_info_url)
 
     @cached_method
     def info(self) -> Dict:

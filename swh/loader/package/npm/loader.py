@@ -19,7 +19,7 @@ from swh.loader.package.loader import (
     PackageLoader,
     RawExtrinsicMetadataCore,
 )
-from swh.loader.package.utils import api_info, cached_method, release_name
+from swh.loader.package.utils import cached_method, get_url_body, release_name
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -116,7 +116,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
 
     @cached_method
     def _raw_info(self) -> bytes:
-        return api_info(self.provider_url)
+        return get_url_body(self.provider_url)
 
     @cached_method
     def info(self) -> Dict:

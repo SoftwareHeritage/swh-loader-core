@@ -11,3 +11,21 @@ def test_golang_loader_first_visit(swh_storage, requests_mock_datadir):
     loader = GolangLoader(swh_storage, url)
 
     assert loader.load()["status"] == "eventful"
+
+
+def test_golang_loader_package_name_with_uppercase_characters(
+    swh_storage, requests_mock_datadir
+):
+    url = "https://pkg.go.dev/github.com/adam-hanna/arrayOperations"
+    loader = GolangLoader(swh_storage, url)
+
+    assert loader.load()["status"] == "eventful"
+
+
+def test_golang_loader_package_with_dev_version_only(
+    swh_storage, requests_mock_datadir
+):
+    url = "https://pkg.go.dev/github.com/xgdapg/daemon"
+    loader = GolangLoader(swh_storage, url)
+
+    assert loader.load()["status"] == "eventful"
