@@ -1,3 +1,19 @@
+swh-loader-core (4.2.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 4.2.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-09-21 22:09:47
+    +0200)
+  * Upstream changes:     - v4.2.0     - package/utils: rename api_info
+    function to get_url_body     - package/utils: Add debug log and
+    throttling retry to api_info     - package/loader: Handle errors
+    when retrieving package version info     - package/loader: Implement
+    load_status and visit_status     - package/tests: Add a visit
+    success test for StubPackageLoader     - golang: Ensure to include
+    dev version when no releases exist     - golang: Ensure to case-
+    encode URLs for retrieving package info
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 21 Sep 2022 20:14:57 +0000
+
 swh-loader-core (4.1.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 4.1.0     - (tagged by Antoine R. Dumont
