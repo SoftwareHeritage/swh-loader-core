@@ -17,7 +17,7 @@ from swh.loader.package.loader import (
     PartialExtID,
     RawExtrinsicMetadataCore,
 )
-from swh.loader.package.utils import EMPTY_AUTHOR, api_info, cached_method
+from swh.loader.package.utils import EMPTY_AUTHOR, cached_method, get_url_body
 from swh.model import hashutil
 from swh.model.model import (
     MetadataAuthority,
@@ -195,7 +195,7 @@ class NixGuixLoader(PackageLoader[NixGuixPackageInfo]):
 
 def retrieve_sources(url: str) -> bytes:
     """Retrieve sources. Potentially raise NotFound error."""
-    return api_info(url, allow_redirects=True)
+    return get_url_body(url, allow_redirects=True)
 
 
 def parse_sources(raw_sources: bytes) -> Dict[str, Any]:

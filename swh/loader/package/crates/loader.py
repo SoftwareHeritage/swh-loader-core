@@ -14,7 +14,7 @@ import toml
 from typing_extensions import TypedDict
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import api_info, cached_method, release_name
+from swh.loader.package.utils import cached_method, get_url_body, release_name
 from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 
@@ -248,7 +248,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         Returns:
             Content response as bytes. Content response is a json document.
         """
-        return api_info(self.url)
+        return get_url_body(self.url)
 
     @cached_method
     def info(self) -> Dict:
