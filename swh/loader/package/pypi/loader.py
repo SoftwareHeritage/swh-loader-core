@@ -18,7 +18,12 @@ from swh.loader.package.loader import (
     PartialExtID,
     RawExtrinsicMetadataCore,
 )
-from swh.loader.package.utils import EMPTY_AUTHOR, api_info, cached_method, release_name
+from swh.loader.package.utils import (
+    EMPTY_AUTHOR,
+    cached_method,
+    get_url_body,
+    release_name,
+)
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
@@ -83,7 +88,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
 
     @cached_method
     def _raw_info(self) -> bytes:
-        return api_info(self.provider_url)
+        return get_url_body(self.provider_url)
 
     @cached_method
     def info(self) -> Dict:

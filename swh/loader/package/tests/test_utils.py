@@ -13,9 +13,8 @@ from urllib.parse import quote
 import pytest
 from requests.exceptions import HTTPError
 
-from swh.loader.exception import NotFound
 import swh.loader.package
-from swh.loader.package.utils import api_info, download, release_name
+from swh.loader.package.utils import download, get_url_body, release_name
 
 
 def test_version_generation():
@@ -213,17 +212,17 @@ def test_api_info_failure(requests_mock):
     status_code = 400
     requests_mock.get(url, status_code=status_code)
 
-    with pytest.raises(NotFound) as e0:
-        api_info(url)
-
-    assert e0.value.args[0] == "Fail to query '%s'. Reason: %s" % (url, status_code)
+    with pytest.raises(
+        HTTPError, match=f"{status_code} Client Error: None for url: {url}"
+    ):
+        get_url_body(url)
 
 
 def test_api_info(requests_mock):
     """Fetching json info from pypi project should be ok"""
     url = "https://pypi.org/pypi/requests/json"
     requests_mock.get(url, text='{"version": "0.0.1"}')
-    actual_info = json.loads(api_info(url))
+    actual_info = json.loads(get_url_body(url))
     assert actual_info == {
         "version": "0.0.1",
     }
@@ -271,3 +270,39 @@ def test_download_retry_reraise(mocker, requests_mock, tmp_path):
 
     with pytest.raises(HTTPError):
         _check_download_ok(url, dest=str(tmp_path))
+
+
+@pytest.fixture(autouse=True)
+def mock_api_info_retry_sleep(mocker):
+    mocker.patch.object(get_url_body.retry, "sleep")
+
+
+def test_api_info_retry(mocker, requests_mock, tmp_path):
+    url = "https://example.org/api/endpoint"
+    json_data = {"foo": "bar"}
+
+    requests_mock.get(
+        url,
+        [
+            {"status_code": 429},
+            {"status_code": 429},
+            {
+                "json": json_data,
+                "status_code": 200,
+            },
+        ],
+    )
+
+    assert json.loads(get_url_body(url)) == json_data
+
+
+def test_api_info_retry_reraise(mocker, requests_mock, tmp_path):
+    url = "https://example.org/api/endpoint"
+
+    requests_mock.get(
+        url,
+        [{"status_code": 429}] * 5,
+    )
+
+    with pytest.raises(HTTPError, match=f"429 Client Error: None for url: {url}"):
+        get_url_body(url)

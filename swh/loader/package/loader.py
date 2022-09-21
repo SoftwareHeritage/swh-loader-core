@@ -160,6 +160,18 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         """
         super().__init__(storage=storage, origin_url=url, **kwargs)
+        self.status_load = ""
+        self.status_visit = ""
+
+    def load_status(self) -> Dict[str, str]:
+        """Detailed loading status."""
+        return {
+            "status": self.status_load,
+        }
+
+    def visit_status(self) -> str:
+        """Detailed visit status."""
+        return self.status_visit
 
     def get_versions(self) -> Sequence[str]:
         """Return the list of all published package versions.
@@ -448,6 +460,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         - return the task's status
 
         """
+        self.status_load = status_load
+        self.status_visit = status_visit
         self.storage.flush()
 
         snapshot_id: Optional[bytes] = None
@@ -524,8 +538,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         Software Heritage archive
 
         """
-        status_load = "uneventful"  # either: eventful, uneventful, failed
-        status_visit = "full"  # see swh.model.model.OriginVisitStatus
+        self.status_load = "uneventful"  # either: eventful, uneventful, failed
+        self.status_visit = "full"  # see swh.model.model.OriginVisitStatus
         snapshot = None
         failed_branches: List[str] = []
 
@@ -549,6 +563,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 "Failed to initialize origin_visit for %s", self.origin.url
             )
             sentry_sdk.capture_exception(e)
+            self.status_load = self.status_visit = "failed"
             return {"status": "failed"}
 
         # Get the previous snapshot for this origin. It is then used to see which
@@ -594,12 +609,20 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 errors=[str(e)],
             )
 
+        errors = []
+
         # Get the metadata of each version's package
-        packages_info: List[Tuple[str, TPackageInfo]] = [
-            (branch_name, p_info)
-            for version in versions
-            for (branch_name, p_info) in self.get_package_info(version)
-        ]
+        packages_info: List[Tuple[str, TPackageInfo]] = []
+        for version in versions:
+            try:
+                for branch_name, p_info in self.get_package_info(version):
+                    packages_info.append((branch_name, p_info))
+            except Exception as e:
+                load_exceptions.append(e)
+                sentry_sdk.capture_exception(e)
+                error = f"Failed to get package info for version {version} of {self.origin.url}"
+                logger.exception(error)
+                errors.append(f"{error}: {e}")
 
         # Compute the ExtID of each of these packages
         known_extids = self._get_known_extids([p_info for (_, p_info) in packages_info])
@@ -615,7 +638,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         tmp_releases: Dict[str, List[Tuple[str, Sha1Git]]] = {
             version: [] for version in versions
         }
-        errors = []
+
         for (branch_name, p_info) in packages_info:
             logger.debug("package_info: %s", p_info)
 
@@ -655,7 +678,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                             p_info, release_id, directory_id
                         )
                     self.storage.flush()
-                    status_load = "eventful"
+                    self.status_load = "eventful"
                 except Exception as e:
                     self.storage.clear_buffers()
                     load_exceptions.append(e)
@@ -710,7 +733,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             tmp_releases[p_info.version].append((branch_name, release_id))
 
         if load_exceptions:
-            status_visit = "partial"
+            self.status_visit = "partial"
 
         if not tmp_releases:
             # We could not load any releases; fail completely
@@ -741,8 +764,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             logger.exception(error)
             errors.append(f"{error}: {e}")
             sentry_sdk.capture_exception(e)
-            status_visit = "failed"
-            status_load = "failed"
+            self.status_visit = "failed"
+            self.status_load = "failed"
 
         if snapshot:
             try:
@@ -755,8 +778,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 logger.exception(error)
                 errors.append(f"{error}: {e}")
                 sentry_sdk.capture_exception(e)
-                status_visit = "partial"
-                status_load = "failed"
+                self.status_visit = "partial"
+                self.status_load = "failed"
 
         try:
             metadata_objects = self.build_extrinsic_origin_metadata()
@@ -766,18 +789,18 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             logger.exception(error)
             errors.append(f"{error}: {e}")
             sentry_sdk.capture_exception(e)
-            status_visit = "partial"
-            status_load = "failed"
+            self.status_visit = "partial"
+            self.status_load = "failed"
 
-        if status_load != "failed":
+        if self.status_load != "failed":
             self._load_extids(new_extids)
 
         return self.finalize_visit(
             snapshot=snapshot,
             visit=visit,
             failed_branches=failed_branches,
-            status_visit=status_visit,
-            status_load=status_load,
+            status_visit=self.status_visit,
+            status_load=self.status_load,
             errors=errors,
         )
 
