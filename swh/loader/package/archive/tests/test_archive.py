@@ -93,6 +93,13 @@ _expected_new_releases_first_visit = {
 }
 
 
+@pytest.fixture(autouse=True, scope="function")
+def lower_sample_rate(mocker):
+    """Lower the number of entries per discovery sample so the minimum threshold
+    for discovery is hit in tests without creating huge test data"""
+    mocker.patch("swh.loader.package.loader.discovery.SAMPLE_SIZE", 1)
+
+
 def test_archive_visit_with_no_artifact_found(swh_storage, requests_mock_datadir):
     url = URL
     unknown_artifact_url = "https://ftp.g.o/unknown/8sync-0.1.0.tar.gz"
@@ -127,6 +134,122 @@ def test_archive_visit_with_no_artifact_found(swh_storage, requests_mock_datadir
     } == stats
 
     assert_last_visit_matches(swh_storage, url, status="partial", type="tar")
+
+
+def test_archive_visit_with_skipped_content(swh_storage, requests_mock_datadir):
+    """With no prior visit, load a gnu project and set the max content size
+    to something low to check that the loader skips "big" content."""
+    loader = ArchiveLoader(
+        swh_storage, URL, artifacts=GNU_ARTIFACTS[:1], max_content_size=10 * 1024
+    )
+
+    actual_load_status = loader.load()
+    assert actual_load_status["status"] == "eventful"
+
+    expected_snapshot_first_visit_id = hash_to_bytes(
+        "9efecc835e8f99254934f256b5301b94f348fd17"
+    )
+
+    assert actual_load_status["snapshot_id"] == hash_to_hex(
+        expected_snapshot_first_visit_id
+    )
+
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+
+    _expected_new_non_skipped_contents_first_visit = [
+        "ae9be03bd2a06ed8f4f118d3fe76330bb1d77f62",
+        "809788434b433eb2e3cfabd5d591c9a659d5e3d8",
+        "1572607d456d7f633bc6065a2b3048496d679a31",
+        "27de3b3bc6545d2a797aeeb4657c0e215a0c2e55",
+        "fbd27c3f41f2668624ffc80b7ba5db9b92ff27ac",
+        "4f9709e64a9134fe8aefb36fd827b84d8b617ab5",
+        "84fb589b554fcb7f32b806951dcf19518d67b08f",
+        "3046e5d1f70297e2a507b98224b6222c9688d610",
+        "e08441aeab02704cfbd435d6445f7c072f8f524e",
+        "49d4c0ce1a16601f1e265d446b6c5ea6b512f27c",
+        "7d149b28eaa228b3871c91f0d5a95a2fa7cb0c68",
+        "f0c97052e567948adf03e641301e9983c478ccff",
+        "2e6db43f5cd764e677f416ff0d0c78c7a82ef19b",
+        "e9258d81faf5881a2f96a77ba609396f82cb97ad",
+        "7350628ccf194c2c3afba4ac588c33e3f3ac778d",
+        "0057bec9b5422aff9256af240b177ac0e3ac2608",
+        "6b5cc594ac466351450f7f64a0b79fdaf4435ad3",
+    ]
+
+    _expected_new_skipped_contents_first_visit = [
+        "1170cf105b04b7e2822a0e09d2acf71da7b9a130",
+        "2b8d0d0b43a1078fc708930c8ddc2956a86c566e",
+        "edeb33282b2bffa0e608e9d2fd960fd08093c0ea",
+        "d64e64d4c73679323f8d4cde2643331ba6c20af9",
+        "7a756602914be889c0a2d3952c710144b3e64cb0",
+        "8624bcdae55baeef00cd11d5dfcfa60f68710a02",
+        "f67935bc3a83a67259cda4b2d43373bd56703844",
+        "7d7c6c8c5ebaeff879f61f37083a3854184f6c41",
+        "b99fec102eb24bffd53ab61fc30d59e810f116a2",
+        "7fb724242e2b62b85ca64190c31dcae5303e19b3",
+        "0bb892d9391aa706dc2c3b1906567df43cbe06a2",
+    ]
+
+    # Check that the union of both sets make up the original set (without skipping)
+    union = set(_expected_new_non_skipped_contents_first_visit) | set(
+        _expected_new_skipped_contents_first_visit
+    )
+    assert union == set(_expected_new_contents_first_visit)
+
+    stats = get_stats(swh_storage)
+    assert {
+        "content": len(_expected_new_non_skipped_contents_first_visit),
+        "directory": len(_expected_new_directories_first_visit),
+        "origin": 1,
+        "origin_visit": 1,
+        "release": len(_expected_new_releases_first_visit),
+        "revision": 0,
+        "skipped_content": len(_expected_new_skipped_contents_first_visit),
+        "snapshot": 1,
+    } == stats
+
+    release_id = hash_to_bytes(list(_expected_new_releases_first_visit)[0])
+    expected_snapshot = Snapshot(
+        id=expected_snapshot_first_visit_id,
+        branches={
+            b"HEAD": SnapshotBranch(
+                target_type=TargetType.ALIAS,
+                target=b"releases/0.1.0",
+            ),
+            b"releases/0.1.0": SnapshotBranch(
+                target_type=TargetType.RELEASE,
+                target=release_id,
+            ),
+        },
+    )
+    check_snapshot(expected_snapshot, swh_storage)
+
+    assert swh_storage.release_get([release_id])[0] == Release(
+        id=release_id,
+        name=b"0.1.0",
+        message=(
+            b"Synthetic release for archive at "
+            b"https://ftp.gnu.org/gnu/8sync/8sync-0.1.0.tar.gz\n"
+        ),
+        target=hash_to_bytes("3aebc29ed1fccc4a6f2f2010fb8e57882406b528"),
+        target_type=ObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person.from_fullname(b""),
+        date=TimestampWithTimezone.from_datetime(
+            datetime.datetime(1999, 12, 9, 8, 53, 30, tzinfo=datetime.timezone.utc)
+        ),
+    )
+
+    expected_contents = map(
+        hash_to_bytes, _expected_new_non_skipped_contents_first_visit
+    )
+    assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
+
+    expected_dirs = map(hash_to_bytes, _expected_new_directories_first_visit)
+    assert list(swh_storage.directory_missing(expected_dirs)) == []
+
+    expected_rels = map(hash_to_bytes, _expected_new_releases_first_visit)
+    assert list(swh_storage.release_missing(expected_rels)) == []
 
 
 def test_archive_visit_with_release_artifact_no_prior_visit(

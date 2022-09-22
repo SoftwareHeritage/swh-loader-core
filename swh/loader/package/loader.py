@@ -31,6 +31,7 @@ from requests.exceptions import ContentDecodingError
 import sentry_sdk
 
 from swh.core.tarball import uncompress
+from swh.loader.core import discovery
 from swh.loader.core.loader import BaseLoader
 from swh.loader.exception import NotFound
 from swh.loader.package.utils import download
@@ -816,6 +817,12 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         )
 
         contents, skipped_contents, directories = from_disk.iter_directory(directory)
+
+        # Instead of sending everything from the bottom up to the storage,
+        # use a Merkle graph discovery algorithm to filter out known objects.
+        contents, skipped_contents, directories = discovery.filter_known_objects(
+            self.storage, contents, skipped_contents, directories
+        )
 
         logger.debug("Number of skipped contents: %s", len(skipped_contents))
         self.storage.skipped_content_add(skipped_contents)
