@@ -47,6 +47,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ""
      - from extra_loader_arguments['aur_metadata']
      - Intrinsic metadata extracted from .SRCINFO file of the package
+   * - cpan
+     - ``p_info.​version``
+     - ``release_name(​version)``
+     - =version
+     - Synthetic release for Perl source package {name} version {version} {description}
+     - true
+     - from intrinsic metadata if any else from extrinsic
+     - from extrinsic metadata
+     - name, version and description from intrinsic metadata
    * - cran
      - ``metadata.get(​"Version", passed as arg)``
      - ``release_name(​version)``

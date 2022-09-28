@@ -1,0 +1,26 @@
+{
+   "took" : 3,
+   "releases" : [
+      {
+         "maturity" : "released",
+         "authorized" : true,
+         "date" : "2011-06-11T05:23:31",
+         "name" : "Internals-CountObjects-0.05",
+         "version" : "0.05",
+         "author" : "JJORE",
+         "download_url" : "https://cpan.metacpan.org/authors/id/J/JJ/JJORE/Internals-CountObjects-0.05.tar.gz",
+         "status" : "latest"
+      },
+      {
+         "authorized" : true,
+         "date" : "2011-06-05T18:44:02",
+         "maturity" : "released",
+         "name" : "Internals-CountObjects-0.01",
+         "version" : "0.01",
+         "author" : "JJORE",
+         "download_url" : "https://cpan.metacpan.org/authors/id/J/JJ/JJORE/Internals-CountObjects-0.01.tar.gz",
+         "status" : "cpan"
+      }
+   ],
+   "total" : 4
+}
