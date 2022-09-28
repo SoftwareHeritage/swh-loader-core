@@ -181,7 +181,7 @@ class BaseDiscoveryGraph:
             if not sample_per_type:
                 continue
             known = set(sample_per_type)
-            unknown = set(await method(sample_per_type))
+            unknown = set(await method(list(sample_per_type)))
             known -= unknown
 
             self.mark_known(known)
