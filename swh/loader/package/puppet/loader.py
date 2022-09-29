@@ -115,6 +115,7 @@ class PuppetLoader(PackageLoader[PuppetPackageInfo]):
             url=url,
             version=version,
             last_modified=last_modified,
+            checksums=data["checksums"],
         )
         yield release_name(version), p_info
 

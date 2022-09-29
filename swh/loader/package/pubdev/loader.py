@@ -154,6 +154,7 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
             last_modified=last_modified,
             author=author,
             description=description,
+            checksums={"sha256": v["archive_sha256"]},
         )
         yield release_name(version), p_info
 

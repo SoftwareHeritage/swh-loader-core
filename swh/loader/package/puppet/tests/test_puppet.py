@@ -24,12 +24,19 @@ ORIGINS = {
             "version": "1.0.0",
             "filename": "saz-memcached-1.0.0.tar.gz",
             "last_update": "2011-11-20T13:40:30-08:00",
+            "checksums": {
+                "length": 763,
+            },
         },
         "8.1.0": {
             "url": "https://forgeapi.puppet.com/v3/files/saz-memcached-8.1.0.tar.gz",  # noqa: B950
             "version": "8.1.0",
             "filename": "saz-memcached-8.1.0.tar.gz",
             "last_update": "2022-07-11T03:34:55-07:00",
+            "checksums": {
+                "md5": "5313e8fff0af08d63681daf955e7a604",
+                "sha256": "0dbb1470c64435700767e9887d0cf70203b1ae59445c401d5d200f2dabb3226e",  # noqa: B950
+            },
         },
     },
 }

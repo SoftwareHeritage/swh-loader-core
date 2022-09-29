@@ -28,6 +28,7 @@
       }
     },
     "archive_url": "https://pub.dartlang.org/packages/pdf/versions/3.8.2.tar.gz",
+    "archive_sha256": "b69a47f10620b5639bfcf51cd9acd1083e7e856dfc4a23f49df89445d1d27692",
     "published": "2022-07-25T11:38:25.983876Z"
   },
   "versions": [
@@ -52,6 +53,7 @@
         }
       },
       "archive_url": "https://pub.dartlang.org/packages/pdf/versions/1.0.0.tar.gz",
+      "archive_sha256": "54f1b1c4d519c3bad61ca63b53b46e7e9eabc3b7fb9a4707525520215152e4e1",
       "published": "2018-07-16T21:12:28.894137Z"
     },
     {
@@ -82,6 +84,7 @@
         }
       },
       "archive_url": "https://pub.dartlang.org/packages/pdf/versions/3.8.2.tar.gz",
+      "archive_sha256": "b69a47f10620b5639bfcf51cd9acd1083e7e856dfc4a23f49df89445d1d27692",
       "published": "2022-07-25T11:38:25.983876Z"
     }
   ]

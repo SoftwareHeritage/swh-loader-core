@@ -128,6 +128,12 @@ class BasePackageInfo:
     """:term:`extrinsic metadata` collected by the loader, that will be attached to the
     loaded directory and added to the Metadata storage."""
 
+    checksums = attr.ib(type=Dict[str, str], default={}, kw_only=True)
+    """Dictionary holding package tarball checksums for integrity check after
+    download, keys are hash algorithm names and values are checksums in
+    hexadecimal format. The supported algorithms are defined in the
+    :data:`swh.model.hashutil.ALGORITHMS` set."""
+
     # TODO: add support for metadata for releases and contents
 
     def extid(self) -> Optional[PartialExtID]:
@@ -410,7 +416,14 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         """
         try:
-            return [download(p_info.url, dest=tmpdir, filename=p_info.filename)]
+            return [
+                download(
+                    p_info.url,
+                    dest=tmpdir,
+                    filename=p_info.filename,
+                    hashes=p_info.checksums,
+                )
+            ]
         except ContentDecodingError:
             # package might be erroneously marked as gzip compressed while is is not,
             # try to download its raw bytes again without attempting to uncompress
@@ -420,6 +433,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     p_info.url,
                     dest=tmpdir,
                     filename=p_info.filename,
+                    hashes=p_info.checksums,
                     extra_request_headers={"Accept-Encoding": "identity"},
                 )
             ]

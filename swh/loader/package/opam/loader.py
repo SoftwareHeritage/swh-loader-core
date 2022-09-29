@@ -217,6 +217,13 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
                 f" {self.opam_package} (at url {self.origin.url}) from `opam show`"
             )
 
+        checksums_str = self.get_enclosed_single_line_field("url.checksum:", version)
+        checksums = {}
+        if checksums_str:
+            for c in checksums_str.strip("[]").split(" "):
+                algo, hash = c.strip('"').split("=")
+                checksums[algo] = hash
+
         authors_field = self.get_enclosed_single_line_field("authors:", version)
         fullname = b"" if authors_field is None else str.encode(authors_field)
         author = Person.from_fullname(fullname)
@@ -241,6 +248,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
                     format="opam-package-definition",
                 )
             ],
+            checksums=checksums,
         )
 
     def build_release(

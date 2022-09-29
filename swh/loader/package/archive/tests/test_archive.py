@@ -596,7 +596,7 @@ def test_archive_not_gzipped_tarball(
             {
                 "time": 944729610,
                 "url": url,
-                "length": 221837,
+                "length": 778240,
                 "filename": filename,
                 "version": "0.1.0",
             }

@@ -3,6 +3,8 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from __future__ import annotations
+
 import datetime
 import hashlib
 import logging
@@ -48,7 +50,7 @@ class ArchivePackageInfo(BasePackageInfo):
         )
 
     @classmethod
-    def from_metadata(cls, a_metadata: Dict[str, Any]) -> "ArchivePackageInfo":
+    def from_metadata(cls, a_metadata: Dict[str, Any]) -> ArchivePackageInfo:
         url = a_metadata["url"]
         filename = a_metadata.get("filename")
         return cls(
@@ -58,6 +60,7 @@ class ArchivePackageInfo(BasePackageInfo):
             length=a_metadata["length"],
             time=a_metadata["time"],
             version=a_metadata["version"],
+            checksums={"length": a_metadata["length"]},
         )
 
 
