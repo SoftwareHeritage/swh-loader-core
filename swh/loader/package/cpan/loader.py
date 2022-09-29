@@ -5,8 +5,9 @@
 
 from datetime import datetime
 import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
 import iso8601
@@ -14,15 +15,11 @@ from packaging.version import parse as parse_version
 import yaml
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import (
-    EMPTY_AUTHOR,
-    Person,
-    cached_method,
-    get_url_body,
-    release_name,
-)
+from swh.loader.package.utils import EMPTY_AUTHOR, Person, release_name
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
+
+logger = logging.getLogger(__name__)
 
 
 @attr.s
@@ -30,9 +27,6 @@ class CpanPackageInfo(BasePackageInfo):
 
     name = attr.ib(type=str)
     """Name of the package"""
-
-    filename = attr.ib(type=str)
-    """Archive (tar.gz) file name"""
 
     version = attr.ib(type=str)
     """Current version"""
@@ -47,7 +41,7 @@ class CpanPackageInfo(BasePackageInfo):
 def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
     """Extract intrinsic metadata from META.json file at dir_path.
 
-    Each Perl package version has a META.json file at the root of the archive,
+    Most Perl package version have a META.json file at the root of the archive,
     or a META.yml for older version.
 
     See https://perldoc.perl.org/CPAN::Meta for META specifications.
@@ -59,12 +53,11 @@ def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
         A dict mapping from yaml parser
     """
     meta_json_path = dir_path / "META.json"
+    meta_yml_path = dir_path / "META.yml"
     metadata: Dict[str, Any] = {}
     if meta_json_path.exists():
         metadata = json.loads(meta_json_path.read_text())
-
-    meta_yml_path = dir_path / "META.yml"
-    if meta_yml_path.exists():
+    elif meta_yml_path.exists():
         metadata = yaml.safe_load(meta_yml_path.read_text())
 
     return metadata
@@ -77,23 +70,22 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
         self,
         storage: StorageInterface,
         url: str,
+        api_base_url: str,
+        artifacts: List[Dict[str, Any]],
+        module_metadata: List[Dict[str, Any]],
         **kwargs,
     ):
 
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
-
-    @cached_method
-    def info_versions(self) -> Dict:
-        """Return the package versions (fetched from
-        ``https://fastapi.metacpan.org/v1/release/versions/{pkgname}``)
-
-        Api documentation https://cpan.haskell.org/api
-        """
-        pkgname = self.url.split("/")[-1]
-        url = f"https://fastapi.metacpan.org/v1/release/versions/{pkgname}"
-        data = json.loads(get_url_body(url=url, headers={"Accept": "application/json"}))
-        return {release["version"]: release for release in data["releases"]}
+        self.api_base_url = api_base_url
+        self.artifacts: Dict[str, Dict] = {
+            artifact["version"]: {k: v for k, v in artifact.items() if k != "version"}
+            for artifact in artifacts
+        }
+        self.module_metadata: Dict[str, Dict] = {
+            meta["version"]: meta for meta in module_metadata
+        }
 
     def get_versions(self) -> Sequence[str]:
         """Get all released versions of a Perl package
@@ -105,7 +97,7 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.info_versions().keys())
+        versions = list(self.artifacts.keys())
         versions.sort(key=parse_version)
         return versions
 
@@ -130,25 +122,24 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
         Returns:
             Iterator of tuple (release_name, p_info)
         """
-        data = self.info_versions()[version]
-        pkgname: str = self.url.split("/")[-1]
-        url: str = data["download_url"]
-        filename: str = url.split("/")[-1]
-        # The api does not provide an explicit timezone, defaults to UTC
-        last_modified = iso8601.parse_date(data["date"])
+        artifact = self.artifacts[version]
+        metadata = self.module_metadata[version]
 
-        if "author" in data:
-            author = Person.from_fullname(data["author"].encode())
-        else:
-            author = EMPTY_AUTHOR
+        last_modified = iso8601.parse_date(metadata["date"])
+        author = (
+            Person.from_fullname(metadata["author"].encode())
+            if metadata["author"]
+            else EMPTY_AUTHOR
+        )
 
         p_info = CpanPackageInfo(
-            name=pkgname,
-            filename=filename,
-            url=url,
+            name=metadata["name"],
+            filename=artifact["filename"],
+            url=artifact["url"],
             version=version,
             last_modified=last_modified,
             author=author,
+            checksums=artifact["checksums"],
         )
         yield release_name(version), p_info
 
@@ -160,11 +151,6 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
         intrinsic_metadata = extract_intrinsic_metadata(
             Path(uncompressed_path) / f"{p_info.name}-{p_info.version}"
         )
-
-        name: str = intrinsic_metadata["name"]
-        assert name == p_info.name
-        version: str = str(intrinsic_metadata["version"])
-        assert version == p_info.version
 
         # author data from http endpoint are less complete than from META
         if "author" in intrinsic_metadata:
@@ -178,11 +164,12 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
             author = p_info.author
 
         message = (
-            f"Synthetic release for Perl source package {name} version {version}\n"
+            f"Synthetic release for Perl source package {p_info.name} "
+            f"version {p_info.version}\n"
         )
 
         return Release(
-            name=version.encode(),
+            name=p_info.version.encode(),
             author=author,
             date=TimestampWithTimezone.from_datetime(p_info.last_modified),
             message=message.encode(),

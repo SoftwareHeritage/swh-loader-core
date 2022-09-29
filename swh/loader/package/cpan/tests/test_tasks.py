@@ -9,6 +9,13 @@ import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
 
+from .test_cpan import (
+    API_BASE_URL,
+    ORIGIN_ARTIFACTS,
+    ORIGIN_MODULE_METADATA,
+    ORIGIN_URL,
+)
+
 NAMESPACE = "swh.loader.package.cpan"
 
 
@@ -21,8 +28,13 @@ def cpan_lister():
 def cpan_listed_origin(cpan_lister):
     return ListedOrigin(
         lister_id=cpan_lister.id,
-        url="https://metacpan.org/dist/Software-Packager",
+        url=ORIGIN_URL,
         visit_type="cpan",
+        extra_loader_arguments={
+            "api_base_url": API_BASE_URL,
+            "artifacts": ORIGIN_ARTIFACTS,
+            "module_metadata": ORIGIN_MODULE_METADATA,
+        },
     )
 
 
