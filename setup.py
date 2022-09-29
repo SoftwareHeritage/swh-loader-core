@@ -68,6 +68,7 @@ setup(
         loader.npm=swh.loader.package.npm:register
         loader.opam=swh.loader.package.opam:register
         loader.pubdev=swh.loader.package.pubdev:register
+        loader.puppet=swh.loader.package.puppet:register
         loader.pypi=swh.loader.package.pypi:register
         loader.maven=swh.loader.package.maven:register
     """,

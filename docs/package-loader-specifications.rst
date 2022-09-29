@@ -149,6 +149,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - from extrinsic metadata
      - from extrinsic metadata
      - name, version and description from intrinsic metadata
+   * - puppet
+     - ``p_info.​version``
+     - ``release_name(​version)``
+     - =version
+     - Synthetic release for Puppet source package {p_info.name} version {version} {description}
+     - true
+     - from intrinsic metadata
+     - from extrinsic metadata
+     - version and description from intrinsic metadata
    * - pypi
      - ``metadata​["version"]``
      - ``release_name(​version)`` or ``release_name(​version, filename)``
