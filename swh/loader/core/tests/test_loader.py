@@ -1,8 +1,9 @@
-# Copyright (C) 2018-2021  The Software Heritage developers
+# Copyright (C) 2018-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import base64
 import datetime
 import hashlib
 import logging
@@ -15,6 +16,7 @@ from swh.loader.core.loader import (
     SENTRY_ORIGIN_URL_TAG_NAME,
     SENTRY_VISIT_TYPE_TAG_NAME,
     BaseLoader,
+    ContentLoader,
     DVCSLoader,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
@@ -306,10 +308,12 @@ def test_loader_save_data_path(swh_storage, tmp_path):
     assert save_path == expected_save_path
 
 
-def _check_load_failure(caplog, loader, exc_class, exc_text, status="partial"):
+def _check_load_failure(
+    caplog, loader, exc_class, exc_text, status="partial", origin=ORIGIN
+):
     """Check whether a failed load properly logged its exception, and that the
     snapshot didn't get referenced in storage"""
-    assert isinstance(loader, DVCSLoader)  # was implicit so far
+    assert isinstance(loader, (DVCSLoader, ContentLoader))  # was implicit so far
     for record in caplog.records:
         if record.levelname != "ERROR":
             continue
@@ -319,11 +323,12 @@ def _check_load_failure(caplog, loader, exc_class, exc_text, status="partial"):
         assert isinstance(exc, exc_class)
         assert exc_text in exc.args[0]
 
-    # Check that the get_snapshot operation would have succeeded
-    assert loader.get_snapshot() is not None
+    if isinstance(loader, DVCSLoader):
+        # Check that the get_snapshot operation would have succeeded
+        assert loader.get_snapshot() is not None
 
     # And confirm that the visit doesn't reference a snapshot
-    visit = assert_last_visit_matches(loader.storage, ORIGIN.url, status)
+    visit = assert_last_visit_matches(loader.storage, origin.url, status)
     if status != "partial":
         assert visit.snapshot is None
         # But that the snapshot didn't get loaded
@@ -503,3 +508,94 @@ def test_loader_sentry_tags_on_error(swh_storage, sentry_events, loader_cls):
     sentry_tags = sentry_events[0]["tags"]
     assert sentry_tags.get(SENTRY_ORIGIN_URL_TAG_NAME) == ORIGIN.url
     assert sentry_tags.get(SENTRY_VISIT_TYPE_TAG_NAME) == DummyLoader.visit_type
+
+
+CONTENT_MIRROR = "https://common-lisp.net"
+CONTENT_URL = f"{CONTENT_MIRROR}/project/asdf/archives/asdf-3.3.5.lisp"
+CONTENT_SHA256 = b"77bfa7d03eab048f68da87d630a6436640abfe7d5543202e24c553d5ff32e0a2"
+CONTENT_INTEGRITY = f"sha256-{base64.encodebytes(CONTENT_SHA256).decode()}"
+
+
+def test_content_loader_missing_field(swh_storage):
+    origin = Origin(CONTENT_URL)
+    with pytest.raises(TypeError, match="missing"):
+        ContentLoader(swh_storage, origin.url)
+
+
+def test_content_loader_404(caplog, swh_storage, requests_mock_datadir):
+    unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
+    loader = ContentLoader(
+        swh_storage, unknown_origin.url, integrity="sha256-unusedfornow"
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+def test_content_loader_404_with_fallback(caplog, swh_storage, requests_mock_datadir):
+    unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
+    fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
+    loader = ContentLoader(
+        swh_storage,
+        unknown_origin.url,
+        fallback_urls=[fallback_url_ko],
+        integrity="sha256-unusedfornow",
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+def test_content_loader_ok_with_fallback(caplog, swh_storage, requests_mock_datadir):
+    dead_origin = Origin(f"{CONTENT_MIRROR}/dead-origin-url")
+    fallback_url_ok = CONTENT_URL
+    fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
+
+    loader = ContentLoader(
+        swh_storage,
+        dead_origin.url,
+        fallback_urls=[fallback_url_ok, fallback_url_ko],
+        integrity=CONTENT_INTEGRITY,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+
+def test_content_loader_ok_simple(swh_storage, requests_mock_datadir):
+    origin = Origin(CONTENT_URL)
+    loader = ContentLoader(
+        swh_storage,
+        origin.url,
+        integrity=CONTENT_INTEGRITY,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    visit_status = assert_last_visit_matches(
+        swh_storage, origin.url, status="full", type="content"
+    )
+    assert visit_status.snapshot is not None
+
+    result2 = loader.load()
+
+    assert result2 == {"status": "uneventful"}

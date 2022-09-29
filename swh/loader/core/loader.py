@@ -3,12 +3,14 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import base64
 import datetime
 import hashlib
 import logging
 import os
 import time
 from typing import Any, ContextManager, Dict, Iterable, List, Optional, Union
+from urllib.parse import urlparse
 
 import sentry_sdk
 
@@ -16,6 +18,7 @@ from swh.core.config import load_from_envvar
 from swh.core.statsd import Statsd
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.exception import NotFound
+from swh.loader.package.utils import get_url_body
 from swh.model.model import (
     BaseContent,
     Content,
@@ -29,8 +32,11 @@ from swh.model.model import (
     Sha1Git,
     SkippedContent,
     Snapshot,
+    SnapshotBranch,
+    TargetType,
 )
 from swh.storage import get_storage
+from swh.storage.algos.snapshot import snapshot_get_latest
 from swh.storage.interface import StorageInterface
 from swh.storage.utils import now
 
@@ -273,7 +279,7 @@ class BaseLoader:
         """
         return True
 
-    def store_data(self):
+    def store_data(self) -> None:
         """Store fetched data in the database.
 
         Should call the :func:`maybe_load_xyz` methods, which handle the
@@ -640,3 +646,113 @@ class DVCSLoader(BaseLoader):
         self.storage.snapshot_add([snapshot])
         self.flush()
         self.loaded_snapshot_id = snapshot.id
+
+
+class ContentLoader(BaseLoader):
+    """Basic loader for edge case content ingestion.
+
+    The "integrity" field is a normalized information about the checksum used and the
+    corresponding base64 hash encoded value of the content.
+
+    The multiple "fallback" urls received for the same content are mirror urls so no
+    need to keep those. We only use them to fetch the actual content if the main origin
+    is no longer available.
+
+    The output snapshot is of the form:
+
+    .. code::
+
+       id: <bytes>
+       branches:
+         HEAD:
+           target_type: content
+           target: <content-id>
+
+    """
+
+    visit_type = "content"
+
+    def __init__(
+        self, *args, integrity: str, fallback_urls: List[str] = None, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.fallback_urls = fallback_urls or []
+        self.integrity: str = integrity
+        self.content: Optional[Content] = None
+        self.snapshot: Optional[Snapshot] = None
+        self.last_snapshot: Optional[Snapshot] = None
+
+    def prepare(self) -> None:
+        self.last_snapshot = snapshot_get_latest(self.storage, self.origin.url)
+
+    def fetch_data(self) -> bool:
+        """Retrieve the content file as a Content Object"""
+        urls = {self.origin.url, *self.fallback_urls}
+        # Determine the content checksum stored in the integrity field
+        # hash-<b64-encoded-checksum>
+        # https://w3c.github.io/webappsec-subresource-integrity/#grammardef-hash-algo
+        hash_algo, hash_value_b64 = self.integrity.split("-")
+        expected_checksum = base64.decodebytes(hash_value_b64.encode())
+        data: Optional[bytes] = None
+        for url in urls:
+            url_ = urlparse(url)
+            self.log.debug(
+                "prepare; origin_url=%s fallback=%s scheme=%s path=%s",
+                self.origin.url,
+                url,
+                url_.scheme,
+                url_.path,
+            )
+            try:
+                data = get_url_body(url)
+                self.content = Content.from_data(data)
+
+                # Ensure content received matched the integrity field received
+                actual_checksum = self.content.get_hash(hash_algo)
+                if actual_checksum == expected_checksum:
+                    # match, we have found our content to ingest, exit loop
+                    break
+                # otherwise continue
+            except NotFound:
+                continue
+
+        if not self.content:
+            raise NotFound(f"Unknown origin {self.origin.url}.")
+
+        return False  # no more data to fetch
+
+    def process_data(self) -> bool:
+        """Build the snapshot out of the Content retrieved."""
+
+        assert self.content is not None
+        self.snapshot = Snapshot(
+            branches={
+                b"HEAD": SnapshotBranch(
+                    target=self.content.sha1_git,
+                    target_type=TargetType.CONTENT,
+                ),
+            }
+        )
+
+        return False  # no more data to process
+
+    def store_data(self) -> None:
+        """Store newly retrieved Content and Snapshot."""
+        assert self.content is not None
+        self.storage.content_add([self.content])
+        assert self.snapshot is not None
+        self.storage.snapshot_add([self.snapshot])
+        self.loaded_snapshot_id = self.snapshot.id
+
+    def visit_status(self):
+        return "full" if self.content and self.snapshot is not None else "partial"
+
+    def load_status(self) -> Dict[str, Any]:
+        return {
+            "status": "uneventful"
+            if self.last_snapshot == self.snapshot
+            else "eventful"
+        }
+
+    def cleanup(self) -> None:
+        self.log.debug("cleanup")
