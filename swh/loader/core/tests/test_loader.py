@@ -17,6 +17,7 @@ from swh.loader.core.loader import (
     SENTRY_VISIT_TYPE_TAG_NAME,
     BaseLoader,
     ContentLoader,
+    DirectoryLoader,
     DVCSLoader,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
@@ -313,7 +314,7 @@ def _check_load_failure(
 ):
     """Check whether a failed load properly logged its exception, and that the
     snapshot didn't get referenced in storage"""
-    assert isinstance(loader, (DVCSLoader, ContentLoader))  # was implicit so far
+    assert isinstance(loader, (DVCSLoader, ContentLoader, DirectoryLoader))
     for record in caplog.records:
         if record.levelname != "ERROR":
             continue
@@ -525,7 +526,9 @@ def test_content_loader_missing_field(swh_storage):
 def test_content_loader_404(caplog, swh_storage, requests_mock_datadir):
     unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
     loader = ContentLoader(
-        swh_storage, unknown_origin.url, integrity="sha256-unusedfornow"
+        swh_storage,
+        unknown_origin.url,
+        integrity=CONTENT_INTEGRITY,
     )
     result = loader.load()
 
@@ -548,7 +551,7 @@ def test_content_loader_404_with_fallback(caplog, swh_storage, requests_mock_dat
         swh_storage,
         unknown_origin.url,
         fallback_urls=[fallback_url_ko],
-        integrity="sha256-unusedfornow",
+        integrity=CONTENT_INTEGRITY,
     )
     result = loader.load()
 
@@ -593,6 +596,127 @@ def test_content_loader_ok_simple(swh_storage, requests_mock_datadir):
 
     visit_status = assert_last_visit_matches(
         swh_storage, origin.url, status="full", type="content"
+    )
+    assert visit_status.snapshot is not None
+
+    result2 = loader.load()
+
+    assert result2 == {"status": "uneventful"}
+
+
+DIRECTORY_MIRROR = "https://example.org"
+DIRECTORY_URL = f"{DIRECTORY_MIRROR}/archives/dummy-hello.tar.gz"
+DIRECTORY_SHA256 = b"7608099df00abcf23ba84f36ce63ad4c8802c3b7d254ddec657488eaf5ffb8d2"
+DIRECTORY_INTEGRITY = f"sha256-{base64.encodebytes(DIRECTORY_SHA256).decode()}"
+
+
+def test_directory_loader_missing_field(swh_storage):
+    origin = Origin(DIRECTORY_URL)
+    with pytest.raises(TypeError, match="missing"):
+        DirectoryLoader(swh_storage, origin.url)
+
+
+def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir):
+    unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tar.gz")
+    loader = DirectoryLoader(
+        swh_storage,
+        unknown_origin.url,
+        integrity=DIRECTORY_INTEGRITY,
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+def test_directory_loader_404_with_fallback(caplog, swh_storage, requests_mock_datadir):
+    unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tbz2")
+    fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/elsewhere-unknown2.tbz2"
+    loader = DirectoryLoader(
+        swh_storage,
+        unknown_origin.url,
+        fallback_urls=[fallback_url_ko],
+        integrity=DIRECTORY_INTEGRITY,
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+def test_directory_loader_404_with_integrity_check_failure(
+    caplog, swh_storage, requests_mock_datadir
+):
+    """Tarball with mismatched integrity is not ingested."""
+    origin = Origin(DIRECTORY_URL)
+
+    directory_hash = DIRECTORY_SHA256.decode().replace("e", "a").encode()
+    directory_integrity = f"sha256-{base64.encodebytes(directory_hash).decode()}"
+
+    loader = DirectoryLoader(
+        swh_storage,
+        origin.url,
+        integrity=directory_integrity,  # making the integrity check fail
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=origin,
+    )
+
+
+def test_directory_loader_ok_with_fallback(caplog, swh_storage, requests_mock_datadir):
+    dead_origin = Origin(f"{DIRECTORY_MIRROR}/dead-origin-url")
+    fallback_url_ok = DIRECTORY_URL
+    fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/unknown2.tgz"
+
+    loader = DirectoryLoader(
+        swh_storage,
+        dead_origin.url,
+        fallback_urls=[fallback_url_ok, fallback_url_ko],
+        integrity=DIRECTORY_INTEGRITY,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+
+def test_directory_loader_ok_simple(swh_storage, requests_mock_datadir):
+    origin = Origin(DIRECTORY_URL)
+    loader = DirectoryLoader(
+        swh_storage,
+        origin.url,
+        integrity=DIRECTORY_INTEGRITY,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    visit_status = assert_last_visit_matches(
+        swh_storage, origin.url, status="full", type="directory"
     )
     assert visit_status.snapshot is not None
 
