@@ -3,7 +3,6 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import base64
 import datetime
 import hashlib
 import logging
@@ -21,7 +20,7 @@ from swh.core.statsd import Statsd
 from swh.core.tarball import uncompress
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.exception import NotFound
-from swh.loader.package.utils import download, get_url_body
+from swh.loader.package.utils import download
 from swh.model import from_disk
 from swh.model.model import (
     BaseContent,
@@ -653,27 +652,29 @@ class DVCSLoader(BaseLoader):
 
 
 class NodeLoader(BaseLoader):
-    """Common class for Content and Directory loaders.
+    """Common class for :class:`ContentLoader` and :class:`Directoryloader`.
 
-    The "integrity" field is a normalized information about the checksum used and the
-    corresponding base64 hash encoded value of the object retrieved (content or
-    directory).
+    The "checksums" field is a dictionary of hex hashes on the object retrieved (content
+    or directory).
 
-    The multiple "fallback" urls received are mirror urls so no need to keep those. We
-    only use them to fetch the actual object if the main origin is no longer available.
+    The multiple "fallback" urls received are mirror urls only used to fetch the object
+    if the main origin is no longer available. Those are not stored.
+
+    Ingestion is considered eventful on the first ingestion. Subsequent load of the same
+    object should end up being an uneventful visit (matching snapshot).
 
     """
 
     def __init__(
-        self, *args, integrity: str, fallback_urls: List[str] = None, **kwargs
+        self,
+        *args,
+        checksums: Dict[str, str],
+        fallback_urls: List[str] = None,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.snapshot: Optional[Snapshot] = None
-        # Determine the content checksum stored in the integrity field
-        # hash-<b64-encoded-checksum>
-        # https://w3c.github.io/webappsec-subresource-integrity/#grammardef-hash-algo
-        self.checksum_algo, checksum_value_b64 = integrity.split("-")
-        self.expected_checksum: bytes = base64.decodebytes(checksum_value_b64.encode())
+        self.checksums = checksums
         fallback_urls_ = fallback_urls or []
         self.mirror_urls: List[str] = [self.origin.url, *fallback_urls_]
 
@@ -714,7 +715,6 @@ class ContentLoader(NodeLoader):
 
     def fetch_data(self) -> bool:
         """Retrieve the content file as a Content Object"""
-        data: Optional[bytes] = None
         for url in self.mirror_urls:
             url_ = urlparse(url)
             self.log.debug(
@@ -725,22 +725,22 @@ class ContentLoader(NodeLoader):
                 url_.path,
             )
             try:
-                data = get_url_body(url)
-                self.content = Content.from_data(data)
-
-                # Ensure content received matched the integrity field received
-                actual_checksum = self.content.get_hash(self.checksum_algo)
-                if actual_checksum == self.expected_checksum:
-                    # match, we have found our content to ingest, exit loop
-                    break
-                # otherwise continue
-            except NotFound:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    file_path, _ = download(url, dest=tmpdir, hashes=self.checksums)
+                    with open(file_path, "rb") as file:
+                        self.content = Content.from_data(file.read())
+            except HTTPError as http_error:
+                if http_error.response.status_code == 404:
+                    self.log.debug(
+                        "Not found '%s', continue on next mirror url if any", url
+                    )
                 continue
+            else:
+                return False  # no more data to fetch
 
-        if not self.content:
-            raise NotFound(f"Unknown origin {self.origin.url}.")
-
-        return False  # no more data to fetch
+        # If we reach this point, we did not find any proper content, consider the
+        # origin not found
+        raise NotFound(f"Unknown origin {self.origin.url}.")
 
     def process_data(self) -> bool:
         """Build the snapshot out of the Content retrieved."""
@@ -799,7 +799,6 @@ class DirectoryLoader(NodeLoader):
         Raises NotFound if no tarball is found
 
         """
-        expected_checksum_hashhex = self.expected_checksum.decode("utf-8")
         for url in self.mirror_urls:
             url_ = urlparse(url)
             self.log.debug(
@@ -814,19 +813,19 @@ class DirectoryLoader(NodeLoader):
                     tarball_path, extrinsic_metadata = download(
                         url,
                         tmpdir,
-                        # Ensure content received matched the integrity field received
-                        hashes={self.checksum_algo: expected_checksum_hashhex},
+                        # Ensure content received matched the checksums received
+                        hashes=self.checksums,
                         extra_request_headers={"Accept-Encoding": "identity"},
                     )
                 except ValueError as e:
                     # Checksum mismatch
                     self.log.debug("Error: %s", e)
                     continue
-                except HTTPError:
-                    self.log.debug(
-                        "Not found %s, continue on next mirror url if any", url
-                    )
-                    # mirror url not found, continue on the next mirror url if any
+                except HTTPError as http_error:
+                    if http_error.response.status_code == 404:
+                        self.log.debug(
+                            "Not found '%s', continue on next mirror url if any", url
+                        )
                     continue
 
                 directory_path = os.path.join(tmpdir, "src")

@@ -3,11 +3,12 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import base64
 import datetime
 import hashlib
 import logging
+import os
 import time
+from typing import Dict, List, Union
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -23,7 +24,7 @@ from swh.loader.core.loader import (
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound
 from swh.loader.tests import assert_last_visit_matches
-from swh.model.hashutil import hash_to_bytes
+from swh.model.hashutil import MultiHash, hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -513,22 +514,38 @@ def test_loader_sentry_tags_on_error(swh_storage, sentry_events, loader_cls):
 
 CONTENT_MIRROR = "https://common-lisp.net"
 CONTENT_URL = f"{CONTENT_MIRROR}/project/asdf/archives/asdf-3.3.5.lisp"
-CONTENT_SHA256 = b"77bfa7d03eab048f68da87d630a6436640abfe7d5543202e24c553d5ff32e0a2"
-CONTENT_INTEGRITY = f"sha256-{base64.encodebytes(CONTENT_SHA256).decode()}"
+
+
+@pytest.fixture
+def content_path(datadir):
+    """Return filepath fetched by ContentLoader test runs."""
+    return os.path.join(
+        datadir, "https_common-lisp.net", "project_asdf_archives_asdf-3.3.5.lisp"
+    )
+
+
+def compute_hashes(
+    filepath: str, cksum_algos: Union[str, List[str]] = "sha256"
+) -> Dict[str, str]:
+    """Compute checksums dict out of a filepath"""
+    checksum_algos = {cksum_algos} if isinstance(cksum_algos, str) else set(cksum_algos)
+    return MultiHash.from_path(filepath, hash_names=checksum_algos).hexdigest()
 
 
 def test_content_loader_missing_field(swh_storage):
+    """It should raise if the ContentLoader is missing checksums field"""
     origin = Origin(CONTENT_URL)
     with pytest.raises(TypeError, match="missing"):
         ContentLoader(swh_storage, origin.url)
 
 
-def test_content_loader_404(caplog, swh_storage, requests_mock_datadir):
+def test_content_loader_404(caplog, swh_storage, requests_mock_datadir, content_path):
+    """It should not ingest origin when there is no file to be found (no mirror url)"""
     unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
     loader = ContentLoader(
         swh_storage,
         unknown_origin.url,
-        integrity=CONTENT_INTEGRITY,
+        checksums=compute_hashes(content_path),
     )
     result = loader.load()
 
@@ -544,14 +561,17 @@ def test_content_loader_404(caplog, swh_storage, requests_mock_datadir):
     )
 
 
-def test_content_loader_404_with_fallback(caplog, swh_storage, requests_mock_datadir):
+def test_content_loader_404_with_fallback(
+    caplog, swh_storage, requests_mock_datadir, content_path
+):
+    """It should not ingest origin when there is no file to be found"""
     unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
     fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
     loader = ContentLoader(
         swh_storage,
         unknown_origin.url,
         fallback_urls=[fallback_url_ko],
-        integrity=CONTENT_INTEGRITY,
+        checksums=compute_hashes(content_path),
     )
     result = loader.load()
 
@@ -567,7 +587,15 @@ def test_content_loader_404_with_fallback(caplog, swh_storage, requests_mock_dat
     )
 
 
-def test_content_loader_ok_with_fallback(caplog, swh_storage, requests_mock_datadir):
+@pytest.mark.parametrize("checksum_algo", ["sha1", "sha256", "sha512"])
+def test_content_loader_ok_with_fallback(
+    checksum_algo,
+    caplog,
+    swh_storage,
+    requests_mock_datadir,
+    content_path,
+):
+    """It should be an eventful visit even when ingesting through mirror url"""
     dead_origin = Origin(f"{CONTENT_MIRROR}/dead-origin-url")
     fallback_url_ok = CONTENT_URL
     fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
@@ -576,19 +604,20 @@ def test_content_loader_ok_with_fallback(caplog, swh_storage, requests_mock_data
         swh_storage,
         dead_origin.url,
         fallback_urls=[fallback_url_ok, fallback_url_ko],
-        integrity=CONTENT_INTEGRITY,
+        checksums=compute_hashes(content_path, checksum_algo),
     )
     result = loader.load()
 
     assert result == {"status": "eventful"}
 
 
-def test_content_loader_ok_simple(swh_storage, requests_mock_datadir):
+def test_content_loader_ok_simple(swh_storage, requests_mock_datadir, content_path):
+    """It should be an eventful visit on a new file, then uneventful"""
     origin = Origin(CONTENT_URL)
     loader = ContentLoader(
         swh_storage,
         origin.url,
-        integrity=CONTENT_INTEGRITY,
+        checksums=compute_hashes(content_path, ["sha1", "sha256", "sha512"]),
     )
     result = loader.load()
 
@@ -606,22 +635,28 @@ def test_content_loader_ok_simple(swh_storage, requests_mock_datadir):
 
 DIRECTORY_MIRROR = "https://example.org"
 DIRECTORY_URL = f"{DIRECTORY_MIRROR}/archives/dummy-hello.tar.gz"
-DIRECTORY_SHA256 = b"7608099df00abcf23ba84f36ce63ad4c8802c3b7d254ddec657488eaf5ffb8d2"
-DIRECTORY_INTEGRITY = f"sha256-{base64.encodebytes(DIRECTORY_SHA256).decode()}"
+
+
+@pytest.fixture
+def tarball_path(datadir):
+    """Return tarball filepath fetched by DirectoryLoader test runs."""
+    return os.path.join(datadir, "https_example.org", "archives_dummy-hello.tar.gz")
 
 
 def test_directory_loader_missing_field(swh_storage):
+    """It should raise if the DirectoryLoader is missing checksums field"""
     origin = Origin(DIRECTORY_URL)
     with pytest.raises(TypeError, match="missing"):
         DirectoryLoader(swh_storage, origin.url)
 
 
-def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir):
+def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir, tarball_path):
+    """It should not ingest origin when there is no tarball to be found (no mirrors)"""
     unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tar.gz")
     loader = DirectoryLoader(
         swh_storage,
         unknown_origin.url,
-        integrity=DIRECTORY_INTEGRITY,
+        checksums=compute_hashes(tarball_path),
     )
     result = loader.load()
 
@@ -637,14 +672,17 @@ def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir):
     )
 
 
-def test_directory_loader_404_with_fallback(caplog, swh_storage, requests_mock_datadir):
+def test_directory_loader_404_with_fallback(
+    caplog, swh_storage, requests_mock_datadir, tarball_path
+):
+    """It should not ingest origin when there is no tarball to be found"""
     unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tbz2")
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/elsewhere-unknown2.tbz2"
     loader = DirectoryLoader(
         swh_storage,
         unknown_origin.url,
         fallback_urls=[fallback_url_ko],
-        integrity=DIRECTORY_INTEGRITY,
+        checksums=compute_hashes(tarball_path),
     )
     result = loader.load()
 
@@ -661,18 +699,19 @@ def test_directory_loader_404_with_fallback(caplog, swh_storage, requests_mock_d
 
 
 def test_directory_loader_404_with_integrity_check_failure(
-    caplog, swh_storage, requests_mock_datadir
+    caplog, swh_storage, requests_mock_datadir, tarball_path
 ):
-    """Tarball with mismatched integrity is not ingested."""
+    """It should not ingest tarball with mismatched checksum"""
     origin = Origin(DIRECTORY_URL)
-
-    directory_hash = DIRECTORY_SHA256.decode().replace("e", "a").encode()
-    directory_integrity = f"sha256-{base64.encodebytes(directory_hash).decode()}"
+    erratic_checksums = {
+        algo: chksum.replace("a", "e")  # alter checksums to fail integrity check
+        for algo, chksum in compute_hashes(tarball_path).items()
+    }
 
     loader = DirectoryLoader(
         swh_storage,
         origin.url,
-        integrity=directory_integrity,  # making the integrity check fail
+        checksums=erratic_checksums,  # making the integrity check fail
     )
     result = loader.load()
 
@@ -688,7 +727,11 @@ def test_directory_loader_404_with_integrity_check_failure(
     )
 
 
-def test_directory_loader_ok_with_fallback(caplog, swh_storage, requests_mock_datadir):
+@pytest.mark.parametrize("checksum_algo", ["sha1", "sha256", "sha512"])
+def test_directory_loader_ok_with_fallback(
+    caplog, swh_storage, requests_mock_datadir, tarball_path, checksum_algo
+):
+    """It should be an eventful visit even when ingesting through mirror url"""
     dead_origin = Origin(f"{DIRECTORY_MIRROR}/dead-origin-url")
     fallback_url_ok = DIRECTORY_URL
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/unknown2.tgz"
@@ -697,19 +740,20 @@ def test_directory_loader_ok_with_fallback(caplog, swh_storage, requests_mock_da
         swh_storage,
         dead_origin.url,
         fallback_urls=[fallback_url_ok, fallback_url_ko],
-        integrity=DIRECTORY_INTEGRITY,
+        checksums=compute_hashes(tarball_path, checksum_algo),
     )
     result = loader.load()
 
     assert result == {"status": "eventful"}
 
 
-def test_directory_loader_ok_simple(swh_storage, requests_mock_datadir):
+def test_directory_loader_ok_simple(swh_storage, requests_mock_datadir, tarball_path):
+    """It should be an eventful visit on a new tarball, then uneventful"""
     origin = Origin(DIRECTORY_URL)
     loader = DirectoryLoader(
         swh_storage,
         origin.url,
-        integrity=DIRECTORY_INTEGRITY,
+        checksums=compute_hashes(tarball_path, ["sha1", "sha256", "sha512"]),
     )
     result = loader.load()
 
