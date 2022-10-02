@@ -667,12 +667,13 @@ class NodeLoader(BaseLoader):
 
     def __init__(
         self,
-        *args,
+        storage: StorageInterface,
+        url: str,
         checksums: Dict[str, str],
         fallback_urls: List[str] = None,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(storage, url, **kwargs)
         self.snapshot: Optional[Snapshot] = None
         self.checksums = checksums
         fallback_urls_ = fallback_urls or []

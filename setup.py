@@ -55,6 +55,8 @@ setup(
         [swh.cli.subcommands]
         loader=swh.loader.cli
         [swh.workers]
+        loader.content=swh.loader.core:register_content
+        loader.directory=swh.loader.core:register_directory
         loader.arch=swh.loader.package.arch:register
         loader.archive=swh.loader.package.archive:register
         loader.aur=swh.loader.package.aur:register
