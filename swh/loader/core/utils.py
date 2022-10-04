@@ -7,15 +7,20 @@
 from datetime import datetime, timezone
 import io
 import os
+from pathlib import Path
 import shutil
 import signal
+from subprocess import PIPE, Popen
 import time
 import traceback
-from typing import Callable, Optional, Union
+from typing import Callable, Iterable, Optional, Union
 
 from billiard import Process, Queue  # type: ignore
 from dateutil.parser import parse
 import psutil
+
+from swh.loader.exception import MissingOptionalDependency
+from swh.model.hashutil import MultiHash
 
 
 def clean_dangling_folders(dirpath: str, pattern_check: str, log=None) -> None:
@@ -125,3 +130,25 @@ def parse_visit_date(visit_date: Optional[Union[datetime, str]]) -> Optional[dat
         return parse(visit_date)
 
     raise ValueError(f"invalid visit date {visit_date!r}")
+
+
+def nix_hashes(filepath: Path, hash_names: Iterable[str]) -> MultiHash:
+    """Compute nix-store hashes on filepath.
+
+    Raises:
+        FileNotFoundError in case the nix-store command is not available on the system.
+
+    """
+    NIX_STORE = shutil.which("nix-store")
+    if NIX_STORE is None:
+        raise MissingOptionalDependency("nix-store")
+
+    multi_hash = MultiHash(hash_names=hash_names)
+
+    command = [NIX_STORE, "--dump", str(filepath)]
+    with Popen(command, stdout=PIPE) as proc:
+        assert proc.stdout is not None
+        for chunk in proc.stdout:
+            multi_hash.update(chunk)
+
+    return multi_hash

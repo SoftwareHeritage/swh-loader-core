@@ -1,23 +1,30 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 from datetime import datetime
 import os
+from pathlib import Path
 import signal
+import tempfile
 from time import sleep
 from unittest.mock import patch
 
 import pytest
 
+from swh.core.tarball import uncompress
 from swh.loader.core.utils import (
     CloneFailure,
     CloneTimeout,
     clean_dangling_folders,
     clone_with_timeout,
+    nix_hashes,
     parse_visit_date,
 )
+from swh.loader.exception import MissingOptionalDependency
+
+from .conftest import nix_store_missing
 
 
 def prepare_arborescence_from(tmpdir, folder_names):
@@ -185,3 +192,27 @@ def test_utils_parse_visit_date_now():
 def test_utils_parse_visit_date_fails():
     with pytest.raises(ValueError, match="invalid"):
         parse_visit_date(10)  # not a string nor a date
+
+
+@patch(
+    "swh.loader.core.utils.shutil.which",
+    return_value=None,
+)
+def test_nix_hashes_missing_nix_store(mock_which):
+    with pytest.raises(MissingOptionalDependency, match="nix-store"):
+        nix_hashes("some-irrelevant-filepath", ["sha1"])
+
+
+@pytest.mark.skipif(nix_store_missing, reason="requires nix-bin installed (bullseye)")
+def test_nix_hashes_compute(tarball_with_nar_hashes):
+    tarball_path, nar_checksums = tarball_with_nar_hashes
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        directory_path = Path(tmpdir) / "src"
+        directory_path.mkdir(parents=True, exist_ok=True)
+        uncompress(tarball_path, dest=str(directory_path))
+        directory = next(directory_path.iterdir())
+
+        actual_multihash = nix_hashes(directory, nar_checksums.keys())
+
+        assert actual_multihash.hexdigest() == nar_checksums
