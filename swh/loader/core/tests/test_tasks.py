@@ -8,7 +8,6 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
 
 NAMESPACE = "swh.loader.core"
 
@@ -19,16 +18,11 @@ def nixguix_lister():
 
 
 @pytest.mark.parametrize("loader_name", ["Content", "Directory"])
-def test_tasks_loader_for_listed_origin(
-    mocker,
-    swh_scheduler_celery_app,
-    swh_scheduler_celery_worker,
-    swh_config,
+def test_loader_tasks_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
     nixguix_lister,
     loader_name,
 ):
-    mock_load = mocker.patch(f"{NAMESPACE}.loader.{loader_name}Loader.load")
-    mock_load.return_value = {"status": "eventful"}
 
     listed_origin = ListedOrigin(
         lister_id=nixguix_lister.id,
@@ -40,14 +34,9 @@ def test_tasks_loader_for_listed_origin(
         },
     )
 
-    task_dict = create_origin_task_dict(listed_origin, nixguix_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        f"{NAMESPACE}.tasks.Load{loader_name}",
-        kwargs=task_dict["arguments"]["kwargs"],
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.{loader_name}Loader",
+        task_function_name=f"{NAMESPACE}.tasks.Load{loader_name}",
+        lister=nixguix_lister,
+        listed_origin=listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}

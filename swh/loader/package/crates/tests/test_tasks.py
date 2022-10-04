@@ -3,22 +3,41 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import uuid
 
-def test_tasks_crates_loader(
-    mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
-):
-    mock_load = mocker.patch("swh.loader.package.crates.loader.CratesLoader.load")
-    mock_load.return_value = {"status": "eventful"}
+import pytest
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.crates.tasks.LoadCrates",
-        kwargs=dict(
-            url="some-url/api/v1/crates/some-package",
-            artifacts=[{"version": "0.0.1", "url": "some-package-0.0.1.crate"}],
-        ),
+from swh.scheduler.model import ListedOrigin, Lister
+
+NAMESPACE = "swh.loader.package.crates"
+
+
+@pytest.fixture
+def crates_lister():
+    return Lister(name="crates", instance_name="example", id=uuid.uuid4())
+
+
+@pytest.fixture
+def crates_listed_origin(crates_lister):
+    return ListedOrigin(
+        lister_id=crates_lister.id,
+        url="some-url/api/v1/crates/some-package",
+        visit_type="crates",
+        extra_loader_arguments={
+            "artifacts": [{"version": "0.0.1", "url": "some-package-0.0.1.crate"}],
+        },
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
+
+
+def test_crates_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    crates_lister,
+    crates_listed_origin,
+):
+
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.CratesLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadCrates",
+        lister=crates_lister,
+        listed_origin=crates_listed_origin,
+    )

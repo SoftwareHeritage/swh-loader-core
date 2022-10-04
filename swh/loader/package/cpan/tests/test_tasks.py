@@ -3,21 +3,38 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import uuid
 
-def test_tasks_cpan_loader(
-    mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
-):
-    mock_load = mocker.patch("swh.loader.package.cpan.loader.CpanLoader.load")
-    mock_load.return_value = {"status": "eventful"}
+import pytest
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.cpan.tasks.LoadCpan",
-        kwargs=dict(
-            url="some-url/api/packages/some-package",
-        ),
+from swh.scheduler.model import ListedOrigin, Lister
+
+NAMESPACE = "swh.loader.package.cpan"
+
+
+@pytest.fixture
+def cpan_lister():
+    return Lister(name="cpan", instance_name="example", id=uuid.uuid4())
+
+
+@pytest.fixture
+def cpan_listed_origin(cpan_lister):
+    return ListedOrigin(
+        lister_id=cpan_lister.id,
+        url="https://metacpan.org/dist/Software-Packager",
+        visit_type="cpan",
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
+
+
+def test_cpan_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    cpan_lister,
+    cpan_listed_origin,
+):
+
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.CpanLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadCpan",
+        lister=cpan_lister,
+        listed_origin=cpan_listed_origin,
+    )

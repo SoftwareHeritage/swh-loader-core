@@ -8,7 +8,8 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
+
+NAMESPACE = "swh.loader.package.opam"
 
 OPAM_LOADER_ARGS = {
     "url": "opam+https://opam.ocaml.org/packages/agrid",
@@ -19,14 +20,9 @@ OPAM_LOADER_ARGS = {
 }
 
 
-@pytest.fixture(autouse=True)
-def celery_worker_and_swh_config(swh_scheduler_celery_worker, swh_config):
-    pass
-
-
 @pytest.fixture
 def opam_lister():
-    return Lister(name="opam-lister", instance_name="example", id=uuid.uuid4())
+    return Lister(name="opam", instance_name="example", id=uuid.uuid4())
 
 
 @pytest.fixture
@@ -41,38 +37,15 @@ def opam_listed_origin(opam_lister):
     )
 
 
-def test_tasks_opam_loader(
-    mocker,
-    swh_scheduler_celery_app,
+def test_opam_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    opam_lister,
+    opam_listed_origin,
 ):
-    mock_load = mocker.patch("swh.loader.package.opam.loader.OpamLoader.load")
-    mock_load.return_value = {"status": "eventful"}
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.opam.tasks.LoadOpam",
-        kwargs=OPAM_LOADER_ARGS,
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.OpamLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadOpam",
+        lister=opam_lister,
+        listed_origin=opam_listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_opam_loader_for_listed_origin(
-    mocker, swh_scheduler_celery_app, opam_lister, opam_listed_origin
-):
-    mock_load = mocker.patch("swh.loader.package.opam.loader.OpamLoader.load")
-    mock_load.return_value = {"status": "eventful"}
-
-    task_dict = create_origin_task_dict(opam_listed_origin, opam_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.opam.tasks.LoadOpam",
-        kwargs=task_dict["arguments"]["kwargs"],
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
