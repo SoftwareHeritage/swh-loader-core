@@ -738,6 +738,7 @@ class ContentLoader(NodeLoader):
 
     def fetch_data(self) -> bool:
         """Retrieve the content file as a Content Object"""
+        errors = []
         for url in self.mirror_urls:
             url_ = urlparse(url)
             self.log.debug(
@@ -754,6 +755,13 @@ class ContentLoader(NodeLoader):
                     file_path, _ = download(url, dest=tmpdir, hashes=self.checksums)
                     with open(file_path, "rb") as file:
                         self.content = Content.from_data(file.read())
+            except ValueError as e:
+                errors.append(e)
+                self.log.debug(
+                    "Mismatched checksums <%s>: continue on next mirror url if any",
+                    url,
+                )
+                continue
             except HTTPError as http_error:
                 if http_error.response.status_code == 404:
                     self.log.debug(
@@ -762,6 +770,9 @@ class ContentLoader(NodeLoader):
                 continue
             else:
                 return False  # no more data to fetch
+
+        if errors:
+            raise errors[0]
 
         # If we reach this point, we did not find any proper content, consider the
         # origin not found
@@ -824,6 +835,7 @@ class DirectoryLoader(NodeLoader):
         Raises NotFound if no tarball is found
 
         """
+        errors = []
         for url in self.mirror_urls:
             url_ = urlparse(url)
             self.log.debug(
@@ -841,8 +853,8 @@ class DirectoryLoader(NodeLoader):
                         hashes=self.standard_hashes,
                         extra_request_headers={"Accept-Encoding": "identity"},
                     )
-                except ValueError:
-                    # Checksum mismatch can happen, so we
+                except ValueError as e:
+                    errors.append(e)
                     self.log.debug(
                         "Mismatched checksums <%s>: continue on next mirror url if any",
                         url,
@@ -869,7 +881,18 @@ class DirectoryLoader(NodeLoader):
                         dir_to_check, self.checksums.keys()
                     ).hexdigest()
 
-                    assert actual_checksums == self.checksums
+                    if actual_checksums != self.checksums:
+                        errors.append(
+                            ValueError(
+                                f"Checksum mismatched on <{url}>: "
+                                f"{actual_checksums} != {self.checksums}"
+                            )
+                        )
+                        self.log.debug(
+                            "Mismatched checksums <%s>: continue on next mirror url if any",
+                            url,
+                        )
+                        continue
 
                 self.directory = from_disk.Directory.from_disk(
                     path=bytes(directory_path),
@@ -882,6 +905,9 @@ class DirectoryLoader(NodeLoader):
 
                 if self.directory is not None:
                     return False  # no more data to fetch
+
+        if errors:
+            raise errors[0]
 
         # if we reach here, we did not find any proper tarball, so consider the origin
         # not found

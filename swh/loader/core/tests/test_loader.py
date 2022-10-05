@@ -638,6 +638,26 @@ def test_content_loader_ok_simple(swh_storage, requests_mock_datadir, content_pa
     assert result2 == {"status": "uneventful"}
 
 
+def test_content_loader_hash_mismatch(swh_storage, requests_mock_datadir, content_path):
+    """It should be an eventful visit on a new file, then uneventful"""
+    checksums = compute_hashes(content_path, ["sha1", "sha256", "sha512"])
+    erratic_checksums = {
+        algo: chksum.replace("a", "e")  # alter checksums to fail integrity check
+        for algo, chksum in checksums.items()
+    }
+    origin = Origin(CONTENT_URL)
+    loader = ContentLoader(
+        swh_storage,
+        origin.url,
+        checksums=erratic_checksums,
+    )
+    result = loader.load()
+
+    assert result == {"status": "failed"}
+
+    assert_last_visit_matches(swh_storage, origin.url, status="failed", type="content")
+
+
 DIRECTORY_MIRROR = "https://example.org"
 DIRECTORY_URL = f"{DIRECTORY_MIRROR}/archives/dummy-hello.tar.gz"
 
@@ -697,7 +717,7 @@ def test_directory_loader_404_with_fallback(
     )
 
 
-def test_directory_loader_404_with_integrity_check_failure(
+def test_directory_loader_hash_mismatch(
     caplog, swh_storage, requests_mock_datadir, tarball_with_std_hashes
 ):
     """It should not ingest tarball with mismatched checksum"""
@@ -716,14 +736,47 @@ def test_directory_loader_404_with_integrity_check_failure(
     )
     result = loader.load()
 
-    assert result == {"status": "uneventful"}
+    assert result == {"status": "failed"}
 
     _check_load_failure(
         caplog,
         loader,
-        NotFound,
-        "Unknown origin",
-        status="not_found",
+        ValueError,
+        "mismatched",
+        status="failed",
+        origin=origin,
+    )
+
+
+@pytest.mark.skipif(nix_store_missing, reason="requires nix-bin installed (bullseye)")
+def test_directory_loader_hash_mismatch_nar(
+    caplog, swh_storage, requests_mock_datadir, tarball_with_nar_hashes
+):
+    """It should not ingest tarball with mismatched checksum"""
+    tarball_path, checksums = tarball_with_nar_hashes
+
+    origin = Origin(DIRECTORY_URL)
+    erratic_checksums = {
+        algo: chksum.replace("a", "e")  # alter checksums to fail integrity check
+        for algo, chksum in checksums.items()
+    }
+
+    loader = DirectoryLoader(
+        swh_storage,
+        origin.url,
+        checksums=erratic_checksums,  # making the integrity check fail
+        checksums_computation="nar",
+    )
+    result = loader.load()
+
+    assert result == {"status": "failed"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        ValueError,
+        "mismatched",
+        status="failed",
         origin=origin,
     )
 
