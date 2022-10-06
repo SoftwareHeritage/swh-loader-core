@@ -750,9 +750,31 @@ class ContentLoader(NodeLoader):
             )
             try:
                 # FIXME: Ensure no "nar" computations is required for file
-                assert self.checksums_computation == "standard"
                 with tempfile.TemporaryDirectory() as tmpdir:
-                    file_path, _ = download(url, dest=tmpdir, hashes=self.checksums)
+                    file_path, _ = download(
+                        url, dest=tmpdir, hashes=self.standard_hashes
+                    )
+                    if self.checksums_computation == "nar":
+                        # hashes are not "standard", so we need an extra check to happen
+                        self.log.debug("Content to check nar hashes: %s", file_path)
+                        actual_checksums = nix_hashes(
+                            Path(file_path), self.checksums.keys()
+                        ).hexdigest()
+
+                        if actual_checksums != self.checksums:
+                            errors.append(
+                                ValueError(
+                                    f"Checksum mismatched on <{url}>: "
+                                    f"{actual_checksums} != {self.checksums}"
+                                )
+                            )
+                            self.log.debug(
+                                "Mismatched checksums <%s>: continue on next mirror "
+                                "url if any",
+                                url,
+                            )
+                            continue
+
                     with open(file_path, "rb") as file:
                         self.content = Content.from_data(file.read())
             except ValueError as e:

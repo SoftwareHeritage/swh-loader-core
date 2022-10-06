@@ -4,9 +4,9 @@
 # See top-level LICENSE file for more information
 
 import datetime
+from functools import partial
 import hashlib
 import logging
-import os
 import time
 from unittest.mock import MagicMock, call
 
@@ -34,7 +34,7 @@ from swh.model.model import (
 )
 import swh.storage.exc
 
-from .conftest import compute_hashes, nix_store_missing
+from .conftest import compute_hashes, compute_nar_hashes, nix_store_missing
 
 ORIGIN = Origin(url="some-url")
 PARENT_ORIGIN = Origin(url="base-origin-url")
@@ -517,14 +517,6 @@ CONTENT_MIRROR = "https://common-lisp.net"
 CONTENT_URL = f"{CONTENT_MIRROR}/project/asdf/archives/asdf-3.3.5.lisp"
 
 
-@pytest.fixture
-def content_path(datadir):
-    """Return filepath fetched by ContentLoader test runs."""
-    return os.path.join(
-        datadir, "https_common-lisp.net", "project_asdf_archives_asdf-3.3.5.lisp"
-    )
-
-
 def test_content_loader_missing_field(swh_storage):
     """It should raise if the ContentLoader is missing checksums field"""
     origin = Origin(CONTENT_URL)
@@ -609,20 +601,34 @@ def test_content_loader_ok_with_fallback(
         swh_storage,
         dead_origin.url,
         fallback_urls=[fallback_url_ok, fallback_url_ko],
-        checksums=compute_hashes(content_path, checksum_algo),
+        checksums=compute_hashes(content_path, [checksum_algo]),
     )
     result = loader.load()
 
     assert result == {"status": "eventful"}
 
 
-def test_content_loader_ok_simple(swh_storage, requests_mock_datadir, content_path):
+compute_content_nar_hashes = partial(compute_nar_hashes, is_tarball=False)
+
+
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+def test_content_loader_ok_simple(
+    swh_storage, requests_mock_datadir, content_path, checksums_computation
+):
     """It should be an eventful visit on a new file, then uneventful"""
+    compute_hashes_fn = (
+        compute_content_nar_hashes if checksums_computation == "nar" else compute_hashes
+    )
+
     origin = Origin(CONTENT_URL)
     loader = ContentLoader(
         swh_storage,
         origin.url,
-        checksums=compute_hashes(content_path, ["sha1", "sha256", "sha512"]),
+        checksums=compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"]),
+        checksums_computation=checksums_computation,
     )
     result = loader.load()
 
@@ -638,9 +644,18 @@ def test_content_loader_ok_simple(swh_storage, requests_mock_datadir, content_pa
     assert result2 == {"status": "uneventful"}
 
 
-def test_content_loader_hash_mismatch(swh_storage, requests_mock_datadir, content_path):
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+def test_content_loader_hash_mismatch(
+    swh_storage, requests_mock_datadir, content_path, checksums_computation
+):
     """It should be an eventful visit on a new file, then uneventful"""
-    checksums = compute_hashes(content_path, ["sha1", "sha256", "sha512"])
+    compute_hashes_fn = (
+        compute_content_nar_hashes if checksums_computation == "nar" else compute_hashes
+    )
+    checksums = compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"])
     erratic_checksums = {
         algo: chksum.replace("a", "e")  # alter checksums to fail integrity check
         for algo, chksum in checksums.items()
@@ -650,6 +665,7 @@ def test_content_loader_hash_mismatch(swh_storage, requests_mock_datadir, conten
         swh_storage,
         origin.url,
         checksums=erratic_checksums,
+        checksums_computation=checksums_computation,
     )
     result = loader.load()
 
@@ -717,11 +733,18 @@ def test_directory_loader_404_with_fallback(
     )
 
 
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
 def test_directory_loader_hash_mismatch(
-    caplog, swh_storage, requests_mock_datadir, tarball_with_std_hashes
+    caplog, swh_storage, requests_mock_datadir, tarball_path, checksums_computation
 ):
     """It should not ingest tarball with mismatched checksum"""
-    tarball_path, checksums = tarball_with_std_hashes
+    compute_hashes_fn = (
+        compute_nar_hashes if checksums_computation == "nar" else compute_hashes
+    )
+    checksums = compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"])
 
     origin = Origin(DIRECTORY_URL)
     erratic_checksums = {
@@ -733,39 +756,7 @@ def test_directory_loader_hash_mismatch(
         swh_storage,
         origin.url,
         checksums=erratic_checksums,  # making the integrity check fail
-    )
-    result = loader.load()
-
-    assert result == {"status": "failed"}
-
-    _check_load_failure(
-        caplog,
-        loader,
-        ValueError,
-        "mismatched",
-        status="failed",
-        origin=origin,
-    )
-
-
-@pytest.mark.skipif(nix_store_missing, reason="requires nix-bin installed (bullseye)")
-def test_directory_loader_hash_mismatch_nar(
-    caplog, swh_storage, requests_mock_datadir, tarball_with_nar_hashes
-):
-    """It should not ingest tarball with mismatched checksum"""
-    tarball_path, checksums = tarball_with_nar_hashes
-
-    origin = Origin(DIRECTORY_URL)
-    erratic_checksums = {
-        algo: chksum.replace("a", "e")  # alter checksums to fail integrity check
-        for algo, chksum in checksums.items()
-    }
-
-    loader = DirectoryLoader(
-        swh_storage,
-        origin.url,
-        checksums=erratic_checksums,  # making the integrity check fail
-        checksums_computation="nar",
+        checksums_computation=checksums_computation,
     )
     result = loader.load()
 
@@ -803,44 +794,24 @@ def test_directory_loader_ok_with_fallback(
     assert result == {"status": "eventful"}
 
 
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
 def test_directory_loader_ok_simple(
-    swh_storage, requests_mock_datadir, tarball_with_std_hashes
+    swh_storage, requests_mock_datadir, tarball_path, checksums_computation
 ):
     """It should be an eventful visit on a new tarball, then uneventful"""
     origin = Origin(DIRECTORY_URL)
-    tarball_path, checksums = tarball_with_std_hashes
-    loader = DirectoryLoader(
-        swh_storage,
-        origin.url,
-        checksums=checksums,
+    compute_hashes_fn = (
+        compute_nar_hashes if checksums_computation == "nar" else compute_hashes
     )
-    result = loader.load()
-
-    assert result == {"status": "eventful"}
-
-    visit_status = assert_last_visit_matches(
-        swh_storage, origin.url, status="full", type="directory"
-    )
-    assert visit_status.snapshot is not None
-
-    result2 = loader.load()
-
-    assert result2 == {"status": "uneventful"}
-
-
-@pytest.mark.skipif(nix_store_missing, reason="requires nix-bin installed (bullseye)")
-def test_directory_loader_ok_with_nar(
-    swh_storage, requests_mock_datadir, tarball_with_nar_hashes
-):
-    """It should be an eventful visit on a tarball with nar hashes, then uneventful"""
-    tarball_path, nar_checksums = tarball_with_nar_hashes
-    origin = Origin(DIRECTORY_URL)
 
     loader = DirectoryLoader(
         swh_storage,
         origin.url,
-        checksums=nar_checksums,
-        checksums_computation="nar",
+        checksums=compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"]),
+        checksums_computation=checksums_computation,
     )
     result = loader.load()
 

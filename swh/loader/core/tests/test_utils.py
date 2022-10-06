@@ -19,6 +19,7 @@ from swh.loader.core.utils import (
     CloneTimeout,
     clean_dangling_folders,
     clone_with_timeout,
+    compute_nar_hashes,
     nix_hashes,
     parse_visit_date,
 )
@@ -216,3 +217,23 @@ def test_nix_hashes_compute(tarball_with_nar_hashes):
         actual_multihash = nix_hashes(directory, nar_checksums.keys())
 
         assert actual_multihash.hexdigest() == nar_checksums
+
+
+@pytest.mark.skipif(nix_store_missing, reason="requires nix-bin installed (bullseye)")
+def test_compute_nar_hashes_tarball(tarball_with_nar_hashes):
+    tarball_path, nar_checksums = tarball_with_nar_hashes
+
+    actual_checksums = compute_nar_hashes(tarball_path, nar_checksums.keys())
+
+    assert actual_checksums == nar_checksums
+
+
+@pytest.mark.skipif(nix_store_missing, reason="requires nix-bin installed (bullseye)")
+def test_compute_nar_hashes_file(content_with_nar_hashes):
+    content_path, nar_checksums = content_with_nar_hashes
+
+    actual_checksums = compute_nar_hashes(
+        content_path, nar_checksums.keys(), is_tarball=False
+    )
+
+    assert actual_checksums == nar_checksums
