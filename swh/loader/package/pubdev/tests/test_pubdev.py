@@ -129,8 +129,8 @@ def test_pubdev_loader_load_one_version(datadir, requests_mock_datadir, swh_stor
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "245092931ba809e6c54ebda8f865fb5a969a4134"
-    expected_release_id = "919f267ea050539606344d49d14bf594c4386e5a"
+    expected_snapshot_id = "dffca49aec93fcf1fa63fa25bf9a04c833a30d73"
+    expected_release_id = "1e2e7226ac9136f2eb7ce28f32ca08fff28590b1"
 
     assert expected_snapshot_id == load_status["snapshot_id"]
 
@@ -164,8 +164,7 @@ def test_pubdev_loader_load_one_version(datadir, requests_mock_datadir, swh_stor
 
     assert swh_storage.release_get([hash_to_bytes(expected_release_id)])[0] == Release(
         name=b"0.1.1",
-        message=b"Synthetic release for pub.dev source package Autolinker version"
-        b" 0.1.1\n\nPort of Autolinker.js to dart\n",
+        message=b"Synthetic release for pub.dev source package Autolinker version 0.1.1\n",
         target=hash_to_bytes("3fb6d4f2c0334d1604357ae92b2dd38a55a78194"),
         target_type=ObjectType.DIRECTORY,
         synthetic=True,
@@ -199,7 +198,7 @@ def test_pubdev_loader_load_multiple_versions(
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "43d5b68a9fa973aa95e56916aaef70841ccbc2a0"
+    expected_snapshot_id = "b03a4ef56b1a3bd4812f8e37f439c261cf4fd2c7"
 
     assert expected_snapshot_id == load_status["snapshot_id"]
 
@@ -207,11 +206,11 @@ def test_pubdev_loader_load_multiple_versions(
         id=hash_to_bytes(load_status["snapshot_id"]),
         branches={
             b"releases/1.0.0": SnapshotBranch(
-                target=hash_to_bytes("fbf8e40af675096681954553d737861e10b57216"),
+                target=hash_to_bytes("6f6eecd1ced321778d6a4bc60af4fb0e93178307"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/3.8.2": SnapshotBranch(
-                target=hash_to_bytes("627a5d586e3fb4e7319b17f1aee268fe2fb8e01c"),
+                target=hash_to_bytes("012bac381e2b9cda7de2da0391bc2969bf80ff97"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
@@ -253,8 +252,8 @@ def test_pubdev_loader_multiple_authors(datadir, requests_mock_datadir, swh_stor
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "4fa9f19d1d6ccc70921c8c50b278f510db63aa36"
-    expected_release_id = "538c98fd69a42d8d0561a7ca95b354de2143a3ab"
+    expected_snapshot_id = "2af571a302514bf17807dc114fff15501f8c1387"
+    expected_release_id = "87331a7804673cb00a339b504d2345769b7ae34a"
 
     assert expected_snapshot_id == load_status["snapshot_id"]
 
@@ -292,8 +291,8 @@ def test_pubdev_loader_empty_author(datadir, requests_mock_datadir, swh_storage)
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "0c7fa6b9fced23c648d2093ad5597622683f8aed"
-    expected_release_id = "7d8c05181069aa1049a3f0bc1d13bedc34625d47"
+    expected_snapshot_id = "8b86c9fb49bbf3e2b4513dc35a2838c67e8895bc"
+    expected_release_id = "d6ba845e28fba2a51e2ed358664cad645a2591ca"
 
     assert expected_snapshot_id == load_status["snapshot_id"]
 

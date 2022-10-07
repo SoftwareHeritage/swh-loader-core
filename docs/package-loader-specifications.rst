@@ -144,11 +144,11 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``p_info.​version``
      - ``release_name(​version)``
      - =version
-     - Synthetic release for pub.dev source package {name} version {version} {description}
+     - Synthetic release for pub.dev source package {p_info.name} version {p_info.version}
      - true
      - from extrinsic metadata
      - from extrinsic metadata
-     - name, version and description from intrinsic metadata
+     - name and version from extrinsic metadata
    * - puppet
      - ``p_info.​version``
      - ``release_name(​version)``
