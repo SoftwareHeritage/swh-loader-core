@@ -166,8 +166,6 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
         version: str = str(intrinsic_metadata["version"])
         assert version == p_info.version
 
-        description = intrinsic_metadata["abstract"]
-
         # author data from http endpoint are less complete than from META
         if "author" in intrinsic_metadata:
             author_data = intrinsic_metadata["author"]
@@ -180,9 +178,7 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
             author = p_info.author
 
         message = (
-            f"Synthetic release for Perl source package {name} "
-            f"version {version}\n\n"
-            f"{description}\n"
+            f"Synthetic release for Perl source package {name} version {version}\n"
         )
 
         return Release(

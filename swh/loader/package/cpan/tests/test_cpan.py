@@ -46,7 +46,7 @@ def test_cpan_loader_load_multiple_version(datadir, requests_mock_datadir, swh_s
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "2b1f606033ef5ccfed78aeb94baf5a8b901b2306"
+    expected_snapshot_id = "848ee8d69d33481c88ab81f6794f6504190f011f"
 
     assert expected_snapshot_id == load_status["snapshot_id"]
 
@@ -54,11 +54,11 @@ def test_cpan_loader_load_multiple_version(datadir, requests_mock_datadir, swh_s
         id=hash_to_bytes(load_status["snapshot_id"]),
         branches={
             b"releases/0.01": SnapshotBranch(
-                target=hash_to_bytes("3b31ce005c364de6c1b8caca8bf12487d5debf38"),
+                target=hash_to_bytes("e73aced4cc3d56b32a328d3248b25b052f029df4"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.05": SnapshotBranch(
-                target=hash_to_bytes("2901106d99de31f71380b6c3b5e92799ce3a1a5e"),
+                target=hash_to_bytes("07382fd255ec0fc293b92aeb7e68b3fe31c174f9"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
@@ -83,11 +83,11 @@ def test_cpan_loader_load_multiple_version(datadir, requests_mock_datadir, swh_s
     } == stats
 
     assert swh_storage.release_get(
-        [hash_to_bytes("2901106d99de31f71380b6c3b5e92799ce3a1a5e")]
+        [hash_to_bytes("07382fd255ec0fc293b92aeb7e68b3fe31c174f9")]
     )[0] == Release(
         name=b"0.05",
         message=b"Synthetic release for Perl source package Internals-CountObjects"
-        b" version 0.05\n\nReport all allocated perl objects\n",
+        b" version 0.05\n",
         target=hash_to_bytes("af3f6a43eaf4b26dbcadb1101e8d81db6d6151e0"),
         target_type=ObjectType.DIRECTORY,
         synthetic=True,
@@ -97,7 +97,7 @@ def test_cpan_loader_load_multiple_version(datadir, requests_mock_datadir, swh_s
             email=b"jjore@cpan.org",
         ),
         date=TimestampWithTimezone.from_iso8601("2011-06-11T05:23:31+00:00"),
-        id=hash_to_bytes("2901106d99de31f71380b6c3b5e92799ce3a1a5e"),
+        id=hash_to_bytes("07382fd255ec0fc293b92aeb7e68b3fe31c174f9"),
     )
 
     assert_last_visit_matches(
