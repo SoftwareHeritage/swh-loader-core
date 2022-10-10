@@ -4,15 +4,12 @@
 # See top-level LICENSE file for more information
 
 from datetime import datetime
-import json
 import logging
-from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
 import iso8601
 from packaging.version import parse as parse_version
-import yaml
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.loader.package.utils import EMPTY_AUTHOR, Person, release_name
@@ -36,31 +33,6 @@ class CpanPackageInfo(BasePackageInfo):
 
     author = attr.ib(type=Person)
     """Author"""
-
-
-def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
-    """Extract intrinsic metadata from META.json file at dir_path.
-
-    Most Perl package version have a META.json file at the root of the archive,
-    or a META.yml for older version.
-
-    See https://perldoc.perl.org/CPAN::Meta for META specifications.
-
-    Args:
-        dir_path: A directory on disk where a META.json|.yml can be found
-
-    Returns:
-        A dict mapping from yaml parser
-    """
-    meta_json_path = dir_path / "META.json"
-    meta_yml_path = dir_path / "META.yml"
-    metadata: Dict[str, Any] = {}
-    if meta_json_path.exists():
-        metadata = json.loads(meta_json_path.read_text())
-    elif meta_yml_path.exists():
-        metadata = yaml.safe_load(meta_yml_path.read_text())
-
-    return metadata
 
 
 class CpanLoader(PackageLoader[CpanPackageInfo]):
@@ -147,22 +119,6 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
         self, p_info: CpanPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
 
-        # Extract intrinsic metadata from uncompressed_path/META.json|.yml
-        intrinsic_metadata = extract_intrinsic_metadata(
-            Path(uncompressed_path) / f"{p_info.name}-{p_info.version}"
-        )
-
-        # author data from http endpoint are less complete than from META
-        if "author" in intrinsic_metadata:
-            author_data = intrinsic_metadata["author"]
-            if type(author_data) is list:
-                author = author_data[0]
-            else:
-                author = author_data
-            author = Person.from_fullname(author.encode())
-        else:
-            author = p_info.author
-
         message = (
             f"Synthetic release for Perl source package {p_info.name} "
             f"version {p_info.version}\n"
@@ -170,7 +126,7 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
 
         return Release(
             name=p_info.version.encode(),
-            author=author,
+            author=p_info.author,
             date=TimestampWithTimezone.from_datetime(p_info.last_modified),
             message=message.encode(),
             target_type=ObjectType.DIRECTORY,
