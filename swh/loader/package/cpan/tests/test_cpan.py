@@ -5,6 +5,9 @@
 
 # flake8: noqa: B950
 
+import json
+from pathlib import Path
+
 import pytest
 
 from swh.loader.package import __version__
@@ -13,13 +16,16 @@ from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stat
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     Person,
+    RawExtrinsicMetadata,
     Release,
     Snapshot,
     SnapshotBranch,
     TargetType,
     TimestampWithTimezone,
 )
+from swh.model.model import MetadataFetcher
 from swh.model.model import ObjectType as ModelObjectType
+from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 ORIGIN_URL = "https://metacpan.org/dist/Internals-CountObjects"
 
@@ -67,6 +73,22 @@ ORIGIN_MODULE_METADATA = [
 
 
 @pytest.fixture
+def head_release_original_artifacts_metadata():
+    return json.dumps(
+        [{k: v for k, v in ORIGIN_ARTIFACTS[0].items() if k != "version"}]
+    ).encode()
+
+
+@pytest.fixture
+def head_release_extrinsic_metadata(datadir):
+    return Path(
+        datadir,
+        "https_fastapi.metacpan.org",
+        "v1_release_JJORE_Internals-CountObjects-0.05",
+    ).read_bytes()
+
+
+@pytest.fixture
 def cpan_loader(requests_mock_datadir, swh_storage):
     return CpanLoader(
         swh_storage,
@@ -85,7 +107,11 @@ def test_get_default_version(cpan_loader):
     assert cpan_loader.get_default_version() == "0.05"
 
 
-def test_cpan_loader_load_multiple_version(cpan_loader):
+def test_cpan_loader_load_multiple_version(
+    cpan_loader,
+    head_release_original_artifacts_metadata,
+    head_release_extrinsic_metadata,
+):
 
     load_status = cpan_loader.load()
     assert load_status["status"] == "eventful"
@@ -153,4 +179,31 @@ def test_cpan_loader_load_multiple_version(cpan_loader):
         status="full",
         type="cpan",
         snapshot=expected_snapshot.id,
+    )
+
+    release_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=head_release.id)
+    directory_swhid = ExtendedSWHID(
+        object_type=ExtendedObjectType.DIRECTORY, object_id=head_release.target
+    )
+    expected_metadata = [
+        RawExtrinsicMetadata(
+            target=directory_swhid,
+            authority=cpan_loader.get_metadata_authority(),
+            fetcher=MetadataFetcher(
+                name="swh.loader.package.cpan.loader.CpanLoader",
+                version=__version__,
+            ),
+            discovery_date=cpan_loader.visit_date,
+            format="cpan-release-json",
+            metadata=head_release_extrinsic_metadata,
+            origin=ORIGIN_URL,
+            release=release_swhid,
+        ),
+    ]
+    assert (
+        cpan_loader.storage.raw_extrinsic_metadata_get(
+            directory_swhid,
+            cpan_loader.get_metadata_authority(),
+        ).results
+        == expected_metadata
     )

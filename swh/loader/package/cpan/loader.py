@@ -10,10 +10,22 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 import attr
 import iso8601
 from packaging.version import parse as parse_version
+from requests import HTTPError
 
-from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import EMPTY_AUTHOR, Person, release_name
-from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
+from swh.loader.package.loader import (
+    BasePackageInfo,
+    PackageLoader,
+    RawExtrinsicMetadataCore,
+)
+from swh.loader.package.utils import EMPTY_AUTHOR, Person, get_url_body, release_name
+from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    ObjectType,
+    Release,
+    Sha1Git,
+    TimestampWithTimezone,
+)
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -38,6 +50,8 @@ class CpanPackageInfo(BasePackageInfo):
 class CpanLoader(PackageLoader[CpanPackageInfo]):
     visit_type = "cpan"
 
+    EXTRINSIC_METADATA_URL_PATTERN = "{api_base_url}/release/{author}/{release_name}"
+
     def __init__(
         self,
         storage: StorageInterface,
@@ -58,6 +72,12 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
         self.module_metadata: Dict[str, Dict] = {
             meta["version"]: meta for meta in module_metadata
         }
+
+    def get_metadata_authority(self):
+        return MetadataAuthority(
+            type=MetadataAuthorityType.FORGE,
+            url="https://metacpan.org/",
+        )
 
     def get_versions(self) -> Sequence[str]:
         """Get all released versions of a Perl package
@@ -104,6 +124,30 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
             else EMPTY_AUTHOR
         )
 
+        try:
+            extrinsic_metadata_url = self.EXTRINSIC_METADATA_URL_PATTERN.format(
+                api_base_url=self.api_base_url,
+                author=metadata["cpan_author"],
+                release_name=metadata["release_name"],
+            )
+            version_extrinsic_metadata = get_url_body(extrinsic_metadata_url)
+        except HTTPError:
+            logger.warning(
+                "Could not fetch extrinsic_metadata for module %s version %s",
+                metadata["name"],
+                version,
+            )
+            version_extrinsic_metadata = None
+
+        directory_extrinsic_metadata = []
+        if version_extrinsic_metadata:
+            directory_extrinsic_metadata.append(
+                RawExtrinsicMetadataCore(
+                    format="cpan-release-json",
+                    metadata=version_extrinsic_metadata,
+                )
+            )
+
         p_info = CpanPackageInfo(
             name=metadata["name"],
             filename=artifact["filename"],
@@ -112,6 +156,7 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
             last_modified=last_modified,
             author=author,
             checksums=artifact["checksums"],
+            directory_extrinsic_metadata=directory_extrinsic_metadata,
         )
         yield release_name(version), p_info
 

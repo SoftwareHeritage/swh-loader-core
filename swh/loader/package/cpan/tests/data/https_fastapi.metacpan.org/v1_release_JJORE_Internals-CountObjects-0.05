@@ -1,0 +1,109 @@
+{
+   "release" : {
+      "provides" : "Internals::CountObjects",
+      "distribution" : "Internals-CountObjects",
+      "authorized" : true,
+      "license" : "perl_5",
+      "author" : "JJORE",
+      "name" : "Internals-CountObjects-0.05",
+      "first" : false,
+      "resources" : {
+         "bugtracker" : {
+            "web" : "http://rt.cpan.org/NoAuth/Bugs.html?Dist=Internals-CountObjects",
+            "mailto" : "bug-Internals-CountObjects@rt.cpan.org"
+         },
+         "repository" : {
+            "web" : "http://github.com/jbenjore/Internals-CountObjects",
+            "url" : "git://github.com/jbenjore/Internals-CountObjects.git",
+            "type" : "git"
+         },
+         "homepage" : "http://search.cpan.org/dist/Internals-CountObjects"
+      },
+      "checksum_md5" : "ee751810f504b5a463397f22634467a7",
+      "version" : "0.05",
+      "changes_file" : "",
+      "stat" : {
+         "size" : 54473,
+         "mtime" : 1307769811,
+         "uid" : 1009,
+         "gid" : 1009,
+         "mode" : 33188
+      },
+      "status" : "latest",
+      "archive" : "Internals-CountObjects-0.05.tar.gz",
+      "deprecated" : false,
+      "date" : "2011-06-11T05:23:31",
+      "download_url" : "https://cpan.metacpan.org/authors/id/J/JJ/JJORE/Internals-CountObjects-0.05.tar.gz",
+      "metadata" : {
+         "license" : [
+            "perl_5"
+         ],
+         "release_status" : "stable",
+         "generated_by" : "Dist::Zilla version 4.200000, CPAN::Meta::Converter version 2.102400, CPAN::Meta::Converter version 2.150005",
+         "no_index" : {
+            "directory" : [
+               "t",
+               "xt",
+               "inc",
+               "local",
+               "perl5",
+               "fatlib",
+               "example",
+               "blib",
+               "examples",
+               "eg"
+            ]
+         },
+         "version" : "0.05",
+         "meta-spec" : {
+            "version" : "2",
+            "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec"
+         },
+         "prereqs" : {
+            "build" : {
+               "requires" : {
+                  "ExtUtils::CBuilder" : "0"
+               }
+            }
+         },
+         "abstract" : "Report all allocated perl objects",
+         "resources" : {
+            "repository" : {
+               "url" : "git://github.com/jbenjore/Internals-CountObjects.git",
+               "web" : "http://github.com/jbenjore/Internals-CountObjects",
+               "type" : "git"
+            },
+            "homepage" : "http://search.cpan.org/dist/Internals-CountObjects",
+            "bugtracker" : {
+               "web" : "http://rt.cpan.org/NoAuth/Bugs.html?Dist=Internals-CountObjects",
+               "mailto" : "bug-Internals-CountObjects@rt.cpan.org"
+            }
+         },
+         "author" : [
+            "Josh Jore <jjore@cpan.org>"
+         ],
+         "dynamic_config" : 0,
+         "name" : "Internals-CountObjects"
+      },
+      "dependency" : {
+         "phase" : "build",
+         "relationship" : "requires",
+         "version" : "0",
+         "module" : "ExtUtils::CBuilder"
+      },
+      "tests" : {
+         "pass" : 491,
+         "fail" : 0,
+         "unknown" : 1,
+         "na" : 0
+      },
+      "main_module" : "Internals::CountObjects",
+      "abstract" : "Report all allocated perl objects",
+      "version_numified" : 0.05,
+      "maturity" : "released",
+      "id" : "D3RywifomVjSA3VV8eM_huWKfrk",
+      "checksum_sha256" : "bbf65021207a7a51c8f8475bc25c4735f49d62744a75d33595e9720731b2b02f"
+   },
+   "took" : 2,
+   "total" : 1
+}
