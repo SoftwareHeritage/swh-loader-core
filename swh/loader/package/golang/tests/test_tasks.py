@@ -3,19 +3,38 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import uuid
 
-def test_tasks_golang_loader(
-    mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
-):
-    mock_load = mocker.patch("swh.loader.package.golang.loader.GolangLoader.load")
-    mock_load.return_value = {"status": "eventful"}
+import pytest
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.golang.tasks.LoadGolang",
-        kwargs={"url": "https://pkg.go.dev/golang.org/whatever/package"},
+from swh.scheduler.model import ListedOrigin, Lister
+
+NAMESPACE = "swh.loader.package.golang"
+
+
+@pytest.fixture
+def golang_lister():
+    return Lister(name="golang", instance_name="example", id=uuid.uuid4())
+
+
+@pytest.fixture
+def golang_listed_origin(golang_lister):
+    return ListedOrigin(
+        lister_id=golang_lister.id,
+        url="https://pkg.go.dev/golang.org/whatever/package",
+        visit_type="golang",
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
+
+
+def test_golang_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    golang_lister,
+    golang_listed_origin,
+):
+
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.GolangLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadGolang",
+        lister=golang_lister,
+        listed_origin=golang_listed_origin,
+    )

@@ -115,6 +115,7 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
             url=artifact["url"],
             version=version,
             last_modified=metadata["last_modified"],
+            checksums=artifact["checksums"],
         )
         yield release_name(version, artifact["filename"]), p_info
 

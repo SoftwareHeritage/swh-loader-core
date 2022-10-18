@@ -1,9 +1,10 @@
-# Copyright (C) 2018-2021  The Software Heritage developers
+# Copyright (C) 2018-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import datetime
+from functools import partial
 import hashlib
 import logging
 import time
@@ -15,10 +16,12 @@ from swh.loader.core.loader import (
     SENTRY_ORIGIN_URL_TAG_NAME,
     SENTRY_VISIT_TYPE_TAG_NAME,
     BaseLoader,
+    ContentLoader,
+    DirectoryLoader,
     DVCSLoader,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
-from swh.loader.exception import NotFound
+from swh.loader.exception import NotFound, UnsupportedChecksumComputation
 from swh.loader.tests import assert_last_visit_matches
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
@@ -30,6 +33,8 @@ from swh.model.model import (
     Snapshot,
 )
 import swh.storage.exc
+
+from .conftest import compute_hashes, compute_nar_hashes, nix_store_missing
 
 ORIGIN = Origin(url="some-url")
 PARENT_ORIGIN = Origin(url="base-origin-url")
@@ -306,10 +311,12 @@ def test_loader_save_data_path(swh_storage, tmp_path):
     assert save_path == expected_save_path
 
 
-def _check_load_failure(caplog, loader, exc_class, exc_text, status="partial"):
+def _check_load_failure(
+    caplog, loader, exc_class, exc_text, status="partial", origin=ORIGIN
+):
     """Check whether a failed load properly logged its exception, and that the
     snapshot didn't get referenced in storage"""
-    assert isinstance(loader, DVCSLoader)  # was implicit so far
+    assert isinstance(loader, (DVCSLoader, ContentLoader, DirectoryLoader))
     for record in caplog.records:
         if record.levelname != "ERROR":
             continue
@@ -319,11 +326,12 @@ def _check_load_failure(caplog, loader, exc_class, exc_text, status="partial"):
         assert isinstance(exc, exc_class)
         assert exc_text in exc.args[0]
 
-    # Check that the get_snapshot operation would have succeeded
-    assert loader.get_snapshot() is not None
+    if isinstance(loader, DVCSLoader):
+        # Check that the get_snapshot operation would have succeeded
+        assert loader.get_snapshot() is not None
 
     # And confirm that the visit doesn't reference a snapshot
-    visit = assert_last_visit_matches(loader.storage, ORIGIN.url, status)
+    visit = assert_last_visit_matches(loader.storage, origin.url, status)
     if status != "partial":
         assert visit.snapshot is None
         # But that the snapshot didn't get loaded
@@ -503,3 +511,317 @@ def test_loader_sentry_tags_on_error(swh_storage, sentry_events, loader_cls):
     sentry_tags = sentry_events[0]["tags"]
     assert sentry_tags.get(SENTRY_ORIGIN_URL_TAG_NAME) == ORIGIN.url
     assert sentry_tags.get(SENTRY_VISIT_TYPE_TAG_NAME) == DummyLoader.visit_type
+
+
+CONTENT_MIRROR = "https://common-lisp.net"
+CONTENT_URL = f"{CONTENT_MIRROR}/project/asdf/archives/asdf-3.3.5.lisp"
+
+
+def test_content_loader_missing_field(swh_storage):
+    """It should raise if the ContentLoader is missing checksums field"""
+    origin = Origin(CONTENT_URL)
+    with pytest.raises(TypeError, match="missing"):
+        ContentLoader(swh_storage, origin.url)
+
+
+@pytest.mark.parametrize("loader_class", [ContentLoader, DirectoryLoader])
+def test_node_loader_missing_field(swh_storage, loader_class):
+    """It should raise if the ContentLoader is missing checksums field"""
+    with pytest.raises(UnsupportedChecksumComputation):
+        loader_class(
+            swh_storage,
+            CONTENT_URL,
+            checksums={"sha256": "irrelevant-for-that-test"},
+            checksums_computation="unsupported",
+        )
+
+
+def test_content_loader_404(caplog, swh_storage, requests_mock_datadir, content_path):
+    """It should not ingest origin when there is no file to be found (no mirror url)"""
+    unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
+    loader = ContentLoader(
+        swh_storage,
+        unknown_origin.url,
+        checksums=compute_hashes(content_path),
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+def test_content_loader_404_with_fallback(
+    caplog, swh_storage, requests_mock_datadir, content_path
+):
+    """It should not ingest origin when there is no file to be found"""
+    unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
+    fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
+    loader = ContentLoader(
+        swh_storage,
+        unknown_origin.url,
+        fallback_urls=[fallback_url_ko],
+        checksums=compute_hashes(content_path),
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+@pytest.mark.parametrize("checksum_algo", ["sha1", "sha256", "sha512"])
+def test_content_loader_ok_with_fallback(
+    checksum_algo,
+    caplog,
+    swh_storage,
+    requests_mock_datadir,
+    content_path,
+):
+    """It should be an eventful visit even when ingesting through mirror url"""
+    dead_origin = Origin(f"{CONTENT_MIRROR}/dead-origin-url")
+    fallback_url_ok = CONTENT_URL
+    fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
+
+    loader = ContentLoader(
+        swh_storage,
+        dead_origin.url,
+        fallback_urls=[fallback_url_ok, fallback_url_ko],
+        checksums=compute_hashes(content_path, [checksum_algo]),
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+
+compute_content_nar_hashes = partial(compute_nar_hashes, is_tarball=False)
+
+
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+def test_content_loader_ok_simple(
+    swh_storage, requests_mock_datadir, content_path, checksums_computation
+):
+    """It should be an eventful visit on a new file, then uneventful"""
+    compute_hashes_fn = (
+        compute_content_nar_hashes if checksums_computation == "nar" else compute_hashes
+    )
+
+    origin = Origin(CONTENT_URL)
+    loader = ContentLoader(
+        swh_storage,
+        origin.url,
+        checksums=compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"]),
+        checksums_computation=checksums_computation,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    visit_status = assert_last_visit_matches(
+        swh_storage, origin.url, status="full", type="content"
+    )
+    assert visit_status.snapshot is not None
+
+    result2 = loader.load()
+
+    assert result2 == {"status": "uneventful"}
+
+
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+def test_content_loader_hash_mismatch(
+    swh_storage, requests_mock_datadir, content_path, checksums_computation
+):
+    """It should be an eventful visit on a new file, then uneventful"""
+    compute_hashes_fn = (
+        compute_content_nar_hashes if checksums_computation == "nar" else compute_hashes
+    )
+    checksums = compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"])
+    erratic_checksums = {
+        algo: chksum.replace("a", "e")  # alter checksums to fail integrity check
+        for algo, chksum in checksums.items()
+    }
+    origin = Origin(CONTENT_URL)
+    loader = ContentLoader(
+        swh_storage,
+        origin.url,
+        checksums=erratic_checksums,
+        checksums_computation=checksums_computation,
+    )
+    result = loader.load()
+
+    assert result == {"status": "failed"}
+
+    assert_last_visit_matches(swh_storage, origin.url, status="failed", type="content")
+
+
+DIRECTORY_MIRROR = "https://example.org"
+DIRECTORY_URL = f"{DIRECTORY_MIRROR}/archives/dummy-hello.tar.gz"
+
+
+def test_directory_loader_missing_field(swh_storage):
+    """It should raise if the DirectoryLoader is missing checksums field"""
+    origin = Origin(DIRECTORY_URL)
+    with pytest.raises(TypeError, match="missing"):
+        DirectoryLoader(swh_storage, origin.url)
+
+
+def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir, tarball_path):
+    """It should not ingest origin when there is no tarball to be found (no mirrors)"""
+    unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tar.gz")
+    loader = DirectoryLoader(
+        swh_storage,
+        unknown_origin.url,
+        checksums=compute_hashes(tarball_path),
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+def test_directory_loader_404_with_fallback(
+    caplog, swh_storage, requests_mock_datadir, tarball_path
+):
+    """It should not ingest origin when there is no tarball to be found"""
+    unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tbz2")
+    fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/elsewhere-unknown2.tbz2"
+    loader = DirectoryLoader(
+        swh_storage,
+        unknown_origin.url,
+        fallback_urls=[fallback_url_ko],
+        checksums=compute_hashes(tarball_path),
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+def test_directory_loader_hash_mismatch(
+    caplog, swh_storage, requests_mock_datadir, tarball_path, checksums_computation
+):
+    """It should not ingest tarball with mismatched checksum"""
+    compute_hashes_fn = (
+        compute_nar_hashes if checksums_computation == "nar" else compute_hashes
+    )
+    checksums = compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"])
+
+    origin = Origin(DIRECTORY_URL)
+    erratic_checksums = {
+        algo: chksum.replace("a", "e")  # alter checksums to fail integrity check
+        for algo, chksum in checksums.items()
+    }
+
+    loader = DirectoryLoader(
+        swh_storage,
+        origin.url,
+        checksums=erratic_checksums,  # making the integrity check fail
+        checksums_computation=checksums_computation,
+    )
+    result = loader.load()
+
+    assert result == {"status": "failed"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        ValueError,
+        "mismatched",
+        status="failed",
+        origin=origin,
+    )
+
+
+@pytest.mark.parametrize("checksum_algo", ["sha1", "sha256", "sha512"])
+def test_directory_loader_ok_with_fallback(
+    caplog, swh_storage, requests_mock_datadir, tarball_with_std_hashes, checksum_algo
+):
+    """It should be an eventful visit even when ingesting through mirror url"""
+    tarball_path, checksums = tarball_with_std_hashes
+
+    dead_origin = Origin(f"{DIRECTORY_MIRROR}/dead-origin-url")
+    fallback_url_ok = DIRECTORY_URL
+    fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/unknown2.tgz"
+
+    loader = DirectoryLoader(
+        swh_storage,
+        dead_origin.url,
+        fallback_urls=[fallback_url_ok, fallback_url_ko],
+        checksums={checksum_algo: checksums[checksum_algo]},
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+
+@pytest.mark.skipif(
+    nix_store_missing, reason="requires nix-store binary from nix binaries"
+)
+@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+def test_directory_loader_ok_simple(
+    swh_storage, requests_mock_datadir, tarball_path, checksums_computation
+):
+    """It should be an eventful visit on a new tarball, then uneventful"""
+    origin = Origin(DIRECTORY_URL)
+    compute_hashes_fn = (
+        compute_nar_hashes if checksums_computation == "nar" else compute_hashes
+    )
+
+    loader = DirectoryLoader(
+        swh_storage,
+        origin.url,
+        checksums=compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"]),
+        checksums_computation=checksums_computation,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    visit_status = assert_last_visit_matches(
+        swh_storage, origin.url, status="full", type="directory"
+    )
+    assert visit_status.snapshot is not None
+
+    result2 = loader.load()
+
+    assert result2 == {"status": "uneventful"}

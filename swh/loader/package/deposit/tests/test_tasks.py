@@ -8,17 +8,13 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
 
-
-@pytest.fixture(autouse=True)
-def celery_worker_and_swh_config(swh_scheduler_celery_worker, swh_config):
-    pass
+NAMESPACE = "swh.loader.package.deposit"
 
 
 @pytest.fixture
 def deposit_lister():
-    return Lister(name="deposit-lister", instance_name="example", id=uuid.uuid4())
+    return Lister(name="deposit", instance_name="example", id=uuid.uuid4())
 
 
 @pytest.fixture
@@ -31,50 +27,15 @@ def deposit_listed_origin(deposit_lister):
     )
 
 
-def test_tasks_deposit_loader(
-    mocker,
-    swh_scheduler_celery_app,
-):
-    mock_loader = mocker.patch(
-        "swh.loader.package.deposit.loader.DepositLoader.from_configfile"
-    )
-    mock_loader.return_value = mock_loader
-    mock_loader.load.return_value = {"status": "eventful"}
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.deposit.tasks.LoadDeposit",
-        kwargs=dict(
-            url="some-url",
-            deposit_id="some-d-id",
-        ),
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_loader.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_deposit_loader_for_listed_origin(
-    mocker,
-    swh_scheduler_celery_app,
+def test_deposit_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
     deposit_lister,
     deposit_listed_origin,
 ):
-    mock_loader = mocker.patch(
-        "swh.loader.package.deposit.loader.DepositLoader.from_configfile"
-    )
-    mock_loader.return_value = mock_loader
-    mock_loader.load.return_value = {"status": "eventful"}
 
-    task_dict = create_origin_task_dict(deposit_listed_origin, deposit_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.deposit.tasks.LoadDeposit",
-        kwargs=task_dict["arguments"]["kwargs"],
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.DepositLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadDeposit",
+        lister=deposit_lister,
+        listed_origin=deposit_listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_loader.called
-    assert res.result == {"status": "eventful"}

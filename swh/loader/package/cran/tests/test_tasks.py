@@ -8,17 +8,13 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
 
-
-@pytest.fixture(autouse=True)
-def celery_worker_and_swh_config(swh_scheduler_celery_worker, swh_config):
-    pass
+NAMESPACE = "swh.loader.package.cran"
 
 
 @pytest.fixture
 def cran_lister():
-    return Lister(name="cran-lister", instance_name="example", id=uuid.uuid4())
+    return Lister(name="cran", instance_name="example", id=uuid.uuid4())
 
 
 @pytest.fixture
@@ -33,44 +29,15 @@ def cran_listed_origin(cran_lister):
     )
 
 
-def test_tasks_cran_loader(
-    mocker,
-    swh_scheduler_celery_app,
-):
-    mock_load = mocker.patch("swh.loader.package.cran.loader.CRANLoader.load")
-    mock_load.return_value = {"status": "eventful"}
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.cran.tasks.LoadCRAN",
-        kwargs=dict(
-            url="some-url",
-            artifacts=[{"version": "1.2.3", "url": "artifact-url"}],
-        ),
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_cran_loader_for_listed_origin(
-    mocker,
-    swh_scheduler_celery_app,
+def test_cran_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
     cran_lister,
     cran_listed_origin,
 ):
-    mock_load = mocker.patch("swh.loader.package.cran.loader.CRANLoader.load")
-    mock_load.return_value = {"status": "eventful"}
 
-    task_dict = create_origin_task_dict(cran_listed_origin, cran_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.cran.tasks.LoadCRAN",
-        kwargs=task_dict["arguments"]["kwargs"],
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.CRANLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadCRAN",
+        lister=cran_lister,
+        listed_origin=cran_listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}

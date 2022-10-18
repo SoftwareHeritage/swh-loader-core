@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import asyncio
 import datetime
 import hashlib
 from itertools import islice
@@ -31,6 +32,7 @@ from requests.exceptions import ContentDecodingError
 import sentry_sdk
 
 from swh.core.tarball import uncompress
+from swh.loader.core import discovery
 from swh.loader.core.loader import BaseLoader
 from swh.loader.exception import NotFound
 from swh.loader.package.utils import download
@@ -125,6 +127,12 @@ class BasePackageInfo:
     )
     """:term:`extrinsic metadata` collected by the loader, that will be attached to the
     loaded directory and added to the Metadata storage."""
+
+    checksums = attr.ib(type=Dict[str, str], default={}, kw_only=True)
+    """Dictionary holding package tarball checksums for integrity check after
+    download, keys are hash algorithm names and values are checksums in
+    hexadecimal format. The supported algorithms are defined in the
+    :data:`swh.model.hashutil.ALGORITHMS` set."""
 
     # TODO: add support for metadata for releases and contents
 
@@ -408,7 +416,14 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         """
         try:
-            return [download(p_info.url, dest=tmpdir, filename=p_info.filename)]
+            return [
+                download(
+                    p_info.url,
+                    dest=tmpdir,
+                    filename=p_info.filename,
+                    hashes=p_info.checksums,
+                )
+            ]
         except ContentDecodingError:
             # package might be erroneously marked as gzip compressed while is is not,
             # try to download its raw bytes again without attempting to uncompress
@@ -418,6 +433,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     p_info.url,
                     dest=tmpdir,
                     filename=p_info.filename,
+                    hashes=p_info.checksums,
                     extra_request_headers={"Accept-Encoding": "identity"},
                 )
             ]
@@ -816,6 +832,16 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         )
 
         contents, skipped_contents, directories = from_disk.iter_directory(directory)
+
+        # Instead of sending everything from the bottom up to the storage,
+        # use a Merkle graph discovery algorithm to filter out known objects.
+        contents, skipped_contents, directories = asyncio.run(
+            discovery.filter_known_objects(
+                discovery.DiscoveryStorageConnection(
+                    contents, skipped_contents, directories, self.storage
+                ),
+            )
+        )
 
         logger.debug("Number of skipped contents: %s", len(skipped_contents))
         self.storage.skipped_content_add(skipped_contents)

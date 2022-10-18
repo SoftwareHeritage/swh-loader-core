@@ -44,6 +44,7 @@ class CRANPackageInfo(BasePackageInfo):
             raw_info=a_metadata,
             name=a_metadata["package"],
             version=a_metadata["version"],
+            checksums=a_metadata.get("checksums", {}),
         )
 
 
