@@ -1,0 +1,89 @@
+{
+   "total" : 1,
+   "took" : 2,
+   "release" : {
+      "date" : "2011-06-05T18:44:02",
+      "download_url" : "https://cpan.metacpan.org/authors/id/J/JJ/JJORE/Internals-CountObjects-0.01.tar.gz",
+      "status" : "cpan",
+      "deprecated" : false,
+      "archive" : "Internals-CountObjects-0.01.tar.gz",
+      "stat" : {
+         "mode" : 33188,
+         "mtime" : 1307299442,
+         "gid" : 1009,
+         "uid" : 1009,
+         "size" : 52541
+      },
+      "version_numified" : 0.01,
+      "abstract" : "Report all allocated perl objects",
+      "maturity" : "released",
+      "checksum_sha256" : "c4904fc34954f18783b15bc1424eda032090fb20efa98d8f2e42c3d3ad153376",
+      "id" : "_YhX3DZlS7XliSAheYHR8UibjPg",
+      "metadata" : {
+         "no_index" : {
+            "directory" : [
+               "t",
+               "xt",
+               "inc",
+               "local",
+               "perl5",
+               "fatlib",
+               "example",
+               "blib",
+               "examples",
+               "eg"
+            ]
+         },
+         "generated_by" : "Dist::Zilla version 4.200000, CPAN::Meta::Converter version 2.102400, CPAN::Meta::Converter version 2.150005",
+         "license" : [
+            "perl_5"
+         ],
+         "release_status" : "stable",
+         "name" : "Internals-CountObjects",
+         "author" : [
+            "Josh Jore <jjore@cpan.org>"
+         ],
+         "dynamic_config" : "0",
+         "abstract" : "Report all allocated perl objects",
+         "prereqs" : {
+            "configure" : {
+               "requires" : {
+                  "ExtUtils::MakeMaker" : "6.31"
+               }
+            },
+            "build" : {
+               "requires" : {}
+            }
+         },
+         "meta-spec" : {
+            "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+            "version" : "2"
+         },
+         "version" : "0.01"
+      },
+      "tests" : {
+         "na" : 0,
+         "pass" : 115,
+         "fail" : 0,
+         "unknown" : 34
+      },
+      "dependency" : {
+         "relationship" : "requires",
+         "version" : "6.31",
+         "module" : "ExtUtils::MakeMaker",
+         "phase" : "configure"
+      },
+      "main_module" : "Internals::CountObjects",
+      "authorized" : true,
+      "license" : "perl_5",
+      "provides" : "Internals::CountObjects",
+      "distribution" : "Internals-CountObjects",
+      "checksum_md5" : "f178444dad69f126db79ebd76c4e95bd",
+      "changes_file" : "",
+      "version" : "0.01",
+      "author" : "JJORE",
+      "name" : "Internals-CountObjects-0.01",
+      "first" : true,
+      "resources" : {}
+   }
+}

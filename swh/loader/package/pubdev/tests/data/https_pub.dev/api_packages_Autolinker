@@ -10,6 +10,7 @@
       "author": "hackcave <hackers@hackcave.org>"
     },
     "archive_url": "https://pub.dartlang.org/packages/Autolinker/versions/0.1.1.tar.gz",
+    "archive_sha256": "ca6149c2bb566b07beaf731930ade8b77fad86055b3f37b6eb2f17aca2fbc1b1",
     "published": "2014-12-24T22:34:02.534090Z"
   },
   "versions": [
@@ -23,6 +24,7 @@
         "author": "hackcave <hackers@hackcave.org>"
       },
       "archive_url": "https://pub.dartlang.org/packages/Autolinker/versions/0.1.1.tar.gz",
+      "archive_sha256": "ca6149c2bb566b07beaf731930ade8b77fad86055b3f37b6eb2f17aca2fbc1b1",
       "published": "2014-12-24T22:34:02.534090Z"
     }
   ]

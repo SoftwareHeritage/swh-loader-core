@@ -3,12 +3,10 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 import json
-from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
+from typing import Dict, Iterator, Optional, Sequence, Tuple
 
 import attr
 from packaging.version import parse as parse_version
-import yaml
 
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.loader.package.utils import (
@@ -37,26 +35,6 @@ class PubDevPackageInfo(BasePackageInfo):
     author = attr.ib(type=Person)
     """Author"""
 
-    description = attr.ib(type=str)
-    """Description"""
-
-
-def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
-    """Extract intrinsic metadata from pubspec.yaml file at dir_path.
-
-    Each pub.dev package version has a pubspec.yaml file at the root of the archive.
-
-    See https://dart.dev/tools/pub/pubspec for pubspec specifications.
-
-    Args:
-        dir_path: A directory on disk where a pubspec.yaml must be present
-
-    Returns:
-        A dict mapping from yaml parser
-    """
-    pubspec_path = dir_path / "pubspec.yaml"
-    return yaml.safe_load(pubspec_path.read_text())
-
 
 class PubDevLoader(PackageLoader[PubDevPackageInfo]):
     visit_type = "pubdev"
@@ -77,14 +55,11 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
             self.PUBDEV_BASE_URL, f"{self.PUBDEV_BASE_URL}api/"
         )
 
-    def _raw_info(self) -> bytes:
-        return get_url_body(self.package_info_url)
-
     @cached_method
     def info(self) -> Dict:
         """Return the project metadata information (fetched from pub.dev registry)"""
         # Use strict=False in order to correctly manage case where \n is present in a string
-        info = json.loads(self._raw_info(), strict=False)
+        info = json.loads(get_url_body(self.package_info_url), strict=False)
         # Arrange versions list as a new dict with `version` as key
         versions = {v["version"]: v for v in info["versions"]}
         info["versions"] = versions
@@ -135,16 +110,16 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
         name = v["pubspec"]["name"]
         filename = f"{name}-{version}.tar.gz"
         last_modified = v["published"]
+        checksums = {"sha256": v["archive_sha256"]} if v.get("archive_sha256") else {}
 
-        if "authors" in v["pubspec"]:
+        authors = v.get("pubspec", {}).get("authors")
+        if authors and isinstance(authors, list):
             # TODO: here we have a list of author, see T3887
-            author = Person.from_fullname(v["pubspec"]["authors"][0].encode())
-        elif "author" in v["pubspec"] and v["pubspec"]["author"] is not None:
+            author = Person.from_fullname(authors[0].encode())
+        elif v.get("pubspec", {}).get("author"):
             author = Person.from_fullname(v["pubspec"]["author"].encode())
         else:
             author = EMPTY_AUTHOR
-
-        description = v["pubspec"]["description"]
 
         p_info = PubDevPackageInfo(
             name=name,
@@ -153,7 +128,7 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
             version=version,
             last_modified=last_modified,
             author=author,
-            description=description,
+            checksums=checksums,
         )
         yield release_name(version), p_info
 
@@ -161,31 +136,14 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
         self, p_info: PubDevPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
 
-        # Extract intrinsic metadata from uncompressed_path/pubspec.yaml
-        intrinsic_metadata = extract_intrinsic_metadata(Path(uncompressed_path))
-
-        name: str = intrinsic_metadata["name"]
-        version: str = intrinsic_metadata["version"]
-        assert version == p_info.version
-
-        # author from intrinsic_metadata should not take precedence over the one
-        # returned by the api, see https://dart.dev/tools/pub/pubspec#authorauthors
-        author: Person = p_info.author
-
-        if "description" in intrinsic_metadata and intrinsic_metadata["description"]:
-            description = intrinsic_metadata["description"]
-        else:
-            description = p_info.description
-
         message = (
-            f"Synthetic release for pub.dev source package {name} "
-            f"version {version}\n\n"
-            f"{description}\n"
+            f"Synthetic release for pub.dev source package {p_info.name} "
+            f"version {p_info.version}\n"
         )
 
         return Release(
-            name=version.encode(),
-            author=author,
+            name=p_info.version.encode(),
+            author=p_info.author,
             date=TimestampWithTimezone.from_iso8601(p_info.last_modified),
             message=message.encode(),
             target_type=ObjectType.DIRECTORY,

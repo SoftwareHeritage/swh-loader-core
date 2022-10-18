@@ -1,7 +1,9 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
+
+from __future__ import annotations
 
 import json
 import logging
@@ -55,7 +57,7 @@ class PyPIPackageInfo(BasePackageInfo):
     @classmethod
     def from_metadata(
         cls, metadata: Dict[str, Any], name: str, version: str
-    ) -> "PyPIPackageInfo":
+    ) -> PyPIPackageInfo:
         return cls(
             url=metadata["url"],
             filename=metadata["filename"],
@@ -71,6 +73,7 @@ class PyPIPackageInfo(BasePackageInfo):
                     metadata=json.dumps(metadata).encode(),
                 )
             ],
+            checksums={"sha256": metadata["digests"]["sha256"]},
         )
 
     def extid(self) -> PartialExtID:

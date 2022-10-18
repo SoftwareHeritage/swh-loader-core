@@ -79,14 +79,14 @@ def download(
     auth: Optional[Tuple[str, str]] = None,
     extra_request_headers: Optional[Dict[str, str]] = None,
 ) -> Tuple[str, Dict]:
-    """Download a remote tarball from url, uncompresses and computes swh hashes
-       on it.
+    """Download a remote file from url, and compute swh hashes on it.
 
     Args:
-        url: Artifact uri to fetch, uncompress and hash
+        url: Artifact uri to fetch and hash
         dest: Directory to write the archive to
         hashes: Dict of expected hashes (key is the hash algo) for the artifact
-            to download (those hashes are expected to be hex string)
+            to download (those hashes are expected to be hex string). The supported
+            algorithms are defined in the :data:`swh.model.hashutil.ALGORITHMS` set.
         auth: Optional tuple of login/password (for http authentication
             service, e.g. deposit)
 

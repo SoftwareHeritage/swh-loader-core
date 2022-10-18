@@ -8,17 +8,13 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
 
-
-@pytest.fixture(autouse=True)
-def celery_worker_and_swh_config(swh_scheduler_celery_worker, swh_config):
-    pass
+NAMESPACE = "swh.loader.package.debian"
 
 
 @pytest.fixture
 def debian_lister():
-    return Lister(name="debian-lister", instance_name="example", id=uuid.uuid4())
+    return Lister(name="debian", instance_name="example", id=uuid.uuid4())
 
 
 @pytest.fixture
@@ -31,35 +27,15 @@ def debian_listed_origin(debian_lister):
     )
 
 
-def test_tasks_debian_loader(mocker, swh_scheduler_celery_app):
-    mock_load = mocker.patch("swh.loader.package.debian.loader.DebianLoader.load")
-    mock_load.return_value = {"status": "eventful"}
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.debian.tasks.LoadDebian",
-        kwargs=dict(url="some-url", packages={}),
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_debian_loader_for_listed_origin(
-    mocker, swh_scheduler_celery_app, debian_lister, debian_listed_origin
+def test_debian_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    debian_lister,
+    debian_listed_origin,
 ):
-    mock_load = mocker.patch("swh.loader.package.debian.loader.DebianLoader.load")
-    mock_load.return_value = {"status": "eventful"}
 
-    task_dict = create_origin_task_dict(debian_listed_origin, debian_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.debian.tasks.LoadDebian",
-        kwargs=task_dict["arguments"]["kwargs"],
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.DebianLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadDebian",
+        lister=debian_lister,
+        listed_origin=debian_listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}

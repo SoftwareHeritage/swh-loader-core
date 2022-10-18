@@ -5,9 +5,12 @@ The Software Heritage Loader Core is a low-level loading utilities and
 helpers used by :term:`loaders <loader>`.
 
 The main entry points are classes:
-- :class:`swh.loader.core.loader.BaseLoader` for loaders (e.g. svn)
-- :class:`swh.loader.core.loader.DVCSLoader` for DVCS loaders (e.g. hg, git, ...)
+- :class:`swh.loader.core.loader.BaseLoader` for VCS loaders (e.g. svn)
+- :class:`swh.loader.core.loader.DVCSLoader` for DVCS loaders (e.g. git, ...)
+- :class:`swh.loader.core.loader.ContentLoader` for Content loader
+- :class:`swh.loader.core.loader.DirectoryLoader` for Directory loader
 - :class:`swh.loader.package.loader.PackageLoader` for Package loaders (e.g. PyPI, Npm, ...)
+- ...
 
 Package loaders
 ---------------

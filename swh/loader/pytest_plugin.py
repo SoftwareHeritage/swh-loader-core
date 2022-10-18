@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -8,6 +8,9 @@ from typing import Any, Dict
 
 import pytest
 import yaml
+
+from swh.scheduler.model import ListedOrigin, Lister
+from swh.scheduler.utils import create_origin_task_dict
 
 
 @pytest.fixture
@@ -52,3 +55,34 @@ def swh_proxy():
     """
     os.environ["http_proxy"] = "http://localhost:999"
     os.environ["https_proxy"] = "http://localhost:999"
+
+
+@pytest.fixture
+def loading_task_creation_for_listed_origin_test(
+    mocker,
+    swh_scheduler_celery_app,
+    swh_scheduler_celery_worker,
+    swh_config,
+):
+    def test_implementation(
+        loader_class_name: str,
+        task_function_name: str,
+        lister: Lister,
+        listed_origin: ListedOrigin,
+    ):
+        mock_load = mocker.patch(f"{loader_class_name}.load")
+        mock_load.return_value = {"status": "eventful"}
+
+        task_dict = create_origin_task_dict(listed_origin, lister)
+
+        res = swh_scheduler_celery_app.send_task(
+            task_function_name,
+            kwargs=task_dict["arguments"]["kwargs"],
+        )
+        assert res
+        res.wait()
+        assert res.successful()
+        assert mock_load.called
+        assert res.result == {"status": "eventful"}
+
+    return test_implementation

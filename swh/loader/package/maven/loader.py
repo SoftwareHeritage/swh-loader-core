@@ -22,7 +22,7 @@ from swh.loader.package.loader import (
     PackageLoader,
     RawExtrinsicMetadataCore,
 )
-from swh.loader.package.utils import EMPTY_AUTHOR, release_name
+from swh.loader.package.utils import EMPTY_AUTHOR, get_url_body, release_name
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -86,6 +86,11 @@ class MavenPackageInfo(BasePackageInfo):
     def from_metadata(cls, a_metadata: ArtifactDict) -> MavenPackageInfo:
         time = iso8601.parse_date(a_metadata["time"]).astimezone(tz=timezone.utc)
         url = a_metadata["url"]
+        checksums = {}
+        try:
+            checksums["sha1"] = get_url_body(url + ".sha1").decode()
+        except requests.HTTPError:
+            pass
         return cls(
             url=url,
             filename=a_metadata.get("filename") or path.split(url)[-1],
@@ -100,6 +105,7 @@ class MavenPackageInfo(BasePackageInfo):
                     metadata=json.dumps(a_metadata).encode(),
                 ),
             ],
+            checksums=checksums,
         )
 
 
