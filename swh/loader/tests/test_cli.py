@@ -1,15 +1,13 @@
-# Copyright (C) 2019-2021 The Software Heritage developers
+# Copyright (C) 2019-2022 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import datetime
-import os
 
 from click.formatting import HelpFormatter
 from click.testing import CliRunner
 import pytest
-import yaml
 
 from swh.loader.cli import SUPPORTED_LOADERS, get_loader
 from swh.loader.cli import loader as loader_cli
@@ -64,28 +62,6 @@ def test_run_help(swh_config):
     usage_prefix = _write_usage("loader run", "[OPTIONS] [%s]\n" % supported_loaders)
     usage_prefix2 = _write_usage("loader run", "[OPTIONS] {%s}\n" % supported_loaders)
     assert result.output.startswith((usage_prefix, usage_prefix2))
-
-
-def test_run_with_configuration_failure(tmp_path):
-    """Triggering a load should fail since configuration is incomplete"""
-    runner = CliRunner()
-
-    conf_path = os.path.join(str(tmp_path), "cli.yml")
-    with open(conf_path, "w") as f:
-        f.write(yaml.dump({}))
-
-    with pytest.raises(ValueError, match="Missing storage"):
-        runner.invoke(
-            loader_cli,
-            [
-                "-C",
-                conf_path,
-                "run",
-                "pypi",
-                "url=https://some-url",
-            ],
-            catch_exceptions=False,
-        )
 
 
 def test_run_pypi(mocker, swh_config):

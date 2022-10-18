@@ -7,15 +7,22 @@
 from datetime import datetime, timezone
 import io
 import os
+from pathlib import Path
 import shutil
 import signal
+from subprocess import PIPE, Popen
+import tempfile
 import time
 import traceback
-from typing import Callable, Optional, Union
+from typing import Callable, Dict, Iterable, List, Optional, Union
 
 from billiard import Process, Queue  # type: ignore
 from dateutil.parser import parse
 import psutil
+
+from swh.core.tarball import uncompress
+from swh.loader.exception import MissingOptionalDependency
+from swh.model.hashutil import MultiHash
 
 
 def clean_dangling_folders(dirpath: str, pattern_check: str, log=None) -> None:
@@ -125,3 +132,57 @@ def parse_visit_date(visit_date: Optional[Union[datetime, str]]) -> Optional[dat
         return parse(visit_date)
 
     raise ValueError(f"invalid visit date {visit_date!r}")
+
+
+def nix_hashes(filepath: Path, hash_names: Iterable[str]) -> MultiHash:
+    """Compute nix-store hashes on filepath.
+
+    Raises:
+        FileNotFoundError in case the nix-store command is not available on the system.
+
+    """
+    NIX_STORE = shutil.which("nix-store")
+    if NIX_STORE is None:
+        raise MissingOptionalDependency("nix-store")
+
+    multi_hash = MultiHash(hash_names=hash_names)
+
+    command = [NIX_STORE, "--dump", str(filepath)]
+    with Popen(command, stdout=PIPE) as proc:
+        assert proc.stdout is not None
+        for chunk in proc.stdout:
+            multi_hash.update(chunk)
+
+    return multi_hash
+
+
+def compute_nar_hashes(
+    filepath: Path,
+    hash_names: List[str] = ["sha256"],
+    is_tarball=True,
+) -> Dict[str, str]:
+    """Compute nar checksums dict out of a filepath (tarball or plain file).
+
+    If it's a tarball, this uncompresses the tarball in a temporary directory to compute
+    the nix hashes (and then cleans it up).
+
+    Args:
+        filepath: The tarball (if is_tarball is True) or a filepath
+        hash_names: The list of checksums to compute
+        is_tarball: Whether filepath represents a tarball or not
+
+    Returns:
+        The dict of checksums values whose keys are present in hash_names.
+
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        if is_tarball:
+            directory_path = Path(tmpdir)
+            directory_path.mkdir(parents=True, exist_ok=True)
+            uncompress(str(filepath), dest=str(directory_path))
+            path_on_disk = next(directory_path.iterdir())
+        else:
+            path_on_disk = filepath
+
+        hashes = nix_hashes(path_on_disk, hash_names).hexdigest()
+    return hashes

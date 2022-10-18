@@ -8,17 +8,13 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
 
-
-@pytest.fixture(autouse=True)
-def celery_worker_and_swh_config(swh_scheduler_celery_worker, swh_config):
-    pass
+NAMESPACE = "swh.loader.package.npm"
 
 
 @pytest.fixture
 def npm_lister():
-    return Lister(name="npm-lister", instance_name="npm", id=uuid.uuid4())
+    return Lister(name="npm", instance_name="npm", id=uuid.uuid4())
 
 
 @pytest.fixture
@@ -30,38 +26,15 @@ def npm_listed_origin(npm_lister):
     )
 
 
-def test_tasks_npm_loader(
-    mocker,
-    swh_scheduler_celery_app,
+def test_npm_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    npm_lister,
+    npm_listed_origin,
 ):
-    mock_load = mocker.patch("swh.loader.package.npm.loader.NpmLoader.load")
-    mock_load.return_value = {"status": "eventful"}
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.npm.tasks.LoadNpm",
-        kwargs=dict(url="https://www.npmjs.com/package/some-package"),
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.NpmLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadNpm",
+        lister=npm_lister,
+        listed_origin=npm_listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_npm_loader_for_listed_origin(
-    mocker, swh_scheduler_celery_app, npm_lister, npm_listed_origin
-):
-    mock_load = mocker.patch("swh.loader.package.npm.loader.NpmLoader.load")
-    mock_load.return_value = {"status": "eventful"}
-
-    task_dict = create_origin_task_dict(npm_listed_origin, npm_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.npm.tasks.LoadNpm",
-        kwargs=task_dict["arguments"]["kwargs"],
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}

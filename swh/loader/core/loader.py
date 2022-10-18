@@ -7,15 +7,23 @@ import datetime
 import hashlib
 import logging
 import os
+from pathlib import Path
+import tempfile
 import time
 from typing import Any, ContextManager, Dict, Iterable, List, Optional, Union
+from urllib.parse import urlparse
 
+from requests.exceptions import HTTPError
 import sentry_sdk
 
 from swh.core.config import load_from_envvar
 from swh.core.statsd import Statsd
+from swh.core.tarball import uncompress
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
-from swh.loader.exception import NotFound
+from swh.loader.core.utils import nix_hashes
+from swh.loader.exception import NotFound, UnsupportedChecksumComputation
+from swh.loader.package.utils import download
+from swh.model import from_disk
 from swh.model.model import (
     BaseContent,
     Content,
@@ -29,8 +37,11 @@ from swh.model.model import (
     Sha1Git,
     SkippedContent,
     Snapshot,
+    SnapshotBranch,
+    TargetType,
 )
 from swh.storage import get_storage
+from swh.storage.algos.snapshot import snapshot_get_latest
 from swh.storage.interface import StorageInterface
 from swh.storage.utils import now
 
@@ -273,7 +284,7 @@ class BaseLoader:
         """
         return True
 
-    def store_data(self):
+    def store_data(self) -> None:
         """Store fetched data in the database.
 
         Should call the :func:`maybe_load_xyz` methods, which handle the
@@ -640,3 +651,317 @@ class DVCSLoader(BaseLoader):
         self.storage.snapshot_add([snapshot])
         self.flush()
         self.loaded_snapshot_id = snapshot.id
+
+
+class NodeLoader(BaseLoader):
+    """Common class for :class:`ContentLoader` and :class:`Directoryloader`.
+
+    The "checksums" field is a dictionary of hex hashes on the object retrieved (content
+    or directory). When "checksums_computation" is "standard", that means the checksums
+    are computed on the content of the remote file to retrieve itself (as unix cli
+    allows, "sha1sum", "sha256sum", ...). When "checksums_computation" is "nar", the
+    checks is delegated to the `nix-store --dump` command, it's actually checksums on
+    the content of the remote artifact retrieved. Other "checksums_computation" will
+    raise UnsupportedChecksumComputation
+
+    The multiple "fallback" urls received are mirror urls only used to fetch the object
+    if the main origin is no longer available. Those are not stored.
+
+    Ingestion is considered eventful on the first ingestion. Subsequent load of the same
+    object should end up being an uneventful visit (matching snapshot).
+
+    """
+
+    def __init__(
+        self,
+        storage: StorageInterface,
+        url: str,
+        checksums: Dict[str, str],
+        checksums_computation: str = "standard",
+        fallback_urls: List[str] = None,
+        **kwargs,
+    ):
+        super().__init__(storage, url, **kwargs)
+        self.snapshot: Optional[Snapshot] = None
+        self.checksums = checksums
+        self.checksums_computation = checksums_computation
+        if self.checksums_computation not in ("nar", "standard"):
+            raise UnsupportedChecksumComputation(
+                "Unsupported checksums computations: %s",
+                self.checksums_computation,
+            )
+
+        fallback_urls_ = fallback_urls or []
+        self.mirror_urls: List[str] = [self.origin.url, *fallback_urls_]
+        # Ensure content received matched the "standard" checksums received, this
+        # contains the checksums when checksum_computations is "standard", it's empty
+        # otherwise
+        self.standard_hashes = (
+            self.checksums if self.checksums_computation == "standard" else {}
+        )
+        self.log.debug("Loader checksums computation: %s", self.checksums_computation)
+
+    def prepare(self) -> None:
+        self.last_snapshot = snapshot_get_latest(self.storage, self.origin.url)
+
+    def load_status(self) -> Dict[str, Any]:
+        return {
+            "status": "uneventful"
+            if self.last_snapshot == self.snapshot
+            else "eventful"
+        }
+
+    def cleanup(self) -> None:
+        self.log.debug("cleanup")
+
+
+class ContentLoader(NodeLoader):
+    """Basic loader for edge case content ingestion.
+
+    The output snapshot is of the form:
+
+    .. code::
+
+       id: <bytes>
+       branches:
+         HEAD:
+           target_type: content
+           target: <content-id>
+
+    """
+
+    visit_type = "content"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.content: Optional[Content] = None
+
+    def fetch_data(self) -> bool:
+        """Retrieve the content file as a Content Object"""
+        errors = []
+        for url in self.mirror_urls:
+            url_ = urlparse(url)
+            self.log.debug(
+                "prepare; origin_url=%s fallback=%s scheme=%s path=%s",
+                self.origin.url,
+                url,
+                url_.scheme,
+                url_.path,
+            )
+            try:
+                # FIXME: Ensure no "nar" computations is required for file
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    file_path, _ = download(
+                        url, dest=tmpdir, hashes=self.standard_hashes
+                    )
+                    if self.checksums_computation == "nar":
+                        # hashes are not "standard", so we need an extra check to happen
+                        self.log.debug("Content to check nar hashes: %s", file_path)
+                        actual_checksums = nix_hashes(
+                            Path(file_path), self.checksums.keys()
+                        ).hexdigest()
+
+                        if actual_checksums != self.checksums:
+                            errors.append(
+                                ValueError(
+                                    f"Checksum mismatched on <{url}>: "
+                                    f"{actual_checksums} != {self.checksums}"
+                                )
+                            )
+                            self.log.debug(
+                                "Mismatched checksums <%s>: continue on next mirror "
+                                "url if any",
+                                url,
+                            )
+                            continue
+
+                    with open(file_path, "rb") as file:
+                        self.content = Content.from_data(file.read())
+            except ValueError as e:
+                errors.append(e)
+                self.log.debug(
+                    "Mismatched checksums <%s>: continue on next mirror url if any",
+                    url,
+                )
+                continue
+            except HTTPError as http_error:
+                if http_error.response.status_code == 404:
+                    self.log.debug(
+                        "Not found '%s', continue on next mirror url if any", url
+                    )
+                continue
+            else:
+                return False  # no more data to fetch
+
+        if errors:
+            raise errors[0]
+
+        # If we reach this point, we did not find any proper content, consider the
+        # origin not found
+        raise NotFound(f"Unknown origin {self.origin.url}.")
+
+    def process_data(self) -> bool:
+        """Build the snapshot out of the Content retrieved."""
+
+        assert self.content is not None
+        self.snapshot = Snapshot(
+            branches={
+                b"HEAD": SnapshotBranch(
+                    target=self.content.sha1_git,
+                    target_type=TargetType.CONTENT,
+                ),
+            }
+        )
+
+        return False  # no more data to process
+
+    def store_data(self) -> None:
+        """Store newly retrieved Content and Snapshot."""
+        assert self.content is not None
+        self.storage.content_add([self.content])
+        assert self.snapshot is not None
+        self.storage.snapshot_add([self.snapshot])
+        self.loaded_snapshot_id = self.snapshot.id
+
+    def visit_status(self):
+        return "full" if self.content and self.snapshot is not None else "partial"
+
+
+class DirectoryLoader(NodeLoader):
+    """Basic loader for edge case directory ingestion (through one tarball).
+
+    The output snapshot is of the form:
+
+    .. code::
+
+       id: <bytes>
+       branches:
+         HEAD:
+           target_type: directory
+           target: <directory-id>
+
+    """
+
+    visit_type = "directory"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.directory: Optional[from_disk.Directory] = None
+        self.cnts: List[Content] = None
+        self.skipped_cnts: List[SkippedContent] = None
+        self.dirs: List[Directory] = None
+
+    def fetch_data(self) -> bool:
+        """Fetch directory as a tarball amongst the self.mirror_urls.
+
+        Raises NotFound if no tarball is found
+
+        """
+        errors = []
+        for url in self.mirror_urls:
+            url_ = urlparse(url)
+            self.log.debug(
+                "prepare; origin_url=%s fallback=%s scheme=%s path=%s",
+                self.origin.url,
+                url,
+                url_.scheme,
+                url_.path,
+            )
+            with tempfile.TemporaryDirectory() as tmpdir:
+                try:
+                    tarball_path, extrinsic_metadata = download(
+                        url,
+                        tmpdir,
+                        hashes=self.standard_hashes,
+                        extra_request_headers={"Accept-Encoding": "identity"},
+                    )
+                except ValueError as e:
+                    errors.append(e)
+                    self.log.debug(
+                        "Mismatched checksums <%s>: continue on next mirror url if any",
+                        url,
+                    )
+                    continue
+                except HTTPError as http_error:
+                    if http_error.response.status_code == 404:
+                        self.log.debug(
+                            "Not found <%s>: continue on next mirror url if any", url
+                        )
+                    continue
+
+                directory_path = Path(tmpdir) / "src"
+                directory_path.mkdir(parents=True, exist_ok=True)
+                uncompress(tarball_path, dest=str(directory_path))
+                self.log.debug("uncompressed path to directory: %s", directory_path)
+
+                if self.checksums_computation == "nar":
+                    # hashes are not "standard", so we need an extra check to happen
+                    # on the uncompressed tarball
+                    dir_to_check = next(directory_path.iterdir())
+                    self.log.debug("Directory to check nar hashes: %s", dir_to_check)
+                    actual_checksums = nix_hashes(
+                        dir_to_check, self.checksums.keys()
+                    ).hexdigest()
+
+                    if actual_checksums != self.checksums:
+                        errors.append(
+                            ValueError(
+                                f"Checksum mismatched on <{url}>: "
+                                f"{actual_checksums} != {self.checksums}"
+                            )
+                        )
+                        self.log.debug(
+                            "Mismatched checksums <%s>: continue on next mirror url if any",
+                            url,
+                        )
+                        continue
+
+                self.directory = from_disk.Directory.from_disk(
+                    path=bytes(directory_path),
+                    max_content_length=self.max_content_size,
+                )
+                # Compute the merkle dag from the top-level directory
+                self.cnts, self.skipped_cnts, self.dirs = from_disk.iter_directory(
+                    self.directory
+                )
+
+                if self.directory is not None:
+                    return False  # no more data to fetch
+
+        if errors:
+            raise errors[0]
+
+        # if we reach here, we did not find any proper tarball, so consider the origin
+        # not found
+        raise NotFound(f"Unknown origin {self.origin.url}.")
+
+    def process_data(self) -> bool:
+        """Build the snapshot out of the Directory retrieved."""
+
+        assert self.directory is not None
+        # Build the snapshot
+        self.snapshot = Snapshot(
+            branches={
+                b"HEAD": SnapshotBranch(
+                    target=self.directory.hash,
+                    target_type=TargetType.DIRECTORY,
+                ),
+            }
+        )
+
+        return False  # no more data to process
+
+    def store_data(self) -> None:
+        """Store newly retrieved Content and Snapshot."""
+        self.log.debug("Number of skipped contents: %s", len(self.skipped_cnts))
+        self.storage.skipped_content_add(self.skipped_cnts)
+        self.log.debug("Number of contents: %s", len(self.cnts))
+        self.storage.content_add(self.cnts)
+        self.log.debug("Number of directories: %s", len(self.dirs))
+        self.storage.directory_add(self.dirs)
+        assert self.snapshot is not None
+        self.storage.snapshot_add([self.snapshot])
+        self.loaded_snapshot_id = self.snapshot.id
+
+    def visit_status(self):
+        return "full" if self.directory and self.snapshot is not None else "partial"

@@ -3,18 +3,28 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import uuid
 
-def test_tasks_arch_loader(
-    mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
-):
-    mock_load = mocker.patch("swh.loader.package.arch.loader.ArchLoader.load")
-    mock_load.return_value = {"status": "eventful"}
+import pytest
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.arch.tasks.LoadArch",
-        kwargs=dict(
-            url="some-url/packages/s/some-package",
-            artifacts=[
+from swh.scheduler.model import ListedOrigin, Lister
+
+NAMESPACE = "swh.loader.package.arch"
+
+
+@pytest.fixture
+def arch_lister():
+    return Lister(name="arch", instance_name="example", id=uuid.uuid4())
+
+
+@pytest.fixture
+def arch_listed_origin(arch_lister):
+    return ListedOrigin(
+        lister_id=arch_lister.id,
+        url="some-url/packages/s/some-package",
+        visit_type="arch",
+        extra_loader_arguments={
+            "artifacts": [
                 {
                     "version": "0.0.1",
                     "url": "https://somewhere/some-package-0.0.1.pkg.xz",
@@ -22,7 +32,7 @@ def test_tasks_arch_loader(
                     "length": 42,
                 }
             ],
-            arch_metadata=[
+            "arch_metadata": [
                 {
                     "version": "0.0.1",
                     "arch": "aarch64",
@@ -31,10 +41,19 @@ def test_tasks_arch_loader(
                     "last_modified": "1970-01-01T21:08:14",
                 }
             ],
-        ),
+        },
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
+
+
+def test_arch_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    arch_lister,
+    arch_listed_origin,
+):
+
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.ArchLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadArch",
+        lister=arch_lister,
+        listed_origin=arch_listed_origin,
+    )

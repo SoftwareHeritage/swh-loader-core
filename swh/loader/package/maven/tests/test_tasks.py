@@ -8,7 +8,8 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
+
+NAMESPACE = "swh.loader.package.maven"
 
 MVN_ARTIFACTS = [
     {
@@ -24,14 +25,9 @@ MVN_ARTIFACTS = [
 ]
 
 
-@pytest.fixture(autouse=True)
-def celery_worker_and_swh_config(swh_scheduler_celery_worker, swh_config):
-    pass
-
-
 @pytest.fixture
 def maven_lister():
-    return Lister(name="maven-lister", instance_name="example", id=uuid.uuid4())
+    return Lister(name="maven", instance_name="example", id=uuid.uuid4())
 
 
 @pytest.fixture
@@ -46,41 +42,15 @@ def maven_listed_origin(maven_lister):
     )
 
 
-def test_tasks_maven_loader(
-    mocker,
-    swh_scheduler_celery_app,
+def test_maven_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    maven_lister,
+    maven_listed_origin,
 ):
-    mock_load = mocker.patch("swh.loader.package.maven.loader.MavenLoader.load")
-    mock_load.return_value = {"status": "eventful"}
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.maven.tasks.LoadMaven",
-        kwargs=dict(
-            url=MVN_ARTIFACTS[0]["url"],
-            artifacts=MVN_ARTIFACTS,
-        ),
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.MavenLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadMaven",
+        lister=maven_lister,
+        listed_origin=maven_listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_maven_loader_for_listed_origin(
-    mocker, swh_scheduler_celery_app, maven_lister, maven_listed_origin
-):
-    mock_load = mocker.patch("swh.loader.package.maven.loader.MavenLoader.load")
-    mock_load.return_value = {"status": "eventful"}
-
-    task_dict = create_origin_task_dict(maven_listed_origin, maven_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.maven.tasks.LoadMaven",
-        kwargs=task_dict["arguments"]["kwargs"],
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}

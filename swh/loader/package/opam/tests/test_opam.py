@@ -297,6 +297,13 @@ def test_opam_release(
                 format="opam-package-definition",
             )
         ],
+        checksums={
+            "sha256": "aa27684fbda1b8036ae7e3c87de33a98a9cd2662bcc91c8447e00e41476b6a46",
+            "sha512": (
+                "1260344f184dd8c8074b0439dbcc8a5d59550a654c249cd61913d4c150c664f"
+                "37b76195ddca38f7f6646d08bddb320ceb8d420508450b4f09a233cd5c22e6b9b"
+            ),
+        },
     )
 
     assert branch_name == expected_branch_name

@@ -8,12 +8,8 @@ import uuid
 import pytest
 
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
 
-
-@pytest.fixture(autouse=True)
-def celery_worker_and_swh_config(swh_scheduler_celery_worker, swh_config):
-    pass
+NAMESPACE = "swh.loader.package.archive"
 
 
 @pytest.fixture
@@ -28,65 +24,29 @@ def archive_listed_origin(archive_lister):
         url="https://example.org/archives",
         visit_type="tar",
         extra_loader_arguments={
-            "artifacts": [],
+            "artifacts": [
+                {
+                    "time": "2010-08-14T01:41:56",
+                    "url": "https://example.org/archives/project-v1.0.0.tar.gz",
+                    "filename": "project-v1.0.0.tar.gz",
+                    "version": "1.0.0",
+                    "length": 2500,
+                }
+            ],
             "snapshot_append": True,
         },
     )
 
 
-def test_tasks_archive_loader(
-    mocker,
-    swh_scheduler_celery_app,
-):
-    mock_load = mocker.patch("swh.loader.package.archive.loader.ArchiveLoader.load")
-    mock_load.return_value = {"status": "eventful"}
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.archive.tasks.LoadArchive",
-        kwargs=dict(url="https://gnu.org/", artifacts=[]),
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_archive_loader_snapshot_append(
-    mocker,
-    swh_scheduler_celery_app,
-):
-    mock_load = mocker.patch("swh.loader.package.archive.loader.ArchiveLoader.load")
-    mock_load.return_value = {"status": "eventful"}
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.archive.tasks.LoadArchive",
-        kwargs=dict(url="https://gnu.org/", artifacts=[], snapshot_append=True),
-    )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
-
-
-def test_tasks_archive_loader_for_listed_origin(
-    mocker,
-    swh_scheduler_celery_app,
+def test_archive_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
     archive_lister,
     archive_listed_origin,
 ):
-    mock_load = mocker.patch("swh.loader.package.archive.loader.ArchiveLoader.load")
-    mock_load.return_value = {"status": "eventful"}
 
-    task_dict = create_origin_task_dict(archive_listed_origin, archive_lister)
-
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.archive.tasks.LoadArchive",
-        kwargs=task_dict["arguments"]["kwargs"],
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.ArchiveLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadArchive",
+        lister=archive_lister,
+        listed_origin=archive_listed_origin,
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}

@@ -3,25 +3,35 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import uuid
 
-def test_tasks_aur_loader(
-    mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
-):
-    mock_load = mocker.patch("swh.loader.package.aur.loader.AurLoader.load")
-    mock_load.return_value = {"status": "eventful"}
+import pytest
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.aur.tasks.LoadAur",
-        kwargs=dict(
-            url="https://somewhere/some-package.git",
-            artifacts=[
+from swh.scheduler.model import ListedOrigin, Lister
+
+NAMESPACE = "swh.loader.package.aur"
+
+
+@pytest.fixture
+def aur_lister():
+    return Lister(name="aur", instance_name="example", id=uuid.uuid4())
+
+
+@pytest.fixture
+def aur_listed_origin(aur_lister):
+    return ListedOrigin(
+        lister_id=aur_lister.id,
+        url="https://somewhere/some-package.git",
+        visit_type="aur",
+        extra_loader_arguments={
+            "artifacts": [
                 {
                     "filename": "some-package.tar.gz",
                     "url": "https://somewhere/some-package.tar.gz",
                     "version": "0.0.1",
                 }
             ],
-            aur_metadata=[
+            "aur_metadata": [
                 {
                     "version": "0.0.1",
                     "project_url": "https://somewhere/some-package",
@@ -29,10 +39,19 @@ def test_tasks_aur_loader(
                     "pkgname": "some-package",
                 }
             ],
-        ),
+        },
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
+
+
+def test_aur_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    aur_lister,
+    aur_listed_origin,
+):
+
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.AurLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadAur",
+        lister=aur_lister,
+        listed_origin=aur_listed_origin,
+    )

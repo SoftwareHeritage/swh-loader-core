@@ -2,6 +2,9 @@
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
+
+# flake8: noqa: B950
+
 import pytest
 
 from swh.loader.package.arch.loader import ArchLoader
@@ -22,16 +25,26 @@ EXPECTED_PACKAGES = [
         "url": "https://archive.archlinux.org/packages/d/dialog/",
         "artifacts": [
             {
-                "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz",  # noqa: B950
+                "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz",
                 "version": "1:1.3_20190211-1",
-                "length": 180000,
+                "length": 440,
                 "filename": "dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz",
+                "checksums": {
+                    "length": 440,
+                    "md5": "ce66c053ded0d51e5610368d85242684",
+                    "sha256": "27c6a7af005cd2214fd63f7498bf51e3bff332df33a9b8f7ed07934823f7ba43",
+                },
             },
             {
-                "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",  # noqa: B950
+                "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",
                 "version": "1:1.3_20220414-1",
-                "length": 198000,
+                "length": 371,
                 "filename": "dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",
+                "checksums": {
+                    "length": 371,
+                    "md5": "5687f6bfc3b6975fdd073deb7075ec09",
+                    "sha256": "b002d18d1e1f356410f73b08170f0bd52f0d83b37b71ccd938594e7d486c4e8a",
+                },
             },
         ],
         "arch_metadata": [
@@ -55,10 +68,15 @@ EXPECTED_PACKAGES = [
         "url": "https://archlinuxarm.org/packages/aarch64/gzip",
         "artifacts": [
             {
-                "url": "https://uk.mirror.archlinuxarm.org/aarch64/core/gzip-1.12-1-aarch64.pkg.tar.xz",  # noqa: B950
-                "length": 79640,
+                "url": "https://uk.mirror.archlinuxarm.org/aarch64/core/gzip-1.12-1-aarch64.pkg.tar.xz",
+                "length": 472,
                 "version": "1.12-1",
                 "filename": "gzip-1.12-1-aarch64.pkg.tar.xz",
+                "checksums": {
+                    "length": 472,
+                    "md5": "0b96fa72ae35c097ec78132ed2f05a57",
+                    "sha256": "8d45b871283e2c37513833f6327ebcdd96c6c3b335588945f873cb809b1e6d2b",
+                },
             }
         ],
         "arch_metadata": [

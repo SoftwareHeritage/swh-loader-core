@@ -88,6 +88,14 @@ def data_jar_1(datadir):
 
 
 @pytest.fixture
+def data_jar_1_sha1(datadir):
+    content = Path(
+        datadir, "https_maven.org", "sprova4j-0.1.0-sources.jar.sha1"
+    ).read_bytes()
+    return content
+
+
+@pytest.fixture
 def data_pom_1(datadir):
     content = Path(datadir, "https_maven.org", "sprova4j-0.1.0.pom").read_bytes()
     return content
@@ -97,6 +105,14 @@ def data_pom_1(datadir):
 def data_jar_2(datadir):
     content = Path(
         datadir, "https_maven.org", "sprova4j-0.1.1-sources.jar"
+    ).read_bytes()
+    return content
+
+
+@pytest.fixture
+def data_jar_2_sha1(datadir):
+    content = Path(
+        datadir, "https_maven.org", "sprova4j-0.1.1-sources.jar.sha1"
     ).read_bytes()
     return content
 
@@ -195,13 +211,17 @@ def expected_pom_metadata(data_pom_1, data_pom_2):
 def network_requests_mock(
     requests_mock,
     data_jar_1,
+    data_jar_1_sha1,
     data_pom_1,
     data_jar_2,
+    data_jar_2_sha1,
     data_pom_2,
 ):
     requests_mock.get(MVN_ARTIFACTS[0]["url"], content=data_jar_1)
+    requests_mock.get(MVN_ARTIFACTS[0]["url"] + ".sha1", content=data_jar_1_sha1)
     requests_mock.get(MVN_ARTIFACTS_POM[0], content=data_pom_1)
     requests_mock.get(MVN_ARTIFACTS[1]["url"], content=data_jar_2)
+    requests_mock.get(MVN_ARTIFACTS[1]["url"] + ".sha1", content=data_jar_2_sha1)
     requests_mock.get(MVN_ARTIFACTS_POM[1], content=data_pom_2)
 
 
@@ -329,10 +349,14 @@ def test_maven_loader_2_visits_without_change(
     # the actual download of jar, and that they're correct.
     urls_history = [str(req.url) for req in list(requests_mock.request_history)]
     assert urls_history == [
+        MVN_ARTIFACTS[0]["url"] + ".sha1",
+        MVN_ARTIFACTS[1]["url"] + ".sha1",
         MVN_ARTIFACTS[0]["url"],
         MVN_ARTIFACTS_POM[0],
         MVN_ARTIFACTS[1]["url"],
         MVN_ARTIFACTS_POM[1],
+        MVN_ARTIFACTS[0]["url"] + ".sha1",
+        MVN_ARTIFACTS[1]["url"] + ".sha1",
     ]
 
 

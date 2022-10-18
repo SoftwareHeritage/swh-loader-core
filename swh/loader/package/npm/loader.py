@@ -93,6 +93,7 @@ class NpmPackageInfo(BasePackageInfo):
                     metadata=json.dumps(package_metadata).encode(),
                 )
             ],
+            checksums={"sha1": package_metadata["dist"]["shasum"]},
         )
 
 

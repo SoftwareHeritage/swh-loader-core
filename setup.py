@@ -55,9 +55,12 @@ setup(
         [swh.cli.subcommands]
         loader=swh.loader.cli
         [swh.workers]
+        loader.content=swh.loader.core:register_content
+        loader.directory=swh.loader.core:register_directory
         loader.arch=swh.loader.package.arch:register
         loader.archive=swh.loader.package.archive:register
         loader.aur=swh.loader.package.aur:register
+        loader.cpan=swh.loader.package.cpan:register
         loader.cran=swh.loader.package.cran:register
         loader.crates=swh.loader.package.crates:register
         loader.debian=swh.loader.package.debian:register
@@ -67,6 +70,7 @@ setup(
         loader.npm=swh.loader.package.npm:register
         loader.opam=swh.loader.package.opam:register
         loader.pubdev=swh.loader.package.pubdev:register
+        loader.puppet=swh.loader.package.puppet:register
         loader.pypi=swh.loader.package.pypi:register
         loader.maven=swh.loader.package.maven:register
     """,

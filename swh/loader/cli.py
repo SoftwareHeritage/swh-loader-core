@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021 The Software Heritage developers
+# Copyright (C) 2019-2022 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -77,7 +77,7 @@ def loader(ctx, config_file):
 
     ctx.obj["config"] = read(config_file)
     logger.debug("config_file: %s", config_file)
-    logger.debug("config: ", ctx.obj["config"])
+    logger.debug("config: %s", ctx.obj["config"])
 
 
 @loader.command(name="run", context_settings=CONTEXT_SETTINGS)
@@ -93,7 +93,10 @@ def run(ctx, type, url, options):
 
     conf = ctx.obj.get("config", {})
     if "storage" not in conf:
-        raise ValueError("Missing storage configuration key")
+        logger.warning(
+            "No storage configuration detected, using an in-memory storage instead."
+        )
+        conf["storage"] = {"cls": "memory"}
 
     (_, kw) = parse_options(options)
     logger.debug(f"kw: {kw}")

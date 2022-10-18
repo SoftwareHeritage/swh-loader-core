@@ -13,9 +13,9 @@ import attr
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.loader.package.utils import (
     EMPTY_AUTHOR,
+    cached_method,
     get_url_body,
     release_name,
-    cached_method,
 )
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface

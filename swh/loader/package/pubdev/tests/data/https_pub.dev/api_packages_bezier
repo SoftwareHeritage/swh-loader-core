@@ -22,7 +22,7 @@
       }
     },
     "archive_url": "https://pub.dartlang.org/packages/bezier/versions/1.1.5.tar.gz",
-    "archive_sha256": "cc5da2fa927b5d347550f78d456cd984b7df78a7f0405119cdab12111e2f9ee8",
+    "archive_sha256": "d8f2a8f75732e7f7c3c0295801c95970301536eee205d4532cb3bc1d720cb1bf",
     "published": "2019-12-22T03:17:30.805225Z"
   },
   "versions": [
@@ -48,7 +48,7 @@
         }
       },
       "archive_url": "https://pub.dartlang.org/packages/bezier/versions/1.1.5.tar.gz",
-      "archive_sha256": "cc5da2fa927b5d347550f78d456cd984b7df78a7f0405119cdab12111e2f9ee8",
+      "archive_sha256": "d8f2a8f75732e7f7c3c0295801c95970301536eee205d4532cb3bc1d720cb1bf",
       "published": "2019-12-22T03:17:30.805225Z"
     }
   ]

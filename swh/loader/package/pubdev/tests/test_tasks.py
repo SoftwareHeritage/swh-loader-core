@@ -3,21 +3,38 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import uuid
 
-def test_tasks_pubdev_loader(
-    mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
-):
-    mock_load = mocker.patch("swh.loader.package.pubdev.loader.PubDevLoader.load")
-    mock_load.return_value = {"status": "eventful"}
+import pytest
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.pubdev.tasks.LoadPubDev",
-        kwargs=dict(
-            url="https://pub.dev/packages/some-package",
-        ),
+from swh.scheduler.model import ListedOrigin, Lister
+
+NAMESPACE = "swh.loader.package.pubdev"
+
+
+@pytest.fixture
+def pubdev_lister():
+    return Lister(name="pubdev", instance_name="example", id=uuid.uuid4())
+
+
+@pytest.fixture
+def pubdev_listed_origin(pubdev_lister):
+    return ListedOrigin(
+        lister_id=pubdev_lister.id,
+        url="https://pub.dev/packages/some-package",
+        visit_type="pubdev",
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
+
+
+def test_pubdev_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    pubdev_lister,
+    pubdev_listed_origin,
+):
+
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.PubDevLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadPubDev",
+        lister=pubdev_lister,
+        listed_origin=pubdev_listed_origin,
+    )
