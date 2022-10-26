@@ -1,3 +1,14 @@
+swh-loader-core (5.1.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.1.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-10-26 14:36:33
+    +0200)
+  * Upstream changes:     - v5.1.0     - Puppet: Artifacts as lists     -
+    Conda: Anaconda packages archive loader     - pre-commit, tox: Bump
+    pre-commit, codespell, black and flake8
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 26 Oct 2022 12:52:43 +0000
+
 swh-loader-core (5.0.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.0.0     - (tagged by Antoine Lambert
