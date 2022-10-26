@@ -5,6 +5,7 @@ loader = swh.loader.cli
 loader.arch = swh.loader.package.arch:register
 loader.archive = swh.loader.package.archive:register
 loader.aur = swh.loader.package.aur:register
+loader.conda = swh.loader.package.conda:register
 loader.content = swh.loader.core:register_content
 loader.cpan = swh.loader.package.cpan:register
 loader.cran = swh.loader.package.cran:register
