@@ -93,6 +93,15 @@ swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_
 swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_ibus-git.tar.gz
 swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_libervia-web-hg.tar.gz
 swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_tealdeer-git.tar.gz
+swh/loader/package/conda/__init__.py
+swh/loader/package/conda/loader.py
+swh/loader/package/conda/tasks.py
+swh/loader/package/conda/tests/__init__.py
+swh/loader/package/conda/tests/test_conda.py
+swh/loader/package/conda/tests/test_tasks.py
+swh/loader/package/conda/tests/data/fake_conda.sh
+swh/loader/package/conda/tests/data/https_conda.anaconda.org/conda-forge_linux-64_lifetimes-0.11.1-py36h9f0ad1d_1.tar.bz2
+swh/loader/package/conda/tests/data/https_conda.anaconda.org/conda-forge_linux-64_lifetimes-0.11.1-py36hc560c46_1.tar.bz2
 swh/loader/package/cpan/__init__.py
 swh/loader/package/cpan/loader.py
 swh/loader/package/cpan/tasks.py
