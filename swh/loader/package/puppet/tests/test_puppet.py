@@ -18,8 +18,8 @@ from swh.model.model import (
 
 ORIGINS = {
     "url": "https://forge.puppet.com/modules/saz/memcached",
-    "artifacts": {
-        "1.0.0": {
+    "artifacts": [
+        {
             "url": "https://forgeapi.puppet.com/v3/files/saz-memcached-1.0.0.tar.gz",  # noqa: B950
             "version": "1.0.0",
             "filename": "saz-memcached-1.0.0.tar.gz",
@@ -28,7 +28,7 @@ ORIGINS = {
                 "length": 763,
             },
         },
-        "8.1.0": {
+        {
             "url": "https://forgeapi.puppet.com/v3/files/saz-memcached-8.1.0.tar.gz",  # noqa: B950
             "version": "8.1.0",
             "filename": "saz-memcached-8.1.0.tar.gz",
@@ -38,7 +38,7 @@ ORIGINS = {
                 "sha256": "0dbb1470c64435700767e9887d0cf70203b1ae59445c401d5d200f2dabb3226e",  # noqa: B950
             },
         },
-    },
+    ],
 }
 
 
@@ -66,7 +66,7 @@ def test_puppet_loader_load_multiple_version(
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "9a8e76a8a6eae5285059d9f6d5083a99317727cf"
+    expected_snapshot_id = "c3da002f1dc325be29004fa64312f71ba50b9fbc"
 
     assert expected_snapshot_id == load_status["snapshot_id"]
 
@@ -78,11 +78,11 @@ def test_puppet_loader_load_multiple_version(
                 target_type=TargetType.ALIAS,
             ),
             b"releases/1.0.0": SnapshotBranch(
-                target=hash_to_bytes("50eb560bb5322cd149359b9cc8debc78834bcfad"),
+                target=hash_to_bytes("83b3463dd35d44dbae4bfe917a9b127924a14bbd"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/8.1.0": SnapshotBranch(
-                target=hash_to_bytes("2f5722136d775dd48fe85fabdd274f1e2d7fcf22"),
+                target=hash_to_bytes("90592c01fe7f96f32a88bc611193b305cb77cc03"),
                 target_type=TargetType.RELEASE,
             ),
         },
@@ -103,17 +103,16 @@ def test_puppet_loader_load_multiple_version(
     } == stats
 
     assert swh_storage.release_get(
-        [hash_to_bytes("2f5722136d775dd48fe85fabdd274f1e2d7fcf22")]
+        [hash_to_bytes("90592c01fe7f96f32a88bc611193b305cb77cc03")]
     )[0] == Release(
         name=b"8.1.0",
-        message=b"Synthetic release for Puppet source package saz-memcached version 8.1.0\n\n"
-        b"Manage memcached via Puppet\n",
+        message=b"Synthetic release for Puppet source package saz-memcached version 8.1.0\n",
         target=hash_to_bytes("1b9a2dbc80f954e1ba4b2f1c6344d1ce4e84ab7c"),
         target_type=ObjectType.DIRECTORY,
         synthetic=True,
         author=Person(fullname=b"saz", name=b"saz", email=None),
         date=TimestampWithTimezone.from_iso8601("2022-07-11T03:34:55-07:00"),
-        id=hash_to_bytes("2f5722136d775dd48fe85fabdd274f1e2d7fcf22"),
+        id=hash_to_bytes("90592c01fe7f96f32a88bc611193b305cb77cc03"),
     )
 
     assert_last_visit_matches(

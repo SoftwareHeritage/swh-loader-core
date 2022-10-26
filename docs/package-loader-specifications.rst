@@ -65,6 +65,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - ``metadata.get(​"Maintainer", "")``
      - ``metadata.get(​"Date")``
      - metadata is intrinsic
+   * - conda
+     - ``p_info.​version``
+     - ``release_name(​version)``
+     - =version
+     - Synthetic release for Conda source package {p_info.name} version {p_info.version}
+     - true
+     - from intrinsic metadata
+     - from extrinsic metadata
+     - ""
    * - crates
      - ``p_info.​version``
      - ``release_name(​version, filename) + "\n\n" + i_metadata.description + "\n"``

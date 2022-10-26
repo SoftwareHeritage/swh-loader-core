@@ -60,6 +60,7 @@ setup(
         loader.arch=swh.loader.package.arch:register
         loader.archive=swh.loader.package.archive:register
         loader.aur=swh.loader.package.aur:register
+        loader.conda=swh.loader.package.conda:register
         loader.cpan=swh.loader.package.cpan:register
         loader.cran=swh.loader.package.cran:register
         loader.crates=swh.loader.package.crates:register

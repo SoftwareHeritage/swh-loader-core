@@ -6,7 +6,7 @@
 from datetime import datetime
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
 import iso8601
@@ -59,13 +59,15 @@ class PuppetLoader(PackageLoader[PuppetPackageInfo]):
         self,
         storage: StorageInterface,
         url: str,
-        artifacts: Dict[str, Any],
+        artifacts: List[Dict[str, Any]],
         **kwargs,
     ):
 
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
-        self.artifacts = artifacts
+        self.artifacts: Dict[str, Dict] = {
+            artifact["version"]: artifact for artifact in artifacts
+        }
 
     def get_versions(self) -> Sequence[str]:
         """Get all released versions of a Puppet module
@@ -133,13 +135,11 @@ class PuppetLoader(PackageLoader[PuppetPackageInfo]):
         version: str = intrinsic_metadata["version"]
         assert version == p_info.version
 
-        description = intrinsic_metadata["summary"]
         author = Person.from_fullname(intrinsic_metadata["author"].encode())
 
         message = (
             f"Synthetic release for Puppet source package {p_info.name} "
-            f"version {version}\n\n"
-            f"{description}\n"
+            f"version {version}\n"
         )
 
         return Release(

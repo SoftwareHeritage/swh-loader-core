@@ -24,14 +24,14 @@ def puppet_listed_origin(puppet_lister):
         url="some-url/api/packages/some-package",
         visit_type="aur",
         extra_loader_arguments={
-            "artifacts": {
-                "1.0.0": {
+            "artifacts": [
+                {
                     "url": "https://domain/some-package-1.0.0.tar.gz",
                     "version": "1.0.0",
                     "filename": "some-module-1.0.0.tar.gz",
                     "last_update": "2011-11-20T13:40:30-08:00",
                 },
-            }
+            ]
         },
     )
 
