@@ -176,6 +176,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
      - from int metadata or ""
      - from ext metadata or None
      - metadata is intrinsic
+   * - rubygems
+     - ``p_info.version``
+     - ``release_name(​version)``
+     - =version
+     - Synthetic release for RubyGems source package {p_info.name} version {p_info.version}
+     - true
+     - from ext metadata
+     - from ext metadata
+     - The source code is extracted from a tarball nested within the gem file
 
 using this function::
 

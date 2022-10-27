@@ -74,6 +74,7 @@ setup(
         loader.puppet=swh.loader.package.puppet:register
         loader.pypi=swh.loader.package.pypi:register
         loader.maven=swh.loader.package.maven:register
+        loader.rubygems=swh.loader.package.rubygems:register
     """,
     classifiers=[
         "Programming Language :: Python :: 3",
