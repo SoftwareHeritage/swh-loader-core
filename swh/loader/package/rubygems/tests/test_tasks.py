@@ -3,19 +3,59 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import uuid
 
-def test_tasks_rubygems_loader(
-    mocker, swh_scheduler_celery_app, swh_scheduler_celery_worker, swh_config
-):
-    mock_load = mocker.patch("swh.loader.package.rubygems.loader.RubyGemsLoader.load")
-    mock_load.return_value = {"status": "eventful"}
+import pytest
 
-    res = swh_scheduler_celery_app.send_task(
-        "swh.loader.package.rubygems.tasks.LoadRubyGems",
-        kwargs={"url": "https://rubygems.org/gems/whatever-package"},
+from swh.scheduler.model import ListedOrigin, Lister
+
+NAMESPACE = "swh.loader.package.rubygems"
+
+
+@pytest.fixture
+def rubygems_lister():
+    return Lister(name="rubygems", instance_name="example", id=uuid.uuid4())
+
+
+@pytest.fixture
+def rubygems_listed_origin(rubygems_lister):
+    return ListedOrigin(
+        lister_id=rubygems_lister.id,
+        url="https://rubygems.org/gems/whatever-package",
+        visit_type="rubygems",
+        extra_loader_arguments={
+            "artifacts": [
+                {
+                    "url": "https://rubygems.org/downloads/whatever-package-0.0.1.gem",
+                    "length": 1,
+                    "version": "0.0.1",
+                    "filename": "whatever-package-0.0.1.gem",
+                    "checksums": {
+                        "sha256": "85a8cf5f41890e9605265eeebfe9e99aa0350a01a3c799f9f55a0615a31a2f5f"  # noqa: B950
+                    },
+                }
+            ],
+            "rubygem_metadata": [
+                {
+                    "date": "2016-11-05T00:00:00+00:00",
+                    "authors": "John Dodoe",
+                    "version": "0.0.1",
+                    "extrinsic_metadata_url": "https://rubygems.org/api/v2/rubygems/whatever-package/versions/0.0.1.json",  # noqa: B950
+                },
+            ],
+        },
     )
-    assert res
-    res.wait()
-    assert res.successful()
-    assert mock_load.called
-    assert res.result == {"status": "eventful"}
+
+
+def test_rubygems_loader_task_for_listed_origin(
+    loading_task_creation_for_listed_origin_test,
+    rubygems_lister,
+    rubygems_listed_origin,
+):
+
+    loading_task_creation_for_listed_origin_test(
+        loader_class_name=f"{NAMESPACE}.loader.RubyGemsLoader",
+        task_function_name=f"{NAMESPACE}.tasks.LoadRubyGems",
+        lister=rubygems_lister,
+        listed_origin=rubygems_listed_origin,
+    )

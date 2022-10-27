@@ -3,17 +3,30 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import json
 import logging
 import os
+import string
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 import attr
+from packaging.version import parse as parse_version
 
-from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import cached_method, get_url_body, release_name
+from swh.loader.package.loader import (
+    BasePackageInfo,
+    PackageLoader,
+    RawExtrinsicMetadataCore,
+)
+from swh.loader.package.utils import get_url_body, release_name
 from swh.model import from_disk
-from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
+from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    ObjectType,
+    Person,
+    Release,
+    Sha1Git,
+    TimestampWithTimezone,
+)
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -33,6 +46,15 @@ class RubyGemsPackageInfo(BasePackageInfo):
     authors = attr.ib(type=List[Person])
     """Authors"""
 
+    sha256 = attr.ib(type=str)
+    """Extid as sha256"""
+
+    MANIFEST_FORMAT = string.Template(
+        "name $name\nshasum $sha256\nurl $url\nversion $version\nlast_update $built_at"
+    )
+    EXTID_TYPE = "rubygems-manifest-sha256"
+    EXTID_VERSION = 0
+
 
 class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
     """Load ``.gem`` files from ``RubyGems.org`` into the SWH archive."""
@@ -43,6 +65,8 @@ class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
         self,
         storage: StorageInterface,
         url: str,
+        artifacts: List[Dict[str, Any]],
+        rubygem_metadata: List[Dict[str, Any]],
         max_content_size: Optional[int] = None,
         **kwargs,
     ):
@@ -51,35 +75,29 @@ class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
         assert url.startswith("https://rubygems.org/gems/"), (
             "Expected rubygems.org url, got '%s'" % url
         )
-        self.gem_name = url[len("https://rubygems.org/gems/") :]
-        # API docs at ``https://guides.rubygems.org/rubygems-org-api/``
-        self.api_base_url = "https://rubygems.org/api/v1"
-        # Mapping of version number to corresponding metadata from the API
-        self.versions_info: Dict[str, Dict[str, Any]] = {}
+        # Convert list of artifacts and rubygem_metadata to a mapping of version
+        self.artifacts: Dict[str, Dict] = {
+            artifact["version"]: artifact for artifact in artifacts
+        }
+        self.rubygem_metadata: Dict[str, Dict] = {
+            data["version"]: data for data in rubygem_metadata
+        }
 
     def get_versions(self) -> Sequence[str]:
-        """Return all versions for the gem being loaded.
-
-        Also stores the detailed information for each version since everything
-        is present in this API call."""
-        versions_info = get_url_body(
-            f"{self.api_base_url}/versions/{self.gem_name}.json"
-        )
-        versions = []
-
-        for version_info in json.loads(versions_info):
-            number = version_info["number"]
-            self.versions_info[number] = version_info
-            versions.append(number)
-
+        """Return all versions sorted for the gem being loaded"""
+        versions = list(self.artifacts.keys())
+        versions.sort(key=parse_version)
         return versions
 
-    @cached_method
     def get_default_version(self) -> str:
-        latest = get_url_body(
-            f"{self.api_base_url}/versions/{self.gem_name}/latest.json"
+        """Get the newest release version of a gem"""
+        return self.get_versions()[-1]
+
+    def get_metadata_authority(self):
+        return MetadataAuthority(
+            type=MetadataAuthorityType.FORGE,
+            url="https://rubygems.org/",
         )
-        return json.loads(latest)["version"]
 
     def _load_directory(
         self, dl_artifacts: List[Tuple[str, Mapping[str, Any]]], tmpdir: str
@@ -101,17 +119,32 @@ class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
         self, version: str
     ) -> Iterator[Tuple[str, RubyGemsPackageInfo]]:
 
-        info = self.versions_info[version]
+        artifact = self.artifacts[version]
+        rubygem_metadata = self.rubygem_metadata[version]
+        filename = artifact["filename"]
+        gem_name = filename.split(f"-{version}.gem")[0]
+        authors = rubygem_metadata["authors"].split(", ")
+        checksums = artifact["checksums"]
 
-        authors = info["authors"].split(", ")
+        # Get extrinsic metadata
+        extrinsic_metadata_url = rubygem_metadata["extrinsic_metadata_url"]
+        extrinsic_metadata = get_url_body(extrinsic_metadata_url)
+
         p_info = RubyGemsPackageInfo(
-            url=f"https://rubygems.org/downloads/{self.gem_name}-{version}.gem",
-            # See format of gem files in ``_load_directory``
-            filename=f"{self.gem_name}-{version}.tar",
+            url=artifact["url"],
+            filename=filename,
             version=version,
-            built_at=TimestampWithTimezone.from_iso8601(info["built_at"]),
-            name=self.gem_name,
+            built_at=TimestampWithTimezone.from_iso8601(rubygem_metadata["date"]),
+            name=gem_name,
             authors=[Person.from_fullname(person.encode()) for person in authors],
+            checksums=checksums,  # sha256 checksum
+            sha256=checksums["sha256"],  # sha256 for EXTID
+            directory_extrinsic_metadata=[
+                RawExtrinsicMetadataCore(
+                    format="rubygem-release-json",
+                    metadata=extrinsic_metadata,
+                ),
+            ],
         )
         yield release_name(version), p_info
 
