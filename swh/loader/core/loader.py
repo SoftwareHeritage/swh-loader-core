@@ -77,6 +77,7 @@ class BaseLoader:
       lister_instance_name: Name of the lister instance which triggered this load.
         Must be None iff lister_name is, but it may be the empty string for listers
         with a single instance.
+
     """
 
     visit_type: str
@@ -98,6 +99,7 @@ class BaseLoader:
         lister_name: Optional[str] = None,
         lister_instance_name: Optional[str] = None,
         metadata_fetcher_credentials: CredentialsType = None,
+        create_partial_snapshot: bool = False,
     ):
         if lister_name == "":
             raise ValueError("lister_name must not be the empty string")
@@ -116,6 +118,7 @@ class BaseLoader:
         self.lister_name = lister_name
         self.lister_instance_name = lister_instance_name
         self.metadata_fetcher_credentials = metadata_fetcher_credentials or {}
+        self.create_partial_snapshot = create_partial_snapshot
 
         if logging_class is None:
             logging_class = "%s.%s" % (
@@ -275,17 +278,18 @@ class BaseLoader:
         """Run any additional processing between fetching and storing the data
 
         Returns:
-            a value that is interpreted as a boolean. If True, fetch_data needs
-            to be called again to complete loading.
-            Ignored if ``fetch_data`` already returned :const:`False`.
+            a value that is interpreted as a boolean. If True, :meth:`fetch_data` needs
+            to be called again to complete loading. Ignored if :meth:`fetch_data`
+            already returned :const:`False`.
         """
         return True
 
     def store_data(self) -> None:
-        """Store fetched data in the database.
+        """Store fetched and processed data in the storage.
 
-        Should call the :func:`maybe_load_xyz` methods, which handle the
-        bundles sent to storage, rather than send directly.
+        This should call the `storage.<object>_add` methods, which handle the objects to
+        store in the storage.
+
         """
         raise NotImplementedError
 
@@ -331,6 +335,16 @@ class BaseLoader:
 
         """
         pass
+
+    def build_partial_snapshot(self) -> Optional[Snapshot]:
+        """When the loader is configured to serialize partial snapshot, this allows the
+        loader to give an implementation that builds a partial snapshot. This is used
+        when the ingestion is taking multiple calls to :meth:`fetch_data` and
+        :meth:`store_data`. Ignored when the loader is not configured to serialize
+        partial snapshot.
+
+        """
+        return None
 
     def load(self) -> Dict[str, str]:
         r"""Loading logic for the loader to follow:
@@ -411,6 +425,26 @@ class BaseLoader:
                 self.store_data()
                 t4 = time.monotonic()
                 total_time_store_data += t4 - t3
+
+                # At the end of each ingestion loop, if the loader is configured for
+                # partial snapshot (see self.create_partial_snapshot) and there are more
+                # data to fetch, allows the loader to record an intermediary snapshot of
+                # the ingestion. This could help when failing to load large repositories
+                # for technical reasons (running out of disk, memory, etc...).
+                if more_data_to_fetch and self.create_partial_snapshot:
+                    partial_snapshot = self.build_partial_snapshot()
+                    if partial_snapshot is not None:
+                        self.storage.snapshot_add([partial_snapshot])
+                        visit_status = OriginVisitStatus(
+                            origin=self.origin.url,
+                            visit=self.visit.visit,
+                            type=self.visit_type,
+                            date=now(),
+                            status="partial",
+                            snapshot=partial_snapshot.id,
+                        )
+                        self.storage.origin_visit_status_add([visit_status])
+
                 if not more_data_to_fetch:
                     break
 

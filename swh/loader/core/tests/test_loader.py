@@ -21,13 +21,17 @@ from swh.loader.core.loader import (
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound, UnsupportedChecksumComputation
-from swh.loader.tests import assert_last_visit_matches
+from swh.loader.tests import assert_last_visit_matches, get_stats
+from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
     Origin,
     RawExtrinsicMetadata,
+    Snapshot,
+    SnapshotBranch,
+    TargetType,
 )
 import swh.storage.exc
 
@@ -77,7 +81,7 @@ class DummyLoader:
 class DummyBaseLoader(DummyLoader, BaseLoader):
     """Buffered loader will send new data when threshold is reached"""
 
-    def store_data(self):
+    def store_data(self) -> None:
         pass
 
 
@@ -363,6 +367,51 @@ def test_loader_timings(swh_storage, mocker, success):
     ]
     assert loader.statsd.namespace == "swh_loader"
     assert loader.statsd.constant_tags == {"visit_type": "my-visit-type"}
+
+
+class DummyLoaderWithPartialSnapshot(DummyBaseLoader):
+    call = 0
+
+    def fetch_data(self):
+        self.call += 1
+        # Let's have one call to fetch data and then another to fetch further data
+        return self.call == 1
+
+    def store_data(self) -> None:
+        # First call does nothing and the last one flushes the final snapshot
+        if self.call != 1:
+            self.storage.snapshot_add([Snapshot(branches={})])
+
+    def build_partial_snapshot(self):
+        """Build partial snapshot to serialize during loading."""
+        return Snapshot(
+            branches={
+                b"alias": SnapshotBranch(
+                    target=hash_to_bytes(b"0" * 20),
+                    target_type=TargetType.DIRECTORY,
+                )
+            }
+        )
+
+
+def test_loader_with_partial_snapshot(swh_storage, sentry_events):
+    """Ensure loader can write partial snapshot when configured to."""
+    loader = DummyLoaderWithPartialSnapshot(
+        swh_storage, "dummy-url", create_partial_snapshot=True
+    )
+    status = loader.load()
+
+    assert status == {"status": "eventful"}
+
+    actual_stats = get_stats(swh_storage)
+
+    expected_stats = {
+        "origin": 1,  # only 1 origin
+        "origin_visit": 1,  # with 1 visit
+        "snapshot": 1 + 1,  # 1 partial snapshot and 1 final snapshot
+    }
+    for key in expected_stats.keys():
+        assert actual_stats[key] == expected_stats[key]
 
 
 class DummyLoaderWithError(DummyBaseLoader):
