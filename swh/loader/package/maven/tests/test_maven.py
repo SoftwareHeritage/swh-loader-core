@@ -8,9 +8,9 @@ import hashlib
 from itertools import chain
 import json
 import os
-from pathlib import Path
 
 import pytest
+import requests
 
 from swh.core.tarball import uncompress
 from swh.loader.package import __version__
@@ -79,54 +79,19 @@ REL_DATES = (
 )
 
 
-@pytest.fixture
-def data_jar_1(datadir):
-    content = Path(
-        datadir, "https_maven.org", "sprova4j-0.1.0-sources.jar"
-    ).read_bytes()
-    return content
+@pytest.fixture(autouse=True)
+def network_requests_mock(requests_mock_datadir):
+    pass
 
 
 @pytest.fixture
-def data_jar_1_sha1(datadir):
-    content = Path(
-        datadir, "https_maven.org", "sprova4j-0.1.0-sources.jar.sha1"
-    ).read_bytes()
-    return content
+def jar_dirs(tmp_path):
+    jar_1_path = os.path.join(tmp_path, os.path.basename(MVN_ARTIFACTS[0]["url"]))
+    jar_2_path = os.path.join(tmp_path, os.path.basename(MVN_ARTIFACTS[1]["url"]))
 
-
-@pytest.fixture
-def data_pom_1(datadir):
-    content = Path(datadir, "https_maven.org", "sprova4j-0.1.0.pom").read_bytes()
-    return content
-
-
-@pytest.fixture
-def data_jar_2(datadir):
-    content = Path(
-        datadir, "https_maven.org", "sprova4j-0.1.1-sources.jar"
-    ).read_bytes()
-    return content
-
-
-@pytest.fixture
-def data_jar_2_sha1(datadir):
-    content = Path(
-        datadir, "https_maven.org", "sprova4j-0.1.1-sources.jar.sha1"
-    ).read_bytes()
-    return content
-
-
-@pytest.fixture
-def data_pom_2(datadir):
-    content = Path(datadir, "https_maven.org", "sprova4j-0.1.1.pom").read_bytes()
-    return content
-
-
-@pytest.fixture
-def jar_dirs(datadir, tmp_path):
-    jar_1_path = os.path.join(datadir, "https_maven.org", "sprova4j-0.1.0-sources.jar")
-    jar_2_path = os.path.join(datadir, "https_maven.org", "sprova4j-0.1.1-sources.jar")
+    with open(jar_1_path, "wb") as jar_1, open(jar_2_path, "wb") as jar_2:
+        jar_1.write(requests.get(MVN_ARTIFACTS[0]["url"]).content)
+        jar_2.write(requests.get(MVN_ARTIFACTS[1]["url"]).content)
 
     jar_1_extract_path = os.path.join(tmp_path, "jar_1")
     jar_2_extract_path = os.path.join(tmp_path, "jar_2")
@@ -203,29 +168,11 @@ def expected_json_metadata():
 
 
 @pytest.fixture
-def expected_pom_metadata(data_pom_1, data_pom_2):
-    return [data_pom_1, data_pom_2]
+def expected_pom_metadata():
+    return [requests.get(pom_url).content for pom_url in MVN_ARTIFACTS_POM]
 
 
-@pytest.fixture(autouse=True)
-def network_requests_mock(
-    requests_mock,
-    data_jar_1,
-    data_jar_1_sha1,
-    data_pom_1,
-    data_jar_2,
-    data_jar_2_sha1,
-    data_pom_2,
-):
-    requests_mock.get(MVN_ARTIFACTS[0]["url"], content=data_jar_1)
-    requests_mock.get(MVN_ARTIFACTS[0]["url"] + ".sha1", content=data_jar_1_sha1)
-    requests_mock.get(MVN_ARTIFACTS_POM[0], content=data_pom_1)
-    requests_mock.get(MVN_ARTIFACTS[1]["url"], content=data_jar_2)
-    requests_mock.get(MVN_ARTIFACTS[1]["url"] + ".sha1", content=data_jar_2_sha1)
-    requests_mock.get(MVN_ARTIFACTS_POM[1], content=data_pom_2)
-
-
-def test_maven_loader_visit_with_no_artifact_found(swh_storage, requests_mock_datadir):
+def test_maven_loader_visit_with_no_artifact_found(swh_storage):
     origin_url = "https://ftp.g.o/unknown"
     unknown_artifact_url = "https://ftp.g.o/unknown/8sync-0.1.0.tar.gz"
     loader = MavenLoader(
@@ -267,9 +214,7 @@ def test_maven_loader_visit_with_no_artifact_found(swh_storage, requests_mock_da
     } == stats
 
 
-def test_maven_loader_jar_visit_inconsistent_base_url(
-    swh_storage, requests_mock, data_jar_1, data_pom_1
-):
+def test_maven_loader_jar_visit_inconsistent_base_url(swh_storage):
     """With no prior visit, loading a jar ends up with 1 snapshot"""
     with pytest.raises(ValueError, match="more than one Maven instance"):
         MavenLoader(
@@ -283,7 +228,10 @@ def test_maven_loader_jar_visit_inconsistent_base_url(
 
 
 def test_maven_loader_first_visit(
-    swh_storage, expected_contents_and_directories, expected_snapshot, expected_releases
+    swh_storage,
+    expected_contents_and_directories,
+    expected_snapshot,
+    expected_releases,
 ):
     """With no prior visit, loading a jar ends up with 1 snapshot"""
 
@@ -329,6 +277,9 @@ def test_maven_loader_2_visits_without_change(
 ):
     """With no prior visit, load a maven project ends up with 1 snapshot"""
 
+    # reset requests history as some are sent by fixtures
+    requests_mock.reset_mock()
+
     loader = MavenLoader(swh_storage, MVN_ORIGIN_URL, artifacts=MVN_ARTIFACTS)
 
     actual_load_status = loader.load()
@@ -361,7 +312,10 @@ def test_maven_loader_2_visits_without_change(
 
 
 def test_maven_loader_extrinsic_metadata(
-    swh_storage, expected_releases, expected_json_metadata, expected_pom_metadata
+    swh_storage,
+    expected_releases,
+    expected_json_metadata,
+    expected_pom_metadata,
 ):
     """With no prior visit, loading a jar ends up with 1 snapshot.
     Extrinsic metadata is the pom file associated to the source jar.
@@ -425,7 +379,10 @@ def test_maven_loader_extrinsic_metadata(
 
 
 def test_maven_loader_extrinsic_metadata_no_pom(
-    swh_storage, requests_mock, expected_releases, expected_json_metadata
+    swh_storage,
+    requests_mock,
+    expected_releases,
+    expected_json_metadata,
 ):
     """With no prior visit, loading a jar ends up with 1 snapshot.
     Extrinsic metadata is None if the pom file cannot be retrieved.
