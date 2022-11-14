@@ -17,6 +17,7 @@ import iso8601
 import requests
 from typing_extensions import TypedDict
 
+from swh.loader.exception import NotFound
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
@@ -87,10 +88,12 @@ class MavenPackageInfo(BasePackageInfo):
         time = iso8601.parse_date(a_metadata["time"]).astimezone(tz=timezone.utc)
         url = a_metadata["url"]
         checksums = {}
-        try:
-            checksums["sha1"] = get_url_body(url + ".sha1").decode()
-        except requests.HTTPError:
-            pass
+        for algo in ("sha1", "md5"):
+            try:
+                checksums[algo] = get_url_body(url + f".{algo}").decode()
+                break
+            except (requests.HTTPError, NotFound):
+                pass
         return cls(
             url=url,
             filename=a_metadata.get("filename") or path.split(url)[-1],

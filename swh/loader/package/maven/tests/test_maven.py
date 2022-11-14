@@ -271,6 +271,10 @@ def test_maven_loader_first_visit(
         "snapshot": 1,
     } == stats
 
+    for version in loader.get_versions():
+        _, package_info = next(loader.get_package_info(version))
+        assert package_info.checksums
+
 
 def test_maven_loader_2_visits_without_change(
     swh_storage, requests_mock, expected_snapshot
@@ -301,12 +305,14 @@ def test_maven_loader_2_visits_without_change(
     urls_history = [str(req.url) for req in list(requests_mock.request_history)]
     assert urls_history == [
         MVN_ARTIFACTS[0]["url"] + ".sha1",
+        MVN_ARTIFACTS[0]["url"] + ".md5",
         MVN_ARTIFACTS[1]["url"] + ".sha1",
         MVN_ARTIFACTS[0]["url"],
         MVN_ARTIFACTS_POM[0],
         MVN_ARTIFACTS[1]["url"],
         MVN_ARTIFACTS_POM[1],
         MVN_ARTIFACTS[0]["url"] + ".sha1",
+        MVN_ARTIFACTS[0]["url"] + ".md5",
         MVN_ARTIFACTS[1]["url"] + ".sha1",
     ]
 
