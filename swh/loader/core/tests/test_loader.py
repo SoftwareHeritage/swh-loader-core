@@ -18,19 +18,16 @@ from swh.loader.core.loader import (
     BaseLoader,
     ContentLoader,
     DirectoryLoader,
-    DVCSLoader,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound, UnsupportedChecksumComputation
 from swh.loader.tests import assert_last_visit_matches
-from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
     Origin,
     RawExtrinsicMetadata,
-    Snapshot,
 )
 import swh.storage.exc
 
@@ -75,28 +72,6 @@ class DummyLoader:
 
     def get_snapshot_id(self):
         return None
-
-
-class DummyDVCSLoader(DummyLoader, DVCSLoader):
-    """DVCS Loader that does nothing in regards to DAG objects."""
-
-    def get_contents(self):
-        return []
-
-    def get_directories(self):
-        return []
-
-    def get_revisions(self):
-        return []
-
-    def get_releases(self):
-        return []
-
-    def get_snapshot(self):
-        return Snapshot(branches={})
-
-    def eventful(self):
-        return False
 
 
 class DummyBaseLoader(DummyLoader, BaseLoader):
@@ -270,26 +245,10 @@ def test_base_loader_post_load_raise(swh_storage, mocker):
     assert post_load.call_args_list == [mocker.call(), mocker.call(success=False)]
 
 
-def test_dvcs_loader(swh_storage):
-    loader = DummyDVCSLoader(swh_storage)
-    result = loader.load()
-    assert result == {"status": "eventful"}
-
-
-def test_dvcs_loader_with_config(swh_storage):
-    loader = DummyDVCSLoader(swh_storage, "another-logger")
-    result = loader.load()
-    assert result == {"status": "eventful"}
-
-
 def test_loader_logger_default_name(swh_storage):
     loader = DummyBaseLoader(swh_storage)
     assert isinstance(loader.log, logging.Logger)
     assert loader.log.name == "swh.loader.core.tests.test_loader.DummyBaseLoader"
-
-    loader = DummyDVCSLoader(swh_storage)
-    assert isinstance(loader.log, logging.Logger)
-    assert loader.log.name == "swh.loader.core.tests.test_loader.DummyDVCSLoader"
 
 
 def test_loader_logger_with_name(swh_storage):
@@ -316,7 +275,7 @@ def _check_load_failure(
 ):
     """Check whether a failed load properly logged its exception, and that the
     snapshot didn't get referenced in storage"""
-    assert isinstance(loader, (DVCSLoader, ContentLoader, DirectoryLoader))
+    assert isinstance(loader, (ContentLoader, DirectoryLoader))
     for record in caplog.records:
         if record.levelname != "ERROR":
             continue
@@ -325,10 +284,6 @@ def _check_load_failure(
         exc = record.exc_info[1]
         assert isinstance(exc, exc_class)
         assert exc_text in exc.args[0]
-
-    if isinstance(loader, DVCSLoader):
-        # Check that the get_snapshot operation would have succeeded
-        assert loader.get_snapshot() is not None
 
     # And confirm that the visit doesn't reference a snapshot
     visit = assert_last_visit_matches(loader.storage, origin.url, status)
@@ -410,103 +365,13 @@ def test_loader_timings(swh_storage, mocker, success):
     assert loader.statsd.constant_tags == {"visit_type": "my-visit-type"}
 
 
-class DummyDVCSLoaderExc(DummyDVCSLoader):
-    """A loader which raises an exception when loading some contents"""
-
-    def get_contents(self):
-        raise RuntimeError("Failed to get contents!")
-
-
-def test_dvcs_loader_exc_partial_visit(swh_storage, caplog):
-    logger_name = "dvcsloaderexc"
-    caplog.set_level(logging.ERROR, logger=logger_name)
-
-    loader = DummyDVCSLoaderExc(swh_storage, logging_class=logger_name)
-    # fake the loading ending up in a snapshot
-    loader.loaded_snapshot_id = hash_to_bytes(
-        "9e4dd2b40d1b46b70917c0949aa2195c823a648e"
-    )
-    result = loader.load()
-
-    # loading failed
-    assert result == {"status": "failed"}
-
-    # still resulted in a partial visit with a snapshot (somehow)
-    _check_load_failure(
-        caplog,
-        loader,
-        RuntimeError,
-        "Failed to get contents!",
-    )
-
-
-class BrokenStorageProxy:
-    def __init__(self, storage):
-        self.storage = storage
-
-    def __getattr__(self, attr):
-        return getattr(self.storage, attr)
-
-    def snapshot_add(self, snapshots):
-        raise RuntimeError("Failed to add snapshot!")
-
-
-class DummyDVCSLoaderStorageExc(DummyDVCSLoader):
-    """A loader which raises an exception when loading some contents"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.storage = BrokenStorageProxy(self.storage)
-
-
-def test_dvcs_loader_storage_exc_failed_visit(swh_storage, caplog):
-    logger_name = "dvcsloaderexc"
-    caplog.set_level(logging.ERROR, logger=logger_name)
-
-    loader = DummyDVCSLoaderStorageExc(swh_storage, logging_class=logger_name)
-    result = loader.load()
-
-    assert result == {"status": "failed"}
-
-    _check_load_failure(
-        caplog, loader, RuntimeError, "Failed to add snapshot!", status="failed"
-    )
-
-
-class DummyDVCSLoaderNotFound(DummyDVCSLoader, BaseLoader):
-    """A loader which raises a not_found exception during the prepare method call"""
-
-    def prepare(*args, **kwargs):
-        raise NotFound("Unknown origin!")
-
-    def load_status(self):
-        return {
-            "status": "uneventful",
-        }
-
-
-def test_loader_not_found(swh_storage, caplog):
-    loader = DummyDVCSLoaderNotFound(swh_storage)
-    result = loader.load()
-
-    assert result == {"status": "uneventful"}
-
-    _check_load_failure(caplog, loader, NotFound, "Unknown origin!", status="not_found")
-
-
 class DummyLoaderWithError(DummyBaseLoader):
     def prepare(self, *args, **kwargs):
         raise Exception("error")
 
 
-class DummyDVCSLoaderWithError(DummyDVCSLoader, BaseLoader):
-    def prepare(self, *args, **kwargs):
-        raise Exception("error")
-
-
-@pytest.mark.parametrize("loader_cls", [DummyLoaderWithError, DummyDVCSLoaderWithError])
-def test_loader_sentry_tags_on_error(swh_storage, sentry_events, loader_cls):
-    loader = loader_cls(swh_storage)
+def test_loader_sentry_tags_on_error(swh_storage, sentry_events):
+    loader = DummyLoaderWithError(swh_storage)
     loader.load()
     sentry_tags = sentry_events[0]["tags"]
     assert sentry_tags.get(SENTRY_ORIGIN_URL_TAG_NAME) == ORIGIN.url
