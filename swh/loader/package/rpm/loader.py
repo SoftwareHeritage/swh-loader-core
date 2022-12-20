@@ -91,7 +91,14 @@ class RpmLoader(PackageLoader[RpmPackageInfo]):
 
     def get_versions(self) -> Sequence[str]:
         """Returns the keys of the packages input (e.g. fedora34/everything/1.18.0-5, etc...)"""
-        return list(sorted(self.packages, key=parse_version))
+        return list(
+            sorted(
+                self.packages,
+                key=lambda version_key: parse_version(
+                    self.packages[version_key]["version"]
+                ),
+            )
+        )
 
     def get_default_version(self) -> str:
         """Get the latest release version of a rpm package"""
