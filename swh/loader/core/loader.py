@@ -454,7 +454,7 @@ class BaseLoader:
                     },
                 },
             )
-            if not isinstance(e, (SystemExit, KeyboardInterrupt)):
+            if not isinstance(e, (SystemExit, KeyboardInterrupt, NotFound)):
                 sentry_sdk.capture_exception()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
