@@ -5,13 +5,15 @@
 
 import json
 import requests
+import tempfile
 
-from typing import Dict, Optional, Any, Mapping
+from typing import Dict, Optional, Any, Mapping, Tuple
 
 from swh.model import hashutil
+from swh.model import from_disk
 
 from swh.model.model import (
-    Sha1Git, Revision, RevisionType
+    Sha1Git, Revision, RevisionType, Release, ObjectType
 )
 
 from swh.loader.package.utils import EMPTY_AUTHOR
@@ -113,3 +115,45 @@ class FunctionalLoader(PackageLoader):
                 },
             }
         )
+
+    def _load_target(
+            self, p_info, origin) \
+            -> Tuple[str, Optional[Sha1Git], bool]:
+
+        revision_id, loaded = self._load_revision(p_info, origin)
+
+        if loaded is True:
+            return 'revision', revision_id, loaded
+
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error("fILE\n\n")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                dl_artifacts = self.download_package(p_info, tmpdir)
+            except Exception:
+                logger.exception('Unable to retrieve %s',
+                                 p_info)
+                return ('', None, False)
+
+            content = from_disk.Content.from_file(
+                path=dl_artifacts[0][0].encode('utf-8'),
+                max_content_length=self.max_content_size)
+
+            self.storage.content_add([content.to_model()])
+
+            release = Release(
+                name=b'iop',
+                message=b'iop',
+                author=EMPTY_AUTHOR,
+                date=None,
+                target_type=ObjectType.CONTENT,
+                target=content.hash,
+                synthetic=True
+            )
+            self.storage.release_add([release])
+
+            return 'release', release.id, True
+
+        return '', None, False

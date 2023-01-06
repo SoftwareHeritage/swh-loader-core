@@ -40,12 +40,12 @@ def test_loader_one_visit(swh_config, requests_mock_datadir):
 
     stats = get_stats(loader.storage)
     assert {
-        'content': 1,
+        'content': 2,
         'directory': 3,
         'origin': 1,
         'origin_visit': 1,
         'person': 1,
-        'release': 0,
+        'release': 1,
         'revision': 1,
         'skipped_content': 0,
         'snapshot': 1
@@ -54,7 +54,7 @@ def test_loader_one_visit(swh_config, requests_mock_datadir):
     origin_visit = next(loader.storage.origin_visit_get(sources_url))
     # The visit is partial because urls pointing to non tarball file
     # are not handled yet
-    assert origin_visit['status'] == 'partial'
+    assert origin_visit['status'] == 'full'
     assert origin_visit['type'] == 'functional'
 
 

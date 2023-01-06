@@ -172,6 +172,13 @@ class PackageLoader:
         """
         return None
 
+    def resolve_target_from(
+            self, known_artifacts: Dict, artifact_metadata: Dict) \
+            -> Tuple[str, Optional[bytes]]:
+        return 'revision', self.resolve_revision_from(
+            known_artifacts,
+            artifact_metadata)
+
     def download_package(self, p_info: Mapping[str, Any],
                          tmpdir: str) -> List[Tuple[str, Mapping]]:
         """Download artifacts for a specific package. All downloads happen in
@@ -290,19 +297,23 @@ class PackageLoader:
                 # `p_` stands for `package_`
                 for branch_name, p_info in self.get_package_info(version):
                     logger.debug('package_info: %s', p_info)
-                    revision_id = self.resolve_revision_from(
+                    target_type, target_id = self.resolve_target_from(
                         known_artifacts, p_info['raw'])
-                    if revision_id is None:
-                        (revision_id, loaded) = \
-                            self._load_revision(p_info, origin)
+                    if target_id is None:
+                        (target_type, target_id, loaded) = \
+                            self._load_target(p_info, origin)
+
                         if loaded:
                             status_load = 'eventful'
                         else:
                             status_visit = 'partial'
-                        if revision_id is None:
+                        if target_id is None:
                             continue
 
-                    tmp_revisions[version].append((branch_name, revision_id))
+                    tmp_revisions[version].append((
+                        branch_name,
+                        target_type,
+                        target_id))
 
             logger.debug('tmp_revisions: %s', tmp_revisions)
             # Build and load the snapshot
@@ -320,9 +331,9 @@ class PackageLoader:
                             'target': branch_name.encode('utf-8'),
                         }
 
-                for branch_name, target in branch_name_revisions:
+                for branch_name, target_type, target in branch_name_revisions:
                     branches[branch_name.encode('utf-8')] = {
-                        'target_type': 'revision',
+                        'target_type': target_type,
                         'target': target,
                     }
 
@@ -436,3 +447,9 @@ class PackageLoader:
         self.storage.revision_add([revision])
 
         return (revision.id, True)
+
+    def _load_target(
+            self, p_info, origin) \
+            -> Tuple[str, Optional[Sha1Git], bool]:
+        revision_id, loaded = self._load_revision(p_info, origin)
+        return 'revision', revision_id, loaded
