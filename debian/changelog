@@ -1,3 +1,20 @@
+swh-loader-core (5.2.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.2.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2023-02-10 14:12:23 +0100)
+  * Upstream changes:     - v5.2.0     - * Move py.typed from
+    swh/loader/{package,core}/ to swh/loader/     - * Allow partial
+    snapshot creation during ingestion     - * conda: Fix versions
+    sorting and update release names     - * Disable reporting of
+    NotFound exceptions to Sentry     - * docs: Include module indices
+    only when building standalone package doc     - * Drop unused
+    core.loader.DVCSLoader class     - * maven: Add support for md5
+    checkums to check download integrity     - * cpan: Add extid
+    manifest to CpanPackageInfo     - * Add loaders for: Rubygems, RPM,
+    Hackage
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 13 Feb 2023 11:06:40 +0000
+
 swh-loader-core (5.1.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.1.0     - (tagged by Antoine R. Dumont
