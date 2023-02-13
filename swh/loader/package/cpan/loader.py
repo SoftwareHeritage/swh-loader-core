@@ -5,6 +5,7 @@
 
 from datetime import datetime
 import logging
+import string
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
@@ -34,6 +35,13 @@ logger = logging.getLogger(__name__)
 @attr.s
 class CpanPackageInfo(BasePackageInfo):
 
+    EXTID_TYPE = "cpan-manifest-sha256"
+    EXTID_VERSION = 0
+
+    MANIFEST_FORMAT = string.Template(
+        "name $name\nversion $version\ndate $last_modified\nshasum $sha256sum"
+    )
+
     name = attr.ib(type=str)
     """Name of the package"""
 
@@ -45,6 +53,9 @@ class CpanPackageInfo(BasePackageInfo):
 
     author = attr.ib(type=Person)
     """Author"""
+
+    sha256sum = attr.ib(type=str)
+    """sha256 checksum of package tarball"""
 
 
 class CpanLoader(PackageLoader[CpanPackageInfo]):
@@ -157,6 +168,7 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
             author=author,
             checksums=artifact["checksums"],
             directory_extrinsic_metadata=directory_extrinsic_metadata,
+            sha256sum=artifact["checksums"]["sha256"],
         )
         yield release_name(version), p_info
 
