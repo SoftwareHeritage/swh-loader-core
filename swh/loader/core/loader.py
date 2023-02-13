@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import tempfile
 import time
-from typing import Any, ContextManager, Dict, Iterable, List, Optional, Union
+from typing import Any, ContextManager, Dict, List, Optional, Union
 from urllib.parse import urlparse
 
 from requests.exceptions import HTTPError
@@ -25,15 +25,12 @@ from swh.loader.exception import NotFound, UnsupportedChecksumComputation
 from swh.loader.package.utils import download
 from swh.model import from_disk
 from swh.model.model import (
-    BaseContent,
     Content,
     Directory,
     Origin,
     OriginVisit,
     OriginVisitStatus,
     RawExtrinsicMetadata,
-    Release,
-    Revision,
     Sha1Git,
     SkippedContent,
     Snapshot,
@@ -80,6 +77,7 @@ class BaseLoader:
       lister_instance_name: Name of the lister instance which triggered this load.
         Must be None iff lister_name is, but it may be the empty string for listers
         with a single instance.
+
     """
 
     visit_type: str
@@ -101,6 +99,7 @@ class BaseLoader:
         lister_name: Optional[str] = None,
         lister_instance_name: Optional[str] = None,
         metadata_fetcher_credentials: CredentialsType = None,
+        create_partial_snapshot: bool = False,
     ):
         if lister_name == "":
             raise ValueError("lister_name must not be the empty string")
@@ -119,6 +118,7 @@ class BaseLoader:
         self.lister_name = lister_name
         self.lister_instance_name = lister_instance_name
         self.metadata_fetcher_credentials = metadata_fetcher_credentials or {}
+        self.create_partial_snapshot = create_partial_snapshot
 
         if logging_class is None:
             logging_class = "%s.%s" % (
@@ -278,17 +278,18 @@ class BaseLoader:
         """Run any additional processing between fetching and storing the data
 
         Returns:
-            a value that is interpreted as a boolean. If True, fetch_data needs
-            to be called again to complete loading.
-            Ignored if ``fetch_data`` already returned :const:`False`.
+            a value that is interpreted as a boolean. If True, :meth:`fetch_data` needs
+            to be called again to complete loading. Ignored if :meth:`fetch_data`
+            already returned :const:`False`.
         """
         return True
 
     def store_data(self) -> None:
-        """Store fetched data in the database.
+        """Store fetched and processed data in the storage.
 
-        Should call the :func:`maybe_load_xyz` methods, which handle the
-        bundles sent to storage, rather than send directly.
+        This should call the `storage.<object>_add` methods, which handle the objects to
+        store in the storage.
+
         """
         raise NotImplementedError
 
@@ -334,6 +335,16 @@ class BaseLoader:
 
         """
         pass
+
+    def build_partial_snapshot(self) -> Optional[Snapshot]:
+        """When the loader is configured to serialize partial snapshot, this allows the
+        loader to give an implementation that builds a partial snapshot. This is used
+        when the ingestion is taking multiple calls to :meth:`fetch_data` and
+        :meth:`store_data`. Ignored when the loader is not configured to serialize
+        partial snapshot.
+
+        """
+        return None
 
     def load(self) -> Dict[str, str]:
         r"""Loading logic for the loader to follow:
@@ -414,6 +425,26 @@ class BaseLoader:
                 self.store_data()
                 t4 = time.monotonic()
                 total_time_store_data += t4 - t3
+
+                # At the end of each ingestion loop, if the loader is configured for
+                # partial snapshot (see self.create_partial_snapshot) and there are more
+                # data to fetch, allows the loader to record an intermediary snapshot of
+                # the ingestion. This could help when failing to load large repositories
+                # for technical reasons (running out of disk, memory, etc...).
+                if more_data_to_fetch and self.create_partial_snapshot:
+                    partial_snapshot = self.build_partial_snapshot()
+                    if partial_snapshot is not None:
+                        self.storage.snapshot_add([partial_snapshot])
+                        visit_status = OriginVisitStatus(
+                            origin=self.origin.url,
+                            visit=self.visit.visit,
+                            type=self.visit_type,
+                            date=now(),
+                            status="partial",
+                            snapshot=partial_snapshot.id,
+                        )
+                        self.storage.origin_visit_status_add([visit_status])
+
                 if not more_data_to_fetch:
                     break
 
@@ -457,7 +488,7 @@ class BaseLoader:
                     },
                 },
             )
-            if not isinstance(e, (SystemExit, KeyboardInterrupt)):
+            if not isinstance(e, (SystemExit, KeyboardInterrupt, NotFound)):
                 sentry_sdk.capture_exception()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
@@ -568,89 +599,6 @@ class BaseLoader:
         time."""
         self.statsd.increment(f"{name}_sum", value, tags=tags)
         self.statsd.increment(f"{name}_count", tags=tags)
-
-
-class DVCSLoader(BaseLoader):
-    """This base class is a pattern for dvcs loaders (e.g. git, mercurial).
-
-    Those loaders are able to load all the data in one go. For example, the
-    loader defined in swh-loader-git :class:`BulkUpdater`.
-
-    For other loaders (stateful one, (e.g :class:`SWHSvnLoader`),
-    inherit directly from :class:`BaseLoader`.
-
-    """
-
-    def cleanup(self) -> None:
-        """Clean up an eventual state installed for computations."""
-        pass
-
-    def has_contents(self) -> bool:
-        """Checks whether we need to load contents"""
-        return True
-
-    def get_contents(self) -> Iterable[BaseContent]:
-        """Get the contents that need to be loaded"""
-        raise NotImplementedError
-
-    def has_directories(self) -> bool:
-        """Checks whether we need to load directories"""
-        return True
-
-    def get_directories(self) -> Iterable[Directory]:
-        """Get the directories that need to be loaded"""
-        raise NotImplementedError
-
-    def has_revisions(self) -> bool:
-        """Checks whether we need to load revisions"""
-        return True
-
-    def get_revisions(self) -> Iterable[Revision]:
-        """Get the revisions that need to be loaded"""
-        raise NotImplementedError
-
-    def has_releases(self) -> bool:
-        """Checks whether we need to load releases"""
-        return True
-
-    def get_releases(self) -> Iterable[Release]:
-        """Get the releases that need to be loaded"""
-        raise NotImplementedError
-
-    def get_snapshot(self) -> Snapshot:
-        """Get the snapshot that needs to be loaded"""
-        raise NotImplementedError
-
-    def eventful(self) -> bool:
-        """Whether the load was eventful"""
-        raise NotImplementedError
-
-    def store_data(self) -> None:
-        assert self.origin
-        if self.save_data_path:
-            self.save_data()
-
-        if self.has_contents():
-            for obj in self.get_contents():
-                if isinstance(obj, Content):
-                    self.storage.content_add([obj])
-                elif isinstance(obj, SkippedContent):
-                    self.storage.skipped_content_add([obj])
-                else:
-                    raise TypeError(f"Unexpected content type: {obj}")
-        if self.has_directories():
-            for directory in self.get_directories():
-                self.storage.directory_add([directory])
-        if self.has_revisions():
-            for revision in self.get_revisions():
-                self.storage.revision_add([revision])
-        if self.has_releases():
-            for release in self.get_releases():
-                self.storage.release_add([release])
-        snapshot = self.get_snapshot()
-        self.storage.snapshot_add([snapshot])
-        self.flush()
-        self.loaded_snapshot_id = snapshot.id
 
 
 class NodeLoader(BaseLoader):

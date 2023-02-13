@@ -5,7 +5,7 @@
 
 from swh.loader.package.conda.loader import CondaLoader
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
-from swh.model.hashutil import hash_to_bytes
+from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.model.model import (
     ObjectType,
     Person,
@@ -72,19 +72,39 @@ def test_conda_loader_load_multiple_version(
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "9c20bedf9af54ef7b3937fe4675f9f17b9331b7b"
+    first_release = Release(
+        name=b"0.11.1-py36h9f0ad1d_1-linux-64",
+        message=b"Synthetic release for Conda source package lifetimes version"
+        b" linux-64/0.11.1-py36h9f0ad1d_1\n",
+        target=hash_to_bytes("0c63e5f909e481d8e5832bac8abbd089bca42993"),
+        target_type=ObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person(
+            fullname=b"CamDavidsonPilon", name=b"CamDavidsonPilon", email=None
+        ),
+        date=TimestampWithTimezone.from_iso8601("2020-07-06T12:19:36.425000+00:00"),
+    )
 
-    assert expected_snapshot_id == load_status["snapshot_id"]
+    # This one have empty author and date
+    second_release = Release(
+        name=b"0.11.1-py36hc560c46_1-linux-64",
+        message=b"Synthetic release for Conda source package lifetimes version"
+        b" linux-64/0.11.1-py36hc560c46_1\n",
+        target=hash_to_bytes("45ca406aeb31f51836a8593b619ab216403ce489"),
+        target_type=ObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person(fullname=b"", name=None, email=None),
+        date=None,
+    )
 
     expected_snapshot = Snapshot(
-        id=hash_to_bytes(load_status["snapshot_id"]),
         branches={
             b"releases/linux-64/0.11.1-py36h9f0ad1d_1": SnapshotBranch(
-                target=hash_to_bytes("9848f61b501801799025d632221833a0f988dca2"),
+                target=first_release.id,
                 target_type=TargetType.RELEASE,
             ),
             b"releases/linux-64/0.11.1-py36hc560c46_1": SnapshotBranch(
-                target=hash_to_bytes("fad38f867db9311504a4c340f2b32dcdffa46e27"),
+                target=second_release.id,
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
@@ -93,6 +113,8 @@ def test_conda_loader_load_multiple_version(
             ),
         },
     )
+
+    assert hash_to_hex(expected_snapshot.id) == load_status["snapshot_id"]
 
     check_snapshot(expected_snapshot, swh_storage)
 
@@ -107,45 +129,6 @@ def test_conda_loader_load_multiple_version(
         "skipped_content": 0,
         "snapshot": 1,
     } == stats
-
-    assert swh_storage.release_get(
-        [hash_to_bytes("9848f61b501801799025d632221833a0f988dca2")]
-    )[0] == Release(
-        name=b"linux-64/0.11.1-py36h9f0ad1d_1",
-        message=b"Synthetic release for Conda source package lifetimes version"
-        b" linux-64/0.11.1-py36h9f0ad1d_1\n",
-        target=hash_to_bytes("0c63e5f909e481d8e5832bac8abbd089bca42993"),
-        target_type=ObjectType.DIRECTORY,
-        synthetic=True,
-        author=Person(
-            fullname=b"CamDavidsonPilon", name=b"CamDavidsonPilon", email=None
-        ),
-        date=TimestampWithTimezone.from_iso8601("2020-07-06T12:19:36.425000+00:00"),
-        id=hash_to_bytes("9848f61b501801799025d632221833a0f988dca2"),
-    )
-
-    assert_last_visit_matches(
-        swh_storage,
-        url=ORIGINS[0]["url"],
-        status="full",
-        type="conda",
-        snapshot=hash_to_bytes(load_status["snapshot_id"]),
-    )
-
-    # This one have empty author and date
-    assert swh_storage.release_get(
-        [hash_to_bytes("fad38f867db9311504a4c340f2b32dcdffa46e27")]
-    )[0] == Release(
-        name=b"linux-64/0.11.1-py36hc560c46_1",
-        message=b"Synthetic release for Conda source package lifetimes version"
-        b" linux-64/0.11.1-py36hc560c46_1\n",
-        target=hash_to_bytes("45ca406aeb31f51836a8593b619ab216403ce489"),
-        target_type=ObjectType.DIRECTORY,
-        synthetic=True,
-        author=Person(fullname=b"", name=None, email=None),
-        date=None,
-        id=hash_to_bytes("fad38f867db9311504a4c340f2b32dcdffa46e27"),
-    )
 
     assert_last_visit_matches(
         swh_storage,

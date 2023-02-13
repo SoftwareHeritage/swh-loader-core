@@ -67,6 +67,7 @@ setup(
         loader.debian=swh.loader.package.debian:register
         loader.deposit=swh.loader.package.deposit:register
         loader.golang=swh.loader.package.golang:register
+        loader.hackage=swh.loader.package.hackage:register
         loader.nixguix=swh.loader.package.nixguix:register
         loader.npm=swh.loader.package.npm:register
         loader.opam=swh.loader.package.opam:register
@@ -74,6 +75,8 @@ setup(
         loader.puppet=swh.loader.package.puppet:register
         loader.pypi=swh.loader.package.pypi:register
         loader.maven=swh.loader.package.maven:register
+        loader.rubygems=swh.loader.package.rubygems:register
+        loader.rpm=swh.loader.package.rpm:register
     """,
     classifiers=[
         "Programming Language :: Python :: 3",

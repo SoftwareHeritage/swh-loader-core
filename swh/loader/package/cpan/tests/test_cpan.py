@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from swh.loader.package import __version__
-from swh.loader.package.cpan.loader import CpanLoader
+from swh.loader.package.cpan.loader import CpanLoader, CpanPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
@@ -207,3 +207,23 @@ def test_cpan_loader_load_multiple_version(
         ).results
         == expected_metadata
     )
+
+    package_extids = [
+        package_info.extid()
+        for version in cpan_loader.get_versions()
+        for _, package_info in cpan_loader.get_package_info(version)
+    ]
+
+    extids = storage.extid_get_from_extid(
+        id_type=CpanPackageInfo.EXTID_TYPE,
+        ids=[extid for (_, _, extid) in package_extids],
+        version=CpanPackageInfo.EXTID_VERSION,
+    )
+
+    release_swhids = {
+        CoreSWHID(object_type=ObjectType.RELEASE, object_id=branch.target)
+        for branch in expected_snapshot.branches.values()
+        if branch.target_type == TargetType.RELEASE
+    }
+
+    assert {extid.target for extid in extids} == release_swhids
