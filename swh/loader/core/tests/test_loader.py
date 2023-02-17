@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
+from swh.core.api.classes import stream_results
 from swh.loader.core.loader import (
     SENTRY_ORIGIN_URL_TAG_NAME,
     SENTRY_VISIT_TYPE_TAG_NAME,
@@ -33,7 +34,6 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
-import swh.storage.exc
 
 from .conftest import compute_hashes, compute_nar_hashes, nix_store_missing
 
@@ -187,8 +187,16 @@ def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
     assert result == {"status": "eventful"}
 
     fetcher_cls.assert_not_called()
-    with pytest.raises(swh.storage.exc.StorageArgumentException):
-        swh_storage.raw_extrinsic_metadata_get(ORIGIN.swhid(), METADATA_AUTHORITY)
+    assert (
+        list(
+            stream_results(
+                swh_storage.raw_extrinsic_metadata_get,
+                ORIGIN.swhid(),
+                METADATA_AUTHORITY,
+            )
+        )
+        == []
+    )
 
 
 def test_base_loader_forked_origin(swh_storage, mocker):
