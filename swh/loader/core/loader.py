@@ -626,7 +626,7 @@ class NodeLoader(BaseLoader):
         url: str,
         checksums: Dict[str, str],
         checksums_computation: str = "standard",
-        fallback_urls: List[str] = None,
+        fallback_urls: Optional[List[str]] = None,
         **kwargs,
     ):
         super().__init__(storage, url, **kwargs)
