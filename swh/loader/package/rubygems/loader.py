@@ -112,8 +112,9 @@ class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
         logger.debug("Unpacking gem file to point to the actual code")
         uncompressed_path = self.uncompress(dl_artifacts, dest=tmpdir)
         source_code_tarball = os.path.join(uncompressed_path, "data.tar.gz")
-
-        return super()._load_directory([(source_code_tarball, {})], tmpdir)
+        return super()._load_directory(
+            [(source_code_tarball, {})], os.path.join(tmpdir, "data")
+        )
 
     def get_package_info(
         self, version: str
