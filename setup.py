@@ -54,6 +54,7 @@ setup(
     entry_points="""
         [swh.cli.subcommands]
         loader=swh.loader.cli
+        nar=swh.loader.core.nar
         [swh.workers]
         loader.content=swh.loader.core:register_content
         loader.directory=swh.loader.core:register_directory
