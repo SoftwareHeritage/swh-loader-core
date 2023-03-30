@@ -8,7 +8,7 @@ import io
 import os
 from pathlib import Path
 import stat
-from typing import Callable
+from typing import List
 
 import click
 
@@ -22,11 +22,11 @@ class Nar:
     """NAR serializer.
 
     This builds the NAR structure and serializes it as per the phd thesis from Eelco
-    Dolstra thesis.
+    Dolstra thesis. See https://edolstra.github.io/pubs/phd-thesis.pdf.
 
     For example, this tree on a filesystem:
 
-    :: code:
+    .. code::
 
        $ tree foo
        foo
@@ -38,7 +38,13 @@ class Nar:
 
     serializes as:
 
-    :: code:
+    .. code::
+
+       nix-archive-1(typedirectoryentry(namebarnode(typedirectoryentry(nameexenode(typeregularexecutablecontents<Content of file foo/bar/exe>))))entry(namebaznode(typeregularcontents<Content of file foo/baz>)))
+
+    For reability, the debug mode prints the following:
+
+    .. code::
 
        nix-archive-1
          (
@@ -63,7 +69,7 @@ class Nar:
                  executable
 
                  contents
-                 <_io.BufferedReader name='foo/bar/exe'>
+                 <Content of file foo/bar/exe>
                  )
                )
              )
@@ -77,27 +83,49 @@ class Nar:
              type
              regular
              contents
-             <_io.BufferedReader name='foo/baz'>
+             <Content of file foo/baz>
             )
           )
         )
 
-    """
+    Note: "<Content of file $name>" is a placeholder for the actual file content
 
-    def __init__(self, exclude_vcs: bool, updater: Callable, debug: bool = False):
+    """  # noqa
+
+    def __init__(
+        self,
+        hash_names: List[str],
+        format_output: str = "hex",
+        exclude_vcs: bool = False,
+        debug: bool = False,
+    ):
+        self.hash_names = hash_names
+        self.updater = {
+            hash_name: hashlib.sha256()
+            if hash_name.lower() == "sha256"
+            else hashlib.sha1()
+            for hash_name in hash_names
+        }
+        format_output = format_output.lower()
         self.exclude_vcs = exclude_vcs
-        self.updater_fn = updater
 
         self.__debug = debug
         self.__indent = 0
 
     def str_(self, thing):
-        """Compute the nar serialization format on 'thing' and compute its hash."""
-        # named 'str' in Figure 5.2 p.93 (page 101 of pdf)
+        """Compute the nar serialization format on 'thing' and compute its hash.
 
+        This is the function named named 'str' in Figure 5.2 p.93 (page 101 of pdf) [1]
+
+        [1] https://edolstra.github.io/pubs/phd-thesis.pdf
+        """
         if self.__debug and isinstance(thing, (str, io.BufferedReader)):
             indent = "".join(["  " for _ in range(self.__indent)])
-            print(indent + str(thing))
+            if isinstance(thing, io.BufferedReader):
+                msg = f"{indent} <Content of file {thing.name}>"
+            else:
+                msg = f"{indent}{thing}"
+            print(msg)
 
         # named 'int'
         if isinstance(thing, str):
@@ -114,14 +142,14 @@ class Nar:
             raise ValueError("not string nor file")
 
         blen = length.to_bytes(8, byteorder="little")  # 64-bit little endian
-        self.updater_fn(blen)
+        self.update(blen)
 
         # first part of 'pad'
         if isinstance(thing, str):
-            self.updater_fn(byte_sequence)
+            self.update(byte_sequence)
         elif isinstance(thing, io.BufferedReader):
             for chunk in iter(lambda: thing.read(CHUNK_SIZE), b""):
-                self.updater_fn(chunk)
+                self.update(chunk)
 
         # second part of 'pad
         m = length % 8
@@ -130,7 +158,11 @@ class Nar:
         else:
             offset = 8 - m
         boffset = bytearray(offset)
-        self.updater_fn(boffset)
+        self.update(boffset)
+
+    def update(self, chunk):
+        for hash_name in self.hash_names:
+            self.updater[hash_name].update(chunk)
 
     def _filter_and_serialize(self, fso: Path) -> None:
         """On the first level of the main tree, we may have to skip some paths (e.g.
@@ -167,7 +199,7 @@ class Nar:
             if os.access(fso, os.X_OK):
                 self.str_(["executable", ""])
             self.str_("contents")
-            with fso.open("rb") as f:
+            with open(str(fso), "rb") as f:
                 self.str_(f)
 
         elif stat.S_ISLNK(mode):
@@ -205,7 +237,36 @@ class Nar:
             else []
         )
         self._serialize(fso, first_level=True)
-        return
+
+    def _compute_result(self, convert_fn):
+        return {
+            hash_name: convert_fn(self.updater[hash_name].hexdigest())
+            for hash_name in self.hash_names
+        }
+
+    def hexdigest(self):
+        """Compute the hash results with hex format."""
+        return self._compute_result(_identity)
+
+    def b64digest(self):
+        """Compute the hash results with b64 format."""
+        return self._compute_result(_convert_b64)
+
+    def b32digest(self):
+        """Compute the hash results with b32 format."""
+        return self._compute_result(_convert_b32)
+
+
+def _identity(hsh: str) -> str:
+    return hsh
+
+
+def _convert_b64(hsh: str) -> str:
+    return base64.b64encode(bytes.fromhex(hsh)).decode().lower()
+
+
+def _convert_b32(hsh: str) -> str:
+    return base64.b32encode(bytes.fromhex(hsh)).decode().lower()
 
 
 @swh_cli_group.command(name="nar", context_settings=CONTEXT_SETTINGS)
@@ -214,7 +275,12 @@ class Nar:
     "--exclude-vcs", "-x", help="exclude version control directories", is_flag=True
 )
 @click.option(
-    "--hash-algo", "-H", default="sha256", type=click.Choice(["sha256", "sha1"])
+    "--hash-algo",
+    "-H",
+    "hash_names",
+    multiple=True,
+    default=["sha256"],
+    type=click.Choice(["sha256", "sha1"]),
 )
 @click.option(
     "--format-output",
@@ -223,27 +289,21 @@ class Nar:
     type=click.Choice(["hex", "base32", "base64"], case_sensitive=False),
 )
 @click.option("--debug/--no-debug", default=lambda: os.environ.get("DEBUG", False))
-def cli(exclude_vcs, directory, hash_algo, format_output, debug):
+def cli(exclude_vcs, directory, hash_names, format_output, debug):
     """Compute NAR hashes on a directory."""
-    h = hashlib.sha256() if hash_algo == "sha256" else hashlib.sha1()
-    updater = h.update
-    format_output = format_output.lower()
 
-    def identity(hsh):
-        return hsh
-
-    def convert_b64(hsh: str):
-        return base64.b64encode(bytes.fromhex(hsh)).decode().lower()
-
-    def convert_b32(hsh: str):
-        return base64.b32encode(bytes.fromhex(hsh)).decode().lower()
+    nar = Nar(hash_names, format_output, exclude_vcs, debug=debug)
 
     convert_fn = {
-        "hex": identity,
-        "base64": convert_b64,
-        "base32": convert_b32,
+        "base64": nar.b64digest,
+        "base32": nar.b32digest,
+        "hex": nar.hexdigest,
     }
 
-    nar = Nar(exclude_vcs, updater, debug=debug)
     nar.serialize(directory)
-    print(convert_fn[format_output](h.hexdigest()))
+    result = convert_fn[format_output]()
+
+    if len(hash_names) == 1:
+        print(result[hash_names[0]])
+    else:
+        print(result)

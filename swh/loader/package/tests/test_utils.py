@@ -97,15 +97,15 @@ def test_download_fail_hashes_mismatch(tmp_path, requests_mock):
         "sha256": "1d9224378d77925d612c9f926eb9fb92850e6551def8328011b6a972323298d5",  # noqa
     }
 
-    for hash_algo in good.keys():
-        wrong_hash = good[hash_algo].replace("1", "0")
+    for hash_name in good.keys():
+        wrong_hash = good[hash_name].replace("1", "0")
         expected_hashes = good.copy()
-        expected_hashes[hash_algo] = wrong_hash  # set the wrong hash
+        expected_hashes[hash_name] = wrong_hash  # set the wrong hash
 
         expected_msg = "Failure when fetching %s. " "Checksum mismatched: %s != %s" % (
             url,
             wrong_hash,
-            good[hash_algo],
+            good[hash_name],
         )
 
         with pytest.raises(ValueError, match=expected_msg):

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2022  The Software Heritage developers
+# Copyright (C) 2015 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -20,7 +20,7 @@ from swh.core.config import load_from_envvar
 from swh.core.statsd import Statsd
 from swh.core.tarball import uncompress
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
-from swh.loader.core.utils import nix_hashes
+from swh.loader.core.nar import Nar
 from swh.loader.exception import NotFound, UnsupportedChecksumComputation
 from swh.loader.package.utils import download
 from swh.model import from_disk
@@ -705,9 +705,9 @@ class ContentLoader(NodeLoader):
                     if self.checksums_computation == "nar":
                         # hashes are not "standard", so we need an extra check to happen
                         self.log.debug("Content to check nar hashes: %s", file_path)
-                        actual_checksums = nix_hashes(
-                            Path(file_path), self.checksums.keys()
-                        ).hexdigest()
+                        nar = Nar(list(self.checksums.keys()))
+                        nar.serialize(Path(file_path))
+                        actual_checksums = nar.hexdigest()
 
                         if actual_checksums != self.checksums:
                             errors.append(
@@ -847,9 +847,9 @@ class DirectoryLoader(NodeLoader):
                     # on the uncompressed tarball
                     dir_to_check = next(directory_path.iterdir())
                     self.log.debug("Directory to check nar hashes: %s", dir_to_check)
-                    actual_checksums = nix_hashes(
-                        dir_to_check, self.checksums.keys()
-                    ).hexdigest()
+                    nar = Nar(list(self.checksums.keys()))
+                    nar.serialize(dir_to_check)
+                    actual_checksums = nar.hexdigest()
 
                     if actual_checksums != self.checksums:
                         errors.append(
