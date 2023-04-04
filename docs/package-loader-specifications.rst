@@ -141,6 +141,15 @@ Here is an overview of the fields (+ internal version name + branch name) used b
         - intrinsic metadata if any else from extrinsic metadata
         - from extrinsic metadata
         - ""
+      * - hex
+        - ``p_info.version``
+        - ``release_name(version)``
+        - =version
+        - standard message
+        - true
+        - from extrinsic metadata
+        - from extrinsic metadata
+        - Source code is extracted from a nested tarball
       * - maven-loader
         - passed as arg
         - HEAD

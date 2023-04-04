@@ -450,6 +450,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         uncompressed_path = os.path.join(dest, "src")
         for a_path, _ in dl_artifacts:
             uncompress(a_path, dest=uncompressed_path)
+
         return uncompressed_path
 
     def extra_branches(self) -> Dict[bytes, Mapping[str, Any]]:
