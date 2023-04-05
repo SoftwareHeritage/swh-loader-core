@@ -648,7 +648,9 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             last_snapshot_targets: Set[Sha1Git] = set()
         else:
             last_snapshot_targets = {
-                branch.target for branch in last_snapshot.branches.values()
+                branch.target
+                for branch in last_snapshot.branches.values()
+                if branch is not None
             }
 
         new_extids: Set[ExtID] = set()

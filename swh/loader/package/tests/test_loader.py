@@ -635,3 +635,30 @@ def test_loader_origin_with_package_info_failure(swh_storage, requests_mock_data
     assert set(loader.last_snapshot().branches.keys()) == {
         f"branch-v{i}.0".encode() for i in (1, 3, 4)
     }
+
+
+def test_loader_with_dangling_branch_in_last_snapshot(
+    swh_storage, requests_mock_datadir
+):
+
+    loader = StubPackageLoader(swh_storage, ORIGIN_URL)
+
+    assert loader.load() == {
+        "snapshot_id": "dcb9ecef64af73f2cdac7f5463cb6dece6b1db61",
+        "status": "eventful",
+    }
+
+    last_snapshot = loader.last_snapshot()
+
+    class StubPackageLoaderWithDanglingBranchInLastSnapshot(StubPackageLoader):
+        def last_snapshot(self):
+            snapshot = last_snapshot.to_dict()
+            snapshot["branches"][b"branch-v1.0"] = None
+            return Snapshot.from_dict(snapshot)
+
+    loader = StubPackageLoaderWithDanglingBranchInLastSnapshot(swh_storage, ORIGIN_URL)
+
+    assert loader.load() == {
+        "snapshot_id": "dcb9ecef64af73f2cdac7f5463cb6dece6b1db61",
+        "status": "eventful",
+    }
