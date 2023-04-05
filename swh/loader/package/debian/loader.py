@@ -446,8 +446,8 @@ def get_intrinsic_package_metadata(
     history: List[Tuple[str, str]] = []
 
     for block in parsed_changelog:
-        assert block.package is not None
-        history.append((block.package, str(block.version)))
+        assert block.package is not None and block._raw_version is not None
+        history.append((block.package, block._raw_version))
 
     changelog = DebianPackageChangelog(
         person=uid_to_person(parsed_changelog.author),

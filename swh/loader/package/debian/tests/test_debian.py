@@ -8,6 +8,7 @@ import datetime
 import hashlib
 import logging
 from os import path
+import textwrap
 
 import pytest
 import requests
@@ -433,6 +434,21 @@ def test_debian_get_intrinsic_package_metadata(
 
     # Retrieve information on package
     dsc_path = path.join(path.dirname(extracted_path), dsc_name)
+
+    with open(path.join(extracted_path, "debian/changelog"), "a") as changelog:
+        # Add a changelog entry with an invalid version string
+        changelog.write(
+            textwrap.dedent(
+                """
+                cicero (0.7-1_cvs) unstable; urgency=low
+
+                    * Initial release
+
+                    -- John Doe <john.doe@example.org>  Tue, 12 Sep 2006 10:20:09 +0200
+                """
+            )
+        )
+
     actual_package_info = get_intrinsic_package_metadata(
         p_info, dsc_path, extracted_path
     )
@@ -446,6 +462,7 @@ def test_debian_get_intrinsic_package_metadata(
                 ("cicero", "0.7.2-2"),
                 ("cicero", "0.7.2-1"),
                 ("cicero", "0.7-1"),
+                ("cicero", "0.7-1_cvs"),
             ],
             person={
                 "email": "sthibault@debian.org",
