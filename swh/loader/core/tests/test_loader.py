@@ -35,7 +35,7 @@ from swh.model.model import (
     TargetType,
 )
 
-from .conftest import compute_hashes, compute_nar_hashes, nix_store_missing
+from .conftest import compute_hashes, compute_nar_hashes
 
 ORIGIN = Origin(url="some-url")
 PARENT_ORIGIN = Origin(url="base-origin-url")
@@ -533,9 +533,6 @@ def test_content_loader_ok_with_fallback(
 compute_content_nar_hashes = partial(compute_nar_hashes, is_tarball=False)
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
 @pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
 def test_content_loader_ok_simple(
     swh_storage, requests_mock_datadir, content_path, checksums_computation
@@ -566,9 +563,6 @@ def test_content_loader_ok_simple(
     assert result2 == {"status": "uneventful"}
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
 @pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
 def test_content_loader_hash_mismatch(
     swh_storage, requests_mock_datadir, content_path, checksums_computation
@@ -655,9 +649,6 @@ def test_directory_loader_404_with_fallback(
     )
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
 @pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
 def test_directory_loader_hash_mismatch(
     caplog, swh_storage, requests_mock_datadir, tarball_path, checksums_computation
@@ -716,9 +707,6 @@ def test_directory_loader_ok_with_fallback(
     assert result == {"status": "eventful"}
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
 @pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
 def test_directory_loader_ok_simple(
     swh_storage, requests_mock_datadir, tarball_path, checksums_computation

@@ -1,18 +1,15 @@
-# Copyright (C) 2018-2022  The Software Heritage developers
+# Copyright (C) 2018-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 from os import path
-import shutil
 from typing import Dict, List
 
 import pytest
 
 from swh.loader.core.utils import compute_nar_hashes
 from swh.model.hashutil import MultiHash
-
-nix_store_missing = shutil.which("nix-store") is None
 
 
 @pytest.fixture
