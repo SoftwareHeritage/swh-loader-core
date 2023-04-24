@@ -1,4 +1,4 @@
-# Copyright (C) 2022 zimoun and the Software Heritage developers
+# Copyright (C) 2022-2023 zimoun and the Software Heritage developers
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
@@ -8,12 +8,13 @@ import io
 import os
 from pathlib import Path
 import stat
-from typing import List
+from typing import Dict, List
 
 import click
 
 from swh.core.cli import CONTEXT_SETTINGS
 from swh.core.cli import swh as swh_cli_group
+from swh.model.hashutil import hash_to_hex
 
 CHUNK_SIZE = 65536
 
@@ -240,33 +241,39 @@ class Nar:
 
     def _compute_result(self, convert_fn):
         return {
-            hash_name: convert_fn(self.updater[hash_name].hexdigest())
+            hash_name: convert_fn(self.updater[hash_name].digest())
             for hash_name in self.hash_names
         }
 
-    def hexdigest(self):
-        """Compute the hash results with hex format."""
+    def digest(self) -> Dict[str, bytes]:
+        """Compute the hash results with bytes format."""
         return self._compute_result(_identity)
 
-    def b64digest(self):
+    def hexdigest(self) -> Dict[str, str]:
+        """Compute the hash results with hex format."""
+        return self._compute_result(hash_to_hex)
+
+    def b64digest(self) -> Dict[str, str]:
         """Compute the hash results with b64 format."""
         return self._compute_result(_convert_b64)
 
-    def b32digest(self):
+    def b32digest(self) -> Dict[str, str]:
         """Compute the hash results with b32 format."""
         return self._compute_result(_convert_b32)
 
 
-def _identity(hsh: str) -> str:
+def _identity(hsh: bytes) -> bytes:
     return hsh
 
 
 def _convert_b64(hsh: str) -> str:
-    return base64.b64encode(bytes.fromhex(hsh)).decode().lower()
+    hsh_hex = hash_to_hex(hsh)
+    return base64.b64encode(bytes.fromhex(hsh_hex)).decode().lower()
 
 
 def _convert_b32(hsh: str) -> str:
-    return base64.b32encode(bytes.fromhex(hsh)).decode().lower()
+    hsh_hex = hash_to_hex(hsh)
+    return base64.b32encode(bytes.fromhex(hsh_hex)).decode().lower()
 
 
 @swh_cli_group.command(name="nar", context_settings=CONTEXT_SETTINGS)

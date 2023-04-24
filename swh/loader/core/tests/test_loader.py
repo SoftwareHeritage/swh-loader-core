@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2022  The Software Heritage developers
+# Copyright (C) 2018-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -8,6 +8,7 @@ from functools import partial
 import hashlib
 import logging
 import time
+from typing import Dict, List
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -25,6 +26,7 @@ from swh.loader.exception import NotFound, UnsupportedChecksumComputation
 from swh.loader.tests import assert_last_visit_matches, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
+    ExtID,
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
@@ -34,6 +36,7 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
+from swh.storage.interface import StorageInterface
 
 from .conftest import compute_hashes, compute_nar_hashes
 
@@ -533,6 +536,24 @@ def test_content_loader_ok_with_fallback(
 compute_content_nar_hashes = partial(compute_nar_hashes, is_tarball=False)
 
 
+def fetch_extids_from_checksums(
+    storage: StorageInterface, checksums: Dict[str, str]
+) -> List[ExtID]:
+    from swh.model.hashutil import hash_to_bytes
+
+    EXTID_TYPE_NAR = "nar-%s-raw-validated"
+    EXTID_TYPE_NAR_VERSION = 0
+
+    extids = []
+    for hash_algo, checksum in checksums.items():
+        id_type = EXTID_TYPE_NAR % hash_algo
+        ids = [hash_to_bytes(checksum)]
+        extid = storage.extid_get_from_extid(id_type, ids, EXTID_TYPE_NAR_VERSION)
+        extids.extend(extid)
+
+    return extids
+
+
 @pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
 def test_content_loader_ok_simple(
     swh_storage, requests_mock_datadir, content_path, checksums_computation
@@ -542,16 +563,21 @@ def test_content_loader_ok_simple(
         compute_content_nar_hashes if checksums_computation == "nar" else compute_hashes
     )
 
+    checksums = compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"])
     origin = Origin(CONTENT_URL)
     loader = ContentLoader(
         swh_storage,
         origin.url,
-        checksums=compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"]),
+        checksums=checksums,
         checksums_computation=checksums_computation,
     )
     result = loader.load()
 
     assert result == {"status": "eventful"}
+
+    if checksums_computation == "nar":
+        extids = fetch_extids_from_checksums(loader.storage, checksums)
+        assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
         swh_storage, origin.url, status="full", type="content"
@@ -707,7 +733,7 @@ def test_directory_loader_ok_with_fallback(
     assert result == {"status": "eventful"}
 
 
-@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+@pytest.mark.parametrize("checksums_computation", ["nar", "standard"])
 def test_directory_loader_ok_simple(
     swh_storage, requests_mock_datadir, tarball_path, checksums_computation
 ):
@@ -717,15 +743,21 @@ def test_directory_loader_ok_simple(
         compute_nar_hashes if checksums_computation == "nar" else compute_hashes
     )
 
+    checksums = compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"])
+
     loader = DirectoryLoader(
         swh_storage,
         origin.url,
-        checksums=compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"]),
+        checksums=checksums,
         checksums_computation=checksums_computation,
     )
     result = loader.load()
 
     assert result == {"status": "eventful"}
+
+    if checksums_computation == "nar":
+        extids = fetch_extids_from_checksums(loader.storage, checksums)
+        assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
         swh_storage, origin.url, status="full", type="directory"
