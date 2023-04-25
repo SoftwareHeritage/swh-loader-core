@@ -21,7 +21,7 @@ from swh.core.statsd import Statsd
 from swh.core.tarball import uncompress
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.core.nar import Nar
-from swh.loader.exception import NotFound, UnsupportedChecksumComputation
+from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.package.utils import download
 from swh.model import from_disk
 from swh.model.hashutil import hash_to_bytes
@@ -610,13 +610,12 @@ class NodeLoader(BaseLoader):
     """Common class for :class:`ContentLoader` and :class:`Directoryloader`.
 
     The "checksums" field is a dictionary of hex hashes on the object retrieved (content
-    or directory). When "checksums_computation" is "standard", that means the checksums
-    are computed on the content of the remote file to retrieve itself (as unix cli
-    allows, "sha1sum", "sha256sum", ...). When "checksums_computation" is "nar", the
-    checks is delegated to Nar class (which does an equivalent hash computation as the
-    `nix store --dump` cli). It's actually checksums on the content of the remote
-    artifact retrieved (be it a file or an archive). Other "checksums_computation" will
-    raise UnsupportedChecksumComputation.
+    or directory). When "checksum_layout" is "standard", the checksums are computed on
+    the content of the remote file to retrieve itself (as unix cli allows, "sha1sum",
+    "sha256sum", ...). When "checksum_layout" is "nar", the checks is delegated to Nar
+    class (which does an equivalent hash computation as the `nix store --dump` cli).
+    It's actually checksums on the content of the remote artifact retrieved (be it a
+    file or an archive). Other "checksum_layout" will raise UnsupportedChecksumLayout.
 
     The multiple "fallback" urls received are mirror urls only used to fetch the object
     if the main origin is no longer available. Those are not stored.
@@ -631,29 +630,43 @@ class NodeLoader(BaseLoader):
         storage: StorageInterface,
         url: str,
         checksums: Dict[str, str],
-        checksums_computation: str = "standard",
+        checksums_computation: Optional[str] = None,
+        checksum_layout: Optional[str] = None,
         fallback_urls: Optional[List[str]] = None,
         **kwargs,
     ):
         super().__init__(storage, url, **kwargs)
         self.snapshot: Optional[Snapshot] = None
         self.checksums = checksums
-        self.checksums_computation = checksums_computation
-        if self.checksums_computation not in ("nar", "standard"):
-            raise UnsupportedChecksumComputation(
-                "Unsupported checksums computations: %s",
-                self.checksums_computation,
+
+        # Keep compatibility with the previous name 'checksums_computations'
+        if checksum_layout is not None:
+            checksum_layout = checksum_layout
+        elif checksum_layout is None and checksums_computation is not None:
+            # checksum_layout param has priority over the checksums_computation
+            # parameter if both are provided
+            checksum_layout = checksums_computation
+        else:
+            # finally, fall back to the previous behavior, defaulting to standard if
+            # nothing is provided
+            checksum_layout = "standard"
+
+        if checksum_layout not in ("nar", "standard"):
+            raise UnsupportedChecksumLayout(
+                "Unsupported checksums layout: %s",
+                checksum_layout,
             )
 
+        self.checksum_layout = checksum_layout
         fallback_urls_ = fallback_urls or []
         self.mirror_urls: List[str] = [self.origin.url, *fallback_urls_]
         # Ensure content received matched the "standard" checksums received, this
         # contains the checksums when checksum_computations is "standard", it's empty
         # otherwise
         self.standard_hashes = (
-            self.checksums if self.checksums_computation == "standard" else {}
+            self.checksums if self.checksum_layout == "standard" else {}
         )
-        self.log.debug("Loader checksums computation: %s", self.checksums_computation)
+        self.log.debug("Loader checksums computation: %s", self.checksum_layout)
 
     def prepare(self) -> None:
         self.last_snapshot = snapshot_get_latest(self.storage, self.origin.url)
@@ -716,7 +729,7 @@ class NodeLoader(BaseLoader):
         are keys in the provided :data:`self.checksums` dict.
 
         """
-        if self.checksums_computation == "nar" and node is not None:
+        if self.checksum_layout == "nar" and node is not None:
             extids = self._nar_extids(node)
             self._load_extids(extids)
 
@@ -760,7 +773,7 @@ class ContentLoader(NodeLoader):
                     file_path, _ = download(
                         url, dest=tmpdir, hashes=self.standard_hashes
                     )
-                    if self.checksums_computation == "nar":
+                    if self.checksum_layout == "nar":
                         # hashes are not "standard", so we need an extra check to happen
                         self.log.debug("Content to check nar hashes: %s", file_path)
                         nar = Nar(list(self.checksums.keys()))
@@ -903,7 +916,7 @@ class DirectoryLoader(NodeLoader):
                 uncompress(tarball_path, dest=str(directory_path))
                 self.log.debug("uncompressed path to directory: %s", directory_path)
 
-                if self.checksums_computation == "nar":
+                if self.checksum_layout == "nar":
                     # hashes are not "standard", so we need an extra check to happen
                     # on the uncompressed tarball
                     dir_to_check = next(directory_path.iterdir())
