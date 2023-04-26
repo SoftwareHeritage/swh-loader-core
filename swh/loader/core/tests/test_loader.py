@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2022  The Software Heritage developers
+# Copyright (C) 2018-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -8,10 +8,12 @@ from functools import partial
 import hashlib
 import logging
 import time
+from typing import Dict, List
 from unittest.mock import MagicMock, call
 
 import pytest
 
+from swh.core.api.classes import stream_results
 from swh.loader.core.loader import (
     SENTRY_ORIGIN_URL_TAG_NAME,
     SENTRY_VISIT_TYPE_TAG_NAME,
@@ -20,10 +22,11 @@ from swh.loader.core.loader import (
     DirectoryLoader,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
-from swh.loader.exception import NotFound, UnsupportedChecksumComputation
+from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.tests import assert_last_visit_matches, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
+    ExtID,
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
@@ -33,9 +36,9 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
-import swh.storage.exc
+from swh.storage.interface import StorageInterface
 
-from .conftest import compute_hashes, compute_nar_hashes, nix_store_missing
+from .conftest import compute_hashes, compute_nar_hashes
 
 ORIGIN = Origin(url="some-url")
 PARENT_ORIGIN = Origin(url="base-origin-url")
@@ -187,8 +190,16 @@ def test_base_loader_with_unknown_lister_name(swh_storage, mocker):
     assert result == {"status": "eventful"}
 
     fetcher_cls.assert_not_called()
-    with pytest.raises(swh.storage.exc.StorageArgumentException):
-        swh_storage.raw_extrinsic_metadata_get(ORIGIN.swhid(), METADATA_AUTHORITY)
+    assert (
+        list(
+            stream_results(
+                swh_storage.raw_extrinsic_metadata_get,
+                ORIGIN.swhid(),
+                METADATA_AUTHORITY,
+            )
+        )
+        == []
+    )
 
 
 def test_base_loader_forked_origin(swh_storage, mocker):
@@ -441,7 +452,16 @@ def test_content_loader_missing_field(swh_storage):
 @pytest.mark.parametrize("loader_class", [ContentLoader, DirectoryLoader])
 def test_node_loader_missing_field(swh_storage, loader_class):
     """It should raise if the ContentLoader is missing checksums field"""
-    with pytest.raises(UnsupportedChecksumComputation):
+    with pytest.raises(UnsupportedChecksumLayout):
+        loader_class(
+            swh_storage,
+            CONTENT_URL,
+            checksums={"sha256": "irrelevant-for-that-test"},
+            checksum_layout="unsupported",
+        )
+
+    # compat' check
+    with pytest.raises(UnsupportedChecksumLayout):
         loader_class(
             swh_storage,
             CONTENT_URL,
@@ -525,28 +545,48 @@ def test_content_loader_ok_with_fallback(
 compute_content_nar_hashes = partial(compute_nar_hashes, is_tarball=False)
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
-@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+def fetch_extids_from_checksums(
+    storage: StorageInterface, checksums: Dict[str, str]
+) -> List[ExtID]:
+    from swh.model.hashutil import hash_to_bytes
+
+    EXTID_TYPE_NAR = "nar-%s-raw-validated"
+    EXTID_TYPE_NAR_VERSION = 0
+
+    extids = []
+    for hash_algo, checksum in checksums.items():
+        id_type = EXTID_TYPE_NAR % hash_algo
+        ids = [hash_to_bytes(checksum)]
+        extid = storage.extid_get_from_extid(id_type, ids, EXTID_TYPE_NAR_VERSION)
+        extids.extend(extid)
+
+    return extids
+
+
+@pytest.mark.parametrize("checksum_layout", ["standard", "nar"])
 def test_content_loader_ok_simple(
-    swh_storage, requests_mock_datadir, content_path, checksums_computation
+    swh_storage, requests_mock_datadir, content_path, checksum_layout
 ):
     """It should be an eventful visit on a new file, then uneventful"""
     compute_hashes_fn = (
-        compute_content_nar_hashes if checksums_computation == "nar" else compute_hashes
+        compute_content_nar_hashes if checksum_layout == "nar" else compute_hashes
     )
 
+    checksums = compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"])
     origin = Origin(CONTENT_URL)
     loader = ContentLoader(
         swh_storage,
         origin.url,
-        checksums=compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"]),
-        checksums_computation=checksums_computation,
+        checksums=checksums,
+        checksum_layout=checksum_layout,
     )
     result = loader.load()
 
     assert result == {"status": "eventful"}
+
+    if checksum_layout == "nar":
+        extids = fetch_extids_from_checksums(loader.storage, checksums)
+        assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
         swh_storage, origin.url, status="full", type="content"
@@ -558,16 +598,13 @@ def test_content_loader_ok_simple(
     assert result2 == {"status": "uneventful"}
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
-@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+@pytest.mark.parametrize("checksum_layout", ["standard", "nar"])
 def test_content_loader_hash_mismatch(
-    swh_storage, requests_mock_datadir, content_path, checksums_computation
+    swh_storage, requests_mock_datadir, content_path, checksum_layout
 ):
     """It should be an eventful visit on a new file, then uneventful"""
     compute_hashes_fn = (
-        compute_content_nar_hashes if checksums_computation == "nar" else compute_hashes
+        compute_content_nar_hashes if checksum_layout == "nar" else compute_hashes
     )
     checksums = compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"])
     erratic_checksums = {
@@ -579,7 +616,7 @@ def test_content_loader_hash_mismatch(
         swh_storage,
         origin.url,
         checksums=erratic_checksums,
-        checksums_computation=checksums_computation,
+        checksum_layout=checksum_layout,
     )
     result = loader.load()
 
@@ -647,16 +684,13 @@ def test_directory_loader_404_with_fallback(
     )
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
-@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+@pytest.mark.parametrize("checksum_layout", ["standard", "nar"])
 def test_directory_loader_hash_mismatch(
-    caplog, swh_storage, requests_mock_datadir, tarball_path, checksums_computation
+    caplog, swh_storage, requests_mock_datadir, tarball_path, checksum_layout
 ):
     """It should not ingest tarball with mismatched checksum"""
     compute_hashes_fn = (
-        compute_nar_hashes if checksums_computation == "nar" else compute_hashes
+        compute_nar_hashes if checksum_layout == "nar" else compute_hashes
     )
     checksums = compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"])
 
@@ -670,7 +704,7 @@ def test_directory_loader_hash_mismatch(
         swh_storage,
         origin.url,
         checksums=erratic_checksums,  # making the integrity check fail
-        checksums_computation=checksums_computation,
+        checksum_layout=checksum_layout,
     )
     result = loader.load()
 
@@ -708,28 +742,31 @@ def test_directory_loader_ok_with_fallback(
     assert result == {"status": "eventful"}
 
 
-@pytest.mark.skipif(
-    nix_store_missing, reason="requires nix-store binary from nix binaries"
-)
-@pytest.mark.parametrize("checksums_computation", ["standard", "nar"])
+@pytest.mark.parametrize("checksum_layout", ["nar", "standard"])
 def test_directory_loader_ok_simple(
-    swh_storage, requests_mock_datadir, tarball_path, checksums_computation
+    swh_storage, requests_mock_datadir, tarball_path, checksum_layout
 ):
     """It should be an eventful visit on a new tarball, then uneventful"""
     origin = Origin(DIRECTORY_URL)
     compute_hashes_fn = (
-        compute_nar_hashes if checksums_computation == "nar" else compute_hashes
+        compute_nar_hashes if checksum_layout == "nar" else compute_hashes
     )
+
+    checksums = compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"])
 
     loader = DirectoryLoader(
         swh_storage,
         origin.url,
-        checksums=compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"]),
-        checksums_computation=checksums_computation,
+        checksums=checksums,
+        checksum_layout=checksum_layout,
     )
     result = loader.load()
 
     assert result == {"status": "eventful"}
+
+    if checksum_layout == "nar":
+        extids = fetch_extids_from_checksums(loader.storage, checksums)
+        assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
         swh_storage, origin.url, status="full", type="directory"

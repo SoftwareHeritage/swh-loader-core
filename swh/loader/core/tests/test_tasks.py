@@ -1,4 +1,4 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -12,27 +12,62 @@ from swh.scheduler.model import ListedOrigin, Lister
 NAMESPACE = "swh.loader.core"
 
 
+LISTER = Lister(name="nixguix", instance_name="example", id=uuid.uuid4())
+# make mypy happy
+assert LISTER is not None and LISTER.id is not None
+
+
 @pytest.fixture
 def nixguix_lister():
-    return Lister(name="nixguix", instance_name="example", id=uuid.uuid4())
+    return LISTER
+
+
+LISTED_ORIGIN = ListedOrigin(
+    lister_id=LISTER.id,
+    url="https://nixguix.example.org/",
+    visit_type="nixguix",
+    extra_loader_arguments={
+        "checksum_layout": "standard",
+        "fallback_urls": ["https://example.org/mirror/artifact-0.0.1.pkg.xz"],
+        "checksums": {"sha256": "some-valid-checksum"},
+    },
+)
+
+
+LISTED_ORIGIN2 = ListedOrigin(
+    lister_id=LISTER.id,
+    url="https://nixguix.example.org/",
+    visit_type="nixguix",
+    extra_loader_arguments={
+        "fallback_urls": ["https://example.org/mirror/artifact-0.0.1.pkg.xz"],
+        "checksums": {"sha256": "some-valid-checksum"},
+    },
+)
+
+
+LISTED_ORIGIN_COMPAT = ListedOrigin(
+    lister_id=LISTER.id,
+    url="https://nixguix.example.org/",
+    visit_type="nixguix",
+    extra_loader_arguments={
+        # Compatibility parameter task name
+        "checksums_computation": "standard",
+        "fallback_urls": ["https://example.org/mirror/artifact-0.0.1.pkg.xz"],
+        "checksums": {"sha256": "some-valid-checksum"},
+    },
+)
 
 
 @pytest.mark.parametrize("loader_name", ["Content", "Directory"])
+@pytest.mark.parametrize(
+    "listed_origin", [LISTED_ORIGIN, LISTED_ORIGIN2, LISTED_ORIGIN_COMPAT]
+)
 def test_loader_tasks_for_listed_origin(
     loading_task_creation_for_listed_origin_test,
     nixguix_lister,
     loader_name,
+    listed_origin,
 ):
-
-    listed_origin = ListedOrigin(
-        lister_id=nixguix_lister.id,
-        url="https://example.org/artifact/artifact",
-        visit_type=loader_name.lower(),
-        extra_loader_arguments={
-            "fallback_urls": ["https://example.org/mirror/artifact-0.0.1.pkg.xz"],
-            "checksums": {"sha256": "some-valid-checksum"},
-        },
-    )
 
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.{loader_name}Loader",

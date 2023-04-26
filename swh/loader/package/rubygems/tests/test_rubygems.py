@@ -3,14 +3,18 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import hashlib
+import os
 from pathlib import Path
 
 import pytest
 
+from swh.core.tarball import uncompress
 from swh.loader.package import __version__
 from swh.loader.package.rubygems.loader import RubyGemsLoader
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
-from swh.model.hashutil import hash_to_bytes
+from swh.model import from_disk
+from swh.model.hashutil import hash_to_hex
 from swh.model.model import (
     Person,
     RawExtrinsicMetadata,
@@ -92,8 +96,91 @@ def test_get_default_version(requests_mock_datadir, swh_storage):
     assert loader.get_default_version() == "0.0.2"
 
 
+def uncompress_gem_package(datadir, tmp_path, package_filename):
+    tarball_path = os.path.join(datadir, "https_rubygems.org", package_filename)
+    uncompress_path = os.path.join(
+        tmp_path, hashlib.sha1(package_filename.encode()).hexdigest()
+    )
+    uncompress(tarball_path, uncompress_path)
+    contents_uncompressed_path = os.path.join(uncompress_path, "data")
+    contents_tarball_path = os.path.join(uncompress_path, "data.tar.gz")
+    uncompress(contents_tarball_path, contents_uncompressed_path)
+    return from_disk.Directory.from_disk(
+        path=contents_uncompressed_path.encode("utf-8")
+    )
+
+
+@pytest.fixture
+def release_0_0_1_dir(datadir, tmp_path):
+    return uncompress_gem_package(datadir, tmp_path, "downloads_haar_joke-0.0.1.gem")
+
+
+@pytest.fixture
+def release_0_0_2_dir(datadir, tmp_path):
+    return uncompress_gem_package(datadir, tmp_path, "downloads_haar_joke-0.0.2.gem")
+
+
+@pytest.fixture
+def release_0_0_1(release_0_0_1_dir):
+    return Release(
+        name=b"0.0.1",
+        message=b"Synthetic release for RubyGems source package haar_joke version 0.0.1\n",
+        target=release_0_0_1_dir.hash,
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person(
+            fullname=b"Gemma Gotch",
+            name=b"",
+            email=None,
+        ),
+        date=TimestampWithTimezone.from_iso8601("2016-07-23T00:00:00+00:00"),
+    )
+
+
+@pytest.fixture
+def release_0_0_2(release_0_0_2_dir):
+    return Release(
+        name=b"0.0.2",
+        message=b"Synthetic release for RubyGems source package haar_joke version 0.0.2\n",
+        target=release_0_0_2_dir.hash,
+        target_type=ModelObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person(
+            fullname=b"Gemma Gotch",
+            name=b"",
+            email=None,
+        ),
+        date=TimestampWithTimezone.from_iso8601("2016-11-05T00:00:00+00:00"),
+    )
+
+
+@pytest.fixture
+def expected_stats(release_0_0_1_dir, release_0_0_2_dir) -> dict:
+    release_0_0_1_cnts, _, release_0_0_1_dirs = from_disk.iter_directory(
+        release_0_0_1_dir
+    )
+    release_0_0_2_cnts, _, release_0_0_2_dirs = from_disk.iter_directory(
+        release_0_0_2_dir
+    )
+    return {
+        "content": len(set(release_0_0_1_cnts) | set(release_0_0_2_cnts)),
+        "directory": len(set(release_0_0_1_dirs) | set(release_0_0_2_dirs)),
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 2,
+        "revision": 0,
+        "skipped_content": 0,
+        "snapshot": 1,
+    }
+
+
 def test_rubygems_loader(
-    swh_storage, requests_mock_datadir, head_release_extrinsic_metadata
+    swh_storage,
+    requests_mock_datadir,
+    head_release_extrinsic_metadata,
+    release_0_0_1,
+    release_0_0_2,
+    expected_stats,
 ):
     loader = RubyGemsLoader(
         swh_storage,
@@ -105,20 +192,14 @@ def test_rubygems_loader(
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "7a646532d6fdd7df84e35d64bf1f3da9ddbd0971"
-    expected_head_release = "afd15d9042873b8082218433f5dd4db1024defc1"
-
-    assert expected_snapshot_id == load_status["snapshot_id"]
-
     expected_snapshot = Snapshot(
-        id=hash_to_bytes(load_status["snapshot_id"]),
         branches={
             b"releases/0.0.1": SnapshotBranch(
-                target=hash_to_bytes("604dbd4f9768e952ae63249edc4084bf0fe85a8c"),
+                target=release_0_0_1.id,
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.0.2": SnapshotBranch(
-                target=hash_to_bytes(expected_head_release),
+                target=release_0_0_2.id,
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
@@ -128,36 +209,12 @@ def test_rubygems_loader(
         },
     )
 
+    assert hash_to_hex(expected_snapshot.id) == load_status["snapshot_id"]
+
     check_snapshot(expected_snapshot, loader.storage)
 
     stats = get_stats(swh_storage)
-    assert {
-        "content": 23,
-        "directory": 7,
-        "origin": 1,
-        "origin_visit": 1,
-        "release": 1 + 1,
-        "revision": 0,
-        "skipped_content": 0,
-        "snapshot": 1,
-    } == stats
-
-    head_release = loader.storage.release_get([hash_to_bytes(expected_head_release)])[0]
-
-    assert head_release == Release(
-        name=b"0.0.2",
-        message=b"Synthetic release for RubyGems source package haar_joke version 0.0.2\n",
-        target=hash_to_bytes("8af199118ef7f6b6c312bcf09c77552442b87a45"),
-        target_type=ModelObjectType.DIRECTORY,
-        synthetic=True,
-        author=Person(
-            fullname=b"Gemma Gotch",
-            name=b"",
-            email=None,
-        ),
-        date=TimestampWithTimezone.from_iso8601("2016-11-05T00:00:00+00:00"),
-        id=hash_to_bytes(expected_head_release),
-    )
+    assert expected_stats == stats
 
     assert_last_visit_matches(
         loader.storage,
@@ -167,9 +224,11 @@ def test_rubygems_loader(
         snapshot=expected_snapshot.id,
     )
 
-    release_swhid = CoreSWHID(object_type=ObjectType.RELEASE, object_id=head_release.id)
+    release_swhid = CoreSWHID(
+        object_type=ObjectType.RELEASE, object_id=release_0_0_2.id
+    )
     directory_swhid = ExtendedSWHID(
-        object_type=ExtendedObjectType.DIRECTORY, object_id=head_release.target
+        object_type=ExtendedObjectType.DIRECTORY, object_id=release_0_0_2.target
     )
     expected_metadata = [
         RawExtrinsicMetadata(

@@ -54,6 +54,7 @@ setup(
     entry_points="""
         [swh.cli.subcommands]
         loader=swh.loader.cli
+        nar=swh.loader.core.nar
         [swh.workers]
         loader.content=swh.loader.core:register_content
         loader.directory=swh.loader.core:register_directory
@@ -68,6 +69,7 @@ setup(
         loader.deposit=swh.loader.package.deposit:register
         loader.golang=swh.loader.package.golang:register
         loader.hackage=swh.loader.package.hackage:register
+        loader.hex=swh.loader.package.hex:register
         loader.nixguix=swh.loader.package.nixguix:register
         loader.npm=swh.loader.package.npm:register
         loader.opam=swh.loader.package.opam:register

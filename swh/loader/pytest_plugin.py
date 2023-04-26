@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -9,6 +9,7 @@ from typing import Any, Dict
 import pytest
 import yaml
 
+from swh.loader.package.utils import download, get_url_body
 from swh.scheduler.model import ListedOrigin, Lister
 from swh.scheduler.utils import create_origin_task_dict
 
@@ -86,3 +87,9 @@ def loading_task_creation_for_listed_origin_test(
         assert res.result == {"status": "eventful"}
 
     return test_implementation
+
+
+@pytest.fixture(autouse=True)
+def mock_retry_sleep(mocker):
+    mocker.patch.object(download.retry, "sleep")
+    mocker.patch.object(get_url_body.retry, "sleep")
