@@ -1,3 +1,26 @@
+swh-loader-core (5.3.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.3.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-04-26 14:55:57
+    +0200)
+  * Upstream changes:     - v5.3.0     - hex: Add loader for hex.pm
+    (Erlang package manager)     - nixguix: NodeLoader: Rename
+    checksums_computation to checksum_layout     - nixguix: content,
+    directory loaders: Store validated nar as ExtIDs     - nixguix: Make
+    core loader use swh.loader.core.nar module     - nixguix: Add
+    swh.loader.core.nar module     - package/utils: Use http_retry
+    decorator from swh.core.retry     - package/loader: Handle dangling
+    branches when processing last snapshot     - debian: Handle invalid
+    version string when parsing changelog     - rubygems: Discard
+    anything other than the source code     - pubdev: Handle packages
+    with dash in version numbers     - docs: Fix presentation of the
+    loader specification table     - maintenance:     - Invert symlink
+    and content for the README file     - Update and clean tox
+    configuration for version 4     - Fix test broken by swh-storage
+    v1.8.0     - mypy: Bump to 1.0.1 and fix new typing errors
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 26 Apr 2023 13:02:54 +0000
+
 swh-loader-core (5.2.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.2.0     - (tagged by Valentin Lorentz
