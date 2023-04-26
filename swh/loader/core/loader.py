@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2022  The Software Heritage developers
+# Copyright (C) 2015-2023 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import tempfile
 import time
-from typing import Any, ContextManager, Dict, List, Optional, Union
+from typing import Any, ContextManager, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
 
 from requests.exceptions import HTTPError
@@ -20,13 +20,15 @@ from swh.core.config import load_from_envvar
 from swh.core.statsd import Statsd
 from swh.core.tarball import uncompress
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
-from swh.loader.core.utils import nix_hashes
-from swh.loader.exception import NotFound, UnsupportedChecksumComputation
+from swh.loader.core.nar import Nar
+from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.package.utils import download
 from swh.model import from_disk
+from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     Content,
     Directory,
+    ExtID,
     Origin,
     OriginVisit,
     OriginVisitStatus,
@@ -41,6 +43,9 @@ from swh.storage import get_storage
 from swh.storage.algos.snapshot import snapshot_get_latest
 from swh.storage.interface import StorageInterface
 from swh.storage.utils import now
+
+logger = logging.getLogger()
+
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "max_content_size": 100 * 1024 * 1024,
@@ -605,12 +610,12 @@ class NodeLoader(BaseLoader):
     """Common class for :class:`ContentLoader` and :class:`Directoryloader`.
 
     The "checksums" field is a dictionary of hex hashes on the object retrieved (content
-    or directory). When "checksums_computation" is "standard", that means the checksums
-    are computed on the content of the remote file to retrieve itself (as unix cli
-    allows, "sha1sum", "sha256sum", ...). When "checksums_computation" is "nar", the
-    checks is delegated to the `nix-store --dump` command, it's actually checksums on
-    the content of the remote artifact retrieved. Other "checksums_computation" will
-    raise UnsupportedChecksumComputation
+    or directory). When "checksum_layout" is "standard", the checksums are computed on
+    the content of the remote file to retrieve itself (as unix cli allows, "sha1sum",
+    "sha256sum", ...). When "checksum_layout" is "nar", the checks is delegated to Nar
+    class (which does an equivalent hash computation as the `nix store --dump` cli).
+    It's actually checksums on the content of the remote artifact retrieved (be it a
+    file or an archive). Other "checksum_layout" will raise UnsupportedChecksumLayout.
 
     The multiple "fallback" urls received are mirror urls only used to fetch the object
     if the main origin is no longer available. Those are not stored.
@@ -625,29 +630,43 @@ class NodeLoader(BaseLoader):
         storage: StorageInterface,
         url: str,
         checksums: Dict[str, str],
-        checksums_computation: str = "standard",
-        fallback_urls: List[str] = None,
+        checksums_computation: Optional[str] = None,
+        checksum_layout: Optional[str] = None,
+        fallback_urls: Optional[List[str]] = None,
         **kwargs,
     ):
         super().__init__(storage, url, **kwargs)
         self.snapshot: Optional[Snapshot] = None
         self.checksums = checksums
-        self.checksums_computation = checksums_computation
-        if self.checksums_computation not in ("nar", "standard"):
-            raise UnsupportedChecksumComputation(
-                "Unsupported checksums computations: %s",
-                self.checksums_computation,
+
+        # Keep compatibility with the previous name 'checksums_computations'
+        if checksum_layout is not None:
+            checksum_layout = checksum_layout
+        elif checksum_layout is None and checksums_computation is not None:
+            # checksum_layout param has priority over the checksums_computation
+            # parameter if both are provided
+            checksum_layout = checksums_computation
+        else:
+            # finally, fall back to the previous behavior, defaulting to standard if
+            # nothing is provided
+            checksum_layout = "standard"
+
+        if checksum_layout not in ("nar", "standard"):
+            raise UnsupportedChecksumLayout(
+                "Unsupported checksums layout: %s",
+                checksum_layout,
             )
 
+        self.checksum_layout = checksum_layout
         fallback_urls_ = fallback_urls or []
         self.mirror_urls: List[str] = [self.origin.url, *fallback_urls_]
         # Ensure content received matched the "standard" checksums received, this
         # contains the checksums when checksum_computations is "standard", it's empty
         # otherwise
         self.standard_hashes = (
-            self.checksums if self.checksums_computation == "standard" else {}
+            self.checksums if self.checksum_layout == "standard" else {}
         )
-        self.log.debug("Loader checksums computation: %s", self.checksums_computation)
+        self.log.debug("Loader checksums computation: %s", self.checksum_layout)
 
     def prepare(self) -> None:
         self.last_snapshot = snapshot_get_latest(self.storage, self.origin.url)
@@ -661,6 +680,58 @@ class NodeLoader(BaseLoader):
 
     def cleanup(self) -> None:
         self.log.debug("cleanup")
+
+    def _load_extids(self, extids: Set[ExtID]) -> None:
+        """Load a set of ExtIDs if any."""
+        if not extids:
+            return
+        try:
+            self.storage.extid_add(list(extids))
+        except Exception as e:
+            logger.exception("Failed to load new ExtIDs for %s", self.origin.url)
+            sentry_sdk.capture_exception(e)
+            # No big deal, it just means the next visit will load the same versions
+            # again.
+
+    def _nar_extids(self, node: Union[Content, Directory]) -> Set[ExtID]:
+        """Compute the set of ExtIDs for the :term:`node` (e.g. Content of Directory).
+
+        This creates as much ExtID types as there are keys in :data:`self.checksums`
+        dict.
+
+        """
+        EXTID_TYPE: str = "nar-%s-raw-validated"
+        """Ext id type. %s is expected to be formatted according to the hash algo used
+        (e.g. sha1, sha256, sha512, ...).
+
+        """
+        EXTID_VERSION: int = 0
+        """ExtID version to use. Bump this if the schema gets changed in the future."""
+
+        checksums = {
+            hash_algo: hash_to_bytes(hsh) for hash_algo, hsh in self.checksums.items()
+        }
+        return {
+            ExtID(
+                extid_type=EXTID_TYPE % hash_algo,
+                extid_version=EXTID_VERSION,
+                extid=extid,
+                target=node.swhid(),
+            )
+            for hash_algo, extid in checksums.items()
+        }
+
+    def store_nar_as_extids(self, node: Union[Content, Directory]) -> None:
+        """Store the nar checksums provided as extids for :data:`node`.
+
+        If the checksums computation provided are of type "nar", this will also store
+        those "integrity" checksums as ExtID. This stores as much ExtID types as there
+        are keys in the provided :data:`self.checksums` dict.
+
+        """
+        if self.checksum_layout == "nar" and node is not None:
+            extids = self._nar_extids(node)
+            self._load_extids(extids)
 
 
 class ContentLoader(NodeLoader):
@@ -702,12 +773,12 @@ class ContentLoader(NodeLoader):
                     file_path, _ = download(
                         url, dest=tmpdir, hashes=self.standard_hashes
                     )
-                    if self.checksums_computation == "nar":
+                    if self.checksum_layout == "nar":
                         # hashes are not "standard", so we need an extra check to happen
                         self.log.debug("Content to check nar hashes: %s", file_path)
-                        actual_checksums = nix_hashes(
-                            Path(file_path), self.checksums.keys()
-                        ).hexdigest()
+                        nar = Nar(list(self.checksums.keys()))
+                        nar.serialize(Path(file_path))
+                        actual_checksums = nar.hexdigest()
 
                         if actual_checksums != self.checksums:
                             errors.append(
@@ -725,6 +796,7 @@ class ContentLoader(NodeLoader):
 
                     with open(file_path, "rb") as file:
                         self.content = Content.from_data(file.read())
+
             except ValueError as e:
                 errors.append(e)
                 self.log.debug(
@@ -767,6 +839,8 @@ class ContentLoader(NodeLoader):
         """Store newly retrieved Content and Snapshot."""
         assert self.content is not None
         self.storage.content_add([self.content])
+        self.store_nar_as_extids(self.content)
+
         assert self.snapshot is not None
         self.storage.snapshot_add([self.snapshot])
         self.loaded_snapshot_id = self.snapshot.id
@@ -842,14 +916,14 @@ class DirectoryLoader(NodeLoader):
                 uncompress(tarball_path, dest=str(directory_path))
                 self.log.debug("uncompressed path to directory: %s", directory_path)
 
-                if self.checksums_computation == "nar":
+                if self.checksum_layout == "nar":
                     # hashes are not "standard", so we need an extra check to happen
                     # on the uncompressed tarball
                     dir_to_check = next(directory_path.iterdir())
                     self.log.debug("Directory to check nar hashes: %s", dir_to_check)
-                    actual_checksums = nix_hashes(
-                        dir_to_check, self.checksums.keys()
-                    ).hexdigest()
+                    nar = Nar(list(self.checksums.keys()))
+                    nar.serialize(dir_to_check)
+                    actual_checksums = nar.hexdigest()
 
                     if actual_checksums != self.checksums:
                         errors.append(
@@ -907,6 +981,8 @@ class DirectoryLoader(NodeLoader):
         self.storage.content_add(self.cnts)
         self.log.debug("Number of directories: %s", len(self.dirs))
         self.storage.directory_add(self.dirs)
+        assert self.directory is not None
+        self.store_nar_as_extids(self.directory.to_model())
         assert self.snapshot is not None
         self.storage.snapshot_add([self.snapshot])
         self.loaded_snapshot_id = self.snapshot.id
