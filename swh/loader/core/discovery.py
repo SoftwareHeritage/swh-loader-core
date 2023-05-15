@@ -205,7 +205,7 @@ class RandomDirSamplingDiscoveryGraph(BaseDiscoveryGraph):
                     skipped_contents=set(),
                     directories=set(self._undecided_directories),
                 )
-            sample = random.sample(self._undecided_directories, SAMPLE_SIZE)
+            sample = random.sample(tuple(self._undecided_directories), SAMPLE_SIZE)
             directories = {o for o in sample}
             return Sample(
                 contents=set(), skipped_contents=set(), directories=directories
