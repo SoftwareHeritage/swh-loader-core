@@ -22,7 +22,7 @@ from swh.model.model import (
 
 EXPECTED_PACKAGES = [
     {
-        "url": "https://archive.archlinux.org/packages/d/dialog/",
+        "url": "https://archlinux.org/packages/core/x86_64/dialog",
         "artifacts": [
             {
                 "url": "https://archive.archlinux.org/packages/d/dialog/dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz",
