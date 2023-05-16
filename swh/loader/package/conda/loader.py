@@ -29,7 +29,11 @@ class CondaPackageInfo(BasePackageInfo):
     """Archive (tar.gz) file name"""
 
     version = attr.ib(type=str)
-    """Complete version and distribution name. Ex: 'linux-64/0.1.1-py37'
+    """Complete version and distribution name used as branch name. Ex: 'linux-64/0.1.1-py37'
+    """
+
+    release_version = attr.ib(type=str)
+    """Version number used as release name. Ex: '0.1.1-py37-linux-64'
     """
 
     last_modified: Optional[datetime] = attr.ib()
@@ -102,7 +106,11 @@ class CondaLoader(PackageLoader[CondaPackageInfo]):
                 ["0.1.1", "0.10.2"]
         """
         versions = list(self.artifacts.keys())
-        versions.sort(key=parse_version)
+        versions.sort(
+            key=lambda version_key: parse_version(
+                version_key.split("/", 1)[1].split("-", 1)[0]
+            )
+        )
         return versions
 
     def get_default_version(self) -> str:
@@ -135,11 +143,14 @@ class CondaLoader(PackageLoader[CondaPackageInfo]):
         if data.get("date"):
             last_modified = iso8601.parse_date(data["date"])
 
+        arch, version_and_build = data["version"].split("/", 1)
+
         p_info = CondaPackageInfo(
             name=pkgname,
             filename=filename,
             url=url,
             version=version,
+            release_version=f"{version_and_build}-{arch}",
             last_modified=last_modified,
             checksums=data["checksums"],
         )
@@ -170,7 +181,7 @@ class CondaLoader(PackageLoader[CondaPackageInfo]):
         )
 
         return Release(
-            name=p_info.version.encode(),
+            name=p_info.release_version.encode(),
             author=author,
             date=last_modified,
             message=message.encode(),

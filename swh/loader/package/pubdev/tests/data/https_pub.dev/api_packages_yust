@@ -1,0 +1,137 @@
+{
+  "name": "yust",
+  "latest": {
+    "version": "3.6.1",
+    "pubspec": {
+      "name": "yust",
+      "description": "Build awesome apps with Flutter and Firebase.",
+      "version": "3.6.1",
+      "homepage": "https://github.com/univelop/yust",
+      "environment": {
+        "sdk": ">=2.17.5 <3.0.0"
+      },
+      "dependencies": {
+        "flutter": {
+          "sdk": "flutter"
+        },
+        "json_annotation": "^4.4.0",
+        "firebase_core": "^2.4.1",
+        "firebase_auth": "^4.2.5",
+        "firebase_auth_platform_interface": "^6.11.7",
+        "firebase_storage": "^11.0.10",
+        "cloud_firestore": "^4.3.1",
+        "googleapis": "^8.1.0",
+        "googleapis_auth": "^1.1.0",
+        "firebase_auth_mocks": "^0.10.3",
+        "collection": "^1.16.0",
+        "http": "^0.13.4",
+        "intl": "^0.17.0",
+        "mime": "^1.0.0",
+        "timezone": "^0.9.0",
+        "stream_transform": "^2.1.0"
+      },
+      "dev_dependencies": {
+        "lints": "^2.0.0",
+        "test": "^1.16.0",
+        "build_runner": "^2.0.3",
+        "json_serializable": "^6.1.4"
+      }
+    },
+    "archive_url": "https://pub.dartlang.org/packages/yust/versions/3.6.1.tar.gz",
+    "archive_sha256": "e7270894bfc8978cc1547e0763abb2e9f49f5fe933aeac9372cfdf5ce84055fd",
+    "published": "2023-02-27T21:49:52.417319Z"
+  },
+  "versions": [
+    {
+      "version": "2.0.0-nullsafety.1",
+      "pubspec": {
+        "name": "yust",
+        "description": "Build awesome apps with Flutter and Firebase.",
+        "version": "2.0.0-nullsafety.1",
+        "homepage": "https://github.com/janneskoehler/yust",
+        "environment": {
+          "sdk": ">=2.12.0 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "json_annotation": "^4.0.1",
+          "firebase_core": "^1.0.2",
+          "firebase_auth": "^1.0.1",
+          "cloud_firestore": "^1.0.3",
+          "firebase_storage": "^8.0.1",
+          "provider": "^5.0.0",
+          "intl": "^0.17.0",
+          "shared_preferences": "^2.0.3",
+          "flutter_easyloading": "^3.0.0",
+          "collection": "^1.15.0-nullsafety.4",
+          "package_info": "^2.0.0",
+          "image_picker": "^0.7.2",
+          "photo_view": "^0.11.1",
+          "file_picker": "^3.0.0",
+          "mime": "^1.0.0",
+          "url_launcher": "^6.0.2",
+          "http": "^0.13.0",
+          "image": "^3.0.1",
+          "flutter_native_image": "^0.0.5+3",
+          "path_provider": "^2.0.1",
+          "connectivity": "^3.0.2",
+          "mask_text_input_formatter": "^2.0.0-nullsafety.2"
+        },
+        "dev_dependencies": {
+          "flutter_test": {
+            "sdk": "flutter"
+          },
+          "build_runner": "^2.0.3",
+          "json_serializable": "^4.1.0"
+        },
+        "flutter": null
+      },
+      "archive_url": "https://pub.dartlang.org/packages/yust/versions/2.0.0-nullsafety.1.tar.gz",
+      "archive_sha256": "9b7ba7edd95a13fbeea9e3eab9e0311f71b969945f0b3767480fc9f75f5c658f",
+      "published": "2021-05-17T13:06:59.860380Z"
+    },
+    {
+      "version": "3.6.1",
+      "pubspec": {
+        "name": "yust",
+        "description": "Build awesome apps with Flutter and Firebase.",
+        "version": "3.6.1",
+        "homepage": "https://github.com/univelop/yust",
+        "environment": {
+          "sdk": ">=2.17.5 <3.0.0"
+        },
+        "dependencies": {
+          "flutter": {
+            "sdk": "flutter"
+          },
+          "json_annotation": "^4.4.0",
+          "firebase_core": "^2.4.1",
+          "firebase_auth": "^4.2.5",
+          "firebase_auth_platform_interface": "^6.11.7",
+          "firebase_storage": "^11.0.10",
+          "cloud_firestore": "^4.3.1",
+          "googleapis": "^8.1.0",
+          "googleapis_auth": "^1.1.0",
+          "firebase_auth_mocks": "^0.10.3",
+          "collection": "^1.16.0",
+          "http": "^0.13.4",
+          "intl": "^0.17.0",
+          "mime": "^1.0.0",
+          "timezone": "^0.9.0",
+          "stream_transform": "^2.1.0"
+        },
+        "dev_dependencies": {
+          "lints": "^2.0.0",
+          "test": "^1.16.0",
+          "build_runner": "^2.0.3",
+          "json_serializable": "^6.1.4"
+        }
+      },
+      "archive_url": "https://pub.dartlang.org/packages/yust/versions/3.6.1.tar.gz",
+      "archive_sha256": "e7270894bfc8978cc1547e0763abb2e9f49f5fe933aeac9372cfdf5ce84055fd",
+      "published": "2023-02-27T21:49:52.417319Z"
+    }
+  ]
+}

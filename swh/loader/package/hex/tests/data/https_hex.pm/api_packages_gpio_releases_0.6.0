@@ -1,0 +1,31 @@
+{
+    "checksum": "a3f953471530ad2312b753422c1802fb0774b3e8f891607f35ce2ec3273b9d2d",
+    "configs": {
+        "erlang.mk": "dep_gpio = hex 0.6.0",
+        "mix.exs": "{:gpio, \"~> 0.6.0\"}",
+        "rebar.config": "{gpio, \"0.6.0\"}"
+    },
+    "docs_html_url": null,
+    "downloads": 1584,
+    "has_docs": false,
+    "html_url": "https://hex.pm/packages/gpio/0.6.0",
+    "inserted_at": "2023-01-12T10:39:50.179787Z",
+    "meta": {
+        "app": "gpio",
+        "build_tools": [
+            "rebar3"
+        ],
+        "elixir": null
+    },
+    "package_url": "https://hex.pm/api/packages/gpio",
+    "publisher": {
+        "email": "ali.sabil@gmail.com",
+        "url": "https://hex.pm/api/users/asabil",
+        "username": "asabil"
+    },
+    "requirements": {},
+    "retirement": null,
+    "updated_at": "2023-01-12T10:39:50.179787Z",
+    "url": "https://hex.pm/api/packages/gpio/releases/0.6.0",
+    "version": "0.6.0"
+}

@@ -145,15 +145,15 @@ class CratesPackageInfo(BasePackageInfo):
     version = attr.ib(type=str)
     """Current version"""
 
-    e_metadata: Dict[str, Any] = attr.ib(factory=ExtrinsicPackageMetadata)
+    e_metadata: Dict[str, Any] = attr.ib(factory=lambda: ExtrinsicPackageMetadata)
     """Extrinsic package metadata, common to all versions"""
 
     e_metadata_version: Dict[str, Any] = attr.ib(
-        factory=ExtrinsicVersionPackageMetadata
+        factory=lambda: ExtrinsicVersionPackageMetadata
     )
     """Extrinsic package metadata specific to a version"""
 
-    i_metadata: Dict[str, Any] = attr.ib(factory=IntrinsicPackageMetadata)
+    i_metadata: Dict[str, Any] = attr.ib(factory=lambda: IntrinsicPackageMetadata)
     """Intrinsic metadata of the current package version"""
 
 

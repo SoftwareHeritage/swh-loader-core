@@ -38,6 +38,9 @@ EXPECTED_PACKAGES = [
     {
         "url": "https://pub.dev/packages/audio_manager",  # loose ++ versions names
     },
+    {
+        "url": "https://pub.dev/packages/yust",  # package with dash in version number
+    },
 ]
 
 
@@ -323,3 +326,35 @@ def test_pubdev_invalid_origin(swh_storage):
             swh_storage,
             "http://nowhere/api/packages/42",
         )
+
+
+def test_pubdev_loader_dash_in_package_version(requests_mock_datadir, swh_storage):
+    loader = PubDevLoader(
+        swh_storage,
+        url=EXPECTED_PACKAGES[6]["url"],
+    )
+
+    load_status = loader.load()
+    assert load_status["status"] == "eventful"
+
+    expected_snapshot_id = "feb1fa3f17fc011fc0f86b596a91da6dcad23d0f"
+
+    expected_snapshot = Snapshot(
+        branches={
+            b"HEAD": SnapshotBranch(
+                target=hash_to_bytes("72656c65617365732f332e362e31"),
+                target_type=TargetType.ALIAS,
+            ),
+            b"releases/2.0.0-nullsafety.1": SnapshotBranch(
+                target=hash_to_bytes("12156dabe4eb0aaf95810b2e779a61b42c057119"),
+                target_type=TargetType.RELEASE,
+            ),
+            b"releases/3.6.1": SnapshotBranch(
+                target=hash_to_bytes("3af5c2b85f0d3ab16577ec2f0886367b12d41aab"),
+                target_type=TargetType.RELEASE,
+            ),
+        },
+        id=hash_to_bytes(expected_snapshot_id),
+    )
+
+    check_snapshot(expected_snapshot, swh_storage)

@@ -1,8 +1,64 @@
-swh-loader-core (5.1.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (5.3.1-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 5.3.1     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2023-05-16 10:21:04 +0200)
+  * Upstream changes:     - v5.3.1     - * Fix support of Python 3.11
+    - * tests: arch: Fix origin URL used in tests to match actual lister
+    data     - * tests: Force older version of urllib3.
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 26 Oct 2022 12:55:25 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 16 May 2023 08:26:53 +0000
+
+swh-loader-core (5.3.0-3~swh1) unstable-swh; urgency=medium
+
+  * Also add B-D on cpio itself
+
+ -- Nicolas Dandrimont <olasd@debian.org>  Mon, 15 May 2023 14:03:10 +0200
+
+swh-loader-core (5.3.0-2~swh1) unstable-swh; urgency=medium
+
+  * Add missing build-dependency on rpm2cpio.
+
+ -- Nicolas Dandrimont <olasd@debian.org>  Mon, 15 May 2023 13:57:15 +0200
+
+swh-loader-core (5.3.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.3.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-04-26 14:55:57
+    +0200)
+  * Upstream changes:     - v5.3.0     - hex: Add loader for hex.pm
+    (Erlang package manager)     - nixguix: NodeLoader: Rename
+    checksums_computation to checksum_layout     - nixguix: content,
+    directory loaders: Store validated nar as ExtIDs     - nixguix: Make
+    core loader use swh.loader.core.nar module     - nixguix: Add
+    swh.loader.core.nar module     - package/utils: Use http_retry
+    decorator from swh.core.retry     - package/loader: Handle dangling
+    branches when processing last snapshot     - debian: Handle invalid
+    version string when parsing changelog     - rubygems: Discard
+    anything other than the source code     - pubdev: Handle packages
+    with dash in version numbers     - docs: Fix presentation of the
+    loader specification table     - maintenance:     - Invert symlink
+    and content for the README file     - Update and clean tox
+    configuration for version 4     - Fix test broken by swh-storage
+    v1.8.0     - mypy: Bump to 1.0.1 and fix new typing errors
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 26 Apr 2023 13:02:54 +0000
+
+swh-loader-core (5.2.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.2.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2023-02-10 14:12:23 +0100)
+  * Upstream changes:     - v5.2.0     - * Move py.typed from
+    swh/loader/{package,core}/ to swh/loader/     - * Allow partial
+    snapshot creation during ingestion     - * conda: Fix versions
+    sorting and update release names     - * Disable reporting of
+    NotFound exceptions to Sentry     - * docs: Include module indices
+    only when building standalone package doc     - * Drop unused
+    core.loader.DVCSLoader class     - * maven: Add support for md5
+    checkums to check download integrity     - * cpan: Add extid
+    manifest to CpanPackageInfo     - * Add loaders for: Rubygems, RPM,
+    Hackage
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 13 Feb 2023 11:06:40 +0000
 
 swh-loader-core (5.1.0-1~swh1) unstable-swh; urgency=medium
 

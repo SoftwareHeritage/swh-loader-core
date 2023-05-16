@@ -76,7 +76,9 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
                 ["0.1.1", "0.10.2"]
         """
         versions = list(self.info()["versions"].keys())
-        versions.sort(key=parse_version)
+        versions.sort(
+            key=lambda version: parse_version(version.split("-", maxsplit=1)[0])
+        )
         return versions
 
     def get_default_version(self) -> str:

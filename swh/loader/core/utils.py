@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2022  The Software Heritage developers
+# Copyright (C) 2018 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,19 +10,17 @@ import os
 from pathlib import Path
 import shutil
 import signal
-from subprocess import PIPE, Popen
 import tempfile
 import time
 import traceback
-from typing import Callable, Dict, Iterable, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from billiard import Process, Queue  # type: ignore
 from dateutil.parser import parse
 import psutil
 
 from swh.core.tarball import uncompress
-from swh.loader.exception import MissingOptionalDependency
-from swh.model.hashutil import MultiHash
+from swh.loader.core.nar import Nar
 
 
 def clean_dangling_folders(dirpath: str, pattern_check: str, log=None) -> None:
@@ -134,28 +132,6 @@ def parse_visit_date(visit_date: Optional[Union[datetime, str]]) -> Optional[dat
     raise ValueError(f"invalid visit date {visit_date!r}")
 
 
-def nix_hashes(filepath: Path, hash_names: Iterable[str]) -> MultiHash:
-    """Compute nix-store hashes on filepath.
-
-    Raises:
-        FileNotFoundError in case the nix-store command is not available on the system.
-
-    """
-    NIX_STORE = shutil.which("nix-store")
-    if NIX_STORE is None:
-        raise MissingOptionalDependency("nix-store")
-
-    multi_hash = MultiHash(hash_names=hash_names)
-
-    command = [NIX_STORE, "--dump", str(filepath)]
-    with Popen(command, stdout=PIPE) as proc:
-        assert proc.stdout is not None
-        for chunk in proc.stdout:
-            multi_hash.update(chunk)
-
-    return multi_hash
-
-
 def compute_nar_hashes(
     filepath: Path,
     hash_names: List[str] = ["sha256"],
@@ -164,7 +140,7 @@ def compute_nar_hashes(
     """Compute nar checksums dict out of a filepath (tarball or plain file).
 
     If it's a tarball, this uncompresses the tarball in a temporary directory to compute
-    the nix hashes (and then cleans it up).
+    the nar hashes (and then cleans it up).
 
     Args:
         filepath: The tarball (if is_tarball is True) or a filepath
@@ -184,5 +160,8 @@ def compute_nar_hashes(
         else:
             path_on_disk = filepath
 
-        hashes = nix_hashes(path_on_disk, hash_names).hexdigest()
+        nar = Nar(hash_names)
+        nar.serialize(path_on_disk)
+        hashes = nar.hexdigest()
+
     return hashes

@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -14,12 +14,9 @@ from urllib.parse import unquote, urlsplit
 from urllib.request import urlopen
 
 import requests
-from requests.exceptions import HTTPError
-from tenacity import retry
 from tenacity.before_sleep import before_sleep_log
-from tenacity.stop import stop_after_attempt
-from tenacity.wait import wait_exponential
 
+from swh.core.retry import http_retry
 from swh.loader.exception import NotFound
 from swh.loader.package import DEFAULT_PARAMS
 from swh.model.hashutil import HASH_BLOCK_SIZE, MultiHash
@@ -48,29 +45,9 @@ def _content_disposition_filename(header: str) -> Optional[str]:
     return fname
 
 
-def _retry_if_throttling(retry_state) -> bool:
-    """Custom tenacity retry predicate for handling HTTP responses with
-    status code 429 (too many requests).
-    """
-    attempt = retry_state.outcome
-    if attempt.failed:
-        exception = attempt.exception()
-        return (
-            isinstance(exception, HTTPError) and exception.response.status_code == 429
-        )
-    return False
-
-
-throttling_retry = retry(
-    retry=_retry_if_throttling,
-    wait=wait_exponential(exp_base=10),
-    stop=stop_after_attempt(max_attempt_number=5),
+@http_retry(
     before_sleep=before_sleep_log(logger, logging.WARNING),
-    reraise=True,
 )
-
-
-@throttling_retry
 def download(
     url: str,
     dest: str,
@@ -164,7 +141,9 @@ def download(
     return filepath, extrinsic_metadata
 
 
-@throttling_retry
+@http_retry(
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+)
 def get_url_body(url: str, **extra_params) -> bytes:
     """Basic HTTP client to retrieve information on software package,
     typically JSON metadata from a REST API.

@@ -1,5 +1,6 @@
 [swh.cli.subcommands]
 loader = swh.loader.cli
+nar = swh.loader.core.nar
 
 [swh.workers]
 loader.arch = swh.loader.package.arch:register
@@ -14,6 +15,8 @@ loader.debian = swh.loader.package.debian:register
 loader.deposit = swh.loader.package.deposit:register
 loader.directory = swh.loader.core:register_directory
 loader.golang = swh.loader.package.golang:register
+loader.hackage = swh.loader.package.hackage:register
+loader.hex = swh.loader.package.hex:register
 loader.maven = swh.loader.package.maven:register
 loader.nixguix = swh.loader.package.nixguix:register
 loader.npm = swh.loader.package.npm:register
@@ -21,3 +24,5 @@ loader.opam = swh.loader.package.opam:register
 loader.pubdev = swh.loader.package.pubdev:register
 loader.puppet = swh.loader.package.puppet:register
 loader.pypi = swh.loader.package.pypi:register
+loader.rpm = swh.loader.package.rpm:register
+loader.rubygems = swh.loader.package.rubygems:register
