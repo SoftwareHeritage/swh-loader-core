@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from abc import ABC, abstractmethod
 import datetime
 import hashlib
 import logging
@@ -606,8 +607,8 @@ class BaseLoader:
         self.statsd.increment(f"{name}_count", tags=tags)
 
 
-class NodeLoader(BaseLoader):
-    """Common class for :class:`ContentLoader` and :class:`Directoryloader`.
+class NodeLoader(BaseLoader, ABC):
+    """Common abstract class for :class:`ContentLoader` and :class:`Directoryloader`.
 
     The "checksums" field is a dictionary of hex hashes on the object retrieved (content
     or directory). When "checksum_layout" is "standard", the checksums are computed on
@@ -638,6 +639,8 @@ class NodeLoader(BaseLoader):
         super().__init__(storage, url, **kwargs)
         self.snapshot: Optional[Snapshot] = None
         self.checksums = checksums
+        # The path to an artifact retrieved locally (e.g. file or directory)
+        self.artifact_path: Optional[Path] = None
 
         # Keep compatibility with the previous name 'checksums_computations'
         if checksum_layout is not None:
@@ -721,6 +724,87 @@ class NodeLoader(BaseLoader):
             for hash_algo, extid in checksums.items()
         }
 
+    @abstractmethod
+    def fetch_artifact(self) -> Iterator[Path]:
+        """This fetches an artifact representation and yields its associated local
+        representation (as Path). Depending on the implementation, this may yield
+        contents coming from a remote location, or directories coming from tarball, svn
+        tree, git tree, hg tree, ...
+
+        Raises
+            NotFound if nothing is found;
+            ValueError in case of mismatched checksums
+
+        """
+        pass
+
+    @abstractmethod
+    def process_artifact(self, artifact_path: Path) -> None:
+        """Build the DAG objects out of the locally retrieved artifact."""
+        pass
+
+    def fetch_data(self) -> bool:
+        """Fetch artifact (e.g. content, directory), checks and ingests the DAG objects
+        coming from the artifact.
+
+        This iterates over the generator :meth:`fetch_artifact` to retrieve artifact. As
+        soon as one is retrieved and pass the checks (e.g. nar checks if the
+        "checksum_layout" is "nar"), the method proceeds with the DAG ingestion as
+        usual. If the artifact does not pass the check, this tries to retrieve the next
+        mirrored artifact. If no artifacts is retrievable, this raises.
+
+        Raises
+            NotFound if no artifact is found;
+            ValueError in case of mismatched checksums
+
+        """
+        errors = []
+        for artifact_path in self.fetch_artifact():
+            if self.checksum_layout == "nar":
+                # hashes are not "standard", so we need an extra check to happen
+                # on the uncompressed tarball
+                nar = Nar(list(self.checksums.keys()))
+                self.log.debug(
+                    "Artifact <%s> with path %s", self.visit_type, artifact_path
+                )
+                if artifact_path.is_dir():
+                    dir_to_check = next(artifact_path.iterdir())
+                    artifact_to_check = dir_to_check
+                else:
+                    artifact_to_check = artifact_path
+
+                self.log.debug(
+                    "Artifact <%s> to check nar hashes: %s",
+                    self.visit_type,
+                    artifact_to_check,
+                )
+                nar.serialize(artifact_to_check)
+                actual_checksums = nar.hexdigest()
+
+                if actual_checksums != self.checksums:
+                    errors.append(
+                        ValueError(
+                            f"Checksum mismatched on <{self.origin.url}>: "
+                            f"{actual_checksums} != {self.checksums}"
+                        )
+                    )
+                    self.log.debug(
+                        "Mismatched checksums <%s>: continue on next mirror url if any",
+                        self.origin.url,
+                    )
+                    continue
+
+            if artifact_path is not None:
+                self.process_artifact(artifact_path)
+                return False  # no more data to fetch
+
+        if errors:
+            raise errors[0]
+
+        # if we reach here, we did not find any proper tarball, so consider the origin
+        # not found
+        raise NotFound(f"Unknown origin {self.origin.url}.")
+
     def store_nar_as_extids(self, node: Union[Content, Directory]) -> None:
         """Store the nar checksums provided as extids for :data:`node`.
 
@@ -755,9 +839,17 @@ class ContentLoader(NodeLoader):
         super().__init__(*args, **kwargs)
         self.content: Optional[Content] = None
 
-    def fetch_data(self) -> bool:
-        """Retrieve the content file as a Content Object"""
+    def fetch_artifact(self) -> Iterator[Path]:
+        """Iterates over the mirror urls to find a content.
+
+        Raises
+            NotFound if nothing is found;
+            ValueError in case of any error when fetching/computing (length, checksums
+            mismatched...)
+
+        """
         errors = []
+        found_file_path = False
         for url in self.mirror_urls:
             url_ = urlparse(url)
             self.log.debug(
@@ -772,30 +864,8 @@ class ContentLoader(NodeLoader):
                     file_path, _ = download(
                         url, dest=tmpdir, hashes=self.standard_hashes
                     )
-                    if self.checksum_layout == "nar":
-                        # hashes are not "standard", so we need an extra check to happen
-                        self.log.debug("Content to check nar hashes: %s", file_path)
-                        nar = Nar(list(self.checksums.keys()))
-                        nar.serialize(Path(file_path))
-                        actual_checksums = nar.hexdigest()
-
-                        if actual_checksums != self.checksums:
-                            errors.append(
-                                ValueError(
-                                    f"Checksum mismatched on <{url}>: "
-                                    f"{actual_checksums} != {self.checksums}"
-                                )
-                            )
-                            self.log.debug(
-                                "Mismatched checksums <%s>: continue on next mirror "
-                                "url if any",
-                                url,
-                            )
-                            continue
-
-                    with open(file_path, "rb") as file:
-                        self.content = Content.from_data(file.read())
-
+                    found_file_path = True
+                    yield Path(file_path)
             except ValueError as e:
                 errors.append(e)
                 self.log.debug(
@@ -809,19 +879,22 @@ class ContentLoader(NodeLoader):
                         "Not found '%s', continue on next mirror url if any", url
                     )
                 continue
-            else:
-                return False  # no more data to fetch
 
-        if errors:
+        # To catch 'standard' hash mismatch issues raise by the 'download' method.
+        if not found_file_path and errors:
             raise errors[0]
 
-        # If we reach this point, we did not find any proper content, consider the
-        # origin not found
-        raise NotFound(f"Unknown origin {self.origin.url}.")
+    def process_artifact(self, artifact_path: Path):
+        """Build the Content out of the remote artifact retrieved.
+
+        This needs to happen in this method because it's within a context manager block.
+
+        """
+        with open(artifact_path, "rb") as content_file:
+            self.content = Content.from_data(content_file.read())
 
     def process_data(self) -> bool:
-        """Build the snapshot out of the Content retrieved."""
-
+        """Build Snapshot out of the artifact retrieved."""
         assert self.content is not None
         self.snapshot = Snapshot(
             branches={
@@ -874,72 +947,24 @@ class BaseDirectoryLoader(NodeLoader):
         self.skipped_cnts: List[SkippedContent] = None
         self.dirs: List[Directory] = None
 
-    def fetch_directory(self) -> Iterator[Path]:
-        """This fetches directory representations and yields its associated local
-        representation (as bytes). Depending on the implementation, this may yield
-        directories coming from tarball, svn tree, git tree, hg tree, ...
+    def process_artifact(self, artifact_path: Path) -> None:
+        """Build the Directory and other DAG objects out of the remote artifact
+        retrieved (self.artifact_path).
 
-        Once a directory is locally retrieved, it continues checking further (e.g. nar
-        checks) and proceed with the DAG ingestion as usual.
-
-        Raises
-            NotFound if nothing is found
-            ValueError in case of mismatched checksums
+        This needs to happen in this method because it's within a context manager block.
 
         """
-        raise NotImplementedError(f"{self.__class__.__name__}.fetch_directory")
-
-    def fetch_data(self) -> bool:
-        """Fetch directory, checks and ingests the DAG objects.
-
-        Raises NotFound if no artifact is found
-
-        """
-        errors = []
-        for directory_path in self.fetch_directory():
-            if self.checksum_layout == "nar":
-                # hashes are not "standard", so we need an extra check to happen
-                # on the uncompressed tarball
-                dir_to_check = next(directory_path.iterdir())
-                self.log.debug("Directory to check nar hashes: %s", dir_to_check)
-                nar = Nar(list(self.checksums.keys()))
-                nar.serialize(dir_to_check)
-                actual_checksums = nar.hexdigest()
-
-                if actual_checksums != self.checksums:
-                    errors.append(
-                        ValueError(
-                            f"Checksum mismatched on <{self.origin.url}>: "
-                            f"{actual_checksums} != {self.checksums}"
-                        )
-                    )
-                    self.log.debug(
-                        "Mismatched checksums <%s>: continue on next mirror url if any",
-                        self.origin.url,
-                    )
-                    continue
-
-            self.directory = from_disk.Directory.from_disk(
-                path=bytes(directory_path),
-                max_content_length=self.max_content_size,
-            )
-            # Compute the merkle dag from the top-level directory
-            self.cnts, self.skipped_cnts, self.dirs = from_disk.iter_directory(
-                self.directory
-            )
-
-            if self.directory is not None:
-                return False  # no more data to fetch
-
-        if errors:
-            raise errors[0]
-
-        # if we reach here, we did not find any proper tarball, so consider the origin
-        # not found
-        raise NotFound(f"Unknown origin {self.origin.url}.")
+        self.directory = from_disk.Directory.from_disk(
+            path=bytes(artifact_path),
+            max_content_length=self.max_content_size,
+        )
+        # Compute the merkle dag from the top-level directory
+        self.cnts, self.skipped_cnts, self.dirs = from_disk.iter_directory(
+            self.directory
+        )
 
     def process_data(self) -> bool:
-        """Build the snapshot out of the Directory retrieved."""
+        """Build the Snapshot out of the Directory retrieved."""
 
         assert self.directory is not None
         # Build the snapshot
@@ -975,11 +1000,11 @@ class BaseDirectoryLoader(NodeLoader):
 class TarballDirectoryLoader(BaseDirectoryLoader):
     """TarballDirectoryLoader in charge of ingesting Directory coming from a tarball."""
 
-    def fetch_directory(self) -> Iterator[Path]:
+    def fetch_artifact(self) -> Iterator[Path]:
         """Iterates over the mirror urls to find a directory packaged in a tarball.
 
         Raises
-            NotFound if nothing is found
+            NotFound if nothing is found;
             ValueError in case of any error when fetching/computing (length, checksums
             mismatched...)
 
