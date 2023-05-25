@@ -1,3 +1,15 @@
+swh-loader-core (5.4.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.4.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-05-25 17:17:00
+    +0200)
+  * Upstream changes:     - v5.4.0     - core.loader: Refactor common
+    behavior between ContentLoader and *DirectoryLoader     -
+    core.loader: Split DirectoryLoader in BaseDirectoryLoader and
+    TarballDirectoryLoader
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 25 May 2023 15:21:55 +0000
+
 swh-loader-core (5.3.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.3.1     - (tagged by Valentin Lorentz
