@@ -19,7 +19,7 @@ from swh.loader.core.loader import (
     SENTRY_VISIT_TYPE_TAG_NAME,
     BaseLoader,
     ContentLoader,
-    DirectoryLoader,
+    TarballDirectoryLoader,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
@@ -290,7 +290,7 @@ def _check_load_failure(
 ):
     """Check whether a failed load properly logged its exception, and that the
     snapshot didn't get referenced in storage"""
-    assert isinstance(loader, (ContentLoader, DirectoryLoader))
+    assert isinstance(loader, (ContentLoader, TarballDirectoryLoader))
     for record in caplog.records:
         if record.levelname != "ERROR":
             continue
@@ -449,7 +449,7 @@ def test_content_loader_missing_field(swh_storage):
         ContentLoader(swh_storage, origin.url)
 
 
-@pytest.mark.parametrize("loader_class", [ContentLoader, DirectoryLoader])
+@pytest.mark.parametrize("loader_class", [ContentLoader, TarballDirectoryLoader])
 def test_node_loader_missing_field(swh_storage, loader_class):
     """It should raise if the ContentLoader is missing checksums field"""
     with pytest.raises(UnsupportedChecksumLayout):
@@ -630,16 +630,16 @@ DIRECTORY_URL = f"{DIRECTORY_MIRROR}/archives/dummy-hello.tar.gz"
 
 
 def test_directory_loader_missing_field(swh_storage):
-    """It should raise if the DirectoryLoader is missing checksums field"""
+    """It should raise if the TarballDirectoryLoader is missing checksums field"""
     origin = Origin(DIRECTORY_URL)
     with pytest.raises(TypeError, match="missing"):
-        DirectoryLoader(swh_storage, origin.url)
+        TarballDirectoryLoader(swh_storage, origin.url)
 
 
 def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir, tarball_path):
     """It should not ingest origin when there is no tarball to be found (no mirrors)"""
     unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tar.gz")
-    loader = DirectoryLoader(
+    loader = TarballDirectoryLoader(
         swh_storage,
         unknown_origin.url,
         checksums=compute_hashes(tarball_path),
@@ -664,7 +664,7 @@ def test_directory_loader_404_with_fallback(
     """It should not ingest origin when there is no tarball to be found"""
     unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tbz2")
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/elsewhere-unknown2.tbz2"
-    loader = DirectoryLoader(
+    loader = TarballDirectoryLoader(
         swh_storage,
         unknown_origin.url,
         fallback_urls=[fallback_url_ko],
@@ -700,7 +700,7 @@ def test_directory_loader_hash_mismatch(
         for algo, chksum in checksums.items()
     }
 
-    loader = DirectoryLoader(
+    loader = TarballDirectoryLoader(
         swh_storage,
         origin.url,
         checksums=erratic_checksums,  # making the integrity check fail
@@ -731,7 +731,7 @@ def test_directory_loader_ok_with_fallback(
     fallback_url_ok = DIRECTORY_URL
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/unknown2.tgz"
 
-    loader = DirectoryLoader(
+    loader = TarballDirectoryLoader(
         swh_storage,
         dead_origin.url,
         fallback_urls=[fallback_url_ok, fallback_url_ko],
@@ -754,7 +754,7 @@ def test_directory_loader_ok_simple(
 
     checksums = compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"])
 
-    loader = DirectoryLoader(
+    loader = TarballDirectoryLoader(
         swh_storage,
         origin.url,
         checksums=checksums,

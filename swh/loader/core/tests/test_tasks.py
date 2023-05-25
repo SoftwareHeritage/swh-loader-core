@@ -58,7 +58,7 @@ LISTED_ORIGIN_COMPAT = ListedOrigin(
 )
 
 
-@pytest.mark.parametrize("loader_name", ["Content", "Directory"])
+@pytest.mark.parametrize("loader_name", ["Content", "TarballDirectory"])
 @pytest.mark.parametrize(
     "listed_origin", [LISTED_ORIGIN, LISTED_ORIGIN2, LISTED_ORIGIN_COMPAT]
 )
