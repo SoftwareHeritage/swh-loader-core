@@ -14,7 +14,7 @@ from swh.model.hashutil import MultiHash
 
 @pytest.fixture
 def tarball_path(datadir):
-    """Return tarball filepath fetched by DirectoryLoader test runs."""
+    """Return tarball filepath fetched by TarballDirectoryLoader test runs."""
     return path.join(datadir, "https_example.org", "archives_dummy-hello.tar.gz")
 
 
