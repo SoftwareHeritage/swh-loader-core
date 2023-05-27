@@ -761,9 +761,10 @@ class NodeLoader(BaseLoader, ABC):
         errors = []
         for artifact_path in self.fetch_artifact():
             if self.checksum_layout == "nar":
-                # hashes are not "standard", so we need an extra check to happen
-                # on the uncompressed tarball
-                nar = Nar(list(self.checksums.keys()))
+                # hashes are not "standard", so we need an extra check to happen on the
+                # artifact retrieved. We also want to exclude any vcs (.git, .svn, ...)
+                # metadata which would impact hash computation if present.
+                nar = Nar(list(self.checksums.keys()), exclude_vcs=True)
                 self.log.debug(
                     "Artifact <%s> with path %s", self.visit_type, artifact_path
                 )
