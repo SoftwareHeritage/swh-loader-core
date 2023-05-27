@@ -767,18 +767,13 @@ class NodeLoader(BaseLoader, ABC):
                 self.log.debug(
                     "Artifact <%s> with path %s", self.visit_type, artifact_path
                 )
-                if artifact_path.is_dir():
-                    dir_to_check = next(artifact_path.iterdir())
-                    artifact_to_check = dir_to_check
-                else:
-                    artifact_to_check = artifact_path
 
                 self.log.debug(
                     "Artifact <%s> to check nar hashes: %s",
                     self.visit_type,
-                    artifact_to_check,
+                    artifact_path,
                 )
-                nar.serialize(artifact_to_check)
+                nar.serialize(artifact_path)
                 actual_checksums = nar.hexdigest()
 
                 if actual_checksums != self.checksums:
@@ -1050,7 +1045,15 @@ class TarballDirectoryLoader(BaseDirectoryLoader):
 
                 if directory_path:
                     found_directory_path = True
-                    yield directory_path
+                    # Check whether a top-level directory exists
+                    listing = list(directory_path.iterdir())
+                    if len(listing) == 1:
+                        # Top-level directory, we provide it
+                        dir_path = listing[0]
+                    else:
+                        # otherwise, provide the directory_path as is
+                        dir_path = directory_path
+                    yield dir_path
 
         # To catch 'standard' hash mismatch issues raise by the 'download' method.
         if not found_directory_path and errors:
