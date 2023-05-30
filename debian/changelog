@@ -1,3 +1,14 @@
+swh-loader-core (5.5.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.5.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-05-30 16:55:32
+    +0200)
+  * Upstream changes:     - v5.5.0     - NodeLoader: Ignore vcs metadata
+    when hashing     - BaseDirectoryLoader: Make base loader check the
+    fetched artifact
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 30 May 2023 15:01:28 +0000
+
 swh-loader-core (5.4.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.4.0     - (tagged by Antoine R. Dumont
