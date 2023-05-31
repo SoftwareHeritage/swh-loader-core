@@ -919,18 +919,14 @@ class ContentLoader(NodeLoader):
 
 class BaseDirectoryLoader(NodeLoader):
     """Abstract base Directory Loader for 'tree' ingestion (through any media).
-    Implementations should inherit from this class and provide the
-    :meth:`fetch_directory` method.
 
-    The output snapshot is of the form:
+    Implementations should inherit from this class and provide the:
 
-    .. code::
+    - required :meth:`fetch_artifact` method to retrieve the Directory (from the proper
+      media protocol, e.g. git, svn, hg, ...)
 
-       id: <bytes>
-       branches:
-         HEAD:
-           target_type: directory
-           target: <directory-id>
+    - optional :meth:`build_snapshot` method to build the Snapshot with the proper
+      structure if the default is not enough.
 
     """
 
@@ -959,12 +955,25 @@ class BaseDirectoryLoader(NodeLoader):
             self.directory
         )
 
-    def process_data(self) -> bool:
-        """Build the Snapshot out of the Directory retrieved."""
+    def build_snapshot(self) -> Snapshot:
+        """Build and return the snapshot to store in the archive.
 
+        By default, this builds the snapshot with the structure:
+
+        .. code::
+
+           id: <bytes>
+           branches:
+             HEAD:
+               target_type: directory
+               target: <directory-id>
+
+        Other directory loader implementations could override this method to build a
+        more specific snapshot.
+
+        """
         assert self.directory is not None
-        # Build the snapshot
-        self.snapshot = Snapshot(
+        return Snapshot(
             branches={
                 b"HEAD": SnapshotBranch(
                     target=self.directory.hash,
@@ -972,8 +981,6 @@ class BaseDirectoryLoader(NodeLoader):
                 ),
             }
         )
-
-        return False  # no more data to process
 
     def store_data(self) -> None:
         """Store newly retrieved Content and Snapshot."""
@@ -985,7 +992,7 @@ class BaseDirectoryLoader(NodeLoader):
         self.storage.directory_add(self.dirs)
         assert self.directory is not None
         self.store_nar_as_extids(self.directory.to_model())
-        assert self.snapshot is not None
+        self.snapshot = self.build_snapshot()
         self.storage.snapshot_add([self.snapshot])
         self.loaded_snapshot_id = self.snapshot.id
 

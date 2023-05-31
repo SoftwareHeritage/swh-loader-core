@@ -8,7 +8,6 @@ from functools import partial
 import hashlib
 import logging
 import time
-from typing import Dict, List
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -23,10 +22,13 @@ from swh.loader.core.loader import (
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
-from swh.loader.tests import assert_last_visit_matches, get_stats
+from swh.loader.tests import (
+    assert_last_visit_matches,
+    fetch_nar_extids_from_checksums,
+    get_stats,
+)
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
-    ExtID,
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
@@ -36,7 +38,6 @@ from swh.model.model import (
     SnapshotBranch,
     TargetType,
 )
-from swh.storage.interface import StorageInterface
 
 from .conftest import compute_hashes, compute_nar_hashes
 
@@ -545,24 +546,6 @@ def test_content_loader_ok_with_fallback(
 compute_content_nar_hashes = partial(compute_nar_hashes, is_tarball=False)
 
 
-def fetch_extids_from_checksums(
-    storage: StorageInterface, checksums: Dict[str, str]
-) -> List[ExtID]:
-    from swh.model.hashutil import hash_to_bytes
-
-    EXTID_TYPE_NAR = "nar-%s-raw-validated"
-    EXTID_TYPE_NAR_VERSION = 0
-
-    extids = []
-    for hash_algo, checksum in checksums.items():
-        id_type = EXTID_TYPE_NAR % hash_algo
-        ids = [hash_to_bytes(checksum)]
-        extid = storage.extid_get_from_extid(id_type, ids, EXTID_TYPE_NAR_VERSION)
-        extids.extend(extid)
-
-    return extids
-
-
 @pytest.mark.parametrize("checksum_layout", ["standard", "nar"])
 def test_content_loader_ok_simple(
     swh_storage, requests_mock_datadir, content_path, checksum_layout
@@ -585,7 +568,7 @@ def test_content_loader_ok_simple(
     assert result == {"status": "eventful"}
 
     if checksum_layout == "nar":
-        extids = fetch_extids_from_checksums(loader.storage, checksums)
+        extids = fetch_nar_extids_from_checksums(loader.storage, checksums)
         assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
@@ -765,7 +748,7 @@ def test_directory_loader_ok_simple(
     assert result == {"status": "eventful"}
 
     if checksum_layout == "nar":
-        extids = fetch_extids_from_checksums(loader.storage, checksums)
+        extids = fetch_nar_extids_from_checksums(loader.storage, checksums)
         assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
