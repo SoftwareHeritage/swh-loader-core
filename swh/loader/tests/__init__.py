@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020  The Software Heritage developers
+# Copyright (C) 2018-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,7 +10,7 @@ import subprocess
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import OriginVisitStatus, Snapshot, TargetType
+from swh.model.model import ExtID, OriginVisitStatus, Snapshot, TargetType
 from swh.storage.algos.origin import origin_get_latest_visit_status
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.interface import StorageInterface
@@ -261,3 +261,20 @@ def get_stats(storage) -> Dict:
         "snapshot",
     ]
     return {k: stats.get(k) for k in keys}
+
+
+def fetch_nar_extids_from_checksums(
+    storage: StorageInterface, checksums: Dict[str, str]
+) -> List[ExtID]:
+
+    EXTID_TYPE_NAR = "nar-%s-raw-validated"
+    EXTID_TYPE_NAR_VERSION = 0
+
+    extids = []
+    for hash_algo, checksum in checksums.items():
+        id_type = EXTID_TYPE_NAR % hash_algo
+        ids = [hash_to_bytes(checksum)]
+        extid = storage.extid_get_from_extid(id_type, ids, EXTID_TYPE_NAR_VERSION)
+        extids.extend(extid)
+
+    return extids
