@@ -1,8 +1,13 @@
-swh-loader-core (5.5.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-loader-core (5.6.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 5.6.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-05-31 16:16:01
+    +0200)
+  * Upstream changes:     - v5.6.0     - loader.BaseDirectoryLoader:
+    Allow build_snapshot override     - loader.tests: Open fetch nar
+    extids from checksums utility test fn
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 30 May 2023 15:04:08 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 31 May 2023 14:22:01 +0000
 
 swh-loader-core (5.5.0-1~swh1) unstable-swh; urgency=medium
 
