@@ -24,7 +24,7 @@ from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_
 from swh.loader.core.nar import Nar
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.package.utils import download
-from swh.model import from_disk
+from swh.model import from_disk, model
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     Content,
@@ -35,7 +35,6 @@ from swh.model.model import (
     OriginVisitStatus,
     RawExtrinsicMetadata,
     Sha1Git,
-    SkippedContent,
     Snapshot,
     SnapshotBranch,
     TargetType,
@@ -637,7 +636,10 @@ class NodeLoader(BaseLoader, ABC):
         **kwargs,
     ):
         super().__init__(storage, url, **kwargs)
-        self.snapshot: Optional[Snapshot] = None
+        # We need to use qualified imports here otherwise
+        # Sphinx gets lost when handling subclasses. See:
+        # https://github.com/sphinx-doc/sphinx/issues/10124
+        self.snapshot: Optional[model.Snapshot] = None
         self.checksums = checksums
         # The path to an artifact retrieved locally (e.g. file or directory)
         self.artifact_path: Optional[Path] = None
@@ -935,9 +937,12 @@ class BaseDirectoryLoader(NodeLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.directory: Optional[from_disk.Directory] = None
-        self.cnts: List[Content] = None
-        self.skipped_cnts: List[SkippedContent] = None
-        self.dirs: List[Directory] = None
+        # We need to use qualified imports here otherwise
+        # Sphinx gets lost when handling subclasses. See:
+        # https://github.com/sphinx-doc/sphinx/issues/10124
+        self.cnts: List[model.Content] = None
+        self.skipped_cnts: List[model.SkippedContent] = None
+        self.dirs: List[model.Directory] = None
 
     def process_artifact(self, artifact_path: Path) -> None:
         """Build the Directory and other DAG objects out of the remote artifact
