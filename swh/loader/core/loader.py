@@ -158,27 +158,38 @@ class BaseLoader:
         )
 
     @classmethod
-    def from_config(cls, storage: Dict[str, Any], **config: Any):
+    def from_config(
+        cls,
+        storage: Dict[str, Any],
+        overrides: Optional[Dict[str, Any]] = None,
+        **extra_kwargs: Any,
+    ):
         """Instantiate a loader from a configuration dict.
 
         This is basically a backwards-compatibility shim for the CLI.
 
         Args:
           storage: instantiation config for the storage
-          config: the configuration dict for the loader, with the following keys:
-            - credentials (optional): credentials list for the scheduler
-            - any other kwargs passed to the loader.
+          overrides: A dict of extra configuration for loaders. Maps fully qualified
+            class names (e.g. ``"swh.loader.git.loader.GitLoader"``) to a dict of extra
+            keyword arguments to pass to this (and only this) loader.
+          extra_kwargs: all extra keyword arguments are passed to all loaders
 
         Returns:
           the instantiated loader
+
         """
         # Drop the legacy config keys which aren't used for this generation of loader.
-        for legacy_key in ("storage", "celery"):
-            config.pop(legacy_key, None)
+        # Should probably raise a deprecation warning?
+        extra_kwargs.pop("celery", None)
+
+        qualified_classname = f"{cls.__module__}.{cls.__name__}"
+        my_overrides = (overrides or {}).get(qualified_classname, {})
+        kwargs = {**extra_kwargs, **my_overrides}
 
         # Instantiate the storage
         storage_instance = get_storage(**storage)
-        return cls(storage=storage_instance, **config)
+        return cls(storage=storage_instance, **kwargs)
 
     @classmethod
     def from_configfile(cls, **kwargs: Any):
