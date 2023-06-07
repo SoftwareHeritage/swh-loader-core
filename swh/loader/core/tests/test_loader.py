@@ -8,6 +8,7 @@ from functools import partial
 import hashlib
 import logging
 import time
+from typing import Any, Dict
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -759,3 +760,72 @@ def test_directory_loader_ok_simple(
     result2 = loader.load()
 
     assert result2 == {"status": "uneventful"}
+
+
+@pytest.fixture
+def swh_loader_config() -> Dict[str, Any]:
+    return {
+        "storage": {
+            "cls": "memory",
+        },
+        "origin_url": "origin",
+        "overrides": {"swh.loader.core.tests.test_loader.FooLoader": {"foo": "bar"}},
+    }
+
+
+class FooLoader(BaseLoader):
+    visit_type = "foo"
+
+    def __init__(self, *args, foo=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.foo = foo
+
+
+class BarLoader(BaseLoader):
+    visit_type = "bar"
+
+
+def test_loader_from_config_with_override(swh_storage, swh_loader_config):
+    """Instanting multiple loaders with centralized configuration is ok"""
+    storage_config = swh_loader_config.pop("storage")
+
+    foo_loader = FooLoader.from_config(storage_config, **swh_loader_config)
+    # Instantiating the loader will pick up its specific configuration in the override
+    assert foo_loader is not None
+    # and use it
+    assert foo_loader.foo == "bar"
+
+    bar_loader = BarLoader.from_config(storage_config, **swh_loader_config)
+    # Instantiating another loader with that same configuration is fine too
+    # It just discards the unknown part of the configuration
+    assert bar_loader is not None
+
+    swh_loader_config.pop("overrides")
+    foo_loader2 = FooLoader.from_config(storage_config, **swh_loader_config)
+    # Instantiating the loader without the override works too as it's an optional
+    # configuration
+    assert foo_loader2 is not None
+    assert foo_loader2.foo is None
+
+
+def test_loader_from_config_with_override2(swh_storage, swh_loader_config):
+    """Instanting multiple loaders with centralized configuration is ok"""
+    storage_config = swh_loader_config.pop("storage")
+    overrides = swh_loader_config.pop("overrides")
+
+    foo_loader = FooLoader.from_config(storage_config, overrides, **swh_loader_config)
+    # Instantiating the loader will pick up its specific configuration in the override
+    assert foo_loader is not None
+    # and use it
+    assert foo_loader.foo == "bar"
+
+    bar_loader = BarLoader.from_config(storage_config, overrides, **swh_loader_config)
+    # Instantiating another loader with that same configuration is fine too
+    # It just discards the unknown part of the configuration
+    assert bar_loader is not None
+
+    foo_loader2 = FooLoader.from_config(storage_config, **swh_loader_config)
+    # Instantiating the loader without the override works too as it's an optional
+    # configuration
+    assert foo_loader2 is not None
+    assert foo_loader2.foo is None
