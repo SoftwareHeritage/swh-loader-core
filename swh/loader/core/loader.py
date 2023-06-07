@@ -24,7 +24,7 @@ from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_
 from swh.loader.core.nar import Nar
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.package.utils import download
-from swh.model import from_disk
+from swh.model import from_disk, model
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     Content,
@@ -35,7 +35,6 @@ from swh.model.model import (
     OriginVisitStatus,
     RawExtrinsicMetadata,
     Sha1Git,
-    SkippedContent,
     Snapshot,
     SnapshotBranch,
     TargetType,
@@ -159,27 +158,38 @@ class BaseLoader:
         )
 
     @classmethod
-    def from_config(cls, storage: Dict[str, Any], **config: Any):
+    def from_config(
+        cls,
+        storage: Dict[str, Any],
+        overrides: Optional[Dict[str, Any]] = None,
+        **extra_kwargs: Any,
+    ):
         """Instantiate a loader from a configuration dict.
 
         This is basically a backwards-compatibility shim for the CLI.
 
         Args:
           storage: instantiation config for the storage
-          config: the configuration dict for the loader, with the following keys:
-            - credentials (optional): credentials list for the scheduler
-            - any other kwargs passed to the loader.
+          overrides: A dict of extra configuration for loaders. Maps fully qualified
+            class names (e.g. ``"swh.loader.git.loader.GitLoader"``) to a dict of extra
+            keyword arguments to pass to this (and only this) loader.
+          extra_kwargs: all extra keyword arguments are passed to all loaders
 
         Returns:
           the instantiated loader
+
         """
         # Drop the legacy config keys which aren't used for this generation of loader.
-        for legacy_key in ("storage", "celery"):
-            config.pop(legacy_key, None)
+        # Should probably raise a deprecation warning?
+        extra_kwargs.pop("celery", None)
+
+        qualified_classname = f"{cls.__module__}.{cls.__name__}"
+        my_overrides = (overrides or {}).get(qualified_classname, {})
+        kwargs = {**extra_kwargs, **my_overrides}
 
         # Instantiate the storage
         storage_instance = get_storage(**storage)
-        return cls(storage=storage_instance, **config)
+        return cls(storage=storage_instance, **kwargs)
 
     @classmethod
     def from_configfile(cls, **kwargs: Any):
@@ -637,7 +647,10 @@ class NodeLoader(BaseLoader, ABC):
         **kwargs,
     ):
         super().__init__(storage, url, **kwargs)
-        self.snapshot: Optional[Snapshot] = None
+        # We need to use qualified imports here otherwise
+        # Sphinx gets lost when handling subclasses. See:
+        # https://github.com/sphinx-doc/sphinx/issues/10124
+        self.snapshot: Optional[model.Snapshot] = None
         self.checksums = checksums
         # The path to an artifact retrieved locally (e.g. file or directory)
         self.artifact_path: Optional[Path] = None
@@ -935,9 +948,12 @@ class BaseDirectoryLoader(NodeLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.directory: Optional[from_disk.Directory] = None
-        self.cnts: List[Content] = None
-        self.skipped_cnts: List[SkippedContent] = None
-        self.dirs: List[Directory] = None
+        # We need to use qualified imports here otherwise
+        # Sphinx gets lost when handling subclasses. See:
+        # https://github.com/sphinx-doc/sphinx/issues/10124
+        self.cnts: List[model.Content] = None
+        self.skipped_cnts: List[model.SkippedContent] = None
+        self.dirs: List[model.Directory] = None
 
     def process_artifact(self, artifact_path: Path) -> None:
         """Build the Directory and other DAG objects out of the remote artifact
