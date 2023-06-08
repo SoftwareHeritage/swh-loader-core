@@ -280,52 +280,57 @@ def fetch_nar_extids_from_checksums(
     return extids
 
 
-def assert_task_and_visit_type_match(module_name: str) -> None:
-    """This checks the tasks declared in the ``module_name`` have their loader visit
+def assert_task_and_visit_type_match(tasks_module_name: str) -> None:
+    """This checks the tasks declared in the ``tasks_module_name`` have their loader visit
     type and their associated task name matching. If that's not the case, that poses
     issues when scheduling visits.
+
+    Args:
+        tasks_module_name: Fully qualified name of SWH module defining celery tasks
 
     Raises:
         AssertionError: when there is a discrepancy between a visit type of a loader and
           the task name
 
     """
-    from collections import defaultdict
     from importlib import import_module
 
-    import celery.app.task
-
-    mod = import_module(module_name)
+    mod = import_module(tasks_module_name)
     task_names = [x for x in dir(mod) if x.startswith("load_")]
     loaders = [x for x in dir(mod) if x.endswith("Loader")]
-    loaders_lower = [loader.lower() for loader in loaders]
 
-    matching_visit_types: Dict[str, bool] = defaultdict(bool)
-    for task_name in task_names:
-        taskobj = getattr(mod, task_name)
-        assert isinstance(taskobj, celery.app.task.Task)
-        loader_type = task_name.replace("load_", "").replace("_", "")
+    for loader in loaders:
+        loader_cls = getattr(mod, loader)
+        visit_type = loader_cls.visit_type
+        task_function_name = f"load_{visit_type.replace('-', '_')}"
+        assert task_function_name in task_names, (
+            f"task function {task_function_name} for visit type {visit_type } "
+            f"is missing in {tasks_module_name}"
+        )
 
-        for loader_name_lower in loaders_lower:
-            if loader_type in loader_name_lower:
-                break
-        else:
-            raise AssertionError(f"No loader matching {loader_type} in {loaders_lower}")
 
-        for loader in loaders:
-            if loader_type not in loader.lower():
-                continue
+def assert_module_tasks_are_scheduler_ready(packages: Iterable) -> None:
+    """This iterates over a list of packages and check that "tasks" modules declare
+    tasks ready to be scheduled. If any discrepancy exist between a task and its loader
+    visit type, those will never get picked up by the scheduler, they are not scheduler
+    ready. This is an incorrect behavior that needs to be fixed immediately. This check
+    ensures that any improper configured task/loader will be reported so developer can
+    fix it.
 
-            loader_cls = getattr(mod, loader)
-            visit_type = loader_cls.visit_type
+    Args:
+        packages: List of imported swh packages
 
-            matching_visit_type = visit_type.replace("-", "") == loader_type
-            assert (
-                matching_visit_type is True
-            ), f"Visit type <{visit_type}> does not match task name <{task_name}>"
-            matching_visit_types[task_name] = matching_visit_type
+    Raises:
+        AssertionError: when there is any discrepancy between a loader's visit type and
+          its associated task name in the ``packages`` list.
 
-    # We should have as many task names as we have matching visits
-    assert len(task_names) == len(matching_visit_types.values()) and all(
-        matching_visit_types.values()
-    )
+    """
+
+    import pkgutil
+
+    for package in packages:
+        for _, modname, _ in pkgutil.walk_packages(
+            package.__path__, prefix=f"{package.__name__}."
+        ):
+            if modname.endswith(".tasks"):
+                assert_task_and_visit_type_match(modname)
