@@ -75,3 +75,47 @@ def test_loader_tasks_for_listed_origin(
         lister=nixguix_lister,
         listed_origin=listed_origin,
     )
+
+
+def test_check_no_discrepancy_between_task_and_visit_type():
+    """For scheduling purposes the task names and the loader's visit type must match"""
+
+    from collections import defaultdict
+    from importlib import import_module
+
+    import celery.app.task
+
+    mod = import_module("swh.loader.core.tasks")
+    task_names = [x for x in dir(mod) if x.startswith("load_")]
+    loaders = [x for x in dir(mod) if x.endswith("Loader")]
+    loaders_lower = [loader.lower() for loader in loaders]
+
+    matching_visit_types = defaultdict(bool)
+    for task_name in task_names:
+        taskobj = getattr(mod, task_name)
+        assert isinstance(taskobj, celery.app.task.Task)
+        loader_type = task_name.replace("load_", "").replace("_", "")
+
+        for loader_name_lower in loaders_lower:
+            if loader_type in loader_name_lower:
+                break
+        else:
+            raise AssertionError(f"No loader matching {loader_type} in {loaders_lower}")
+
+        for loader in loaders:
+            if loader_type not in loader.lower():
+                continue
+
+            loader_cls = getattr(mod, loader)
+            visit_type = loader_cls.visit_type
+
+            matching_visit_type = visit_type.replace("-", "") == loader_type
+            assert (
+                matching_visit_type is True
+            ), f"Visit type <{visit_type}> does not match task name <{task_name}>"
+            matching_visit_types[task_name] = matching_visit_type
+
+    # We should have as many task names as we have matching visits
+    assert len(task_names) == len(matching_visit_types.values()) and all(
+        matching_visit_types.values()
+    )
