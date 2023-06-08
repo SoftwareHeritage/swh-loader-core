@@ -1,3 +1,14 @@
+swh-loader-core (5.7.2-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.7.2     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-06-08 16:50:58
+    +0200)
+  * Upstream changes:     - v5.7.2     - tasks: Ensure tasks can be
+    scheduled     - tasks: Add test to check for loader visit type and
+    task name discrepancy     - Rename ArchiveLoader to TarballLoader
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 08 Jun 2023 14:56:48 +0000
+
 swh-loader-core (5.7.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.7.1     - (tagged by Antoine R. Dumont
