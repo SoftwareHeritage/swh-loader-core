@@ -278,3 +278,59 @@ def fetch_nar_extids_from_checksums(
         extids.extend(extid)
 
     return extids
+
+
+def assert_task_and_visit_type_match(tasks_module_name: str) -> None:
+    """This checks the tasks declared in the ``tasks_module_name`` have their loader visit
+    type and their associated task name matching. If that's not the case, that poses
+    issues when scheduling visits.
+
+    Args:
+        tasks_module_name: Fully qualified name of SWH module defining celery tasks
+
+    Raises:
+        AssertionError: when there is a discrepancy between a visit type of a loader and
+          the task name
+
+    """
+    from importlib import import_module
+
+    mod = import_module(tasks_module_name)
+    task_names = [x for x in dir(mod) if x.startswith("load_")]
+    loaders = [x for x in dir(mod) if x.endswith("Loader")]
+
+    for loader in loaders:
+        loader_cls = getattr(mod, loader)
+        visit_type = loader_cls.visit_type
+        task_function_name = f"load_{visit_type.replace('-', '_')}"
+        assert task_function_name in task_names, (
+            f"task function {task_function_name} for visit type {visit_type } "
+            f"is missing in {tasks_module_name}"
+        )
+
+
+def assert_module_tasks_are_scheduler_ready(packages: Iterable) -> None:
+    """This iterates over a list of packages and check that "tasks" modules declare
+    tasks ready to be scheduled. If any discrepancy exist between a task and its loader
+    visit type, those will never get picked up by the scheduler, they are not scheduler
+    ready. This is an incorrect behavior that needs to be fixed immediately. This check
+    ensures that any improper configured task/loader will be reported so developer can
+    fix it.
+
+    Args:
+        packages: List of imported swh packages
+
+    Raises:
+        AssertionError: when there is any discrepancy between a loader's visit type and
+          its associated task name in the ``packages`` list.
+
+    """
+
+    import pkgutil
+
+    for package in packages:
+        for _, modname, _ in pkgutil.walk_packages(
+            package.__path__, prefix=f"{package.__name__}."
+        ):
+            if modname.endswith(".tasks"):
+                assert_task_and_visit_type_match(modname)
