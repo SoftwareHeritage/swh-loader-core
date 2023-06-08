@@ -1019,6 +1019,8 @@ class BaseDirectoryLoader(NodeLoader):
 class TarballDirectoryLoader(BaseDirectoryLoader):
     """TarballDirectoryLoader in charge of ingesting Directory coming from a tarball."""
 
+    visit_type = "tarball-directory"
+
     def fetch_artifact(self) -> Iterator[Path]:
         """Iterates over the mirror urls to find a directory packaged in a tarball.
 

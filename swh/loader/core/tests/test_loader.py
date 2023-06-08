@@ -753,7 +753,7 @@ def test_directory_loader_ok_simple(
         assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
-        swh_storage, origin.url, status="full", type="directory"
+        swh_storage, origin.url, status="full", type="tarball-directory"
     )
     assert visit_status.snapshot is not None
 
