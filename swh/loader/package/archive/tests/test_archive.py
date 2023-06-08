@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022 The Software Heritage developers
+# Copyright (C) 2019-2023 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -14,7 +14,7 @@ import attr
 import pytest
 from requests.exceptions import ContentDecodingError
 
-from swh.loader.package.archive.loader import ArchiveLoader, ArchivePackageInfo
+from swh.loader.package.archive.loader import TarballLoader, TarballPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.model.model import (
@@ -103,7 +103,7 @@ def lower_sample_rate(mocker):
 def test_archive_visit_with_no_artifact_found(swh_storage, requests_mock_datadir):
     url = URL
     unknown_artifact_url = "https://ftp.g.o/unknown/8sync-0.1.0.tar.gz"
-    loader = ArchiveLoader(
+    loader = TarballLoader(
         swh_storage,
         url,
         artifacts=[
@@ -133,13 +133,13 @@ def test_archive_visit_with_no_artifact_found(swh_storage, requests_mock_datadir
         "snapshot": 1,
     } == stats
 
-    assert_last_visit_matches(swh_storage, url, status="partial", type="tar")
+    assert_last_visit_matches(swh_storage, url, status="partial", type="tarball")
 
 
 def test_archive_visit_with_skipped_content(swh_storage, requests_mock_datadir):
     """With no prior visit, load a gnu project and set the max content size
     to something low to check that the loader skips "big" content."""
-    loader = ArchiveLoader(
+    loader = TarballLoader(
         swh_storage, URL, artifacts=GNU_ARTIFACTS[:1], max_content_size=10 * 1024
     )
 
@@ -154,7 +154,7 @@ def test_archive_visit_with_skipped_content(swh_storage, requests_mock_datadir):
         expected_snapshot_first_visit_id
     )
 
-    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tarball")
 
     _expected_new_non_skipped_contents_first_visit = [
         "ae9be03bd2a06ed8f4f118d3fe76330bb1d77f62",
@@ -256,7 +256,7 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
     swh_storage, requests_mock_datadir
 ):
     """With no prior visit, load a gnu project ends up with 1 snapshot"""
-    loader = ArchiveLoader(swh_storage, URL, artifacts=GNU_ARTIFACTS[:1])
+    loader = TarballLoader(swh_storage, URL, artifacts=GNU_ARTIFACTS[:1])
 
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
@@ -269,7 +269,7 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         expected_snapshot_first_visit_id
     )
 
-    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tarball")
 
     stats = get_stats(swh_storage)
     assert {
@@ -328,20 +328,20 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
 def test_archive_2_visits_without_change(swh_storage, requests_mock_datadir):
     """With no prior visit, load a gnu project ends up with 1 snapshot"""
     url = URL
-    loader = ArchiveLoader(swh_storage, url, artifacts=GNU_ARTIFACTS[:1])
+    loader = TarballLoader(swh_storage, url, artifacts=GNU_ARTIFACTS[:1])
 
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    assert_last_visit_matches(swh_storage, url, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, url, status="full", type="tarball")
 
     actual_load_status2 = loader.load()
     assert actual_load_status2["status"] == "uneventful"
     assert actual_load_status2["snapshot_id"] is not None
     assert actual_load_status["snapshot_id"] == actual_load_status2["snapshot_id"]
 
-    assert_last_visit_matches(swh_storage, url, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, url, status="full", type="tarball")
 
     urls = [
         m.url
@@ -355,13 +355,13 @@ def test_archive_2_visits_with_new_artifact(swh_storage, requests_mock_datadir):
     """With no prior visit, load a gnu project ends up with 1 snapshot"""
     url = URL
     artifact1 = GNU_ARTIFACTS[0]
-    loader = ArchiveLoader(swh_storage, url, [artifact1])
+    loader = TarballLoader(swh_storage, url, [artifact1])
 
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    assert_last_visit_matches(swh_storage, url, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, url, status="full", type="tarball")
 
     stats = get_stats(swh_storage)
     assert {
@@ -384,7 +384,7 @@ def test_archive_2_visits_with_new_artifact(swh_storage, requests_mock_datadir):
 
     artifact2 = GNU_ARTIFACTS[1]
 
-    loader2 = ArchiveLoader(swh_storage, url, [artifact1, artifact2])
+    loader2 = TarballLoader(swh_storage, url, [artifact1, artifact2])
     stats2 = get_stats(swh_storage)
     assert stats == stats2  # ensure we share the storage
 
@@ -404,7 +404,7 @@ def test_archive_2_visits_with_new_artifact(swh_storage, requests_mock_datadir):
         "snapshot": 1 + 1,
     } == stats2
 
-    assert_last_visit_matches(swh_storage, url, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, url, status="full", type="tarball")
 
     urls = [
         m.url
@@ -432,7 +432,7 @@ def test_archive_2_visits_without_change_not_gnu(swh_storage, requests_mock_data
 
     # Here the loader defines the id_keys to use for existence in the snapshot
     # It's not the default archive loader which
-    loader = ArchiveLoader(
+    loader = TarballLoader(
         swh_storage,
         url,
         artifacts=artifacts,
@@ -442,12 +442,12 @@ def test_archive_2_visits_without_change_not_gnu(swh_storage, requests_mock_data
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
-    assert_last_visit_matches(swh_storage, url, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, url, status="full", type="tarball")
 
     actual_load_status2 = loader.load()
     assert actual_load_status2["status"] == "uneventful"
     assert actual_load_status2["snapshot_id"] == actual_load_status["snapshot_id"]
-    assert_last_visit_matches(swh_storage, url, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, url, status="full", type="tarball")
 
     urls = [
         m.url
@@ -461,7 +461,7 @@ def test_archive_extid():
     """Compute primary key should return the right identity"""
 
     @attr.s
-    class TestPackageInfo(ArchivePackageInfo):
+    class TestPackageInfo(TarballPackageInfo):
         a = attr.ib()
         b = attr.ib()
 
@@ -493,11 +493,11 @@ def test_archive_extid():
 def test_archive_snapshot_append(swh_storage, requests_mock_datadir):
     # first loading with a first artifact
     artifact1 = GNU_ARTIFACTS[0]
-    loader = ArchiveLoader(swh_storage, URL, [artifact1], snapshot_append=True)
+    loader = TarballLoader(swh_storage, URL, [artifact1], snapshot_append=True)
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
-    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tarball")
 
     # check expected snapshot
     snapshot = loader.last_snapshot()
@@ -509,11 +509,11 @@ def test_archive_snapshot_append(swh_storage, requests_mock_datadir):
 
     # second loading with a second artifact
     artifact2 = GNU_ARTIFACTS[1]
-    loader = ArchiveLoader(swh_storage, URL, [artifact2], snapshot_append=True)
+    loader = TarballLoader(swh_storage, URL, [artifact2], snapshot_append=True)
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
-    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tarball")
 
     # check expected snapshot, should contain a new branch and the
     # branch for the first artifact
@@ -529,11 +529,11 @@ def test_archive_snapshot_append(swh_storage, requests_mock_datadir):
 def test_archive_snapshot_append_branch_override(swh_storage, requests_mock_datadir):
     # first loading for a first artifact
     artifact1 = GNU_ARTIFACTS[0]
-    loader = ArchiveLoader(swh_storage, URL, [artifact1], snapshot_append=True)
+    loader = TarballLoader(swh_storage, URL, [artifact1], snapshot_append=True)
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
-    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tarball")
 
     # check expected snapshot
     snapshot = loader.last_snapshot()
@@ -548,11 +548,11 @@ def test_archive_snapshot_append_branch_override(swh_storage, requests_mock_data
     artifact2["url"] = GNU_ARTIFACTS[1]["url"]
     artifact2["time"] = GNU_ARTIFACTS[1]["time"]
     artifact2["length"] = GNU_ARTIFACTS[1]["length"]
-    loader = ArchiveLoader(swh_storage, URL, [artifact2], snapshot_append=True)
+    loader = TarballLoader(swh_storage, URL, [artifact2], snapshot_append=True)
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
-    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tarball")
 
     # check expected snapshot, should contain the same branch as previously
     # but with different target
@@ -589,7 +589,7 @@ def test_archive_not_gzipped_tarball(
             },
         ],
     )
-    loader = ArchiveLoader(
+    loader = TarballLoader(
         swh_storage,
         url,
         artifacts=[
@@ -617,9 +617,9 @@ def test_archive_visit_no_time_for_tarball(swh_storage, requests_mock_datadir):
     for artifact in artifacts:
         artifact["time"] = None
 
-    loader = ArchiveLoader(swh_storage, URL, artifacts=artifacts)
+    loader = TarballLoader(swh_storage, URL, artifacts=artifacts)
 
     actual_load_status = loader.load()
     assert actual_load_status["status"] == "eventful"
 
-    assert_last_visit_matches(swh_storage, URL, status="full", type="tar")
+    assert_last_visit_matches(swh_storage, URL, status="full", type="tarball")

@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2021 The Software Heritage developers
+# Copyright (C) 2020-2023 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -11,7 +11,7 @@ from typing import Dict, Optional, Tuple
 import pytest
 
 from swh.loader.package import __version__
-from swh.loader.package.archive.loader import ArchiveLoader
+from swh.loader.package.archive.loader import TarballLoader
 from swh.loader.package.nixguix.loader import (
     NixGuixLoader,
     clean_sources,
@@ -605,7 +605,7 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
             "version": release,
         }
     ]
-    archive_loader = ArchiveLoader(swh_storage, url=gnu_url, artifacts=gnu_artifacts)
+    archive_loader = TarballLoader(swh_storage, url=gnu_url, artifacts=gnu_artifacts)
     actual_load_status = archive_loader.load()
     expected_snapshot_id = "9efecc835e8f99254934f256b5301b94f348fd17"
     assert actual_load_status["status"] == "eventful"
@@ -615,7 +615,7 @@ def test_load_nixguix_one_common_artifact_from_other_loader(
         archive_loader.storage,
         gnu_url,
         status="full",
-        type="tar",
+        type="tarball",
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 

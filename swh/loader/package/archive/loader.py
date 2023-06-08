@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s
-class ArchivePackageInfo(BasePackageInfo):
+class TarballPackageInfo(BasePackageInfo):
     raw_info = attr.ib(type=Dict[str, Any])
     length = attr.ib(type=int)
     """Size of the archive file"""
@@ -50,7 +50,7 @@ class ArchivePackageInfo(BasePackageInfo):
         )
 
     @classmethod
-    def from_metadata(cls, a_metadata: Dict[str, Any]) -> ArchivePackageInfo:
+    def from_metadata(cls, a_metadata: Dict[str, Any]) -> TarballPackageInfo:
         url = a_metadata["url"]
         filename = a_metadata.get("filename")
         return cls(
@@ -64,10 +64,10 @@ class ArchivePackageInfo(BasePackageInfo):
         )
 
 
-class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
+class TarballLoader(PackageLoader[TarballPackageInfo]):
     """Load archive origin's artifact files into swh archive"""
 
-    visit_type = "tar"
+    visit_type = "tarball"
 
     def __init__(
         self,
@@ -99,7 +99,7 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
 
             extid_manifest_format: template string used to format a manifest,
                 which is hashed to get the extid of a package.
-                Defaults to {ArchivePackageInfo.MANIFEST_FORMAT!r}
+                Defaults to {TarballPackageInfo.MANIFEST_FORMAT!r}
             snapshot_append: if :const:`True`, append latest snapshot content to
                 the new snapshot created by the loader
 
@@ -127,21 +127,21 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
 
     def get_package_info(
         self, version: str
-    ) -> Iterator[Tuple[str, ArchivePackageInfo]]:
+    ) -> Iterator[Tuple[str, TarballPackageInfo]]:
         for a_metadata in self.artifacts:
-            p_info = ArchivePackageInfo.from_metadata(a_metadata)
+            p_info = TarballPackageInfo.from_metadata(a_metadata)
             if version == p_info.version:
                 # FIXME: this code assumes we have only 1 artifact per
                 # versioned package
                 yield release_name(version), p_info
 
     def new_packageinfo_to_extid(
-        self, p_info: ArchivePackageInfo
+        self, p_info: TarballPackageInfo
     ) -> Optional[PartialExtID]:
         return p_info.extid(manifest_format=self.extid_manifest_format)
 
     def build_release(
-        self, p_info: ArchivePackageInfo, uncompressed_path: str, directory: Sha1Git
+        self, p_info: TarballPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
         time = p_info.time  # assume it's a timestamp
         if isinstance(time, str):  # otherwise, assume it's a parsable date
@@ -169,3 +169,6 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
             return {}
         last_snapshot = self.last_snapshot()
         return last_snapshot.to_dict()["branches"] if last_snapshot else {}
+
+
+ArchiveLoader = TarballLoader
