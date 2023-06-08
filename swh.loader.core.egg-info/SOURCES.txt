@@ -394,4 +394,5 @@ swh/loader/tests/__init__.py
 swh/loader/tests/conftest.py
 swh/loader/tests/test_cli.py
 swh/loader/tests/test_init.py
+swh/loader/tests/test_tasks.py
 swh/loader/tests/data/0805nexter-1.1.0.tar.gz
