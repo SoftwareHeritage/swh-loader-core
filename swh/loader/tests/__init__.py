@@ -309,7 +309,9 @@ def assert_task_and_visit_type_match(tasks_module_name: str) -> None:
         )
 
 
-def assert_module_tasks_are_scheduler_ready(packages: Iterable) -> None:
+def assert_module_tasks_are_scheduler_ready(
+    packages: Iterable, passthrough: List = []
+) -> None:
     """This iterates over a list of packages and check that "tasks" modules declare
     tasks ready to be scheduled. If any discrepancy exist between a task and its loader
     visit type, those will never get picked up by the scheduler, they are not scheduler
@@ -319,6 +321,8 @@ def assert_module_tasks_are_scheduler_ready(packages: Iterable) -> None:
 
     Args:
         packages: List of imported swh packages
+        passthrough: List of authorized modules to not pass any checks. Those would be
+          module with loader whose visit type already hit the archive.
 
     Raises:
         AssertionError: when there is any discrepancy between a loader's visit type and
@@ -332,5 +336,7 @@ def assert_module_tasks_are_scheduler_ready(packages: Iterable) -> None:
         for _, modname, _ in pkgutil.walk_packages(
             package.__path__, prefix=f"{package.__name__}."
         ):
+            if modname in passthrough:
+                continue
             if modname.endswith(".tasks"):
                 assert_task_and_visit_type_match(modname)

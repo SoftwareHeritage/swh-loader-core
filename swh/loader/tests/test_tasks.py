@@ -10,4 +10,7 @@ def test_tasks_loader_visit_type_match_task_name():
     import swh.loader.core
     import swh.loader.package
 
-    assert_module_tasks_are_scheduler_ready([swh.loader.core, swh.loader.package])
+    assert_module_tasks_are_scheduler_ready(
+        [swh.loader.core, swh.loader.package],
+        passthrough=["swh.loader.package.archive.tasks"],
+    )
