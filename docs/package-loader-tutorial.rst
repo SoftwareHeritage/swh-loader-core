@@ -434,7 +434,7 @@ It is done like this::
    import string
 
    @attr.s
-   class TarballPackageInfo(BasePackageInfo):
+   class ArchivePackageInfo(BasePackageInfo):
        length = attr.ib(type=int)
        """Size of the archive file"""
        time = attr.ib(type=Union[str, datetime.datetime])
