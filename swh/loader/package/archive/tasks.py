@@ -5,11 +5,11 @@
 
 from celery import shared_task
 
-from swh.loader.package.archive.loader import TarballLoader
+from swh.loader.package.archive.loader import ArchiveLoader
 
 
 @shared_task(name=__name__ + ".LoadTarball")
-def load_tarball(**kwargs):
+def load_archive_files(**kwargs):
     """Load archive's artifacts (e.g gnu, etc...)"""
-    loader = TarballLoader.from_configfile(**kwargs)
+    loader = ArchiveLoader.from_configfile(**kwargs)
     return loader.load()
