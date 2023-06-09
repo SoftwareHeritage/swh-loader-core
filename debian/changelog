@@ -1,3 +1,13 @@
+swh-loader-core (5.7.3-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.7.3     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-06-09 10:45:58
+    +0200)
+  * Upstream changes:     - v5.7.3     - Keep ArchiveLoader     - Allow
+    ArchiveLoader and related task to pass through consistency checks
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 09 Jun 2023 08:51:44 +0000
+
 swh-loader-core (5.7.2-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.7.2     - (tagged by Antoine R. Dumont
