@@ -211,7 +211,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
     def get_package_info(self, version: str) -> Iterator[Tuple[str, OpamPackageInfo]]:
 
         url = self.get_enclosed_single_line_field("url.src:", version)
-        if url is None:
+        if not url:
             raise ValueError(
                 f"can't get field url.src: for version {version} of package"
                 f" {self.opam_package} (at url {self.origin.url}) from `opam show`"
