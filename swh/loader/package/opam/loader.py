@@ -5,6 +5,7 @@
 
 import io
 import os
+import shutil
 from subprocess import PIPE, Popen, call
 from typing import Any, Iterator, List, Optional, Tuple
 
@@ -31,6 +32,19 @@ from swh.storage.interface import StorageInterface
 class OpamPackageInfo(BasePackageInfo):
     author = attr.ib(type=Person)
     committer = attr.ib(type=Person)
+
+
+def opam() -> str:
+    """Get the path to the opam executable.
+
+    Raises:
+      EnvironmentError if no opam executable is found
+    """
+    ret = shutil.which("opam")
+    if not ret:
+        raise EnvironmentError("No opam executable found in path {os.environ['PATH']}")
+
+    return ret
 
 
 def opam_read(
@@ -162,7 +176,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
             # folder
             call(
                 [
-                    "opam",
+                    opam(),
                     "init",
                     "--reinit",
                     "--bare",
@@ -190,7 +204,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         package_file = self.get_package_file(version)
 
         return [
-            "opam",
+            opam(),
             "show",
             "--color",
             "never",
