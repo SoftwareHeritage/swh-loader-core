@@ -141,26 +141,13 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
             The list of versions for the package
 
         """
-        # TODO: use `opam show` instead of this workaround when it support the `--repo`
-        # flag
-        package_dir = self.get_package_dir()
-
-        if not os.path.exists(package_dir):
-            raise ValueError(
-                f"can't get versions for package {self.opam_package} "
-                f"(at url {self.origin.url})."
-            )
-
-        versions = [
-            ".".join(version.split(".")[1:]) for version in os.listdir(package_dir)
-        ]
-        if not versions:
+        versions_str = self.get_enclosed_single_line_field("all-versions", version=None)
+        if not versions_str:
             raise ValueError(
                 f"can't get versions for package {self.opam_package} "
                 f"(at url {self.origin.url})"
             )
-        versions.sort()
-        return versions
+        return versions_str.split()
 
     def get_versions(self) -> List[str]:
         """First initialize the opam root directory if needed then start listing the
@@ -201,8 +188,9 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         """Return the most recent version of the package as default."""
         return self._compute_versions()[-1]
 
-    def _opam_show_args(self, version: str):
-        package_file = self.get_package_file(version)
+    def _opam_show_args(self, version: Optional[str]):
+
+        package = self.get_package_name(version) if version else self.opam_package
 
         return [
             opam(),
@@ -213,10 +201,12 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
             "--normalise",
             "--root",
             self.opam_root,
-            package_file,
+            package,
         ]
 
-    def get_enclosed_single_line_field(self, field, version) -> Optional[str]:
+    def get_enclosed_single_line_field(
+        self, field: str, version: Optional[str]
+    ) -> Optional[str]:
         result = opam_read(self._opam_show_args(version) + ["--field", field])
 
         # Sanitize the result if any (remove trailing \n and enclosing ")
