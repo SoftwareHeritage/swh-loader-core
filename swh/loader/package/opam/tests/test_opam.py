@@ -122,7 +122,7 @@ def test_opam_loader_with_opam_init(
         "snapshot_id": "e1159446b00745ba4daa7ee26d74fbd81ecc081c",
     }
 
-    assert "opam init" in " ".join(spy_run.call_args[0][0][:2])
+    assert "opam init" in " ".join(spy_run.call_args_list[0][0][0][:2])
 
 
 def test_opam_loader_one_version(

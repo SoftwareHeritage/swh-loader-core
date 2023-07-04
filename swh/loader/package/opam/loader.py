@@ -3,11 +3,10 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import io
 import logging
 import os
 import shutil
-from subprocess import PIPE, Popen, run
+from subprocess import PIPE, run
 from typing import Any, Iterator, List, Optional, Tuple
 
 import attr
@@ -48,35 +47,6 @@ def opam() -> str:
         raise EnvironmentError("No opam executable found in path {os.environ['PATH']}")
 
     return ret
-
-
-def opam_read(
-    cmd: List[str], init_error_msg_if_any: Optional[str] = None
-) -> Optional[str]:
-    """This executes an opam command and returns the first line of the output.
-
-    Args:
-        cmd: Opam command to execute as a list of string
-        init_error_msg_if_any: Error message to raise in case a problem occurs
-          during initialization
-
-    Raises:
-        ValueError with the init_error_msg_if_any content in case stdout is not
-        consumable and the variable is provided with non empty value.
-
-    Returns:
-        the first line of the executed command output
-
-    """
-    with Popen(cmd, stdout=PIPE) as proc:
-        if proc.stdout is not None:
-            for line in io.TextIOWrapper(proc.stdout):
-                # care only for the first line output result (mostly blank separated
-                # values, callers will deal with the parsing of the line)
-                return line
-        elif init_error_msg_if_any:
-            raise ValueError(init_error_msg_if_any)
-    return None
 
 
 class OpamLoader(PackageLoader[OpamPackageInfo]):
@@ -227,10 +197,17 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
     def get_enclosed_single_line_field(
         self, field: str, version: Optional[str]
     ) -> Optional[str]:
-        result = opam_read(self._opam_show_args(version) + ["--field", field])
+        result = run(
+            self._opam_show_args(version) + ["--field", field],
+            check=True,
+            stdout=PIPE,
+            text=True,
+        )
+
+        lines = result.stdout.splitlines()
 
         # Sanitize the result if any (remove trailing \n and enclosing ")
-        return result.strip().strip('"') if result else None
+        return lines[0].strip().strip('"') if lines else None
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, OpamPackageInfo]]:
 
@@ -256,9 +233,9 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         fullname = b"" if maintainer_field is None else str.encode(maintainer_field)
         committer = Person.from_fullname(fullname)
 
-        with Popen(self._opam_show_args(version) + ["--raw"], stdout=PIPE) as proc:
-            assert proc.stdout is not None
-            metadata = proc.stdout.read()
+        metadata = run(
+            self._opam_show_args(version) + ["--raw"], check=True, stdout=PIPE
+        ).stdout
 
         yield self.get_package_name(version), OpamPackageInfo(
             url=url,
