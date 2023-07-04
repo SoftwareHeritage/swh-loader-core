@@ -870,6 +870,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             exception when unable to download or uncompress artifacts
 
         """
+        if not p_info.url:
+            raise ValueError("No url for package!")
         with tempfile.TemporaryDirectory() as tmpdir:
             dl_artifacts = self.download_package(p_info, tmpdir)
 
