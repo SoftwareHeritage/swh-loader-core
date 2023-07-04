@@ -7,7 +7,7 @@ import logging
 import os
 import shutil
 from subprocess import PIPE, run
-from typing import Any, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import attr
 
@@ -209,27 +209,47 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         # Sanitize the result if any (remove trailing \n and enclosing ")
         return lines[0].strip().strip('"') if lines else None
 
+    def get_enclosed_fields(
+        self, fields: List[str], version: Optional[str]
+    ) -> Dict[str, str]:
+        result = run(
+            self._opam_show_args(version) + ["--field", ",".join(fields)],
+            check=True,
+            stdout=PIPE,
+            text=True,
+        )
+
+        ret = {}
+        for line in result.stdout.splitlines():
+            line_split = line.split(maxsplit=1)
+            if len(line_split) > 1:
+                ret[line_split[0]] = line_split[1].strip().strip('"')
+        return ret
+
     def get_package_info(self, version: str) -> Iterator[Tuple[str, OpamPackageInfo]]:
 
-        url = self.get_enclosed_single_line_field("url.src:", version)
+        fields = self.get_enclosed_fields(
+            ["url.src:", "url.checksum:", "authors:", "maintainer:"], version
+        )
+        url = fields["url.src:"]
         if not url:
             raise ValueError(
                 f"can't get field url.src: for version {version} of package"
                 f" {self.opam_package} (at url {self.origin.url}) from `opam show`"
             )
 
-        checksums_str = self.get_enclosed_single_line_field("url.checksum:", version)
+        checksums_str = fields["url.checksum:"]
         checksums = {}
         if checksums_str:
             for c in checksums_str.strip("[]").split(" "):
                 algo, hash = c.strip('"').split("=")
                 checksums[algo] = hash
 
-        authors_field = self.get_enclosed_single_line_field("authors:", version)
+        authors_field = fields["authors:"]
         fullname = b"" if authors_field is None else str.encode(authors_field)
         author = Person.from_fullname(fullname)
 
-        maintainer_field = self.get_enclosed_single_line_field("maintainer:", version)
+        maintainer_field = fields["maintainer:"]
         fullname = b"" if maintainer_field is None else str.encode(maintainer_field)
         committer = Person.from_fullname(fullname)
 
