@@ -1,0 +1,3 @@
+repositories: [
+  "loadertest" {"https://opam.ocaml.org"}
+]
