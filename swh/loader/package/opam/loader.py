@@ -4,9 +4,10 @@
 # See top-level LICENSE file for more information
 
 import io
+import logging
 import os
 import shutil
-from subprocess import PIPE, Popen, call
+from subprocess import PIPE, Popen, run
 from typing import Any, Iterator, List, Optional, Tuple
 
 import attr
@@ -26,6 +27,8 @@ from swh.model.model import (
     Sha1Git,
 )
 from swh.storage.interface import StorageInterface
+
+logger = logging.getLogger(__name__)
 
 
 @attr.s
@@ -81,13 +84,8 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
 
     The state of the opam repository is stored in a directory called an opam root. This
     folder is a requisite for the opam binary to actually list information on package.
-
-    When initialize_opam_root is False (the default for production workers), the opam
-    root must already have been configured outside of the loading process. If not an
-    error is raised, thus failing the loading.
-
-    For standalone workers, initialize_opam_root must be set to True, so the ingestion
-    can take care of installing the required opam root properly.
+    It will be automatically initialized or updated if it does not exist or if an opam
+    repository must be added to the default switch.
 
     The remaining ingestion uses the opam binary to give the versions of the given
     package. Then, for each version, the loader uses the opam binary to list the tarball
@@ -105,7 +103,6 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         opam_instance: str,
         opam_url: str,
         opam_package: str,
-        initialize_opam_root: bool = False,
         **kwargs: Any,
     ):
         super().__init__(storage=storage, url=url, **kwargs)
@@ -114,7 +111,6 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         self.opam_instance = opam_instance
         self.opam_url = opam_url
         self.opam_package = opam_package
-        self.initialize_opam_root = initialize_opam_root
 
     def get_package_dir(self) -> str:
         return (
@@ -129,6 +125,53 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
 
     def get_metadata_authority(self):
         return MetadataAuthority(type=MetadataAuthorityType.FORGE, url=self.opam_url)
+
+    def _opam_init(self):
+        repo_path = os.path.join(self.opam_root, "repo", self.opam_instance)
+        # opam >= 2.1 bundles packages metadata in a tarball
+        if not os.path.exists(repo_path) and not os.path.exists(repo_path + ".tar.gz"):
+            # perform opam init if repository cannot be found in opam root
+            if not os.path.exists(self.opam_root) or not os.listdir(self.opam_root):
+                # opam root is missing or empty, do a full init
+                logger.debug(
+                    "Initializing opam root with %s repository", self.opam_instance
+                )
+                run(
+                    [
+                        opam(),
+                        "init",
+                        "--reinit",
+                        "--bare",
+                        "--no-setup",
+                        "--root",
+                        self.opam_root,
+                        self.opam_instance,
+                        self.opam_url,
+                    ],
+                    check=True,
+                )
+            else:
+                # opam root exists and is populated, we just add another repository in it
+                # if it's already setup, it's a noop
+                logger.debug("Adding %s repository to opam root", self.opam_instance)
+                run(
+                    [
+                        opam(),
+                        "repository",
+                        "add",
+                        "--set-default",
+                        "--root",
+                        self.opam_root,
+                        self.opam_instance,
+                        self.opam_url,
+                    ],
+                    check=True,
+                )
+        # for production loaders, no need to initialize the opam root
+        # folder. It must be present though so check for it, if not present, raise
+        if not os.path.isfile(os.path.join(self.opam_root, "config")):
+            # so if not correctly setup, raise immediately
+            raise ValueError("Invalid opam root")
 
     @cached_method
     def _compute_versions(self) -> List[str]:
@@ -158,30 +201,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
             versions or if the opam root directory is invalid.
 
         """
-        if self.initialize_opam_root:
-            # for standalone loader (e.g docker), loader must initialize the opam root
-            # folder
-            call(
-                [
-                    opam(),
-                    "init",
-                    "--reinit",
-                    "--bare",
-                    "--no-setup",
-                    "--yes",
-                    "--root",
-                    self.opam_root,
-                    self.opam_instance,
-                    self.opam_url,
-                ]
-            )
-        else:
-            # for standard/production loaders, no need to initialize the opam root
-            # folder. It must be present though so check for it, if not present, raise
-            if not os.path.isfile(os.path.join(self.opam_root, "config")):
-                # so if not correctly setup, raise immediately
-                raise ValueError("Invalid opam root")
-
+        self._opam_init()
         return self._compute_versions()
 
     def get_default_version(self) -> str:

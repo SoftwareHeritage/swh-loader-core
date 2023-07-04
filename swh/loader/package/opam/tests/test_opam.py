@@ -91,13 +91,20 @@ def fake_opam_root(mocker, tmpdir, datadir):
     yield fake_opam_root_dst
 
 
-def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
-    """Running opam loader without a prepared opam repository fails"""
-    opam_url = f"file://{datadir}/fake_opam_repo"
+def test_opam_loader_with_opam_init(
+    swh_storage, tmpdir, requests_mock_datadir, datadir, mocker
+):
+    """Running opam loader without a prepared opam repository should
+    call 'opam init' to get packages metadata."""
     opam_root = tmpdir
     opam_instance = "loadertest"
     opam_package = "agrid"
+    opam_url = f"file://{datadir}/fake_opam_repo/repo/{opam_instance}"
     url = f"opam+{opam_url}/packages/{opam_package}"
+
+    from swh.loader.package.opam import loader as loader_module
+
+    spy_run = mocker.spy(loader_module, "run")
 
     loader = OpamLoader(
         swh_storage,
@@ -108,12 +115,14 @@ def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
         opam_package,
     )
 
-    # No opam root directory init directory from loader. So, at the opam root does not
-    # exist, the loading fails. That's the expected use for the production workers
-    # (whose opam_root maintenance will be externally managed).
     actual_load_status = loader.load()
 
-    assert actual_load_status == {"status": "failed"}
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": "e1159446b00745ba4daa7ee26d74fbd81ecc081c",
+    }
+
+    assert "opam init" in " ".join(spy_run.call_args[0][0][:2])
 
 
 def test_opam_loader_one_version(
