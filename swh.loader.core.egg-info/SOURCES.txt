@@ -298,9 +298,13 @@ swh/loader/package/opam/tests/__init__.py
 swh/loader/package/opam/tests/test_opam.py
 swh/loader/package/opam/tests/test_tasks.py
 swh/loader/package/opam/tests/data/fake_opam_repo/_repo
+swh/loader/package/opam/tests/data/fake_opam_repo/config
 swh/loader/package/opam/tests/data/fake_opam_repo/version
+swh/loader/package/opam/tests/data/fake_opam_repo/repo/repos-config
 swh/loader/package/opam/tests/data/fake_opam_repo/repo/loadertest/lock
+swh/loader/package/opam/tests/data/fake_opam_repo/repo/loadertest/repo
 swh/loader/package/opam/tests/data/fake_opam_repo/repo/loadertest/repos-config
+swh/loader/package/opam/tests/data/fake_opam_repo/repo/loadertest/version
 swh/loader/package/opam/tests/data/fake_opam_repo/repo/loadertest/packages/agrid/agrid.0.1/opam
 swh/loader/package/opam/tests/data/fake_opam_repo/repo/loadertest/packages/directories/directories.0.1/opam
 swh/loader/package/opam/tests/data/fake_opam_repo/repo/loadertest/packages/directories/directories.0.2/opam

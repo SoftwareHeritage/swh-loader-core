@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022 The Software Heritage developers
+# Copyright (C) 2019-2023 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -68,18 +68,16 @@ url {
 }
 """  # noqa
 
+pytestmark = pytest.mark.skipif(
+    shutil.which("opam") is None, reason="opam binary is missing"
+)
+
 
 @pytest.fixture
 def fake_opam_root(mocker, tmpdir, datadir):
     """Fixture to initialize the actual opam in test context. It mocks the actual opam init
     calls and installs a fake opam root out of the one present in datadir.
-
     """
-    # inhibits the real `subprocess.call` which prepares the required internal opam
-    # state
-    module_name = "swh.loader.package.opam.loader"
-    mock_init = mocker.patch(f"{module_name}.call", return_value=None)
-
     # Installs the fake opam root for the tests to use
     fake_opam_root_src = f"{datadir}/fake_opam_repo"
     fake_opam_root_dst = f"{tmpdir}/opam"
@@ -92,17 +90,21 @@ def fake_opam_root(mocker, tmpdir, datadir):
 
     yield fake_opam_root_dst
 
-    # loader are initialized with `initialize_opam_root=True` so this should be called
-    assert mock_init.called, "This should be called when loader use this fixture"
 
-
-def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
-    """Running opam loader without a prepared opam repository fails"""
-    opam_url = f"file://{datadir}/fake_opam_repo"
+def test_opam_loader_with_opam_init(
+    swh_storage, tmpdir, requests_mock_datadir, datadir, mocker
+):
+    """Running opam loader without a prepared opam repository should
+    call 'opam init' to get packages metadata."""
     opam_root = tmpdir
     opam_instance = "loadertest"
     opam_package = "agrid"
+    opam_url = f"file://{datadir}/fake_opam_repo/repo/{opam_instance}"
     url = f"opam+{opam_url}/packages/{opam_package}"
+
+    from swh.loader.package.opam import loader as loader_module
+
+    spy_run = mocker.spy(loader_module, "run")
 
     loader = OpamLoader(
         swh_storage,
@@ -111,15 +113,16 @@ def test_opam_loader_no_opam_repository_fails(swh_storage, tmpdir, datadir):
         opam_instance,
         opam_url,
         opam_package,
-        initialize_opam_root=False,  # The opam directory must be present and no init...
     )
 
-    # No opam root directory init directory from loader. So, at the opam root does not
-    # exist, the loading fails. That's the expected use for the production workers
-    # (whose opam_root maintenance will be externally managed).
     actual_load_status = loader.load()
 
-    assert actual_load_status == {"status": "failed"}
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": "e1159446b00745ba4daa7ee26d74fbd81ecc081c",
+    }
+
+    assert "opam init" in " ".join(spy_run.call_args_list[0][0][0][:2])
 
 
 def test_opam_loader_one_version(
@@ -138,7 +141,6 @@ def test_opam_loader_one_version(
         opam_instance,
         opam_url,
         opam_package,
-        initialize_opam_root=True,  # go through the initialization while mocking it
     )
 
     actual_load_status = loader.load()
@@ -213,7 +215,6 @@ def test_opam_loader_many_version(
         opam_instance,
         opam_url,
         opam_package,
-        initialize_opam_root=True,
     )
 
     actual_load_status = loader.load()
@@ -271,7 +272,6 @@ def test_opam_release(
         opam_instance,
         opam_url,
         opam_package,
-        initialize_opam_root=True,
     )
 
     actual_load_status = loader.load()
@@ -355,7 +355,6 @@ def test_opam_metadata(
         opam_instance,
         opam_url,
         opam_package,
-        initialize_opam_root=True,
     )
 
     actual_load_status = loader.load()
