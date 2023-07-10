@@ -5,6 +5,7 @@
 
 from os.path import exists
 import shutil
+from subprocess import CompletedProcess, run
 
 import pytest
 
@@ -418,3 +419,101 @@ def test_opam_metadata(
         next_page_token=None,
         results=expected_metadata,
     )
+
+
+def test_opam_missing_url_src_for_package(
+    tmpdir, requests_mock_datadir, fake_opam_root, swh_storage, datadir, mocker
+):
+    def run_side_effect(*args, **kwargs):
+        if "url.src:,url.checksum:,authors:,maintainer:" in args[0]:
+            # simulate missing tarball URL in package metadata
+            return CompletedProcess(
+                args[0],
+                returncode=0,
+                stdout="""
+url.src:
+url.checksum: ["sha256=aa27684fbda1b8036ae7e3c87de33a98a9cd2662bcc91c8447e00e41476b6a46"]
+authors:      "OCamlPro <contact@ocamlpro.com>"
+maintainer:   "OCamlPro <contact@ocamlpro.com>"
+""",
+            )
+        return run(*args, **kwargs)
+
+    mock_run = mocker.patch("swh.loader.package.opam.loader.run")
+    mock_run.side_effect = run_side_effect
+
+    opam_url = f"file://{datadir}/fake_opam_repo"
+    opam_root = fake_opam_root
+    opam_instance = "loadertest"
+
+    opam_package = "ocb"
+    url = f"opam+{opam_url}/packages/{opam_package}"
+
+    loader = OpamLoader(
+        swh_storage,
+        url,
+        opam_root,
+        opam_instance,
+        opam_url,
+        opam_package,
+    )
+
+    actual_load_status = loader.load()
+
+    # ocb package has a single version with no tarball URL, visit should be uneventful
+    assert actual_load_status["status"] == "uneventful"
+
+    # snapshot should be empty
+    snapshot = swh_storage.snapshot_get(
+        hash_to_bytes(actual_load_status["snapshot_id"])
+    )
+    assert snapshot["id"] == Snapshot(branches={}).id
+
+
+def test_opam_missing_author_or_maintainer_for_package(
+    tmpdir, requests_mock_datadir, fake_opam_root, swh_storage, datadir, mocker
+):
+    def run_side_effect(*args, **kwargs):
+        if "url.src:,url.checksum:,authors:,maintainer:" in args[0]:
+            # simulate missing authors and maintainer fields in package metadata
+            return CompletedProcess(
+                args[0],
+                returncode=0,
+                stdout="""
+url.src:      "https://github.com/OCamlPro/ocb/archive/0.1.tar.gz"
+url.checksum: ["sha256=aa27684fbda1b8036ae7e3c87de33a98a9cd2662bcc91c8447e00e41476b6a46"]
+authors:
+maintainer:
+""",
+            )
+        return run(*args, **kwargs)
+
+    mock_run = mocker.patch("swh.loader.package.opam.loader.run")
+    mock_run.side_effect = run_side_effect
+
+    opam_url = f"file://{datadir}/fake_opam_repo"
+    opam_root = fake_opam_root
+    opam_instance = "loadertest"
+
+    opam_package = "ocb"
+    url = f"opam+{opam_url}/packages/{opam_package}"
+
+    loader = OpamLoader(
+        swh_storage,
+        url,
+        opam_root,
+        opam_instance,
+        opam_url,
+        opam_package,
+    )
+
+    actual_load_status = loader.load()
+
+    assert actual_load_status["status"] == "eventful"
+
+    snapshot = swh_storage.snapshot_get(
+        hash_to_bytes(actual_load_status["snapshot_id"])
+    )
+    release = swh_storage.release_get([snapshot["branches"][b"ocb.0.1"]["target"]])[0]
+    # release should have author with empty fullname
+    assert release.author == Person(fullname=b"", name=None, email=None)
