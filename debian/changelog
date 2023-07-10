@@ -1,3 +1,11 @@
+swh-loader-core (5.8.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.8.1     - (tagged by Antoine Lambert
+    <anlambert@softwareheritage.org> on 2023-07-10 15:05:17 +0200)
+  * Upstream changes:     - version 5.8.1
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 10 Jul 2023 13:10:53 +0000
+
 swh-loader-core (5.8.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.8.0     - (tagged by Antoine Lambert
