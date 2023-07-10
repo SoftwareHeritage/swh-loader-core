@@ -231,25 +231,25 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         fields = self.get_enclosed_fields(
             ["url.src:", "url.checksum:", "authors:", "maintainer:"], version
         )
-        url = fields["url.src:"]
+        url = fields.get("url.src:")
         if not url:
             raise ValueError(
                 f"can't get field url.src: for version {version} of package"
                 f" {self.opam_package} (at url {self.origin.url}) from `opam show`"
             )
 
-        checksums_str = fields["url.checksum:"]
+        checksums_str = fields.get("url.checksum:")
         checksums = {}
         if checksums_str:
             for c in checksums_str.strip("[]").split(" "):
                 algo, hash = c.strip('"').split("=")
                 checksums[algo] = hash
 
-        authors_field = fields["authors:"]
+        authors_field = fields.get("authors:")
         fullname = b"" if authors_field is None else str.encode(authors_field)
         author = Person.from_fullname(fullname)
 
-        maintainer_field = fields["maintainer:"]
+        maintainer_field = fields.get("maintainer:")
         fullname = b"" if maintainer_field is None else str.encode(maintainer_field)
         committer = Person.from_fullname(fullname)
 
