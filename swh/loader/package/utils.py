@@ -86,7 +86,6 @@ def download(
     if url.startswith("ftp://"):
         response = urlopen(url, timeout=timeout)
         chunks = (response.read(HASH_BLOCK_SIZE) for _ in itertools.count())
-        response_data = itertools.takewhile(bool, chunks)
     else:
         response = requests.get(url, **params, timeout=timeout, stream=True)
         response.raise_for_status()
@@ -98,7 +97,19 @@ def download(
             filename = _content_disposition_filename(
                 response.headers["content-disposition"]
             )
-        response_data = response.iter_content(chunk_size=HASH_BLOCK_SIZE)
+        content_type = response.headers.get("content-type")
+        content_encoding = response.headers.get("content-encoding", "")
+        if (
+            content_type
+            in {"application/x-gzip", "application/gzip", "application/x-gunzip"}
+            and "gzip" in content_encoding
+        ):
+            # prevent automatic deflate of response bytes by requests
+            chunks = (response.raw.read(HASH_BLOCK_SIZE) for _ in itertools.count())
+        else:
+            chunks = response.iter_content(chunk_size=HASH_BLOCK_SIZE)
+
+    response_data = itertools.takewhile(bool, chunks)
 
     filename = filename if filename else os.path.basename(urlsplit(url).path)
 
