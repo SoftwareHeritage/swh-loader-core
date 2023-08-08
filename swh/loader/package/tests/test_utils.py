@@ -6,6 +6,7 @@
 
 import json
 import os
+from pathlib import Path
 from unittest.mock import MagicMock
 from urllib.error import URLError
 from urllib.parse import quote
@@ -15,6 +16,7 @@ from requests.exceptions import HTTPError
 
 import swh.loader.package
 from swh.loader.package.utils import download, get_url_body, release_name
+from swh.model.hashutil import MultiHash
 
 
 def test_version_generation():
@@ -37,21 +39,17 @@ def test_download_fail_to_download(tmp_path, requests_mock):
 
 _filename = "requests-0.0.1.tar.gz"
 _data = "this is something"
+_hashes = {
+    "length": len(_data),
+    "sha1": "fdd1ce606a904b08c816ba84f3125f2af44d92b2",
+    "sha256": "1d9224378d77925d612c9f926eb9fb92850e6551def8328011b6a972323298d5",
+}
 
 
-def _check_download_ok(url, dest, filename=_filename, hashes={}):
-    actual_filepath, actual_hashes = download(url, dest, hashes=hashes)
-
+def _check_download_ok(url, dest, filename=_filename, hashes=_hashes):
+    actual_filepath, _ = download(url, dest, hashes=hashes)
     actual_filename = os.path.basename(actual_filepath)
     assert actual_filename == filename
-    assert actual_hashes["length"] == len(_data)
-    assert (
-        actual_hashes["checksums"]["sha1"] == "fdd1ce606a904b08c816ba84f3125f2af44d92b2"
-    )
-    assert (
-        actual_hashes["checksums"]["sha256"]
-        == "1d9224378d77925d612c9f926eb9fb92850e6551def8328011b6a972323298d5"
-    )
 
 
 @pytest.mark.fs
@@ -296,3 +294,30 @@ def test_api_info_retry_reraise(requests_mock):
 
     with pytest.raises(HTTPError, match=f"429 Client Error: None for url: {url}"):
         get_url_body(url)
+
+
+def test_download_prevent_auto_deflate(requests_mock, datadir, tmp_path):
+    url = "https://example.org/package/example/example-v1.0.tar.gz"
+    data = Path(
+        datadir, "https_example.org", "package_example_example-v1.0.tar.gz"
+    ).read_bytes()
+
+    requests_mock.get(
+        url,
+        content=data,
+        headers={
+            "content-type": "application/x-gzip",
+            "content-encoding": "gzip",
+            "content-length": str(len(data)),
+        },
+    ),
+
+    hashes = MultiHash(hash_names={"md5", "sha1", "sha256"})
+    hashes.update(data)
+
+    _check_download_ok(
+        url,
+        dest=str(tmp_path),
+        filename="example-v1.0.tar.gz",
+        hashes=hashes.hexdigest(),
+    )
