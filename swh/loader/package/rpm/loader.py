@@ -1,10 +1,11 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 from __future__ import annotations
 
+import json
 import logging
 from os import path, walk
 import string
@@ -13,7 +14,6 @@ import tempfile
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 import attr
-from packaging.version import parse as parse_version
 
 from swh.core.tarball import uncompress
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
@@ -32,9 +32,10 @@ class RpmPackageInfo(BasePackageInfo):
     """Intrinsic version of the package, independent from the distribution (e.g. 1.18.0-5)"""
     build_time = attr.ib(type=str, default=None)
     """Build time of the package in iso format. (e.g. 2017-02-10T04:59:31+00:00)"""
+    checksums_str = attr.ib(type=str, default=None)
 
     EXTID_TYPE = "rpm-sha256"
-    MANIFEST_FORMAT = string.Template("$name $intrinsic_version $build_time")
+    MANIFEST_FORMAT = string.Template("$name $intrinsic_version $checksums_str")
 
     @classmethod
     def from_metadata(cls, a_metadata: Dict[str, Any], version: str) -> RpmPackageInfo:
@@ -45,10 +46,11 @@ class RpmPackageInfo(BasePackageInfo):
             name=a_metadata["name"],  # nginx
             url=a_metadata["url"],  # url of the .rpm file
             filename=filename,  # nginx-1.18.0-5.fc34.src.rpm
-            version=version,  # fedora34/everything/1.18.0-5
+            version=version,  # 34/Everything/1.18.0-5
             intrinsic_version=a_metadata["version"],  # 1.18.0-5
-            build_time=a_metadata["buildTime"],
+            build_time=a_metadata["build_time"],
             checksums=a_metadata["checksums"],
+            checksums_str=json.dumps(a_metadata["checksums"], sort_keys=True),
         )
 
 
@@ -69,12 +71,12 @@ class RpmLoader(PackageLoader[RpmPackageInfo]):
             packages: versioned packages and associated artifacts, example::
 
               {
-                'fedora34/everything/1.18.0-5': {
+                '34/Everything/1.18.0-5': {
                   'name': 'nginx',
                   'version': '1.18.0-5',
                   'release': 34,
                   'edition': 'Everything',
-                  'buildTime': '2022-11-01T12:00:55+00:00',
+                  'build_time': '2022-11-01T12:00:55+00:00',
                   'url': 'https://archives.fedoraproject.org/nginx-1.18.0-5.fc34.src.rpm',
                   'checksums': {
                     'sha256': 'ac68fa26886c661b77bfb97bbe234a6c37d36a16c1eca126eabafbfc7fcb',
@@ -90,15 +92,8 @@ class RpmLoader(PackageLoader[RpmPackageInfo]):
         self.tarball_branches: Dict[bytes, Mapping[str, Any]] = {}
 
     def get_versions(self) -> Sequence[str]:
-        """Returns the keys of the packages input (e.g. fedora34/everything/1.18.0-5, etc...)"""
-        return list(
-            sorted(
-                self.packages,
-                key=lambda version_key: parse_version(
-                    self.packages[version_key]["version"]
-                ),
-            )
-        )
+        """Returns the keys of the packages input (e.g. 34/Everything/1.18.0-5, etc...)"""
+        return list(sorted(self.packages))
 
     def get_default_version(self) -> str:
         """Get the latest release version of a rpm package"""
@@ -149,8 +144,8 @@ class RpmLoader(PackageLoader[RpmPackageInfo]):
                 }
 
         msg = (
-            f"Synthetic release for Rpm source package {p_info.name} "
-            f"version {p_info.version}\n"
+            f"Synthetic release for RPM source package {p_info.name} "
+            f"version {p_info.intrinsic_version}\n"
         )
 
         return Release(
