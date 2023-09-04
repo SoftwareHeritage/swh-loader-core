@@ -1,4 +1,4 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -11,15 +11,15 @@ from swh.scheduler.model import ListedOrigin, Lister
 
 NAMESPACE = "swh.loader.package.rpm"
 
-RPM_ORIGIN_URL = "https://src.fedoraproject.org/rpms/0xFFFF"
+RPM_ORIGIN_URL = "rpm://Fedora/packages/0xFFFF"
 
 RPM_PACKAGES = {
-    "fedora36/everything/0.10-4": {
+    "36/Everything/0.10-4": {
         "name": "0xFFFF",
         "version": "0.10-4",
         "release": 36,
         "edition": "Everything",
-        "buildTime": "2022-01-19T19:13:53+00:00",
+        "build_time": "2022-01-19T19:13:53+00:00",
         "url": (
             "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
             "36/Everything/source/tree/Packages/0/0xFFFF-0.10-4.fc36.src.rpm"
@@ -33,7 +33,7 @@ RPM_PACKAGES = {
 
 @pytest.fixture
 def fedora_lister():
-    return Lister(name="fedora", instance_name="fedora", id=uuid.uuid4())
+    return Lister(name="rpm", instance_name="Fedora", id=uuid.uuid4())
 
 
 @pytest.fixture
