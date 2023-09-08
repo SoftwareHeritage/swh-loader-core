@@ -212,6 +212,7 @@ def test_rpm_multiple_visits(swh_storage, requests_mock_datadir, expected_stats)
 
     # Second run: No updates
     load_status = loader.load()
+
     expected_stats["origin_visit"] += 1  # a new visit occurred but no new snapshot
 
     assert load_status == {"status": "uneventful", "snapshot_id": snapshot.id.hex()}
@@ -219,7 +220,13 @@ def test_rpm_multiple_visits(swh_storage, requests_mock_datadir, expected_stats)
     assert_stored(swh_storage, release, snapshot, expected_stats)
 
     # Third run: New release (Updated snapshot)
-    loader.packages = NEW_PACKAGES
+    loader = RpmLoader(
+        swh_storage,
+        ORIGIN,
+        packages=NEW_PACKAGES,
+        lister_name="rpm",
+        lister_instance_name="Fedora",
+    )
 
     load_status = loader.load()
     expected_stats["origin_visit"] += 1  # same rpm:// origin
@@ -229,3 +236,90 @@ def test_rpm_multiple_visits(swh_storage, requests_mock_datadir, expected_stats)
     assert load_status == {"status": "eventful", "snapshot_id": new_snapshot.id.hex()}
     assert [m.url for m in requests_mock_datadir.request_history] == [RPM_URL, RPM_URL]
     assert_stored(swh_storage, new_release, new_snapshot, expected_stats)
+
+
+def test_rpm_package_versions_sort(swh_storage):
+    packages = {
+        "7/Fedora/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "7/Server/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "7/Modular/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "7/Everything/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "8/Everything/0.6.1-6": {
+            "version": "0.6.1-6",
+            "build_time": "2007-10-17T06:20:56+00:00",
+        },
+        "9/Everything/0.6.1-9": {
+            "version": "0.6.1-9",
+            "build_time": "2008-04-06T08:18:00+00:00",
+        },
+        "10/Everything/0.6.1-9": {
+            "version": "0.6.1-9",
+            "build_time": "2008-04-06T08:18:00+00:00",
+        },
+        "7/Workstation/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "11/Everything/0.6.1-10": {
+            "version": "0.6.1-10",
+            "build_time": "2009-02-25T18:00:39+00:00",
+        },
+        "12/Everything/0.6.1-11": {
+            "version": "0.6.1-11",
+            "build_time": "2009-07-28T11:00:32+00:00",
+        },
+        "13/Everything/0.6.1-11": {
+            "version": "0.6.1-11",
+            "build_time": "2009-07-28T11:00:32+00:00",
+        },
+        "14/Everything/0.6.1-11": {
+            "version": "0.6.1-11",
+            "build_time": "2009-07-28T11:00:32+00:00",
+        },
+    }
+
+    loader = RpmLoader(
+        swh_storage,
+        "rpm://example/package",
+        packages=packages,
+        lister_name="rpm",
+        lister_instance_name="Fedora",
+    )
+
+    expected_versions_sort = [
+        "7/Fedora/0.6.1-5",
+        "7/Server/0.6.1-5",
+        "7/Modular/0.6.1-5",
+        "7/Everything/0.6.1-5",
+        "7/Workstation/0.6.1-5",
+        "8/Everything/0.6.1-6",
+        "9/Everything/0.6.1-9",
+        "10/Everything/0.6.1-9",
+        "11/Everything/0.6.1-10",
+        "12/Everything/0.6.1-11",
+        "13/Everything/0.6.1-11",
+        "14/Everything/0.6.1-11",
+    ]
+
+    # sorting by branch name or package version does not result
+    # in expected ordering
+    assert list(sorted(packages)) != expected_versions_sort
+    assert (
+        list(sorted(packages, key=lambda p: packages[p]["version"]))
+        != expected_versions_sort
+    )
+
+    # sorting by build time does
+    assert loader.get_versions() == expected_versions_sort
