@@ -261,7 +261,7 @@ def _identity(hsh: bytes) -> bytes:
 
 def _convert_b64(hsh: str) -> str:
     hsh_hex = hash_to_hex(hsh)
-    return base64.b64encode(bytes.fromhex(hsh_hex)).decode().lower()
+    return base64.b64encode(bytes.fromhex(hsh_hex)).decode()
 
 
 def _convert_b32(hsh: str) -> str:
