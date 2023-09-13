@@ -10,7 +10,7 @@ import logging
 import os
 import re
 from typing import Callable, Dict, Optional, Tuple, TypeVar
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urlparse, urlsplit
 from urllib.request import urlopen
 
 import requests
@@ -83,8 +83,12 @@ def download(
     # so the connection does not hang indefinitely (read/connection timeout)
     timeout = params.get("timeout", 60)
 
-    if url.startswith("ftp://"):
+    parsed_url = urlparse(url)
+    if parsed_url.scheme == "ftp":
         response = urlopen(url, timeout=timeout)
+        chunks = (response.read(HASH_BLOCK_SIZE) for _ in itertools.count())
+    elif parsed_url.scheme == "file":
+        response = open(parsed_url.path, "rb")
         chunks = (response.read(HASH_BLOCK_SIZE) for _ in itertools.count())
     else:
         response = requests.get(url, **params, timeout=timeout, stream=True)
