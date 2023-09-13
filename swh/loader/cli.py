@@ -121,11 +121,16 @@ def run(ctx, type, url, options):
         **kw,
     )
     result = loader.load()
+
+    visit_status = loader.storage.origin_visit_status_get_latest(
+        url, loader.visit.visit
+    ).status
     msg = f"{result} for origin '{url}'"
     directory = kw.get("directory")
     if directory:
         msg = msg + f" and directory '{directory}'"
     click.echo(msg)
+    ctx.exit(code=0 if visit_status == "full" else 1)
 
 
 @loader.command(name="list", context_settings=CONTEXT_SETTINGS)
