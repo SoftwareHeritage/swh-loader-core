@@ -43,7 +43,6 @@ swh/loader/py.typed
 swh/loader/pytest_plugin.py
 swh/loader/core/__init__.py
 swh/loader/core/converters.py
-swh/loader/core/discovery.py
 swh/loader/core/loader.py
 swh/loader/core/metadata_fetchers.py
 swh/loader/core/nar.py

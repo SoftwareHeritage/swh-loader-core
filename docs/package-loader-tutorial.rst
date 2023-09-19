@@ -692,6 +692,8 @@ Most of them are a reminder of other sections above.
   original format unchanged, instead of converting it to a JSON/msgpack/... format)
   and :ref:`their format is documented <extrinsic-metadata-formats>`.
   They must tested as well.
+* The forge is present in the `swh-docs software-origins list <https://gitlab.softwareheritage.org/swh/devel/swh-docs/-/blob/master/docs/software-origins-support.yml>`_
+  and the `software-origins user documentation <https://gitlab.softwareheritage.org/swh/devel/swh-docs/-/tree/master/docs/user/software-origins>`_
 * There is no risk of extid clashes, even across instances (if relevant),
   even in presence of malicious actors (as far as reasonably possible)
 

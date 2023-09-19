@@ -33,6 +33,33 @@ def test_nar_content(content_with_nar_hashes):
     assert nar.hexdigest() == nar_hashes
 
 
+def test_nar_exclude_vcs(tmpdir):
+    directory_path = Path(tmpdir)
+
+    file_path = directory_path / "file"
+    file_path.write_text("file")
+
+    git_path = directory_path / ".git"
+    git_path.mkdir()
+
+    git_file_path = git_path / "foo"
+    git_file_path.write_text("foo")
+
+    subdir_path = directory_path / "bar"
+    subdir_path.mkdir()
+
+    git_subdir_path = subdir_path / ".git"
+    git_subdir_path.mkdir()
+
+    git_subdir_file_path = git_subdir_path / "baz"
+    git_subdir_file_path.write_text("baz")
+
+    nar = Nar(hash_names=["sha1"], exclude_vcs=True)
+    nar.serialize(directory_path)
+
+    assert nar.hexdigest() == {"sha1": "eae9a4b8a2743b238d6c61e54ec38d82642a38c5"}
+
+
 @pytest.fixture
 def cli_runner():
     return CliRunner()
