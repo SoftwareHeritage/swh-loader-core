@@ -11,6 +11,7 @@ import pytest
 
 from swh.loader.cli import SUPPORTED_LOADERS, get_loader
 from swh.loader.cli import loader as loader_cli
+from swh.loader.core.tests.conftest import compute_hashes
 from swh.loader.package.loader import PackageLoader
 
 
@@ -64,9 +65,13 @@ def test_run_help(swh_config):
     assert result.output.startswith((usage_prefix, usage_prefix2))
 
 
-def test_run_pypi(mocker, swh_config):
-    """Triggering a load should be ok"""
-    mock_loader = mocker.patch("swh.loader.package.pypi.loader.PyPILoader.load")
+def test_run_directory_loader_success(swh_config, datadir):
+    """Loading success should exit with 0."""
+
+    tarball_path = f"{datadir}/0805nexter-1.1.0.tar.gz"
+    checksums = compute_hashes(tarball_path, ["sha1", "sha256", "sha512"])
+    tarball_url = f"file://{tarball_path}"
+
     runner = CliRunner()
     result = runner.invoke(
         loader_cli,
@@ -74,12 +79,32 @@ def test_run_pypi(mocker, swh_config):
             "-C",
             swh_config,
             "run",
-            "pypi",
-            "url=https://some-url",
+            "directory",
+            tarball_url,
+            f"checksums={checksums}",
         ],
     )
     assert result.exit_code == 0
-    mock_loader.assert_called_once_with()
+
+
+def test_run_directory_loader_failure(swh_config):
+    """Loading failure should exit with 1."""
+
+    tarball_url = "file://non/existent/path"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        loader_cli,
+        [
+            "-C",
+            swh_config,
+            "run",
+            "directory",
+            tarball_url,
+            "checksums={}",
+        ],
+    )
+    assert result.exit_code == 1
 
 
 def test_run_with_visit_date(mocker, swh_config):
@@ -88,10 +113,10 @@ def test_run_with_visit_date(mocker, swh_config):
 
     runner = CliRunner()
     input_date = "2016-05-03 15:16:32+00"
-    result = runner.invoke(
+    runner.invoke(
         loader_cli, ["run", "npm", "https://some-url", f"visit_date='{input_date}'"]
     )
-    assert result.exit_code == 0
+
     expected_parsed_date = datetime.datetime(
         2016, 5, 3, 15, 16, 32, tzinfo=datetime.timezone.utc
     )

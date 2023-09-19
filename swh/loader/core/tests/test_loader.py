@@ -762,6 +762,32 @@ def test_directory_loader_ok_simple(
     assert result2 == {"status": "uneventful"}
 
 
+@pytest.mark.parametrize("checksum_layout", ["nar", "standard"])
+def test_directory_loader_ok_local_url(swh_storage, tarball_path, checksum_layout):
+    """It should be an eventful visit on a new local tarball, then uneventful"""
+
+    origin = Origin(f"file://{tarball_path}")
+    compute_hashes_fn = (
+        compute_nar_hashes if checksum_layout == "nar" else compute_hashes
+    )
+
+    checksums = compute_hashes_fn(tarball_path, ["sha1", "sha256", "sha512"])
+
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        origin.url,
+        checksums=checksums,
+        checksum_layout=checksum_layout,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    result2 = loader.load()
+
+    assert result2 == {"status": "uneventful"}
+
+
 @pytest.fixture
 def swh_loader_config() -> Dict[str, Any]:
     return {

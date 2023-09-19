@@ -171,13 +171,15 @@ class Nar:
         entries.
 
         """
+        paths_to_ignore = (
+            [f"{fso}/{folder}" for folder in [".git", ".hg", ".svn"]]
+            if self.exclude_vcs
+            else []
+        )
         for path in sorted(Path(fso).iterdir()):
-            ignore = False
-            for path_to_ignore in self.__paths_to_ignore:
-                if path.match(path_to_ignore):  # Ignore specific folder
-                    ignore = True
-                    break
-            if not ignore:
+            if not any(
+                path.match(path_to_ignore) for path_to_ignore in paths_to_ignore
+            ):
                 self._serializeEntry(path)
 
     def _only_serialize(self, fso: Path) -> None:
@@ -188,7 +190,7 @@ class Nar:
         for path in sorted(Path(fso).iterdir()):
             self._serializeEntry(path)
 
-    def _serialize(self, fso: Path, first_level: bool = False):
+    def _serialize(self, fso: Path):
         if self.__debug:
             self.__indent += 1
         self.str_("(")
@@ -209,11 +211,7 @@ class Nar:
 
         elif stat.S_ISDIR(mode):
             self.str_(["type", "directory"])
-            serialize_fn = (
-                self._filter_and_serialize if first_level else self._only_serialize
-            )
-            serialize_fn(fso)
-
+            self._filter_and_serialize(fso)
         else:
             raise ValueError("unsupported file type")
 
@@ -232,12 +230,7 @@ class Nar:
 
     def serialize(self, fso: Path) -> None:
         self.str_("nix-archive-1")
-        self.__paths_to_ignore = (
-            [f"{fso}/{folder}" for folder in [".git", ".hg", ".svn"]]
-            if self.exclude_vcs
-            else []
-        )
-        self._serialize(fso, first_level=True)
+        self._serialize(fso)
 
     def _compute_result(self, convert_fn):
         return {
@@ -268,7 +261,7 @@ def _identity(hsh: bytes) -> bytes:
 
 def _convert_b64(hsh: str) -> str:
     hsh_hex = hash_to_hex(hsh)
-    return base64.b64encode(bytes.fromhex(hsh_hex)).decode().lower()
+    return base64.b64encode(bytes.fromhex(hsh_hex)).decode()
 
 
 def _convert_b32(hsh: str) -> str:
