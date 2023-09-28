@@ -79,6 +79,7 @@ setup(
         loader.maven=swh.loader.package.maven:register
         loader.rubygems=swh.loader.package.rubygems:register
         loader.rpm=swh.loader.package.rpm:register
+        loader.bioconductor=swh.loader.package.bioconductor:register
     """,
     classifiers=[
         "Programming Language :: Python :: 3",
