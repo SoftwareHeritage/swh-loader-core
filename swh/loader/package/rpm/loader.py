@@ -17,7 +17,7 @@ import attr
 
 from swh.core.tarball import uncompress
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import EMPTY_AUTHOR, release_name
+from swh.loader.package.utils import EMPTY_AUTHOR, cached_method, release_name
 from swh.model import from_disk
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
@@ -91,9 +91,10 @@ class RpmLoader(PackageLoader[RpmPackageInfo]):
         self.packages = packages
         self.tarball_branches: Dict[bytes, Mapping[str, Any]] = {}
 
+    @cached_method
     def get_versions(self) -> Sequence[str]:
-        """Returns the keys of the packages input (e.g. 34/Everything/1.18.0-5, etc...)"""
-        return list(sorted(self.packages))
+        """Returns the package versions sorted by build time"""
+        return list(sorted(self.packages, key=lambda p: self.packages[p]["build_time"]))
 
     def get_default_version(self) -> str:
         """Get the latest release version of a rpm package"""
