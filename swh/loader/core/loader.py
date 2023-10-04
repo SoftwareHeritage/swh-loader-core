@@ -777,7 +777,14 @@ class NodeLoader(BaseLoader, ABC):
                 # hashes are not "standard", so we need an extra check to happen on the
                 # artifact retrieved. We also want to exclude any vcs (.git, .svn, ...)
                 # metadata which would impact hash computation if present.
-                nar = Nar(list(self.checksums.keys()), exclude_vcs=True)
+
+                visit_type_split = set(self.visit_type.split("-"))
+                vcs_types = {"bzr", "git", "hg", "svn"}
+                vcs_type = next(iter(visit_type_split & vcs_types), None)
+
+                nar = Nar(
+                    list(self.checksums.keys()), exclude_vcs=True, vcs_type=vcs_type
+                )
                 self.log.debug(
                     "Artifact <%s> with path %s", self.visit_type, artifact_path
                 )
