@@ -1,3 +1,14 @@
+swh-loader-core (5.13.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.13.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2023-10-05 13:42:46
+    +0200)
+  * Upstream changes:     - v5.13.0     - loader: Detect VCS type for
+    nar hash from visit type in NodeLoader     - nar: Exclude only a
+    single vcs type when computing hash
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 05 Oct 2023 11:47:50 +0000
+
 swh-loader-core (5.12.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.12.0     - (tagged by Antoine R. Dumont
