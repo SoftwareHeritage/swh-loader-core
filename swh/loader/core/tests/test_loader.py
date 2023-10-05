@@ -855,3 +855,31 @@ def test_loader_from_config_with_override2(swh_storage, swh_loader_config):
     # configuration
     assert foo_loader2 is not None
     assert foo_loader2.foo is None
+
+
+class SvnDirectoryLoader(TarballDirectoryLoader):
+    visit_type = "svn-export"
+
+
+def test_nar_vcs_type_for_svn_dir_loader(swh_storage, tarball_path, mocker):
+    """It should detect vcs_type for nar hash from loader visit_type"""
+
+    origin = Origin(f"file://{tarball_path}")
+
+    checksums = compute_nar_hashes(tarball_path, ["sha1", "sha256", "sha512"])
+
+    from swh.loader.core.nar import Nar
+
+    nar_obj = mocker.spy(Nar, "__init__")
+
+    loader = SvnDirectoryLoader(
+        swh_storage,
+        origin.url,
+        checksums=checksums,
+        checksum_layout="nar",
+    )
+    result = loader.load()
+    assert result == {"status": "eventful"}
+
+    _, kwargs = nar_obj.call_args
+    assert kwargs == {"exclude_vcs": True, "vcs_type": "svn"}
