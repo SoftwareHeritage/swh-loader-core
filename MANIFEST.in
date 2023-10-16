@@ -1,8 +1,0 @@
-include Makefile
-include requirements*.txt
-include version.txt
-include README.md
-include conftest.py
-recursive-include swh py.typed
-recursive-include swh/loader/tests/data/ *
-recursive-include swh/loader/package/*/tests/data/ *
