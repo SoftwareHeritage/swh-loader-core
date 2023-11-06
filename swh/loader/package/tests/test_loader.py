@@ -6,6 +6,7 @@
 import datetime
 import hashlib
 import logging
+import os
 import string
 from typing import Optional
 from unittest.mock import Mock, call, patch
@@ -659,3 +660,63 @@ def test_loader_with_dangling_branch_in_last_snapshot(
         "snapshot_id": "dcb9ecef64af73f2cdac7f5463cb6dece6b1db61",
         "status": "eventful",
     }
+
+
+class StubPackageLoaderDuplicatedReleases(StubPackageLoader):
+    def get_versions(self):
+        return ["v1.0", "v1", "v2.0", "v2", "v3.0", "v3", "v4.0", "v4"]
+
+    def get_package_info(self, version):
+        filename = f"example-{version}.tar.gz"
+        filepath = os.path.join(
+            os.path.dirname(__file__),
+            "data",
+            "https_example.org",
+            f"package_example_{filename}",
+        )
+        with open(filepath, "rb") as file:
+            sha256_checksum = hashlib.sha256(file.read())
+
+        p_info = StubPackageInfo(
+            f"{ORIGIN_URL}/{filename}",
+            filename,
+            version=version,
+            checksums={"sha256": sha256_checksum.hexdigest()},
+        )
+        extid_type = "extid-stub-sha256"
+
+        patch.object(
+            p_info,
+            "extid",
+            return_value=(extid_type, 1, sha256_checksum.digest()),
+            autospec=True,
+        ).start()
+        yield (f"branch-{version}", p_info)
+
+
+def test_loader_with_duplicated_releases(swh_storage, requests_mock_datadir, mocker):
+    """Check each package release is downloaded and processed only once."""
+    loader = StubPackageLoaderDuplicatedReleases(swh_storage, ORIGIN_URL)
+
+    load_release = mocker.spy(loader, "_load_release")
+
+    assert loader.load() == {
+        "status": "eventful",
+        "snapshot_id": "a01fb6280bedbfc3609d3b6ae06e70bf2b4186fa",
+    }
+
+    # versions v{i}.0 and v{i} target the same release so load_release
+    # should have been called once per unique release
+    assert len(load_release.mock_calls) == len(loader.get_versions()) / 2
+
+    snasphot = loader.last_snapshot()
+
+    # all referenced versions should be found in the snapshot
+    assert len(snasphot.branches) == len(loader.get_versions())
+
+    # check branch-v{i}.0 and branch-v{i} target the same release
+    for i in range(1, 5):
+        assert (
+            snasphot.branches[f"branch-v{i}.0".encode()]
+            == snasphot.branches[f"branch-v{i}".encode()]
+        )

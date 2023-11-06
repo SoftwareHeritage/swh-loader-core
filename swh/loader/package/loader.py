@@ -652,6 +652,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             }
 
         new_extids: Set[ExtID] = set()
+        extid_to_swhid: Dict[Optional[PartialExtID], CoreSWHID] = {}
         tmp_releases: Dict[str, List[Tuple[str, Sha1Git]]] = {
             version: [] for version in versions
         }
@@ -662,7 +663,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             # Check if the package was already loaded, using its ExtID
             swhid = self.resolve_object_from_extids(
                 known_extids, p_info, last_snapshot_targets
-            )
+            ) or extid_to_swhid.get(p_info.extid())
 
             if swhid is not None and swhid.object_type == ObjectType.REVISION:
                 # This package was already loaded, but by an older version
@@ -738,6 +739,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     release_swhid = CoreSWHID(
                         object_type=ObjectType.RELEASE, object_id=release_id
                     )
+                    extid_to_swhid[partial_extid] = release_swhid
                     new_extids.add(
                         ExtID(
                             extid_type=extid_type,
