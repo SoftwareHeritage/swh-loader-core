@@ -107,7 +107,13 @@ class DebianPackageInfo(BasePackageInfo):
                 f"got {len(dsc_files)}"
             )
 
-        return (EXTID_TYPE, EXTID_VERSION, hash_to_bytes(dsc_files[0].sha256))
+        return (
+            EXTID_TYPE,
+            EXTID_VERSION,
+            hash_to_bytes(
+                dsc_files[0].sha256 or dsc_files[0].sha1 or dsc_files[0].md5sum
+            ),
+        )
 
 
 @attr.s
