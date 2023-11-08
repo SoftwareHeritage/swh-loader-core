@@ -57,7 +57,6 @@ def raw_sources(datadir) -> bytes:
 
 
 SNAPSHOT1 = Snapshot(
-    id=hash_to_bytes("fafcfe32016d018bd892114fce211f37a36a092a"),
     branches={
         b"evaluation": SnapshotBranch(
             target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
@@ -68,7 +67,7 @@ SNAPSHOT1 = Snapshot(
             target_type=TargetType.RELEASE,
         ),
         b"https://github.com/owner-3/repository-1/revision-1.tgz": SnapshotBranch(
-            target=hash_to_bytes("dc7dc10a664396d5c88adc56352904db231bde14"),
+            target=hash_to_bytes("adbc07c7d5654aa9ecf7b4fd8ec79083477f5b51"),
             target_type=TargetType.RELEASE,
         ),
     },
@@ -309,8 +308,8 @@ def test_loader_one_visit(swh_storage, requests_mock_datadir, raw_sources):
 
     stats = get_stats(swh_storage)
     assert {
-        "content": 1,
-        "directory": 3,
+        "content": 2,
+        "directory": 5,
         "origin": 1,
         "origin_visit": 1,
         "release": 2,
@@ -437,8 +436,8 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
 
     stats = get_stats(swh_storage)
     assert {
-        "content": 1,
-        "directory": 3,
+        "content": 2,
+        "directory": 5,
         "origin": 1,
         "origin_visit": 1,
         "release": 2,
@@ -449,6 +448,7 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
 
     loader = NixGuixLoader(swh_storage, sources_url)
     load_status = loader.load()
+
     expected_snapshot_id_hex = "c1983a0a3f647548e1fb92f30339da6848fe9f7a"
     expected_snapshot_id = hash_to_bytes(expected_snapshot_id_hex)
     assert load_status == {
@@ -488,8 +488,8 @@ def test_loader_two_visits(swh_storage, requests_mock_datadir_visits):
 
     stats = get_stats(swh_storage)
     assert {
-        "content": 2,
-        "directory": 5,
+        "content": 3,
+        "directory": 7,
         "origin": 1,
         "origin_visit": 2,
         "release": 3,
