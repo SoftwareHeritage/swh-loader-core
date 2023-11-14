@@ -43,7 +43,6 @@ swh/loader/py.typed
 swh/loader/pytest_plugin.py
 swh/loader/core/__init__.py
 swh/loader/core/converters.py
-swh/loader/core/discovery.py
 swh/loader/core/loader.py
 swh/loader/core/metadata_fetchers.py
 swh/loader/core/nar.py
@@ -94,6 +93,15 @@ swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_
 swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_ibus-git.tar.gz
 swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_libervia-web-hg.tar.gz
 swh/loader/package/aur/tests/data/https_aur.archlinux.org/cgit_aur.git_snapshot_tealdeer-git.tar.gz
+swh/loader/package/bioconductor/__init__.py
+swh/loader/package/bioconductor/loader.py
+swh/loader/package/bioconductor/tasks.py
+swh/loader/package/bioconductor/tests/__init__.py
+swh/loader/package/bioconductor/tests/test_bioconductor.py
+swh/loader/package/bioconductor/tests/test_tasks.py
+swh/loader/package/bioconductor/tests/data/https_www.bioconductor.org/ABarray_1.8.0.tar.gz
+swh/loader/package/bioconductor/tests/data/https_www.bioconductor.org/a4_1.46.0.tar.gz
+swh/loader/package/bioconductor/tests/data/https_www.bioconductor.org/a4_1.48.0.tar.gz
 swh/loader/package/conda/__init__.py
 swh/loader/package/conda/loader.py
 swh/loader/package/conda/tasks.py

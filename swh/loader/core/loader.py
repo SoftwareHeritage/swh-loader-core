@@ -777,7 +777,14 @@ class NodeLoader(BaseLoader, ABC):
                 # hashes are not "standard", so we need an extra check to happen on the
                 # artifact retrieved. We also want to exclude any vcs (.git, .svn, ...)
                 # metadata which would impact hash computation if present.
-                nar = Nar(list(self.checksums.keys()), exclude_vcs=True)
+
+                visit_type_split = set(self.visit_type.split("-"))
+                vcs_types = {"bzr", "git", "hg", "svn"}
+                vcs_type = next(iter(visit_type_split & vcs_types), None)
+
+                nar = Nar(
+                    list(self.checksums.keys()), exclude_vcs=True, vcs_type=vcs_type
+                )
                 self.log.debug(
                     "Artifact <%s> with path %s", self.visit_type, artifact_path
                 )
@@ -945,7 +952,7 @@ class BaseDirectoryLoader(NodeLoader):
 
     visit_type = "directory"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, dir_filter="accept_all_directories", **kwargs):
         super().__init__(*args, **kwargs)
         self.directory: Optional[from_disk.Directory] = None
         # We need to use qualified imports here otherwise
@@ -954,6 +961,20 @@ class BaseDirectoryLoader(NodeLoader):
         self.cnts: List[model.Content] = None
         self.skipped_cnts: List[model.SkippedContent] = None
         self.dirs: List[model.Directory] = None
+
+        # Configure directory filter which is a callable for the
+        # from_disk.Directory.from_disk method call in the process_artifact method.
+        if isinstance(dir_filter, str):
+            if dir_filter not in ["accept_all_directories", "ignore_empty_directories"]:
+                raise Exception(
+                    f"Expected dir_filter to be 'accept_all_directories' or "
+                    f"'ignore_empty_directories', got {dir_filter!r}"
+                )
+            from swh.model import from_disk
+
+            self.dir_filter = getattr(from_disk, dir_filter)
+        else:
+            self.dir_filter = dir_filter
 
     def process_artifact(self, artifact_path: Path) -> None:
         """Build the Directory and other DAG objects out of the remote artifact
@@ -965,6 +986,7 @@ class BaseDirectoryLoader(NodeLoader):
         self.directory = from_disk.Directory.from_disk(
             path=bytes(artifact_path),
             max_content_length=self.max_content_size,
+            dir_filter=self.dir_filter,
         )
         # Compute the merkle dag from the top-level directory
         self.cnts, self.skipped_cnts, self.dirs = from_disk.iter_directory(

@@ -1,4 +1,4 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -26,12 +26,12 @@ RPM_URL = "https://archives.fedoraproject.org/nginx-1.18.0-5.fc34.src.rpm"
 
 
 PACKAGES = {
-    "fedora34/everything/1.18.0-5": {
+    "34/Everything/1.18.0-5": {
         "name": "nginx",
         "version": "1.18.0-5",
         "release": 34,
         "edition": "Everything",
-        "buildTime": "2022-11-01T12:00:55+00:00",
+        "build_time": "2022-11-01T12:00:55+00:00",
         "url": RPM_URL,
         "checksums": {
             "sha256": "ac68fa26886c661b77bfb97bbe234a6c37d36a16c1eca126eabafbfc7fcbece4"
@@ -41,13 +41,13 @@ PACKAGES = {
 
 NEW_PACKAGES = {
     **PACKAGES,
-    "fedora35/everything/1.20.0-5": {
+    "35/Everything/1.20.0-5": {
         # using the same .rpm file but for a new branch
         "name": "nginx",
         "version": "1.20.0-5",
         "release": 35,
         "edition": "Everything",
-        "buildTime": "2022-11-01T12:00:55+00:00",
+        "build_time": "2022-11-01T12:00:55+00:00",
         "url": RPM_URL,
         "checksums": {
             "sha256": "ac68fa26886c661b77bfb97bbe234a6c37d36a16c1eca126eabafbfc7fcbece4"
@@ -70,60 +70,34 @@ def expected_stats():
     }
 
 
-snapshot_id = "e3b199390a96f70afe73137f5082e34f0deb4872"
-release_id = hash_to_bytes("5aafaa6f753002fc1b87e603c5e42f582f777f6d")
-
-snapshot = Snapshot(
-    id=hash_to_bytes(snapshot_id),
-    branches={
-        b"releases/fedora34/everything/1.18.0-5": SnapshotBranch(
-            target=release_id,
-            target_type=TargetType.RELEASE,
-        ),
-        b"HEAD": SnapshotBranch(
-            target=hash_to_bytes(
-                "72656c65617365732f6665646f726133342f65766572797468696e672f312e31382e302d35"
-            ),
-            target_type=TargetType.ALIAS,
-        ),
-        b"nginx-1.18.0.tar.gz": SnapshotBranch(
-            target=hash_to_bytes("b0d583b0c289290294657b4c975b2094b9b6803b"),
-            target_type=TargetType.DIRECTORY,
-        ),
-    },
-)
 release = Release(
-    id=release_id,
     name=b"1.18.0-5",
     author=EMPTY_AUTHOR,
     date=TimestampWithTimezone.from_iso8601("2022-11-01T12:00:55+00:00"),
-    message=(
-        b"Synthetic release for Rpm source package "
-        b"nginx version fedora34/everything/1.18.0-5\n"
-    ),
+    message=(b"Synthetic release for RPM source package nginx version 1.18.0-5\n"),
     target=hash_to_bytes("044965ae8affff6fd0bcb908bb345e626ca99ef6"),
     target_type=ObjectType.DIRECTORY,
     synthetic=True,
 )
 
-new_snapshot_id = "ec0c636be12a8dd26e9697ea79b30e7ef43f5ca7"
-new_release_id = hash_to_bytes("4a554d436472947f0e325f0b24140c9616645a25")
+new_release = Release(
+    name=b"1.20.0-5",
+    author=EMPTY_AUTHOR,
+    date=TimestampWithTimezone.from_iso8601("2022-11-01T12:00:55+00:00"),
+    message=(b"Synthetic release for RPM source package nginx version 1.20.0-5\n"),
+    target=hash_to_bytes("044965ae8affff6fd0bcb908bb345e626ca99ef6"),
+    target_type=ObjectType.DIRECTORY,
+    synthetic=True,
+)
 
-new_snapshot = Snapshot(
-    id=hash_to_bytes(new_snapshot_id),
+snapshot = Snapshot(
     branches={
-        b"releases/fedora34/everything/1.18.0-5": SnapshotBranch(
-            target=release_id,
-            target_type=TargetType.RELEASE,
-        ),
-        b"releases/fedora35/everything/1.20.0-5": SnapshotBranch(
-            target=new_release_id,
+        b"releases/34/Everything/1.18.0-5": SnapshotBranch(
+            target=release.id,
             target_type=TargetType.RELEASE,
         ),
         b"HEAD": SnapshotBranch(
-            target=hash_to_bytes(
-                "72656c65617365732f6665646f726133352f65766572797468696e672f312e32302e302d35"
-            ),
+            target=b"releases/34/Everything/1.18.0-5",
             target_type=TargetType.ALIAS,
         ),
         b"nginx-1.18.0.tar.gz": SnapshotBranch(
@@ -132,18 +106,27 @@ new_snapshot = Snapshot(
         ),
     },
 )
-new_release = Release(
-    id=new_release_id,
-    name=b"1.20.0-5",
-    author=EMPTY_AUTHOR,
-    date=TimestampWithTimezone.from_iso8601("2022-11-01T12:00:55+00:00"),
-    message=(
-        b"Synthetic release for Rpm source package "
-        b"nginx version fedora35/everything/1.20.0-5\n"
-    ),
-    target=hash_to_bytes("044965ae8affff6fd0bcb908bb345e626ca99ef6"),
-    target_type=ObjectType.DIRECTORY,
-    synthetic=True,
+
+
+new_snapshot = Snapshot(
+    branches={
+        b"releases/34/Everything/1.18.0-5": SnapshotBranch(
+            target=release.id,
+            target_type=TargetType.RELEASE,
+        ),
+        b"releases/35/Everything/1.20.0-5": SnapshotBranch(
+            target=new_release.id,
+            target_type=TargetType.RELEASE,
+        ),
+        b"HEAD": SnapshotBranch(
+            target=b"releases/35/Everything/1.20.0-5",
+            target_type=TargetType.ALIAS,
+        ),
+        b"nginx-1.18.0.tar.gz": SnapshotBranch(
+            target=hash_to_bytes("b0d583b0c289290294657b4c975b2094b9b6803b"),
+            target_type=TargetType.DIRECTORY,
+        ),
+    },
 )
 
 
@@ -196,38 +179,147 @@ def assert_stored(swh_storage, release: Release, snapshot: Snapshot, stats: dict
 
 
 def test_rpm_first_visit(swh_storage, requests_mock_datadir, expected_stats):
-    loader = RpmLoader(swh_storage, ORIGIN, packages=PACKAGES)
+    loader = RpmLoader(
+        swh_storage,
+        ORIGIN,
+        packages=PACKAGES,
+        lister_name="rpm",
+        lister_instance_name="Fedora",
+    )
 
     actual_load_status = loader.load()
 
-    assert actual_load_status == {"status": "eventful", "snapshot_id": snapshot_id}
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": snapshot.id.hex(),
+    }
     assert [m.url for m in requests_mock_datadir.request_history] == [RPM_URL]
     assert_stored(swh_storage, release, snapshot, expected_stats)
 
 
 def test_rpm_multiple_visits(swh_storage, requests_mock_datadir, expected_stats):
-    loader = RpmLoader(swh_storage, ORIGIN, packages=PACKAGES)
+    loader = RpmLoader(
+        swh_storage,
+        ORIGIN,
+        packages=PACKAGES,
+        lister_name="rpm",
+        lister_instance_name="Fedora",
+    )
 
     # First run: Discovered exactly 1 package
     load_status = loader.load()
-    assert load_status == {"status": "eventful", "snapshot_id": snapshot_id}
+    assert load_status == {"status": "eventful", "snapshot_id": snapshot.id.hex()}
 
     # Second run: No updates
     load_status = loader.load()
+
     expected_stats["origin_visit"] += 1  # a new visit occurred but no new snapshot
 
-    assert load_status == {"status": "uneventful", "snapshot_id": snapshot_id}
+    assert load_status == {"status": "uneventful", "snapshot_id": snapshot.id.hex()}
     assert [m.url for m in requests_mock_datadir.request_history] == [RPM_URL]
     assert_stored(swh_storage, release, snapshot, expected_stats)
 
     # Third run: New release (Updated snapshot)
-    loader.packages = NEW_PACKAGES
+    loader = RpmLoader(
+        swh_storage,
+        ORIGIN,
+        packages=NEW_PACKAGES,
+        lister_name="rpm",
+        lister_instance_name="Fedora",
+    )
 
     load_status = loader.load()
     expected_stats["origin_visit"] += 1  # same rpm:// origin
     expected_stats["release"] += 1  # new release (1.20.0-5)
     expected_stats["snapshot"] += 1  # updated metadata (`packages` param)
 
-    assert load_status == {"status": "eventful", "snapshot_id": new_snapshot_id}
+    assert load_status == {"status": "eventful", "snapshot_id": new_snapshot.id.hex()}
     assert [m.url for m in requests_mock_datadir.request_history] == [RPM_URL, RPM_URL]
     assert_stored(swh_storage, new_release, new_snapshot, expected_stats)
+
+
+def test_rpm_package_versions_sort(swh_storage):
+    packages = {
+        "7/Fedora/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "7/Server/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "7/Modular/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "7/Everything/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "8/Everything/0.6.1-6": {
+            "version": "0.6.1-6",
+            "build_time": "2007-10-17T06:20:56+00:00",
+        },
+        "9/Everything/0.6.1-9": {
+            "version": "0.6.1-9",
+            "build_time": "2008-04-06T08:18:00+00:00",
+        },
+        "10/Everything/0.6.1-9": {
+            "version": "0.6.1-9",
+            "build_time": "2008-04-06T08:18:00+00:00",
+        },
+        "7/Workstation/0.6.1-5": {
+            "version": "0.6.1-5",
+            "build_time": "2007-09-24T16:49:52+00:00",
+        },
+        "11/Everything/0.6.1-10": {
+            "version": "0.6.1-10",
+            "build_time": "2009-02-25T18:00:39+00:00",
+        },
+        "12/Everything/0.6.1-11": {
+            "version": "0.6.1-11",
+            "build_time": "2009-07-28T11:00:32+00:00",
+        },
+        "13/Everything/0.6.1-11": {
+            "version": "0.6.1-11",
+            "build_time": "2009-07-28T11:00:32+00:00",
+        },
+        "14/Everything/0.6.1-11": {
+            "version": "0.6.1-11",
+            "build_time": "2009-07-28T11:00:32+00:00",
+        },
+    }
+
+    loader = RpmLoader(
+        swh_storage,
+        "rpm://example/package",
+        packages=packages,
+        lister_name="rpm",
+        lister_instance_name="Fedora",
+    )
+
+    expected_versions_sort = [
+        "7/Fedora/0.6.1-5",
+        "7/Server/0.6.1-5",
+        "7/Modular/0.6.1-5",
+        "7/Everything/0.6.1-5",
+        "7/Workstation/0.6.1-5",
+        "8/Everything/0.6.1-6",
+        "9/Everything/0.6.1-9",
+        "10/Everything/0.6.1-9",
+        "11/Everything/0.6.1-10",
+        "12/Everything/0.6.1-11",
+        "13/Everything/0.6.1-11",
+        "14/Everything/0.6.1-11",
+    ]
+
+    # sorting by branch name or package version does not result
+    # in expected ordering
+    assert list(sorted(packages)) != expected_versions_sort
+    assert (
+        list(sorted(packages, key=lambda p: packages[p]["version"]))
+        != expected_versions_sort
+    )
+
+    # sorting by build time does
+    assert loader.get_versions() == expected_versions_sort

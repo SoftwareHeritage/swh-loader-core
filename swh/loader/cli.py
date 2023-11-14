@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022 The Software Heritage developers
+# Copyright (C) 2019-2023 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -86,7 +86,15 @@ def loader(ctx, config_file):
 @click.argument("options", nargs=-1)
 @click.pass_context
 def run(ctx, type, url, options):
-    """Ingest with loader <type> the origin located at <url>"""
+    """Ingest with loader <type> the origin located at <url>
+
+    Expected configuration:
+
+    \b
+    * :ref:`cli-config-storage`
+    * :ref:`cli-config-metadata_fetcher_credentials`
+
+    """
     import iso8601
 
     from swh.scheduler.cli.utils import parse_options
@@ -113,11 +121,16 @@ def run(ctx, type, url, options):
         **kw,
     )
     result = loader.load()
+
+    visit_status = loader.storage.origin_visit_status_get_latest(
+        url, loader.visit.visit
+    ).status
     msg = f"{result} for origin '{url}'"
     directory = kw.get("directory")
     if directory:
         msg = msg + f" and directory '{directory}'"
     click.echo(msg)
+    ctx.exit(code=0 if visit_status == "full" else 1)
 
 
 @loader.command(name="list", context_settings=CONTEXT_SETTINGS)

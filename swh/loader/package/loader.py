@@ -32,11 +32,10 @@ from requests.exceptions import ContentDecodingError
 import sentry_sdk
 
 from swh.core.tarball import uncompress
-from swh.loader.core import discovery
 from swh.loader.core.loader import BaseLoader
 from swh.loader.exception import NotFound
 from swh.loader.package.utils import download
-from swh.model import from_disk
+from swh.model import discovery, from_disk
 from swh.model.hashutil import hash_to_hex
 from swh.model.model import (
     ExtID,
@@ -56,6 +55,7 @@ from swh.model.model import (
 )
 from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
+from swh.storage.algos import discovery as storage_discovery
 from swh.storage.algos.snapshot import snapshot_get_latest
 from swh.storage.interface import StorageInterface
 from swh.storage.utils import now
@@ -840,7 +840,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         # use a Merkle graph discovery algorithm to filter out known objects.
         contents, skipped_contents, directories = asyncio.run(
             discovery.filter_known_objects(
-                discovery.DiscoveryStorageConnection(
+                storage_discovery.DiscoveryStorageConnection(
                     contents, skipped_contents, directories, self.storage
                 ),
             )

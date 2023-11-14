@@ -97,17 +97,27 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
         return self.get_versions()[-1]
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, ArchPackageInfo]]:
-        """Get release name and package information from version
+        """Get release name and package information from version.
+
+        Note: This drops the length property which is provided as an approximated length
+        in previous lister version. If provided that information must be exact otherwise
+        the download step will fail.
 
         Args:
             version: arch version (e.g: "0.1.0")
 
         Returns:
             Iterator of tuple (release_name, p_info)
+
         """
         artifact = self.artifacts[version]
         metadata = self.arch_metadata[version]
         assert version == artifact["version"] == metadata["version"]
+
+        # Drop the length key, bogus value provided by earlier iterations of the lister
+        checksums = {
+            k: v for k, v in artifact["checksums"].items() if k != "length"
+        }
 
         p_info = ArchPackageInfo(
             name=metadata["name"],
@@ -115,7 +125,7 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
             url=artifact["url"],
             version=version,
             last_modified=metadata["last_modified"],
-            checksums=artifact["checksums"],
+            checksums=checksums,
         )
         yield release_name(version, artifact["filename"]), p_info
 

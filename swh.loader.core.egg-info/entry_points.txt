@@ -6,6 +6,7 @@ nar = swh.loader.core.nar
 loader.arch = swh.loader.package.arch:register
 loader.archive = swh.loader.package.archive:register
 loader.aur = swh.loader.package.aur:register
+loader.bioconductor = swh.loader.package.bioconductor:register
 loader.conda = swh.loader.package.conda:register
 loader.content = swh.loader.core:register_content
 loader.cpan = swh.loader.package.cpan:register

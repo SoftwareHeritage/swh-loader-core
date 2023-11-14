@@ -8,7 +8,7 @@ import io
 import os
 from pathlib import Path
 import stat
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import click
 
@@ -98,6 +98,7 @@ class Nar:
         hash_names: List[str],
         format_output: str = "hex",
         exclude_vcs: bool = False,
+        vcs_type: Optional[str] = "git",
         debug: bool = False,
     ):
         self.hash_names = hash_names
@@ -109,6 +110,7 @@ class Nar:
         }
         format_output = format_output.lower()
         self.exclude_vcs = exclude_vcs
+        self.vcs_type = vcs_type
 
         self.__debug = debug
         self.__indent = 0
@@ -171,13 +173,11 @@ class Nar:
         entries.
 
         """
+        path_to_ignore = (
+            f"{fso}/.{self.vcs_type}" if self.exclude_vcs and self.vcs_type else None
+        )
         for path in sorted(Path(fso).iterdir()):
-            ignore = False
-            for path_to_ignore in self.__paths_to_ignore:
-                if path.match(path_to_ignore):  # Ignore specific folder
-                    ignore = True
-                    break
-            if not ignore:
+            if path_to_ignore is None or not path.match(path_to_ignore):
                 self._serializeEntry(path)
 
     def _only_serialize(self, fso: Path) -> None:
@@ -188,7 +188,7 @@ class Nar:
         for path in sorted(Path(fso).iterdir()):
             self._serializeEntry(path)
 
-    def _serialize(self, fso: Path, first_level: bool = False):
+    def _serialize(self, fso: Path):
         if self.__debug:
             self.__indent += 1
         self.str_("(")
@@ -209,11 +209,7 @@ class Nar:
 
         elif stat.S_ISDIR(mode):
             self.str_(["type", "directory"])
-            serialize_fn = (
-                self._filter_and_serialize if first_level else self._only_serialize
-            )
-            serialize_fn(fso)
-
+            self._filter_and_serialize(fso)
         else:
             raise ValueError("unsupported file type")
 
@@ -232,12 +228,7 @@ class Nar:
 
     def serialize(self, fso: Path) -> None:
         self.str_("nix-archive-1")
-        self.__paths_to_ignore = (
-            [f"{fso}/{folder}" for folder in [".git", ".hg", ".svn"]]
-            if self.exclude_vcs
-            else []
-        )
-        self._serialize(fso, first_level=True)
+        self._serialize(fso)
 
     def _compute_result(self, convert_fn):
         return {
@@ -268,7 +259,7 @@ def _identity(hsh: bytes) -> bytes:
 
 def _convert_b64(hsh: str) -> str:
     hsh_hex = hash_to_hex(hsh)
-    return base64.b64encode(bytes.fromhex(hsh_hex)).decode().lower()
+    return base64.b64encode(bytes.fromhex(hsh_hex)).decode()
 
 
 def _convert_b32(hsh: str) -> str:
@@ -279,7 +270,16 @@ def _convert_b32(hsh: str) -> str:
 @swh_cli_group.command(name="nar", context_settings=CONTEXT_SETTINGS)
 @click.argument("directory")
 @click.option(
-    "--exclude-vcs", "-x", help="exclude version control directories", is_flag=True
+    "--exclude-vcs",
+    "-x",
+    help="Exclude version control directories",
+    is_flag=True,
+)
+@click.option(
+    "--vcs-type",
+    "-t",
+    help="Type of version control system to exclude directories",
+    default="git",
 )
 @click.option(
     "--hash-algo",
@@ -296,10 +296,10 @@ def _convert_b32(hsh: str) -> str:
     type=click.Choice(["hex", "base32", "base64"], case_sensitive=False),
 )
 @click.option("--debug/--no-debug", default=lambda: os.environ.get("DEBUG", False))
-def cli(exclude_vcs, directory, hash_names, format_output, debug):
+def cli(exclude_vcs, vcs_type, directory, hash_names, format_output, debug):
     """Compute NAR hashes on a directory."""
 
-    nar = Nar(hash_names, format_output, exclude_vcs, debug=debug)
+    nar = Nar(hash_names, format_output, exclude_vcs, vcs_type, debug=debug)
 
     convert_fn = {
         "base64": nar.b64digest,
