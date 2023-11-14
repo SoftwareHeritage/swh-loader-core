@@ -115,9 +115,7 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
         assert version == artifact["version"] == metadata["version"]
 
         # Drop the length key, bogus value provided by earlier iterations of the lister
-        checksums = {
-            k: v for k, v in artifact["checksums"].items() if k != "length"
-        }
+        checksums = {k: v for k, v in artifact["checksums"].items() if k != "length"}
 
         p_info = ArchPackageInfo(
             name=metadata["name"],
