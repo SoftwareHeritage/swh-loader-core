@@ -21,6 +21,9 @@ repos:
         args: [-L crate]
         entry: codespell --ignore-words-list=iff
         stages: [commit]
+      - id: codespell
+        name: Check commit message spelling
+        stages: [commit-msg]
 
   - repo: local
     hooks:
