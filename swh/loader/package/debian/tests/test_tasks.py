@@ -32,7 +32,6 @@ def test_debian_loader_task_for_listed_origin(
     debian_lister,
     debian_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.DebianLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadDebian",

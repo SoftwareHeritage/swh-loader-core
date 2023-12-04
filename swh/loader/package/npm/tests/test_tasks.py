@@ -31,7 +31,6 @@ def test_npm_loader_task_for_listed_origin(
     npm_lister,
     npm_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.NpmLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadNpm",

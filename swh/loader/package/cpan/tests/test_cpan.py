@@ -112,7 +112,6 @@ def test_cpan_loader_load_multiple_version(
     head_release_original_artifacts_metadata,
     head_release_extrinsic_metadata,
 ):
-
     load_status = cpan_loader.load()
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None

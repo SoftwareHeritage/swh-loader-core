@@ -254,7 +254,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         # For each extid type, call extid_get_from_extid() with all the extids of
         # that type, and store them in the '(type, extid) -> target' map.
         known_extids: Dict[PartialExtID, List[CoreSWHID]] = {}
-        for ((extid_type, extid_version), extids) in new_extids.items():
+        for (extid_type, extid_version), extids in new_extids.items():
             for extid in self.storage.extid_get_from_extid(
                 extid_type, extids, version=extid_version
             ):
@@ -343,7 +343,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 )
             }
             if missing_releases:
-
                 err_message = "Found ExtIDs pointing to missing releases"
 
                 logger.error(err_message + ": %s", missing_releases)
@@ -658,7 +657,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             version: [] for version in versions
         }
 
-        for (branch_name, p_info) in packages_info:
+        for branch_name, p_info in packages_info:
             logger.debug("package_info: %s", p_info)
 
             # Check if the package was already loaded, using its ExtID

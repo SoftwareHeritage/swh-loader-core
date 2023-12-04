@@ -158,7 +158,6 @@ def test_extract_non_rpm_package(requests_mock_datadir):
 
 
 def test_extract_non_existent_rpm_package():
-
     with tempfile.TemporaryDirectory() as tmpdir:
         with pytest.raises(FileNotFoundError) as e:
             extract_rpm_package(f"{tmpdir}/non-existent.src.rpm", tmpdir)

@@ -41,7 +41,6 @@ def test_puppet_loader_task_for_listed_origin(
     puppet_lister,
     puppet_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.PuppetLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadPuppet",

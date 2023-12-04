@@ -17,7 +17,6 @@ from swh.storage.interface import StorageInterface
 
 @attr.s
 class ArchPackageInfo(BasePackageInfo):
-
     name = attr.ib(type=str)
     """Name of the package"""
 
@@ -60,7 +59,6 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
         arch_metadata: List[Dict[str, Any]],
         **kwargs,
     ):
-
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
         self.artifacts: Dict[str, Dict] = {

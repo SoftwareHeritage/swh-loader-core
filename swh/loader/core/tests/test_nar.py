@@ -100,7 +100,6 @@ def assert_output_contains(cli_output: str, snippet: str) -> bool:
 
 
 def test_nar_cli_help(cli_runner, cli_nar):
-
     result = cli_runner.invoke(cli_nar, ["--help"])
 
     assert result.exit_code == 0

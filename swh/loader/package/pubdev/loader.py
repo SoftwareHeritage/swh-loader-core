@@ -22,7 +22,6 @@ from swh.storage.interface import StorageInterface
 
 @attr.s
 class PubDevPackageInfo(BasePackageInfo):
-
     name = attr.ib(type=str)
     """Name of the package"""
 
@@ -47,7 +46,6 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
         url: str,
         **kwargs,
     ):
-
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
         assert url.startswith(self.PUBDEV_BASE_URL)
@@ -137,7 +135,6 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
     def build_release(
         self, p_info: PubDevPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
-
         message = (
             f"Synthetic release for pub.dev source package {p_info.name} "
             f"version {p_info.version}\n"

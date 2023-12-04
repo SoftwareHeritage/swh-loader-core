@@ -21,7 +21,6 @@ from swh.storage.interface import StorageInterface
 
 @attr.s
 class CondaPackageInfo(BasePackageInfo):
-
     name = attr.ib(type=str)
     """Name of the package"""
 
@@ -85,7 +84,6 @@ class CondaLoader(PackageLoader[CondaPackageInfo]):
         artifacts: List[Dict[str, Any]],
         **kwargs,
     ):
-
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
         self.artifacts: Dict[str, Dict] = {
@@ -159,7 +157,6 @@ class CondaLoader(PackageLoader[CondaPackageInfo]):
     def build_release(
         self, p_info: CondaPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
-
         # Extract intrinsic metadata from archive to get description and author
         metadata = extract_intrinsic_metadata(Path(uncompressed_path))
 

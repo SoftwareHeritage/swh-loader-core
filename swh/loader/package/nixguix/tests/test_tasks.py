@@ -31,7 +31,6 @@ def test_nixguix_loader_task_for_listed_origin(
     nixguix_lister,
     nixguix_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.NixGuixLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadNixguix",

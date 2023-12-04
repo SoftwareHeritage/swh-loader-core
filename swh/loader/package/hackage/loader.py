@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 @attr.s
 class HackagePackageInfo(BasePackageInfo):
-
     name = attr.ib(type=str)
     """Name of the package"""
 
@@ -77,7 +76,6 @@ class HackageLoader(PackageLoader[HackagePackageInfo]):
         url: str,
         **kwargs,
     ):
-
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
 
@@ -191,7 +189,6 @@ class HackageLoader(PackageLoader[HackagePackageInfo]):
     def build_release(
         self, p_info: HackagePackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
-
         # Extract intrinsic metadata from uncompressed_path/{pkgname}-{version}.cabal
         intrinsic_metadata = extract_intrinsic_metadata(
             Path(uncompressed_path) / f"{p_info.name}-{p_info.version}", p_info.name

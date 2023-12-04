@@ -202,7 +202,6 @@ def test_opam_loader_one_version(
 def test_opam_loader_many_version(
     tmpdir, requests_mock_datadir, fake_opam_root, datadir, swh_storage
 ):
-
     opam_url = f"file://{datadir}/fake_opam_repo"
     opam_root = fake_opam_root
     opam_instance = "loadertest"
@@ -258,7 +257,6 @@ def test_opam_loader_many_version(
 def test_opam_release(
     tmpdir, requests_mock_datadir, fake_opam_root, swh_storage, datadir
 ):
-
     opam_url = f"file://{datadir}/fake_opam_repo"
     opam_root = fake_opam_root
     opam_instance = "loadertest"
