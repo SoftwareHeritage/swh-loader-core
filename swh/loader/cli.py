@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 LOADERS = {
-    entry_point.name.split(".", 3)[2]: entry_point
+    entry_point.name.split(".", 1)[1]: entry_point
     for entry_point in pkg_resources.iter_entry_points("swh.workers")
-    if entry_point.name.startswith("swh.loader.")
+    if entry_point.name.split(".", 1)[0] == "loader"
 }
 
 
