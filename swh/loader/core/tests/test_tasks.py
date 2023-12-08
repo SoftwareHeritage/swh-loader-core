@@ -69,7 +69,6 @@ def test_loader_tasks_for_listed_origin(
     loader_name,
     listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.{loader_name}Loader",
         task_function_name=f"{NAMESPACE}.tasks.Load{loader_name}",

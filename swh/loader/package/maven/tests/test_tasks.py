@@ -47,7 +47,6 @@ def test_maven_loader_task_for_listed_origin(
     maven_lister,
     maven_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.MavenLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadMaven",

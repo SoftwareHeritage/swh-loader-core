@@ -1,21 +1,20 @@
 Metadata-Version: 2.1
 Name: swh.loader.core
-Version: 5.13.1
-Summary: Software Heritage Base Loader
-Home-page: https://forge.softwareheritage.org/diffusion/DLDBASE
-Author: Software Heritage developers
-Author-email: swh-devel@inria.fr
-Project-URL: Bug Reports, https://forge.softwareheritage.org/maniphest
+Version: 5.14.1
+Summary: Software Heritage core and package loaders
+Author-email: Software Heritage developers <swh-devel@inria.fr>
+Project-URL: Homepage, https://gitlab.softwareheritage.org/swh/devel/swh-loader-core
+Project-URL: Bug Reports, https://gitlab.softwareheritage.org/swh/devel/swh-loader-core/-/issues
 Project-URL: Funding, https://www.softwareheritage.org/donate
-Project-URL: Source, https://forge.softwareheritage.org/source/swh-loader-core
 Project-URL: Documentation, https://docs.softwareheritage.org/devel/swh-loader-core/
+Project-URL: Source, https://gitlab.softwareheritage.org/swh/devel/swh-loader-core.git
 Classifier: Programming Language :: Python :: 3
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
 Classifier: Operating System :: OS Independent
 Classifier: Development Status :: 5 - Production/Stable
 Requires-Python: >=3.7
-Description-Content-Type: text/markdown
+Description-Content-Type: text/x-rst
 License-File: LICENSE
 License-File: AUTHORS
 Requires-Dist: psutil
@@ -28,7 +27,7 @@ Requires-Dist: typing-extensions
 Requires-Dist: toml
 Requires-Dist: packaging
 Requires-Dist: swh.core>=2.23.0
-Requires-Dist: swh.model>=6.5.1
+Requires-Dist: swh.model>=6.9
 Requires-Dist: swh.objstorage>=0.2.2
 Requires-Dist: swh.scheduler>=0.4.0
 Requires-Dist: swh.storage>=1.18.0
@@ -49,15 +48,21 @@ Software Heritage - Loader foundations
 ======================================
 
 The Software Heritage Loader Core is a low-level loading utilities and
-helpers used by :term:`loaders <loader>`.
+helpers used by `loaders <https://docs.softwareheritage.org/devel/glossary.html#term-loader>`_.
 
 The main entry points are classes:
-- :class:`swh.loader.core.loader.BaseLoader` for VCS loaders (e.g. svn)
-- :class:`swh.loader.core.loader.DVCSLoader` for DVCS loaders (e.g. git, ...)
-- :class:`swh.loader.core.loader.ContentLoader` for Content loader
-- :class:`swh.loader.core.loader.DirectoryLoader` for Directory loader
-- :class:`swh.loader.package.loader.PackageLoader` for Package loaders (e.g. PyPI, Npm, ...)
-- ...
+
+- `swh.loader.core.loader.BaseLoader <https://docs.softwareheritage.org/devel/apidoc/swh.loader.core.loader.html#swh.loader.core.loader.BaseLoader>`_
+  for VCS loaders (e.g. git, svn, ...)
+
+- `swh.loader.core.loader.ContentLoader <https://docs.softwareheritage.org/devel/apidoc/swh.loader.core.loader.html#swh.loader.core.loader.ContentLoader>`_
+  for Content loader
+
+- `swh.loader.core.loader.BaseDirectoryLoader <https://docs.softwareheritage.org/devel/apidoc/swh.loader.core.loader.html#swh.loader.core.loader.BaseDirectoryLoader>`_
+  for Directory loaders
+
+- `swh.loader.package.loader.PackageLoader <https://docs.softwareheritage.org/devel/apidoc/swh.loader.package.loader.html#swh.loader.package.loader.PackageLoader>`_
+  for Package loaders (e.g. PyPI, Npm, ...)
 
 Package loaders
 ---------------
@@ -66,8 +71,10 @@ This package also implements many package loaders directly, out of convenience,
 as they usually are quite similar and each fits in a single file.
 
 They all roughly follow these steps, explained in the
-:py:meth:`swh.loader.package.loader.PackageLoader.load` documentation.
-See the :ref:`package-loader-tutorial` for details.
+`swh.loader.package.loader.PackageLoader.load <https://docs.softwareheritage.org/devel/apidoc/swh.loader.package.loader.html#swh.loader.package.loader.PackageLoader.load>`_
+documentation.
+See the `Package Loader tutorial <https://docs.softwareheritage.org/devel/swh-loader-core/package-loader-tutorial.html#package-loader-tutorial>`_
+for details.
 
 VCS loaders
 -----------

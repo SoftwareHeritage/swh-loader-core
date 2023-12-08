@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 
 @attr.s
 class CpanPackageInfo(BasePackageInfo):
-
     EXTID_TYPE = "cpan-manifest-sha256"
     EXTID_VERSION = 0
 
@@ -72,7 +71,6 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
         module_metadata: List[Dict[str, Any]],
         **kwargs,
     ):
-
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
         self.api_base_url = api_base_url
@@ -175,7 +173,6 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
     def build_release(
         self, p_info: CpanPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
-
         message = (
             f"Synthetic release for Perl source package {p_info.name} "
             f"version {p_info.version}\n"

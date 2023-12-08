@@ -119,7 +119,6 @@ class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
     def get_package_info(
         self, version: str
     ) -> Iterator[Tuple[str, RubyGemsPackageInfo]]:
-
         artifact = self.artifacts[version]
         rubygem_metadata = self.rubygem_metadata[version]
         filename = artifact["filename"]

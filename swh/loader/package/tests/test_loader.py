@@ -107,7 +107,6 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
 
 
 def test_loader_origin_visit_success(swh_storage, requests_mock_datadir):
-
     loader = StubPackageLoader(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {
@@ -621,7 +620,6 @@ class StubPackageLoaderWithPackageInfoFailure(StubPackageLoader):
 
 
 def test_loader_origin_with_package_info_failure(swh_storage, requests_mock_datadir):
-
     loader = StubPackageLoaderWithPackageInfoFailure(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {
@@ -640,7 +638,6 @@ def test_loader_origin_with_package_info_failure(swh_storage, requests_mock_data
 def test_loader_with_dangling_branch_in_last_snapshot(
     swh_storage, requests_mock_datadir
 ):
-
     loader = StubPackageLoader(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {

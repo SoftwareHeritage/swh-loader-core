@@ -108,7 +108,6 @@ def test_get_default_version(requests_mock_datadir, swh_storage):
 def test_hackage_loader_load_one_version(
     datadir, requests_mock_datadir, swh_storage, requests_mock
 ):
-
     requests_mock.head(
         url="https://hackage.haskell.org/package/aeson-2.1.0.0/aeson-2.1.0.0.tar.gz",
         status_code=200,
@@ -186,7 +185,6 @@ def test_hackage_loader_load_multiple_version(
     swh_storage,
     requests_mock,
 ):
-
     requests_mock.head(
         url="https://hackage.haskell.org/package/colors-0.1/colors-0.1.tar.gz",
         status_code=200,

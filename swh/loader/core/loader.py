@@ -11,8 +11,20 @@ import os
 from pathlib import Path
 import tempfile
 import time
-from typing import Any, ContextManager, Dict, Iterator, List, Optional, Set, Union
+from typing import (
+    Any,
+    Callable,
+    ContextManager,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Union,
+)
 from urllib.parse import urlparse
+import warnings
 
 from requests.exceptions import HTTPError
 import sentry_sdk
@@ -952,15 +964,31 @@ class BaseDirectoryLoader(NodeLoader):
 
     visit_type = "directory"
 
-    def __init__(self, *args, dir_filter="accept_all_directories", **kwargs):
+    def __init__(
+        self,
+        *args,
+        path_filter: Callable[
+            [bytes, bytes, Optional[Iterable[bytes]]], bool
+        ] = from_disk.accept_all_paths,
+        dir_filter: Union[
+            None, str, Callable[[bytes, bytes, Iterable[bytes]], bool]
+        ] = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.directory: Optional[from_disk.Directory] = None
         # We need to use qualified imports here otherwise
         # Sphinx gets lost when handling subclasses. See:
         # https://github.com/sphinx-doc/sphinx/issues/10124
-        self.cnts: List[model.Content] = None
-        self.skipped_cnts: List[model.SkippedContent] = None
-        self.dirs: List[model.Directory] = None
+        self.cnts: Optional[List[model.Content]] = None
+        self.skipped_cnts: Optional[List[model.SkippedContent]] = None
+        self.dirs: Optional[List[model.Directory]] = None
+
+        if dir_filter is not None:
+            warnings.warn(
+                "`dir_filter` is deprecated, use `path_filter` instead.",
+                DeprecationWarning,
+            )
 
         # Configure directory filter which is a callable for the
         # from_disk.Directory.from_disk method call in the process_artifact method.
@@ -970,11 +998,21 @@ class BaseDirectoryLoader(NodeLoader):
                     f"Expected dir_filter to be 'accept_all_directories' or "
                     f"'ignore_empty_directories', got {dir_filter!r}"
                 )
-            from swh.model import from_disk
-
-            self.dir_filter = getattr(from_disk, dir_filter)
+            self.dir_filter: Optional[
+                Callable[[bytes, bytes, Iterable[bytes]], bool]
+            ] = getattr(from_disk, dir_filter)
         else:
             self.dir_filter = dir_filter
+
+        self._path_filter = path_filter
+
+    def path_filter(
+        self, path: bytes, name: bytes, entries: Optional[Iterable[bytes]]
+    ) -> bool:
+        if entries is not None and self.dir_filter is not None:
+            return self.dir_filter(path, name, entries)
+
+        return self._path_filter(path, name, entries)
 
     def process_artifact(self, artifact_path: Path) -> None:
         """Build the Directory and other DAG objects out of the remote artifact
@@ -986,7 +1024,7 @@ class BaseDirectoryLoader(NodeLoader):
         self.directory = from_disk.Directory.from_disk(
             path=bytes(artifact_path),
             max_content_length=self.max_content_size,
-            dir_filter=self.dir_filter,
+            path_filter=self.path_filter,
         )
         # Compute the merkle dag from the top-level directory
         self.cnts, self.skipped_cnts, self.dirs = from_disk.iter_directory(
@@ -1022,10 +1060,13 @@ class BaseDirectoryLoader(NodeLoader):
 
     def store_data(self) -> None:
         """Store newly retrieved Content and Snapshot."""
+        assert self.skipped_cnts is not None
         self.log.debug("Number of skipped contents: %s", len(self.skipped_cnts))
         self.storage.skipped_content_add(self.skipped_cnts)
+        assert self.cnts is not None
         self.log.debug("Number of contents: %s", len(self.cnts))
         self.storage.content_add(self.cnts)
+        assert self.dirs is not None
         self.log.debug("Number of directories: %s", len(self.dirs))
         self.storage.directory_add(self.dirs)
         assert self.directory is not None

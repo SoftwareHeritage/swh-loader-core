@@ -1,3 +1,4 @@
+.copier-answers.yml
 .git-blame-ignore-revs
 .gitignore
 .pre-commit-config.yaml
@@ -5,7 +6,6 @@ AUTHORS
 CODE_OF_CONDUCT.md
 CONTRIBUTORS
 LICENSE
-MANIFEST.in
 Makefile
 README.rst
 conftest.py
@@ -16,7 +16,6 @@ requirements-swh.txt
 requirements-test.txt
 requirements.txt
 setup.cfg
-setup.py
 tox.ini
 docs/.gitignore
 docs/Makefile
@@ -29,14 +28,12 @@ docs/package-loader-tutorial.rst
 docs/vcs-loader-overview.rst
 docs/_static/.placeholder
 docs/_templates/.placeholder
-swh/__init__.py
 swh.loader.core.egg-info/PKG-INFO
 swh.loader.core.egg-info/SOURCES.txt
 swh.loader.core.egg-info/dependency_links.txt
 swh.loader.core.egg-info/entry_points.txt
 swh.loader.core.egg-info/requires.txt
 swh.loader.core.egg-info/top_level.txt
-swh/loader/__init__.py
 swh/loader/cli.py
 swh/loader/exception.py
 swh/loader/py.typed

@@ -43,7 +43,6 @@ def test_archive_loader_task_for_listed_origin(
     archive_lister,
     archive_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.ArchiveLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadTarball",

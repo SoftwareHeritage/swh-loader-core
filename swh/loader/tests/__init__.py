@@ -266,7 +266,6 @@ def get_stats(storage) -> Dict:
 def fetch_nar_extids_from_checksums(
     storage: StorageInterface, checksums: Dict[str, str]
 ) -> List[ExtID]:
-
     EXTID_TYPE_NAR = "nar-%s-raw-validated"
     EXTID_TYPE_NAR_VERSION = 0
 

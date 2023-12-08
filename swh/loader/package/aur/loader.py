@@ -17,7 +17,6 @@ from swh.storage.interface import StorageInterface
 
 @attr.s
 class AurPackageInfo(BasePackageInfo):
-
     name = attr.ib(type=str)
     """Name of the package"""
 
@@ -49,7 +48,7 @@ def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
         srcinfo = content.read().replace("\t", "")
         parsed = rex.findall(srcinfo)
         data: Dict[str, Any] = {}
-        for (k, v) in parsed:
+        for k, v in parsed:
             if k in data:
                 if type(data[k]) is not list:
                     data[k] = [data[k]]
@@ -70,7 +69,6 @@ class AurLoader(PackageLoader[AurPackageInfo]):
         aur_metadata: List[Dict[str, Any]],
         **kwargs,
     ):
-
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
         self.artifacts: Dict[str, Dict] = {

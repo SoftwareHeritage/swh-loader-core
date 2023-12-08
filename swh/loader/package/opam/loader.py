@@ -179,7 +179,6 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         return self._compute_versions()[-1]
 
     def _opam_show_args(self, version: Optional[str]):
-
         package = self.get_package_name(version) if version else self.opam_package
 
         return [
@@ -227,7 +226,6 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         return ret
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, OpamPackageInfo]]:
-
         fields = self.get_enclosed_fields(
             ["url.src:", "url.checksum:", "authors:", "maintainer:"], version
         )
@@ -278,7 +276,6 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         uncompressed_path: str,
         directory: Sha1Git,
     ) -> Optional[Release]:
-
         msg = (
             f"Synthetic release for OPAM source package {self.opam_package} "
             f"version {p_info.version}\n"

@@ -138,7 +138,6 @@ class IntrinsicPackageMetadata(TypedDict):
 
 @attr.s
 class CratesPackageInfo(BasePackageInfo):
-
     name = attr.ib(type=str)
     """Name of the package"""
 

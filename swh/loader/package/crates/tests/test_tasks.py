@@ -34,7 +34,6 @@ def test_crates_loader_task_for_listed_origin(
     crates_lister,
     crates_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.CratesLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadCrates",

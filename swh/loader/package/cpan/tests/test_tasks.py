@@ -43,7 +43,6 @@ def test_cpan_loader_task_for_listed_origin(
     cpan_lister,
     cpan_listed_origin,
 ):
-
     loading_task_creation_for_listed_origin_test(
         loader_class_name=f"{NAMESPACE}.loader.CpanLoader",
         task_function_name=f"{NAMESPACE}.tasks.LoadCpan",

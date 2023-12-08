@@ -183,7 +183,6 @@ def test_arch_loader_load_one_version(datadir, requests_mock_datadir, swh_storag
 
 
 def test_arch_loader_load_n_versions(datadir, requests_mock_datadir, swh_storage):
-
     loader = ArchLoader(
         swh_storage,
         url=EXPECTED_PACKAGES[0]["url"],
