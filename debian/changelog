@@ -1,3 +1,15 @@
+swh-loader-core (5.14.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 5.14.1     - (tagged by David Douard
+    <david.douard@sdfa3.org> on 2023-12-08 11:49:42 +0100)
+  * Upstream changes:     - v5.14.1     - fix README rst syntax issues
+    - fix tox: ensure all tests are executed     - fix workers
+    entrypoint declarations: restore their names to previous     -
+    values ('loader.xxx' instead of 'swh.loader.xxx'), before new     -
+    packaging migration.
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 08 Dec 2023 11:05:28 +0000
+
 swh-loader-core (5.13.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 5.13.1     - (tagged by Antoine R. Dumont
