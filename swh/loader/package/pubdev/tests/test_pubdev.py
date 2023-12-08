@@ -320,7 +320,6 @@ def test_pubdev_loader_empty_author(datadir, requests_mock_datadir, swh_storage)
 
 
 def test_pubdev_invalid_origin(swh_storage):
-
     with pytest.raises(AssertionError):
         PubDevLoader(
             swh_storage,

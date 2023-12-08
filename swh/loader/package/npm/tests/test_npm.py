@@ -417,7 +417,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         url="https://npmjs.com/",
     )
 
-    for (version_name, release_id) in versions:
+    for version_name, release_id in versions:
         release = swh_storage.release_get([hash_to_bytes(release_id)])[0]
         assert release.target_type == ModelObjectType.DIRECTORY
         directory_id = release.target

@@ -1,6 +1,6 @@
 [swh.cli.subcommands]
-loader = swh.loader.cli
-nar = swh.loader.core.nar
+swh.loader.core = swh.loader.cli
+swh.loader.core.nar = swh.loader.core.nar
 
 [swh.workers]
 loader.arch = swh.loader.package.arch:register

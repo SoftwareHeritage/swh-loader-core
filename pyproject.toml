@@ -1,3 +1,73 @@
+[project]
+name = "swh.loader.core"
+authors = [
+	{name="Software Heritage developers", email="swh-devel@inria.fr"},
+]
+description = "Software Heritage core and package loaders"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+]
+dynamic = ["version", "dependencies", "optional-dependencies"]
+
+[tool.setuptools.packages.find]
+include = ["swh.*"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt", "requirements-swh.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+testing = {file = ["requirements-test.txt"]}
+
+[project.entry-points."swh.cli.subcommands"]
+"swh.loader.core" = "swh.loader.cli"
+"swh.loader.core.nar" = "swh.loader.core.nar"
+
+[project.entry-points."swh.workers"]
+"loader.content" = "swh.loader.core:register_content"
+"loader.directory" = "swh.loader.core:register_directory"
+"loader.arch" = "swh.loader.package.arch:register"
+"loader.archive" = "swh.loader.package.archive:register"
+"loader.aur" = "swh.loader.package.aur:register"
+"loader.conda" = "swh.loader.package.conda:register"
+"loader.cpan" = "swh.loader.package.cpan:register"
+"loader.cran" = "swh.loader.package.cran:register"
+"loader.crates" = "swh.loader.package.crates:register"
+"loader.debian" = "swh.loader.package.debian:register"
+"loader.deposit" = "swh.loader.package.deposit:register"
+"loader.golang" = "swh.loader.package.golang:register"
+"loader.hackage" = "swh.loader.package.hackage:register"
+"loader.hex" = "swh.loader.package.hex:register"
+"loader.nixguix" = "swh.loader.package.nixguix:register"
+"loader.npm" = "swh.loader.package.npm:register"
+"loader.opam" = "swh.loader.package.opam:register"
+"loader.pubdev" = "swh.loader.package.pubdev:register"
+"loader.puppet" = "swh.loader.package.puppet:register"
+"loader.pypi" = "swh.loader.package.pypi:register"
+"loader.maven" = "swh.loader.package.maven:register"
+"loader.rubygems" = "swh.loader.package.rubygems:register"
+"loader.rpm" = "swh.loader.package.rpm:register"
+"loader.bioconductor" = "swh.loader.package.bioconductor:register"
+
+[project.urls]
+"Homepage" = "https://gitlab.softwareheritage.org/swh/devel/swh-loader-core"
+"Bug Reports" = "https://gitlab.softwareheritage.org/swh/devel/swh-loader-core/-/issues"
+"Funding" = "https://www.softwareheritage.org/donate"
+"Documentation" = "https://docs.softwareheritage.org/devel/swh-loader-core/"
+"Source" = "https://gitlab.softwareheritage.org/swh/devel/swh-loader-core.git"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+fallback_version = "0.0.1"
+
 [tool.black]
 target-version = ['py37']
 
@@ -9,3 +79,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
 force_sort_within_sections = true
+known_first_party = ['swh']
+
+[tool.codespell]
+ignore-words-list = "iff,crate"

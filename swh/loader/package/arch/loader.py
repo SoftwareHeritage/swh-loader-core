@@ -17,7 +17,6 @@ from swh.storage.interface import StorageInterface
 
 @attr.s
 class ArchPackageInfo(BasePackageInfo):
-
     name = attr.ib(type=str)
     """Name of the package"""
 
@@ -60,7 +59,6 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
         arch_metadata: List[Dict[str, Any]],
         **kwargs,
     ):
-
         super().__init__(storage=storage, url=url, **kwargs)
         self.url = url
         self.artifacts: Dict[str, Dict] = {
@@ -115,9 +113,7 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
         assert version == artifact["version"] == metadata["version"]
 
         # Drop the length key, bogus value provided by earlier iterations of the lister
-        checksums = {
-            k: v for k, v in artifact["checksums"].items() if k != "length"
-        }
+        checksums = {k: v for k, v in artifact["checksums"].items() if k != "length"}
 
         p_info = ArchPackageInfo(
             name=metadata["name"],

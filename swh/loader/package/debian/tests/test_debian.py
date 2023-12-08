@@ -532,7 +532,6 @@ def test_debian_multiple_packages(swh_storage, requests_mock_datadir):
 
 
 def test_debian_loader_only_md5_sum_in_dsc(swh_storage, requests_mock_datadir):
-
     packages_per_version = deepcopy(PACKAGES_PER_VERSION)
     for package_files in packages_per_version.values():
         for package_data in package_files["files"].values():
@@ -542,7 +541,6 @@ def test_debian_loader_only_md5_sum_in_dsc(swh_storage, requests_mock_datadir):
 
 
 def test_debian_loader_no_md5_sum_in_dsc(swh_storage, requests_mock_datadir):
-
     packages_per_version = deepcopy(PACKAGES_PER_VERSION)
     for package_files in packages_per_version.values():
         for package_data in package_files["files"].values():

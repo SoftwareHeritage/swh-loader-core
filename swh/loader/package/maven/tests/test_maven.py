@@ -332,7 +332,6 @@ def test_maven_loader_extrinsic_metadata(
     assert actual_load_status["status"] == "eventful"
 
     for i, expected_release in enumerate(expected_releases):
-
         expected_release_id = expected_release.id
         release = swh_storage.release_get([expected_release_id])[0]
         assert release is not None
