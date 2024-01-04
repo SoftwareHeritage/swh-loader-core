@@ -1,9 +1,10 @@
-# Copyright (C) 2019-2023  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 
+from io import BytesIO
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ from urllib.parse import quote
 
 import pytest
 from requests.exceptions import HTTPError
+from urllib3.response import HTTPResponse
 
 import swh.loader.package
 from swh.loader.package.utils import download, get_url_body, release_name
@@ -296,21 +298,31 @@ def test_api_info_retry_reraise(requests_mock):
         get_url_body(url)
 
 
-def test_download_prevent_auto_deflate(requests_mock, datadir, tmp_path):
+@pytest.mark.parametrize(
+    "gzip_content_encoding",
+    [True, False],
+    ids=["with gzip encoding", "without gzip encoding"],
+)
+def test_download_prevent_auto_deflate(
+    requests_mock, datadir, tmp_path, gzip_content_encoding
+):
     url = "https://example.org/package/example/example-v1.0.tar.gz"
     data = Path(
         datadir, "https_example.org", "package_example_example-v1.0.tar.gz"
     ).read_bytes()
 
+    headers = {
+        "content-type": "application/x-gzip",
+        "content-length": str(len(data)),
+    }
+
+    if gzip_content_encoding:
+        headers["content-encoding"] = "gzip"
+
     requests_mock.get(
         url,
-        content=data,
-        headers={
-            "content-type": "application/x-gzip",
-            "content-encoding": "gzip",
-            "content-length": str(len(data)),
-        },
-    ),
+        raw=HTTPResponse(body=BytesIO(data), headers=headers, preload_content=False),
+    )
 
     hashes = MultiHash(hash_names={"md5", "sha1", "sha256"})
     hashes.update(data)
