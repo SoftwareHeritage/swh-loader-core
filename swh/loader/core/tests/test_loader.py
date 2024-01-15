@@ -25,7 +25,7 @@ from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.tests import (
     assert_last_visit_matches,
-    fetch_nar_extids_from_checksums,
+    fetch_extids_from_checksums,
     get_stats,
 )
 from swh.model.hashutil import hash_to_bytes
@@ -568,9 +568,8 @@ def test_content_loader_ok_simple(
 
     assert result == {"status": "eventful"}
 
-    if checksum_layout == "nar":
-        extids = fetch_nar_extids_from_checksums(loader.storage, checksums)
-        assert len(extids) == len(checksums)
+    extids = fetch_extids_from_checksums(loader.storage, checksum_layout, checksums)
+    assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
         swh_storage, origin.url, status="full", type="content"
@@ -748,9 +747,8 @@ def test_directory_loader_ok_simple(
 
     assert result == {"status": "eventful"}
 
-    if checksum_layout == "nar":
-        extids = fetch_nar_extids_from_checksums(loader.storage, checksums)
-        assert len(extids) == len(checksums)
+    extids = fetch_extids_from_checksums(loader.storage, checksum_layout, checksums)
+    assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
         swh_storage, origin.url, status="full", type="tarball-directory"

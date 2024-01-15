@@ -263,18 +263,23 @@ def get_stats(storage) -> Dict:
     return {k: stats.get(k) for k in keys}
 
 
-def fetch_nar_extids_from_checksums(
-    storage: StorageInterface, checksums: Dict[str, str]
+def fetch_extids_from_checksums(
+    storage: StorageInterface, checksum_layout: str, checksums: Dict[str, str]
 ) -> List[ExtID]:
-    EXTID_TYPE_NAR = "nar-%s-raw-validated"
-    EXTID_TYPE_NAR_VERSION = 0
-
     extids = []
-    for hash_algo, checksum in checksums.items():
-        id_type = EXTID_TYPE_NAR % hash_algo
-        ids = [hash_to_bytes(checksum)]
-        extid = storage.extid_get_from_extid(id_type, ids, EXTID_TYPE_NAR_VERSION)
-        extids.extend(extid)
+    extid_type = None
+    if checksum_layout == "nar":
+        extid_type = "nar-%s-raw-validated"
+    elif checksum_layout == "standard":
+        extid_type = "checksum-%s"
+    extid_version = 0
+
+    if extid_type:
+        for hash_algo, checksum in checksums.items():
+            id_type = extid_type % hash_algo
+            ids = [hash_to_bytes(checksum)]
+            extid = storage.extid_get_from_extid(id_type, ids, extid_version)
+            extids.extend(extid)
 
     return extids
 

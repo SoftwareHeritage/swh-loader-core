@@ -721,33 +721,34 @@ class NodeLoader(BaseLoader, ABC):
             # No big deal, it just means the next visit will load the same versions
             # again.
 
-    def _nar_extids(self, node: Union[Content, Directory]) -> Set[ExtID]:
+    def _extids(self, node: Union[Content, Directory]) -> Set[ExtID]:
         """Compute the set of ExtIDs for the :term:`node` (e.g. Content of Directory).
 
         This creates as much ExtID types as there are keys in :data:`self.checksums`
         dict.
-
         """
-        EXTID_TYPE: str = "nar-%s-raw-validated"
-        """Ext id type. %s is expected to be formatted according to the hash algo used
-        (e.g. sha1, sha256, sha512, ...).
+        extids: Set[ExtID] = set()
+        extid_type: Optional[str] = None
+        if self.checksum_layout == "nar":
+            extid_type = "nar-%s-raw-validated"
+        elif self.checksum_layout == "standard":
+            extid_type = "checksum-%s"
 
-        """
-        EXTID_VERSION: int = 0
-        """ExtID version to use. Bump this if the schema gets changed in the future."""
+        if extid_type:
+            checksums = {
+                hash_algo: hash_to_bytes(hsh)
+                for hash_algo, hsh in self.checksums.items()
+            }
+            extids = {
+                ExtID(
+                    extid_type=extid_type % hash_algo,
+                    extid=extid,
+                    target=node.swhid(),
+                )
+                for hash_algo, extid in checksums.items()
+            }
 
-        checksums = {
-            hash_algo: hash_to_bytes(hsh) for hash_algo, hsh in self.checksums.items()
-        }
-        return {
-            ExtID(
-                extid_type=EXTID_TYPE % hash_algo,
-                extid_version=EXTID_VERSION,
-                extid=extid,
-                target=node.swhid(),
-            )
-            for hash_algo, extid in checksums.items()
-        }
+        return extids
 
     @abstractmethod
     def fetch_artifact(self) -> Iterator[Path]:
@@ -833,16 +834,15 @@ class NodeLoader(BaseLoader, ABC):
         # not found
         raise NotFound(f"Unknown origin {self.origin.url}.")
 
-    def store_nar_as_extids(self, node: Union[Content, Directory]) -> None:
-        """Store the nar checksums provided as extids for :data:`node`.
+    def store_extids(self, node: Union[Content, Directory]) -> None:
+        """Store the checksums provided as extids for :data:`node`.
 
-        If the checksums computation provided are of type "nar", this will also store
-        those "integrity" checksums as ExtID. This stores as much ExtID types as there
-        are keys in the provided :data:`self.checksums` dict.
+        This stores as much ExtID types as there are keys in the provided
+        :data:`self.checksums` dict.
 
         """
-        if self.checksum_layout == "nar" and node is not None:
-            extids = self._nar_extids(node)
+        if node is not None:
+            extids = self._extids(node)
             self._load_extids(extids)
 
 
@@ -939,7 +939,7 @@ class ContentLoader(NodeLoader):
         """Store newly retrieved Content and Snapshot."""
         assert self.content is not None
         self.storage.content_add([self.content])
-        self.store_nar_as_extids(self.content)
+        self.store_extids(self.content)
 
         assert self.snapshot is not None
         self.storage.snapshot_add([self.snapshot])
@@ -1070,7 +1070,7 @@ class BaseDirectoryLoader(NodeLoader):
         self.log.debug("Number of directories: %s", len(self.dirs))
         self.storage.directory_add(self.dirs)
         assert self.directory is not None
-        self.store_nar_as_extids(self.directory.to_model())
+        self.store_extids(self.directory.to_model())
         self.snapshot = self.build_snapshot()
         self.storage.snapshot_add([self.snapshot])
         self.loaded_snapshot_id = self.snapshot.id
