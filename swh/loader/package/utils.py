@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2023  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -91,6 +91,9 @@ def download(
         response = open(parsed_url.path, "rb")
         chunks = (response.read(HASH_BLOCK_SIZE) for _ in itertools.count())
     else:
+        # request artifact raw bytes without extra compression as requests set
+        # Accept-Encoding header to "gzip, deflate" by default
+        params["headers"]["Accept-Encoding"] = "identity"
         response = requests.get(url, **params, timeout=timeout, stream=True)
         response.raise_for_status()
         # update URL to response one as requests follow redirection by default
@@ -109,7 +112,7 @@ def download(
             and "gzip" in content_encoding
         ):
             # prevent automatic deflate of response bytes by requests
-            chunks = (response.raw.read(HASH_BLOCK_SIZE) for _ in itertools.count())
+            chunks = response.raw.stream(HASH_BLOCK_SIZE, decode_content=False)
         else:
             chunks = response.iter_content(chunk_size=HASH_BLOCK_SIZE)
 
@@ -151,7 +154,7 @@ def download(
         "url": url,
     }
 
-    logger.debug("extrinsic_metadata", extrinsic_metadata)
+    logger.debug("extrinsic_metadata: %s", extrinsic_metadata)
 
     return filepath, extrinsic_metadata
 
