@@ -269,7 +269,7 @@ def fetch_extids_from_checksums(
     extids = []
     extid_type = None
     if checksum_layout == "nar":
-        extid_type = "nar-%s-raw-validated"
+        extid_type = "nar-%s"
     elif checksum_layout == "standard":
         extid_type = "checksum-%s"
     extid_version = 0

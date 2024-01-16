@@ -730,7 +730,7 @@ class NodeLoader(BaseLoader, ABC):
         extids: Set[ExtID] = set()
         extid_type: Optional[str] = None
         if self.checksum_layout == "nar":
-            extid_type = "nar-%s-raw-validated"
+            extid_type = "nar-%s"
         elif self.checksum_layout == "standard":
             extid_type = "checksum-%s"
 
