@@ -3,7 +3,6 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import asyncio
 import datetime
 import hashlib
 from itertools import islice
@@ -837,12 +836,10 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         # Instead of sending everything from the bottom up to the storage,
         # use a Merkle graph discovery algorithm to filter out known objects.
-        contents, skipped_contents, directories = asyncio.run(
-            discovery.filter_known_objects(
-                storage_discovery.DiscoveryStorageConnection(
-                    contents, skipped_contents, directories, self.storage
-                ),
-            )
+        contents, skipped_contents, directories = discovery.filter_known_objects(
+            storage_discovery.DiscoveryStorageConnection(
+                contents, skipped_contents, directories, self.storage
+            ),
         )
 
         logger.debug("Number of skipped contents: %s", len(skipped_contents))
