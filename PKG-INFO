@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: swh.loader.core
-Version: 5.14.2
+Version: 5.15.1
 Summary: Software Heritage core and package loaders
 Author-email: Software Heritage developers <swh-devel@inria.fr>
 Project-URL: Homepage, https://gitlab.softwareheritage.org/swh/devel/swh-loader-core
@@ -27,10 +27,10 @@ Requires-Dist: typing-extensions
 Requires-Dist: toml
 Requires-Dist: packaging
 Requires-Dist: swh.core>=2.23.0
-Requires-Dist: swh.model>=6.9
+Requires-Dist: swh.model>=6.11
 Requires-Dist: swh.objstorage>=0.2.2
 Requires-Dist: swh.scheduler>=0.4.0
-Requires-Dist: swh.storage>=1.18.0
+Requires-Dist: swh.storage>=1.20
 Provides-Extra: testing
 Requires-Dist: pytest; extra == "testing"
 Requires-Dist: pytest-mock; extra == "testing"
