@@ -472,9 +472,12 @@ def test_node_loader_missing_field(swh_storage, loader_class):
         )
 
 
-def test_content_loader_404(caplog, swh_storage, requests_mock_datadir, content_path):
+def test_content_loader_404(
+    caplog, swh_storage, requests_mock_datadir, content_path, requests_mock
+):
     """It should not ingest origin when there is no file to be found (no mirror url)"""
     unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
+    requests_mock.get(unknown_origin.url, status_code=404)
     loader = ContentLoader(
         swh_storage,
         unknown_origin.url,
@@ -495,11 +498,13 @@ def test_content_loader_404(caplog, swh_storage, requests_mock_datadir, content_
 
 
 def test_content_loader_404_with_fallback(
-    caplog, swh_storage, requests_mock_datadir, content_path
+    caplog, swh_storage, requests_mock_datadir, content_path, requests_mock
 ):
     """It should not ingest origin when there is no file to be found"""
     unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
     fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
+    requests_mock.get(unknown_origin.url, status_code=404)
+    requests_mock.get(fallback_url_ko, status_code=404)
     loader = ContentLoader(
         swh_storage,
         unknown_origin.url,
@@ -527,11 +532,14 @@ def test_content_loader_ok_with_fallback(
     swh_storage,
     requests_mock_datadir,
     content_path,
+    requests_mock,
 ):
     """It should be an eventful visit even when ingesting through mirror url"""
     dead_origin = Origin(f"{CONTENT_MIRROR}/dead-origin-url")
     fallback_url_ok = CONTENT_URL
     fallback_url_ko = f"{CONTENT_MIRROR}/project/asdf/archives/unknown2.lisp"
+    requests_mock.get(dead_origin.url, status_code=404)
+    requests_mock.get(fallback_url_ko, status_code=404)
 
     loader = ContentLoader(
         swh_storage,
@@ -619,9 +627,12 @@ def test_directory_loader_missing_field(swh_storage):
         TarballDirectoryLoader(swh_storage, origin.url)
 
 
-def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir, tarball_path):
+def test_directory_loader_404(
+    caplog, swh_storage, requests_mock_datadir, tarball_path, requests_mock
+):
     """It should not ingest origin when there is no tarball to be found (no mirrors)"""
     unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tar.gz")
+    requests_mock.get(unknown_origin.url, status_code=404)
     loader = TarballDirectoryLoader(
         swh_storage,
         unknown_origin.url,
@@ -642,11 +653,14 @@ def test_directory_loader_404(caplog, swh_storage, requests_mock_datadir, tarbal
 
 
 def test_directory_loader_404_with_fallback(
-    caplog, swh_storage, requests_mock_datadir, tarball_path
+    caplog, swh_storage, requests_mock_datadir, tarball_path, requests_mock
 ):
     """It should not ingest origin when there is no tarball to be found"""
     unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tbz2")
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/elsewhere-unknown2.tbz2"
+    requests_mock.get(unknown_origin.url, status_code=404)
+    requests_mock.get(fallback_url_ko, status_code=404)
+
     loader = TarballDirectoryLoader(
         swh_storage,
         unknown_origin.url,
@@ -705,7 +719,12 @@ def test_directory_loader_hash_mismatch(
 
 @pytest.mark.parametrize("checksum_algo", ["sha1", "sha256", "sha512"])
 def test_directory_loader_ok_with_fallback(
-    caplog, swh_storage, requests_mock_datadir, tarball_with_std_hashes, checksum_algo
+    caplog,
+    swh_storage,
+    requests_mock_datadir,
+    tarball_with_std_hashes,
+    checksum_algo,
+    requests_mock,
 ):
     """It should be an eventful visit even when ingesting through mirror url"""
     tarball_path, checksums = tarball_with_std_hashes
@@ -713,6 +732,8 @@ def test_directory_loader_ok_with_fallback(
     dead_origin = Origin(f"{DIRECTORY_MIRROR}/dead-origin-url")
     fallback_url_ok = DIRECTORY_URL
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/unknown2.tgz"
+    requests_mock.get(dead_origin.url, status_code=404)
+    requests_mock.get(fallback_url_ko, status_code=404)
 
     loader = TarballDirectoryLoader(
         swh_storage,
