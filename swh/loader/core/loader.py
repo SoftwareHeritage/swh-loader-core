@@ -28,6 +28,7 @@ import warnings
 
 from requests.exceptions import HTTPError
 import sentry_sdk
+from tenacity.stop import stop_after_attempt
 
 from swh.core.config import load_from_envvar
 from swh.core.statsd import Statsd
@@ -35,7 +36,7 @@ from swh.core.tarball import uncompress
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.core.nar import Nar
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
-from swh.loader.package.utils import download
+from swh.loader.package.utils import download as download_orig
 from swh.model import from_disk, model
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
@@ -65,6 +66,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 
 SENTRY_ORIGIN_URL_TAG_NAME = "swh.loader.origin_url"
 SENTRY_VISIT_TYPE_TAG_NAME = "swh.loader.visit_type"
+
+
+def _download(*args, **kwargs):
+    # reduce number of request retries to avoid waiting too much time
+    return download_orig.retry_with(stop=stop_after_attempt(3))(*args, **kwargs)
 
 
 class BaseLoader:
@@ -889,7 +895,7 @@ class ContentLoader(NodeLoader):
             )
             try:
                 with tempfile.TemporaryDirectory() as tmpdir:
-                    file_path, _ = download(
+                    file_path, _ = _download(
                         url, dest=tmpdir, hashes=self.standard_hashes
                     )
                     found_file_path = True
@@ -1106,7 +1112,7 @@ class TarballDirectoryLoader(BaseDirectoryLoader):
             )
             with tempfile.TemporaryDirectory() as tmpdir:
                 try:
-                    tarball_path, _ = download(
+                    tarball_path, _ = _download(
                         url,
                         tmpdir,
                         hashes=self.standard_hashes,

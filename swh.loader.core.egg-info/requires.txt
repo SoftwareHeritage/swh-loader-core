@@ -8,10 +8,10 @@ typing-extensions
 toml
 packaging
 swh.core>=2.23.0
-swh.model>=6.9
+swh.model>=6.11
 swh.objstorage>=0.2.2
 swh.scheduler>=0.4.0
-swh.storage>=1.18.0
+swh.storage>=1.20
 
 [testing]
 pytest
