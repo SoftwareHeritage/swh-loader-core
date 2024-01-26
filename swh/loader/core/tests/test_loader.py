@@ -14,12 +14,14 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from swh.core.api.classes import stream_results
+from swh.core.tests.test_retry import assert_sleep_calls
 from swh.loader.core.loader import (
     SENTRY_ORIGIN_URL_TAG_NAME,
     SENTRY_VISIT_TYPE_TAG_NAME,
     BaseLoader,
     ContentLoader,
     TarballDirectoryLoader,
+    download_orig,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
@@ -679,6 +681,39 @@ def test_directory_loader_404_with_fallback(
         status="not_found",
         origin=unknown_origin,
     )
+
+
+def test_directory_loader_500_with_fallback(
+    caplog, swh_storage, requests_mock_datadir, tarball_path, requests_mock, mocker
+):
+    """It should not ingest origin when there is no tarball to be found"""
+    unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tbz2")
+    fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/elsewhere-unknown2.tbz2"
+    requests_mock.get(unknown_origin.url, status_code=500)
+    requests_mock.get(fallback_url_ko, status_code=500)
+
+    mock_sleep = mocker.patch.object(download_orig.retry, "sleep")
+
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        unknown_origin.url,
+        fallback_urls=[fallback_url_ko],
+        checksums=compute_hashes(tarball_path),
+    )
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+
+    _check_load_failure(
+        caplog,
+        loader,
+        NotFound,
+        "Unknown origin",
+        status="not_found",
+        origin=unknown_origin,
+    )
+
+    assert_sleep_calls(mocker, mock_sleep, [1, 10, 1, 10])
 
 
 @pytest.mark.parametrize("checksum_layout", ["standard", "nar"])
