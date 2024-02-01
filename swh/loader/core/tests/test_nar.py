@@ -25,8 +25,31 @@ def test_nar_tarball(tmpdir, tarball_with_nar_hashes):
     assert nar.hexdigest() == nar_hashes
 
 
+def test_nar_tarball_with_executable(tmpdir, tarball_with_executable_with_nar_hashes):
+    """Compute nar on tarball with executable files inside should not mismatch"""
+    tarball_path, nar_hashes = tarball_with_executable_with_nar_hashes
+
+    directory_path = Path(tmpdir)
+    directory_path.mkdir(parents=True, exist_ok=True)
+    uncompress(str(tarball_path), dest=str(directory_path))
+    path_on_disk = next(directory_path.iterdir())
+
+    nar = Nar(hash_names=list(nar_hashes.keys()))
+    nar.serialize(path_on_disk)
+    assert nar.hexdigest() == nar_hashes
+
+
 def test_nar_content(content_with_nar_hashes):
     content_path, nar_hashes = content_with_nar_hashes
+
+    nar = Nar(hash_names=list(nar_hashes.keys()))
+    nar.serialize(content_path)
+    assert nar.hexdigest() == nar_hashes
+
+
+def test_nar_executable(executable_with_nar_hashes):
+    """Compute nar on file with executable bit set should not mismatch"""
+    content_path, nar_hashes = executable_with_nar_hashes
 
     nar = Nar(hash_names=list(nar_hashes.keys()))
     nar.serialize(content_path)

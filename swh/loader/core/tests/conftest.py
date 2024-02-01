@@ -19,11 +19,26 @@ def tarball_path(datadir):
 
 
 @pytest.fixture
+def tarball_with_executable_path(datadir):
+    """Return tarball filepath (which contains executable) fetched by
+    TarballDirectoryLoader test runs."""
+    return path.join(
+        datadir, "https_example.org", "archives_dummy-hello-with-executable.tar.gz"
+    )
+
+
+@pytest.fixture
 def content_path(datadir):
     """Return filepath fetched by ContentLoader test runs."""
     return path.join(
         datadir, "https_common-lisp.net", "project_asdf_archives_asdf-3.3.5.lisp"
     )
+
+
+@pytest.fixture
+def executable_path(datadir):
+    """Return executable filepath fetched by ContentLoader test runs."""
+    return path.join(datadir, "https_example.org", "test-executable.sh")
 
 
 def compute_hashes(filepath: str, hash_names: List[str] = ["sha256"]) -> Dict[str, str]:
@@ -51,6 +66,17 @@ def tarball_with_nar_hashes(tarball_path):
 
 
 @pytest.fixture
+def tarball_with_executable_with_nar_hashes(tarball_with_executable_path):
+    nar_hashes = compute_nar_hashes(tarball_with_executable_path, ["sha256"])
+    # Ensure it's the same hash as the initial one computed from the cli
+    assert (
+        nar_hashes["sha256"]
+        == "1d3407e5ad740331f928c2a864c7a8e0796f9da982a858c151c9b77506ec10a8"
+    )
+    return (tarball_with_executable_path, nar_hashes)
+
+
+@pytest.fixture
 def content_with_nar_hashes(content_path):
     nar_hashes = compute_nar_hashes(content_path, ["sha256"], is_tarball=False)
     # Ensure it's the same hash as the initial one computed from the cli
@@ -59,3 +85,14 @@ def content_with_nar_hashes(content_path):
         == "0b555a4d13e530460425d1dc20332294f151067fb64a7e49c7de501f05b0a41a"
     )
     return (content_path, nar_hashes)
+
+
+@pytest.fixture
+def executable_with_nar_hashes(executable_path):
+    nar_hashes = compute_nar_hashes(executable_path, ["sha256"], is_tarball=False)
+    # Ensure it's the same hash as the initial one computed from the (guix hash) cli
+    assert (
+        nar_hashes["sha256"]
+        == "d29c24cee7dfc0f015b022e9af1c913f165edfaf918fde966d82e2006013a8ce"
+    )
+    return (executable_path, nar_hashes)

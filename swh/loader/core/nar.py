@@ -197,7 +197,7 @@ class Nar:
 
         if stat.S_ISREG(mode):
             self.str_(["type", "regular"])
-            if os.access(fso, os.X_OK):
+            if mode & 0o111 != 0:
                 self.str_(["executable", ""])
             self.str_("contents")
             with open(str(fso), "rb") as f:
