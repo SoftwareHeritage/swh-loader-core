@@ -1,7 +1,7 @@
 pytest
 pytest-mock
-requests_mock
-urllib3 < 2.0.0  # https://github.com/jamielennox/requests-mock/issues/228
+requests_mock >= 1.11.0
+urllib3
 swh-core[testing]
 swh-scheduler[testing] >= 2.0.0
 swh-storage[testing] >= 2.0.0
