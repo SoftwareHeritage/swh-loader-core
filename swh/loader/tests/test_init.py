@@ -171,7 +171,7 @@ SNAPSHOT = Snapshot(
 def swh_storage_backend_config(swh_storage_postgresql):
     return {
         "cls": "postgresql",
-        "db": swh_storage_postgresql.dsn,
+        "db": swh_storage_postgresql.info.dsn,
         "objstorage": {"cls": "memory"},
     }
 
