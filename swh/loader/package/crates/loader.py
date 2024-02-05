@@ -296,13 +296,13 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         url = artifact["url"]
 
         # Get extrinsic metadata from http api
-        e_metadata = ExtrinsicPackageMetadata(**self.info())  # type: ignore[misc]
+        e_metadata = ExtrinsicPackageMetadata(**self.info())  # type: ignore[typeddict-item]
 
         # Extract crate info for current version (One .crate file for a given version)
         (crate_version,) = [
             crate for crate in e_metadata["versions"] if crate["num"] == version
         ]
-        e_metadata_version = ExtrinsicVersionPackageMetadata(  # type: ignore[misc]
+        e_metadata_version = ExtrinsicVersionPackageMetadata(  # type: ignore[typeddict-item]
             **crate_version
         )
 
@@ -330,7 +330,9 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         i_metadata = {
             k: v for k, v in i_metadata_raw["package"].items() if k in i_metadata_keys
         }
-        p_info.i_metadata = IntrinsicPackageMetadata(**i_metadata)  # type: ignore[misc]
+        p_info.i_metadata = IntrinsicPackageMetadata(
+            **i_metadata
+        )  # type: ignore[typeddict-item]
 
         author = extract_author(p_info)
         description = extract_description(p_info)
