@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2023  The Software Heritage developers
+# Copyright (C) 2018-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -454,6 +454,18 @@ def test_content_loader_missing_field(swh_storage):
 
 
 @pytest.mark.parametrize("loader_class", [ContentLoader, TarballDirectoryLoader])
+def test_loader_extid_version(swh_storage, loader_class, content_path):
+    """Ensure the extid_version is the expected one"""
+    unknown_origin = Origin(f"{CONTENT_MIRROR}/project/asdf/archives/unknown.lisp")
+    loader = loader_class(
+        swh_storage,
+        unknown_origin.url,
+        checksums=compute_hashes(content_path),
+    )
+    assert loader.extid_version == 1
+
+
+@pytest.mark.parametrize("loader_class", [ContentLoader, TarballDirectoryLoader])
 def test_node_loader_missing_field(swh_storage, loader_class):
     """It should raise if the ContentLoader is missing checksums field"""
     with pytest.raises(UnsupportedChecksumLayout):
@@ -578,7 +590,9 @@ def test_content_loader_ok_simple(
 
     assert result == {"status": "eventful"}
 
-    extids = fetch_extids_from_checksums(loader.storage, checksum_layout, checksums)
+    extids = fetch_extids_from_checksums(
+        loader.storage, checksum_layout, checksums, extid_version=loader.extid_version
+    )
     assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(
@@ -803,7 +817,77 @@ def test_directory_loader_ok_simple(
 
     assert result == {"status": "eventful"}
 
-    extids = fetch_extids_from_checksums(loader.storage, checksum_layout, checksums)
+    extids = fetch_extids_from_checksums(
+        loader.storage, checksum_layout, checksums, extid_version=loader.extid_version
+    )
+    assert len(extids) == len(checksums)
+
+    visit_status = assert_last_visit_matches(
+        swh_storage, origin.url, status="full", type="tarball-directory"
+    )
+    assert visit_status.snapshot is not None
+
+    result2 = loader.load()
+
+    assert result2 == {"status": "uneventful"}
+
+
+def test_directory_loader_nar_hash_without_top_level_dir(swh_storage, tarball_path):
+    """It should be an eventful visit when the expected NAR hash omits tarball top level
+    directory in its computation."""
+
+    origin = Origin(f"file://{tarball_path}")
+
+    expected_nar_checksums = {
+        "sha256": "23fb1fe278aeb2de899f7d7f10cf892f63136cea2c07146da2200da4de54b7e4"
+    }
+
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        origin.url,
+        checksums=expected_nar_checksums,
+        checksum_layout="nar",
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+
+@pytest.mark.parametrize("tarball_top_level_directory", [True, False])
+def test_directory_loader_nar_hash_tarball_with_or_without_top_level(
+    swh_storage, requests_mock_datadir, tarball_path, tarball_top_level_directory
+):
+    """It should be eventful to ingest tarball when the expected NAR hash omits tarball
+    top level directory in its computation (as nixpkgs computes the nar on tarball) or
+    when the top level directory is provided directly (as guix computes the nar on
+    tarball)
+
+    """
+    origin = Origin(DIRECTORY_URL)
+    # Compute nar hashes out of:
+    # - the uncompressed directory top-level (top_level=True)
+    # - the first directory (top_level=False) within the tarball
+    # In any case, the ingestion should be ok
+    checksums = compute_nar_hashes(
+        tarball_path,
+        ["sha1", "sha256", "sha512"],
+        is_tarball=True,
+        top_level=tarball_top_level_directory,
+    )
+
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        origin.url,
+        checksums=checksums,
+        checksum_layout="nar",
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    extids = fetch_extids_from_checksums(
+        loader.storage, "nar", checksums, extid_version=loader.extid_version
+    )
     assert len(extids) == len(checksums)
 
     visit_status = assert_last_visit_matches(

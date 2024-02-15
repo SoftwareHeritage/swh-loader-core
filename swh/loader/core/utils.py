@@ -136,6 +136,7 @@ def compute_nar_hashes(
     filepath: Path,
     hash_names: List[str] = ["sha256"],
     is_tarball=True,
+    top_level=True,
 ) -> Dict[str, str]:
     """Compute nar checksums dict out of a filepath (tarball or plain file).
 
@@ -146,6 +147,8 @@ def compute_nar_hashes(
         filepath: The tarball (if is_tarball is True) or a filepath
         hash_names: The list of checksums to compute
         is_tarball: Whether filepath represents a tarball or not
+        top_level: Whether we want to compute the top-level directory (of the tarball)
+            hashes. This is only useful when used with 'is_tarball' at True.
 
     Returns:
         The dict of checksums values whose keys are present in hash_names.
@@ -156,7 +159,13 @@ def compute_nar_hashes(
             directory_path = Path(tmpdir)
             directory_path.mkdir(parents=True, exist_ok=True)
             uncompress(str(filepath), dest=str(directory_path))
-            path_on_disk = next(directory_path.iterdir())
+
+            if top_level:
+                # Default behavior, pass the extracted tarball path root directory
+                path_on_disk = directory_path
+            else:
+                # Pass along the first directory of the tarball
+                path_on_disk = next(iter(directory_path.iterdir()))
         else:
             path_on_disk = filepath
 

@@ -58,9 +58,23 @@ def tarball_with_std_hashes(tarball_path):
 def tarball_with_nar_hashes(tarball_path):
     nar_hashes = compute_nar_hashes(tarball_path, ["sha256"])
     # Ensure it's the same hash as the initial one computed from the cli
+
     assert (
         nar_hashes["sha256"]
-        == "23fb1fe278aeb2de899f7d7f10cf892f63136cea2c07146da2200da4de54b7e4"
+        == "45db8a27ccfae60b5233003c54c2d6b5ed6f0a1299dd9bbebc8f06cf649bc9c0"
+    )
+    return (tarball_path, nar_hashes)
+
+
+@pytest.fixture
+def tarball_with_nar_hashes_first_directory(tarball_path):
+    # Compute the nar hashes from the first directory inside the tarball
+    nar_hashes = compute_nar_hashes(tarball_path, ["sha256"], top_level=False)
+    # Ensure it's the same hash as the initial one computed from the cli
+
+    assert (
+        nar_hashes["sha256"]
+        == "45db8a27ccfae60b5233003c54c2d6b5ed6f0a1299dd9bbebc8f06cf649bc9c0"
     )
     return (tarball_path, nar_hashes)
 
@@ -71,7 +85,7 @@ def tarball_with_executable_with_nar_hashes(tarball_with_executable_path):
     # Ensure it's the same hash as the initial one computed from the cli
     assert (
         nar_hashes["sha256"]
-        == "1d3407e5ad740331f928c2a864c7a8e0796f9da982a858c151c9b77506ec10a8"
+        == "2c2b619d2dc235bff286762550c7f86eb34c9f88ec83a8ae426d75604d3a815b"
     )
     return (tarball_with_executable_path, nar_hashes)
 

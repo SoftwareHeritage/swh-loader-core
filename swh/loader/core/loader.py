@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 The Software Heritage developers
+# Copyright (C) 2015-2024 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -654,6 +654,10 @@ class NodeLoader(BaseLoader, ABC):
 
     """
 
+    # Bump version when incompatible changes occur:
+    # - 20240215: Tarball directory from a leaf class changed the tarball ingestion
+    extid_version = 1
+
     def __init__(
         self,
         storage: StorageInterface,
@@ -750,6 +754,7 @@ class NodeLoader(BaseLoader, ABC):
                     extid_type=extid_type % hash_algo,
                     extid=extid,
                     target=node.swhid(),
+                    extid_version=self.extid_version,
                 )
                 for hash_algo, extid in checksums.items()
             }
@@ -1140,15 +1145,16 @@ class TarballDirectoryLoader(BaseDirectoryLoader):
 
                 if directory_path:
                     found_directory_path = True
+                    # Yield the top-level directory as-is
+                    yield directory_path
+                    # If there is a mismatch between the computed NAR hash and the one
+                    # we should obtain, retry its computation by not including single
+                    # top level directory if there is such a layout (as nix does).
                     # Check whether a top-level directory exists
                     listing = list(directory_path.iterdir())
                     if len(listing) == 1:
-                        # Top-level directory, we provide it
-                        dir_path = listing[0]
-                    else:
-                        # otherwise, provide the directory_path as is
-                        dir_path = directory_path
-                    yield dir_path
+                        # Top-level directory exists, we provide it, nix depends on it
+                        yield listing[0]
 
         # To catch 'standard' hash mismatch issues raise by the 'download' method.
         if not found_directory_path and errors:

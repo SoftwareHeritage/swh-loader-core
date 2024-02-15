@@ -264,7 +264,10 @@ def get_stats(storage) -> Dict:
 
 
 def fetch_extids_from_checksums(
-    storage: StorageInterface, checksum_layout: str, checksums: Dict[str, str]
+    storage: StorageInterface,
+    checksum_layout: str,
+    checksums: Dict[str, str],
+    extid_version: int = 0,
 ) -> List[ExtID]:
     extids = []
     extid_type = None
@@ -272,7 +275,6 @@ def fetch_extids_from_checksums(
         extid_type = "nar-%s"
     elif checksum_layout == "standard":
         extid_type = "checksum-%s"
-    extid_version = 0
 
     if extid_type:
         for hash_algo, checksum in checksums.items():

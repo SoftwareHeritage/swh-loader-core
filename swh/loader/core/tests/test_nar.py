@@ -1,4 +1,4 @@
-# Copyright (C) 2023  The Software Heritage developers
+# Copyright (C) 2023-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -18,10 +18,9 @@ def test_nar_tarball(tmpdir, tarball_with_nar_hashes):
     directory_path = Path(tmpdir)
     directory_path.mkdir(parents=True, exist_ok=True)
     uncompress(str(tarball_path), dest=str(directory_path))
-    path_on_disk = next(directory_path.iterdir())
 
     nar = Nar(hash_names=list(nar_hashes.keys()))
-    nar.serialize(path_on_disk)
+    nar.serialize(directory_path)
     assert nar.hexdigest() == nar_hashes
 
 
@@ -32,10 +31,9 @@ def test_nar_tarball_with_executable(tmpdir, tarball_with_executable_with_nar_ha
     directory_path = Path(tmpdir)
     directory_path.mkdir(parents=True, exist_ok=True)
     uncompress(str(tarball_path), dest=str(directory_path))
-    path_on_disk = next(directory_path.iterdir())
 
     nar = Nar(hash_names=list(nar_hashes.keys()))
-    nar.serialize(path_on_disk)
+    nar.serialize(directory_path)
     assert nar.hexdigest() == nar_hashes
 
 
@@ -135,11 +133,10 @@ def test_nar_cli_tarball(cli_runner, cli_nar, tmpdir, tarball_with_nar_hashes):
     directory_path = Path(tmpdir)
     directory_path.mkdir(parents=True, exist_ok=True)
     uncompress(str(tarball_path), dest=str(directory_path))
-    path_on_disk = next(directory_path.iterdir())
 
     assert list(nar_hashes.keys()) == ["sha256"]
 
-    result = cli_runner.invoke(cli_nar, ["--hash-algo", "sha256", str(path_on_disk)])
+    result = cli_runner.invoke(cli_nar, ["--hash-algo", "sha256", str(directory_path)])
 
     assert result.exit_code == 0
     assert_output_contains(result.output, nar_hashes["sha256"])
