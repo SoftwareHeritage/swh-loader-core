@@ -7,13 +7,17 @@ from collections import defaultdict
 import os
 from pathlib import PosixPath
 import subprocess
+import tempfile
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
+from swh.loader.core.nar import Nar
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import ExtID, OriginVisitStatus, Snapshot, TargetType
+from swh.model.swhids import ObjectType
 from swh.storage.algos.origin import origin_get_latest_visit_status
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.interface import StorageInterface
+from swh.vault.to_disk import DirectoryBuilder
 
 
 def assert_last_visit_matches(
@@ -282,6 +286,32 @@ def fetch_extids_from_checksums(
             ids = [hash_to_bytes(checksum)]
             extid = storage.extid_get_from_extid(id_type, ids, extid_version)
             extids.extend(extid)
+
+        for extid_ in extids:
+            if extid_.extid_type.startswith("nar-"):
+                # check NAR hashes of archived directory or content match the expected ones
+                target_swhid = extid_.target
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    nar = Nar(hash_names=list(checksums.keys()))
+                    if target_swhid.object_type == ObjectType.DIRECTORY:
+                        dir_builder = DirectoryBuilder(
+                            storage=storage,
+                            root=tmp_dir.encode(),
+                            dir_id=target_swhid.object_id,
+                        )
+                        dir_builder.build()
+                        path_to_hash = tmp_dir
+                    else:
+                        path_to_hash = os.path.join(tmp_dir, "content")
+                        content_bytes = storage.content_get_data(
+                            {"sha1_git": target_swhid.object_id}
+                        )
+                        assert content_bytes is not None
+                        with open(path_to_hash, "wb") as content:
+                            content.write(content_bytes)
+
+                    nar.serialize(PosixPath(path_to_hash))
+                    assert nar.hexdigest() == checksums
 
     return extids
 

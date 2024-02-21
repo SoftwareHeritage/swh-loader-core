@@ -5,6 +5,7 @@ urllib3
 swh-core[testing]
 swh-scheduler[testing] >= 2.0.0
 swh-storage[testing] >= 2.0.0
+swh-vault
 types-click
 types-python-dateutil
 types-pyyaml
