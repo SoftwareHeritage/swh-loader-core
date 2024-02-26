@@ -858,9 +858,22 @@ class NodeLoader(BaseLoader, ABC):
 
 
 class ContentLoader(NodeLoader):
-    """Basic loader for edge case content ingestion.
+    """Basic loader for edge case ingestion of url resolving to bare 'content' file.
 
-    The output snapshot is of the form:
+    A visit ends up in full visit with a snapshot when the artifact is retrieved with
+    success, match the checksums provided and is ingested with success in the archive.
+
+    An extid mapping entry is recorded in the extid table. The extid_type depends on the
+    checksums' type provided (see :class:`NodeLoader` docstring).
+
+    .. code:
+
+           ExtID(extid_type='[nar|checksums]-sha256',
+             extid_version=self.extid_version,
+             target='swh:1:cnt:<content-id>',
+             target_type='content')
+
+    The output snapshot has the following structure:
 
     .. code::
 
@@ -1091,7 +1104,34 @@ class BaseDirectoryLoader(NodeLoader):
 
 
 class TarballDirectoryLoader(BaseDirectoryLoader):
-    """TarballDirectoryLoader in charge of ingesting Directory coming from a tarball."""
+    """TarballDirectoryLoader for ingestion of url resolving to a tarball. The tarball
+    is uncompressed and checked against its provided checksums (either standard
+    checksums or :class:`Nar` checksums).
+
+    A visit ends up in full visit with a snapshot when the artifact is retrieved with
+    success, match the checksums provided and is ingested with success in the archive.
+
+    An extid mapping entry is recorded in the extid table. The extid_type depends on the
+    checksums' type provided (see :class:`NodeLoader` docstring).
+
+    .. code:
+
+       ExtID(extid_type='[nar|checksums]-sha256',
+             extid_version=self.extid_version,
+             target='swh:1:dir:<directory-id>',
+             target_type='directory')
+
+    The output snapshot has the following structure:
+
+    .. code::
+
+       id: <bytes>
+       branches:
+         HEAD:
+           target_type: directory
+           target: <directory-id>
+
+    """
 
     visit_type = "tarball-directory"
 
