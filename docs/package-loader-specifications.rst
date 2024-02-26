@@ -159,15 +159,6 @@ Here is an overview of the fields (+ internal version name + branch name) used b
         - ""
         - passed as arg
         - Only one artefact per url (jar/zip src)
-      * - nixguix
-        - URL
-        - URL
-        - URL
-        - None
-        - true
-        - ""
-        - None
-        - it's the URL of the artifact referenced by the derivation
       * - npm
         - ``metadata​["version"]``
         - ``release_name(​version)``

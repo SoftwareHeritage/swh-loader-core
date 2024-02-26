@@ -1,0 +1,9 @@
+This loader no longer exists.
+
+It has been removed to the benefit of the loaders:
+- swh.loader.core.loader.ContentLoader
+- swh.loader.core.loader.TarballDirectoryLoader
+- swh.loader.git.directory.GitCheckoutLoader
+- swh.loader.mercurial.directory.HgCheckoutLoader
+- swh.loader.svn.directory.SvnExportLoader
+
