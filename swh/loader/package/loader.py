@@ -33,8 +33,8 @@ import sentry_sdk
 from swh.core.tarball import uncompress
 from swh.loader.core import __version__
 from swh.loader.core.loader import BaseLoader
+from swh.loader.core.utils import download
 from swh.loader.exception import NotFound
-from swh.loader.package.utils import download
 from swh.model import discovery, from_disk
 from swh.model.hashutil import hash_to_hex
 from swh.model.model import (

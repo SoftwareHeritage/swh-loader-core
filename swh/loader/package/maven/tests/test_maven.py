@@ -14,8 +14,8 @@ import requests
 
 from swh.core.tarball import uncompress
 from swh.loader.core import __version__
+from swh.loader.core.utils import EMPTY_AUTHOR
 from swh.loader.package.maven.loader import MavenLoader, MavenPackageInfo
-from swh.loader.package.utils import EMPTY_AUTHOR
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.from_disk import Directory, iter_directory
 from swh.model.hashutil import hash_to_bytes

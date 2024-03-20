@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -18,8 +18,8 @@ from swh.loader.core.loader import (
     SENTRY_ORIGIN_URL_TAG_NAME,
     SENTRY_VISIT_TYPE_TAG_NAME,
 )
+from swh.loader.core.utils import EMPTY_AUTHOR
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import EMPTY_AUTHOR
 from swh.model.model import (
     ExtID,
     Origin,

@@ -15,9 +15,14 @@ from packaging.version import parse as parse_version
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from swh.loader.core.utils import DEFAULT_PARAMS
+from swh.loader.core.utils import (
+    DEFAULT_PARAMS,
+    EMPTY_AUTHOR,
+    Person,
+    get_url_body,
+    release_name,
+)
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import EMPTY_AUTHOR, Person, get_url_body, release_name
 from swh.model.hashutil import hash_to_hex
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface

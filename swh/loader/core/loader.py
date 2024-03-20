@@ -35,8 +35,8 @@ from swh.core.statsd import Statsd
 from swh.core.tarball import uncompress
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.core.nar import Nar
+from swh.loader.core.utils import download as download_orig
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
-from swh.loader.package.utils import download as download_orig
 from swh.model import from_disk, model
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (

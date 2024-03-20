@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -16,8 +16,8 @@ import attr
 import dateutil.parser
 from debian.deb822 import Deb822
 
+from swh.loader.core.utils import release_name
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.loader.package.utils import release_name
 from swh.model.model import ObjectType, Person, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
 

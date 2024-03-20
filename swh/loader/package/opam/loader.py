@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2023  The Software Heritage developers
+# Copyright (C) 2021-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -11,12 +11,12 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import attr
 
+from swh.loader.core.utils import cached_method
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
     RawExtrinsicMetadataCore,
 )
-from swh.loader.package.utils import cached_method
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,

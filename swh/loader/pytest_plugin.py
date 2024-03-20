@@ -9,7 +9,7 @@ from typing import Any, Dict
 import pytest
 import yaml
 
-from swh.loader.package.utils import download, get_url_body
+from swh.loader.core.utils import download, get_url_body
 from swh.scheduler.model import ListedOrigin, Lister
 from swh.scheduler.utils import create_origin_task_dict
 

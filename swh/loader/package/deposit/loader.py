@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -15,12 +15,12 @@ import sentry_sdk
 
 from swh.core.config import load_from_envvar
 from swh.loader.core.loader import DEFAULT_CONFIG
+from swh.loader.core.utils import cached_method, download
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
     RawExtrinsicMetadataCore,
 )
-from swh.loader.package.utils import cached_method, download
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.model.model import (
     MetadataAuthority,
