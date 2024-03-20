@@ -23,7 +23,7 @@ from swh.model.hashutil import MultiHash
 
 def test_version_generation():
     assert (
-        swh.loader.package.__version__ != "devel"
+        swh.loader.core.__version__ != "devel"
     ), "Make sure swh.loader.core is installed (e.g. pip install -e .)"
 
 

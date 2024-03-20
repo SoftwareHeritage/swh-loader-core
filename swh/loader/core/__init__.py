@@ -3,8 +3,14 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-
 from typing import Any, Mapping
+
+import pkg_resources
+
+try:
+    __version__ = pkg_resources.get_distribution("swh.loader.core").version
+except pkg_resources.DistributionNotFound:
+    __version__ = "devel"
 
 
 def register_content() -> Mapping[str, Any]:

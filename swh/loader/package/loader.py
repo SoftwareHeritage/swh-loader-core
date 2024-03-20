@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -31,6 +31,7 @@ from requests.exceptions import ContentDecodingError
 import sentry_sdk
 
 from swh.core.tarball import uncompress
+from swh.loader.core import __version__
 from swh.loader.core.loader import BaseLoader
 from swh.loader.exception import NotFound
 from swh.loader.package.utils import download
@@ -971,7 +972,11 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             module = sys.modules[package_name]
             if hasattr(module, "__version__"):
                 return module.__version__
-
+        if module_name.startswith("swh.loader"):
+            # there is not explicitly defined version of the loader but it's
+            # one of the swh.loader.core ones, so return the known __version__
+            # of this later
+            return __version__
         # If this loader's class has no parent package with a __version__,
         # it should implement it itself.
         raise NotImplementedError(

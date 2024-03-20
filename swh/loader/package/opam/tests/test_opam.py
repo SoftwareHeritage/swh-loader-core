@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2023 The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -9,7 +9,7 @@ from subprocess import CompletedProcess, run
 
 import pytest
 
-from swh.loader.package import __version__
+from swh.loader.core import __version__
 from swh.loader.package.loader import RawExtrinsicMetadataCore
 from swh.loader.package.opam.loader import OpamLoader, OpamPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats

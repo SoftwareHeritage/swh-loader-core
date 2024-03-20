@@ -9,7 +9,7 @@ import os
 
 import pytest
 
-from swh.loader.package import __version__
+from swh.loader.core import __version__
 from swh.loader.package.npm.loader import (
     NpmLoader,
     _author_str,

@@ -67,6 +67,9 @@ ORIGIN_URL = "https://example.org/package/example"
 class StubPackageLoader(PackageLoader[StubPackageInfo]):
     visit_type = "stub"
 
+    def get_loader_version(self) -> str:
+        return "devel"
+
     def get_versions(self):
         return ["v1.0", "v2.0", "v3.0", "v4.0"]
 

@@ -17,8 +17,8 @@ import requests
 from tenacity.before_sleep import before_sleep_log
 
 from swh.core.retry import http_retry
+from swh.loader.core.utils import DEFAULT_PARAMS
 from swh.loader.exception import NotFound
-from swh.loader.package import DEFAULT_PARAMS
 from swh.model.hashutil import HASH_BLOCK_SIZE, MultiHash
 from swh.model.model import Person
 

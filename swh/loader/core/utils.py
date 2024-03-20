@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Software Heritage developers
+# Copyright (C) 2018-2024 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -13,15 +13,21 @@ import signal
 import tempfile
 import time
 import traceback
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from billiard import Process, Queue  # type: ignore
 from dateutil.parser import parse
 import psutil
 
 from swh.core.tarball import uncompress
+from swh.loader.core import __version__
 from swh.loader.core.nar import Nar
 from swh.model.hashutil import MultiHash
+
+
+DEFAULT_PARAMS: Dict[str, Any] = {
+    "headers": {"User-Agent": "Software Heritage Loader (%s)" % (__version__)}
+}
 
 
 def clean_dangling_folders(dirpath: str, pattern_check: str, log=None) -> None:

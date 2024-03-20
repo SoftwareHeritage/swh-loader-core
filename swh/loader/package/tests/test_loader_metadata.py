@@ -8,7 +8,7 @@ from typing import Iterator, List, Sequence, Tuple
 
 import attr
 
-from swh.loader.package import __version__
+from swh.loader.core import __version__
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,

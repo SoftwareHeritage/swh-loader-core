@@ -6,7 +6,7 @@ from typing import List
 import pytest
 
 from swh.core.tarball import uncompress
-from swh.loader.package import __version__
+from swh.loader.core import __version__
 from swh.loader.package.hex.loader import HexLoader
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model import from_disk

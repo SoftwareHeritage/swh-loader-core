@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022 The Software Heritage developers
+# Copyright (C) 2019-2024 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -13,7 +13,7 @@ import pytest
 import requests
 
 from swh.core.tarball import uncompress
-from swh.loader.package import __version__
+from swh.loader.core import __version__
 from swh.loader.package.maven.loader import MavenLoader, MavenPackageInfo
 from swh.loader.package.utils import EMPTY_AUTHOR
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats

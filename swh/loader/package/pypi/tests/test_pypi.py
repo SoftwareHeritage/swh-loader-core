@@ -12,7 +12,7 @@ import pytest
 
 from swh.core.pytest_plugin import requests_mock_datadir_factory
 from swh.core.tarball import uncompress
-from swh.loader.package import __version__
+from swh.loader.core import __version__
 from swh.loader.package.pypi.loader import (
     PyPILoader,
     PyPIPackageInfo,
