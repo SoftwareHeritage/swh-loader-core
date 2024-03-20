@@ -93,6 +93,12 @@ class MetadataTestLoader(PackageLoader[BasePackageInfo]):
     def get_versions(self) -> Sequence[str]:
         return ["v1.0.0"]
 
+    def get_loader_name(self) -> str:
+        # hardcode the loader name to get rid of possible issues resulting from
+        # variations of the python import mechanism with regard to the PEP420
+        # (implicit namespace) quirks.
+        return "swh.loader.package.tests.test_loader_metadata.MetadataTestLoader"
+
     def _load_directory(self, dl_artifacts, tmpdir):
         class directory:
             hash = DIRECTORY_ID
