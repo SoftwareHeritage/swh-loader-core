@@ -21,6 +21,7 @@ import psutil
 
 from swh.core.tarball import uncompress
 from swh.loader.core.nar import Nar
+from swh.model.hashutil import MultiHash
 
 
 def clean_dangling_folders(dirpath: str, pattern_check: str, log=None) -> None:
@@ -130,6 +131,11 @@ def parse_visit_date(visit_date: Optional[Union[datetime, str]]) -> Optional[dat
         return parse(visit_date)
 
     raise ValueError(f"invalid visit date {visit_date!r}")
+
+
+def compute_hashes(filepath: str, hash_names: List[str] = ["sha256"]) -> Dict[str, str]:
+    """Compute checksums dict out of a filepath"""
+    return MultiHash.from_path(filepath, hash_names=hash_names).hexdigest()
 
 
 def compute_nar_hashes(

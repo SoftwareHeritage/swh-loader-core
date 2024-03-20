@@ -11,7 +11,7 @@ import pytest
 
 from swh.loader.cli import SUPPORTED_LOADERS, get_loader
 from swh.loader.cli import loader as loader_cli
-from swh.loader.core.tests.conftest import compute_hashes
+from swh.loader.core.utils import compute_hashes
 from swh.loader.package.loader import PackageLoader
 
 

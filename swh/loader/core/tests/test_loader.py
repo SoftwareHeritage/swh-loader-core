@@ -36,6 +36,7 @@ from swh.loader.core.tests.dummy_loader import (
     DummyMetadataFetcherWithFork,
     FooLoader,
 )
+from swh.loader.core.utils import compute_hashes, compute_nar_hashes
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.tests import (
     assert_last_visit_matches,
@@ -44,12 +45,6 @@ from swh.loader.tests import (
 )
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import Origin, Snapshot, SnapshotBranch, SnapshotTargetType
-
-from .conftest import compute_hashes, compute_nar_hashes
-
-pytest_plugins = [
-    "swh.loader.pytest_plugin",
-]
 
 
 def test_types():

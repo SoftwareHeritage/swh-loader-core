@@ -4,12 +4,10 @@
 # See top-level LICENSE file for more information
 
 from os import path
-from typing import Dict, List
 
 import pytest
 
-from swh.loader.core.utils import compute_nar_hashes
-from swh.model.hashutil import MultiHash
+from swh.loader.core.utils import compute_hashes, compute_nar_hashes
 
 
 @pytest.fixture
@@ -39,11 +37,6 @@ def content_path(datadir):
 def executable_path(datadir):
     """Return executable filepath fetched by ContentLoader test runs."""
     return path.join(datadir, "https_example.org", "test-executable.sh")
-
-
-def compute_hashes(filepath: str, hash_names: List[str] = ["sha256"]) -> Dict[str, str]:
-    """Compute checksums dict out of a filepath"""
-    return MultiHash.from_path(filepath, hash_names=hash_names).hexdigest()
 
 
 @pytest.fixture
