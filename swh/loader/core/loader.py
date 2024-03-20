@@ -969,7 +969,7 @@ class ContentLoader(NodeLoader):
         self.storage.snapshot_add([self.snapshot])
         self.loaded_snapshot_id = self.snapshot.id
 
-    def visit_status(self):
+    def visit_status(self) -> str:
         return "full" if self.content and self.snapshot is not None else "partial"
 
 
