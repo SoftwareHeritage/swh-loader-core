@@ -1,8 +1,9 @@
 [project]
 name = "swh.loader.core"
 authors = [
-	{name="Software Heritage developers", email="swh-devel@inria.fr"},
+    {name="Software Heritage developers", email="swh-devel@inria.fr"},
 ]
+
 description = "Software Heritage core and package loaders"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.7"
