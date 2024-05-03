@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2023  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -11,7 +11,7 @@ import yaml
 
 from swh.loader.core.utils import download, get_url_body
 from swh.scheduler.model import ListedOrigin, Lister
-from swh.scheduler.utils import create_origin_task_dict
+from swh.scheduler.utils import create_origin_task
 
 
 @pytest.fixture
@@ -74,11 +74,11 @@ def loading_task_creation_for_listed_origin_test(
         mock_load = mocker.patch(f"{loader_class_name}.load")
         mock_load.return_value = {"status": "eventful"}
 
-        task_dict = create_origin_task_dict(listed_origin, lister)
+        task = create_origin_task(listed_origin, lister)
 
         res = swh_scheduler_celery_app.send_task(
             task_function_name,
-            kwargs=task_dict["arguments"]["kwargs"],
+            kwargs=task.arguments.kwargs,
         )
         assert res
         res.wait()
