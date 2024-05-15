@@ -24,7 +24,7 @@ from swh.model.model import (
     ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.interface import PagedResult
@@ -165,11 +165,11 @@ def test_opam_loader_one_version(
         branches={
             b"HEAD": SnapshotBranch(
                 target=b"agrid.0.1",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"agrid.0.1": SnapshotBranch(
                 target=release_id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
@@ -232,19 +232,19 @@ def test_opam_loader_many_version(
         branches={
             b"HEAD": SnapshotBranch(
                 target=b"directories.0.3",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"directories.0.1": SnapshotBranch(
                 target=hash_to_bytes("1c88d466b3d57a619e296999322d096fa37bb1c2"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"directories.0.2": SnapshotBranch(
                 target=hash_to_bytes("d6f30684039ad485511a138e2ae504ff67a13075"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"directories.0.3": SnapshotBranch(
                 target=hash_to_bytes("6cf92c0ff052074e69ac18809a9c8198bcc2e746"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
@@ -317,11 +317,11 @@ def test_opam_release(
         branches={
             b"HEAD": SnapshotBranch(
                 target=b"ocb.0.1",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"ocb.0.1": SnapshotBranch(
                 target=release_id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
@@ -369,11 +369,11 @@ def test_opam_metadata(
         branches={
             b"HEAD": SnapshotBranch(
                 target=b"ocb.0.1",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"ocb.0.1": SnapshotBranch(
                 target=expected_release_id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )

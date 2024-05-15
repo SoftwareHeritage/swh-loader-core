@@ -12,7 +12,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -75,15 +75,15 @@ def test_puppet_loader_load_multiple_version(
         branches={
             b"HEAD": SnapshotBranch(
                 target=b"releases/8.1.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"releases/1.0.0": SnapshotBranch(
                 target=hash_to_bytes("83b3463dd35d44dbae4bfe917a9b127924a14bbd"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/8.1.0": SnapshotBranch(
                 target=hash_to_bytes("90592c01fe7f96f32a88bc611193b305cb77cc03"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )

@@ -25,7 +25,7 @@ from swh.model.model import (
     ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
@@ -190,7 +190,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         branches={
             b"HEAD": SnapshotBranch(
                 target=release_id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
@@ -320,7 +320,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"HEAD": SnapshotBranch(
-                target=hash_to_bytes(release_id), target_type=TargetType.RELEASE
+                target=hash_to_bytes(release_id), target_type=SnapshotTargetType.RELEASE
             )
         },
     )
@@ -537,7 +537,7 @@ def test_deposit_loading_ok_release_notes(
         branches={
             b"HEAD": SnapshotBranch(
                 target=release_id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )

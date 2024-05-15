@@ -26,7 +26,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -36,11 +36,11 @@ SNAPSHOT = Snapshot(
     id=hash_to_bytes("c0ccd6452cbe9cd4f0a523b23f09c411bd92ef4e"),
     branches={
         b"HEAD": SnapshotBranch(
-            target=b"releases/2.22-6", target_type=TargetType.ALIAS
+            target=b"releases/2.22-6", target_type=SnapshotTargetType.ALIAS
         ),
         b"releases/2.22-6": SnapshotBranch(
             target=RELEASE_ID,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
     },
 )

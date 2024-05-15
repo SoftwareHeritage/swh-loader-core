@@ -30,7 +30,7 @@ from swh.model.model import (
     RawExtrinsicMetadata,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.interface import PagedResult
@@ -339,15 +339,15 @@ def test_pypi_release_metadata_structure(
         branches={
             b"HEAD": SnapshotBranch(
                 target=b"releases/1.2.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"releases/1.1.0": SnapshotBranch(
                 target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
                 target=expected_release_id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
@@ -424,11 +424,11 @@ def test_pypi_visit_with_missing_artifact(
         branches={
             b"releases/1.2.0": SnapshotBranch(
                 target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/1.2.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -469,15 +469,15 @@ def test_pypi_visit_with_1_release_artifact(swh_storage, requests_mock_datadir):
         branches={
             b"releases/1.1.0": SnapshotBranch(
                 target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
                 target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/1.2.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -516,15 +516,15 @@ def test_pypi_multiple_visits_with_no_change(swh_storage, requests_mock_datadir)
         branches={
             b"releases/1.1.0": SnapshotBranch(
                 target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
                 target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/1.2.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -613,19 +613,19 @@ def test_pypi_incremental_visit(swh_storage, requests_mock_datadir_visits):
         branches={
             b"releases/1.1.0": SnapshotBranch(
                 target=hash_to_bytes("f8789ff3ed70a5f570c35d885c7bcfda7b23b091"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/1.2.0": SnapshotBranch(
                 target=hash_to_bytes("fbbcb817f01111b06442cdcc93140ab3cc777d68"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/1.3.0": SnapshotBranch(
                 target=hash_to_bytes("a21b09cbec8e31f47307f196bb1f939effc26e11"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/1.3.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -688,11 +688,11 @@ def test_pypi_visit_1_release_with_2_artifacts(swh_storage, requests_mock_datadi
         branches={
             b"releases/1.1.0/nexter-1.1.0.zip": SnapshotBranch(
                 target=hash_to_bytes("f7d43faeb65b64d3faa67e4f46559db57d26b9a4"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/1.1.0/nexter-1.1.0.tar.gz": SnapshotBranch(
                 target=hash_to_bytes("732bb9dc087e6015884daaebb8b82559be729b5a"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )

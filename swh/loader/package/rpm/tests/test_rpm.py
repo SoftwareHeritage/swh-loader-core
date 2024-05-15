@@ -17,7 +17,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -94,15 +94,15 @@ snapshot = Snapshot(
     branches={
         b"releases/34/Everything/1.18.0-5": SnapshotBranch(
             target=release.id,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
         b"HEAD": SnapshotBranch(
             target=b"releases/34/Everything/1.18.0-5",
-            target_type=TargetType.ALIAS,
+            target_type=SnapshotTargetType.ALIAS,
         ),
         b"nginx-1.18.0.tar.gz": SnapshotBranch(
             target=hash_to_bytes("b0d583b0c289290294657b4c975b2094b9b6803b"),
-            target_type=TargetType.DIRECTORY,
+            target_type=SnapshotTargetType.DIRECTORY,
         ),
     },
 )
@@ -112,19 +112,19 @@ new_snapshot = Snapshot(
     branches={
         b"releases/34/Everything/1.18.0-5": SnapshotBranch(
             target=release.id,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
         b"releases/35/Everything/1.20.0-5": SnapshotBranch(
             target=new_release.id,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
         b"HEAD": SnapshotBranch(
             target=b"releases/35/Everything/1.20.0-5",
-            target_type=TargetType.ALIAS,
+            target_type=SnapshotTargetType.ALIAS,
         ),
         b"nginx-1.18.0.tar.gz": SnapshotBranch(
             target=hash_to_bytes("b0d583b0c289290294657b4c975b2094b9b6803b"),
-            target_type=TargetType.DIRECTORY,
+            target_type=SnapshotTargetType.DIRECTORY,
         ),
     },
 )

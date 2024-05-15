@@ -16,7 +16,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -132,11 +132,11 @@ def test_hackage_loader_load_one_version(
         branches={
             b"releases/2.1.0.0": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/2.1.0.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -214,15 +214,15 @@ def test_hackage_loader_load_multiple_version(
         branches={
             b"releases/0.3.0.2": SnapshotBranch(
                 target=hash_to_bytes("639ff93de24d0f2ab53c0d4273128b35f04c794d"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.1": SnapshotBranch(
                 target=hash_to_bytes("2c2d247d8c0684ec691e95ae8e8ef59bfb757f29"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.3.0.2",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -271,11 +271,11 @@ def test_hackage_loader_load_one_version_caps(
         branches={
             b"releases/0.6.3": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.6.3",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )

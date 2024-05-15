@@ -14,7 +14,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
 )
 from swh.storage.interface import StorageInterface
 
@@ -87,11 +87,11 @@ snapshot = Snapshot(
     branches={
         b"releases/3.16/bioc/1.46.0": SnapshotBranch(
             target=release.id,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
         b"HEAD": SnapshotBranch(
             target=b"releases/3.16/bioc/1.46.0",
-            target_type=TargetType.ALIAS,
+            target_type=SnapshotTargetType.ALIAS,
         ),
     },
 )
@@ -101,15 +101,15 @@ new_snapshot = Snapshot(
     branches={
         b"releases/3.16/bioc/1.46.0": SnapshotBranch(
             target=release.id,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
         b"releases/3.17/bioc/1.48.0": SnapshotBranch(
             target=new_release.id,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
         b"HEAD": SnapshotBranch(
             target=b"releases/3.17/bioc/1.48.0",
-            target_type=TargetType.ALIAS,
+            target_type=SnapshotTargetType.ALIAS,
         ),
     },
 )
@@ -228,11 +228,11 @@ def test_old_releases(swh_storage, requests_mock_datadir):
         branches={
             b"releases/2.2/bioc/1.8.0": SnapshotBranch(
                 target=old_release.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/2.2/bioc/1.8.0",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )

@@ -23,7 +23,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -213,11 +213,11 @@ def test_archive_visit_with_skipped_content(swh_storage, requests_mock_datadir):
         id=expected_snapshot_first_visit_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
                 target=b"releases/0.1.0",
             ),
             b"releases/0.1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=release_id,
             ),
         },
@@ -288,11 +288,11 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         id=expected_snapshot_first_visit_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
                 target=b"releases/0.1.0",
             ),
             b"releases/0.1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=release_id,
             ),
         },

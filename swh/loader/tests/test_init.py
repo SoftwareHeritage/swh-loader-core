@@ -33,7 +33,7 @@ from swh.model.model import (
     RevisionType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     Timestamp,
     TimestampWithTimezone,
 )
@@ -149,19 +149,19 @@ SNAPSHOT = Snapshot(
     branches={
         b"release/0.1.0": SnapshotBranch(
             target=RELEASE.id,
-            target_type=TargetType.RELEASE,
+            target_type=SnapshotTargetType.RELEASE,
         ),
         b"HEAD": SnapshotBranch(
             target=REVISION.id,
-            target_type=TargetType.REVISION,
+            target_type=SnapshotTargetType.REVISION,
         ),
         b"alias": SnapshotBranch(
             target=b"HEAD",
-            target_type=TargetType.ALIAS,
+            target_type=SnapshotTargetType.ALIAS,
         ),
         b"evaluation": SnapshotBranch(  # branch dedicated to not exist in storage
             target=hash_to_bytes("cc4e04c26672dd74e5fd0fecb78b435fb55368f7"),
-            target_type=TargetType.REVISION,
+            target_type=SnapshotTargetType.REVISION,
         ),
     },
 )
@@ -351,7 +351,9 @@ def test_check_snapshot(swh_storage):
 
     # all should be fine!
     check_snapshot(
-        SNAPSHOT, swh_storage, allowed_empty=[(TargetType.REVISION, b"evaluation")]
+        SNAPSHOT,
+        swh_storage,
+        allowed_empty=[(SnapshotTargetType.REVISION, b"evaluation")],
     )
 
 
@@ -376,7 +378,7 @@ def test_check_snapshot_failures(swh_storage):
         branches={
             b"master": SnapshotBranch(
                 target=hash_to_bytes(hash_hex),
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
             ),
         },
     )
@@ -389,7 +391,7 @@ def test_check_snapshot_failures(swh_storage):
     unexpected_snapshot = Snapshot(
         branches={
             b"tip": SnapshotBranch(  # wrong branch
-                target=hash_to_bytes(hash_hex), target_type=TargetType.RELEASE
+                target=hash_to_bytes(hash_hex), target_type=SnapshotTargetType.RELEASE
             )
         },
     )
@@ -415,7 +417,7 @@ def test_check_snapshot_failures(swh_storage):
         branches={
             b"alias": SnapshotBranch(
                 target=b"HEAD",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -434,11 +436,11 @@ def test_check_snapshot_failures(swh_storage):
         branches={
             b"alias": SnapshotBranch(
                 target=b"HEAD",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"HEAD": SnapshotBranch(
                 target=REVISION.id,
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
             ),
         },
     )
@@ -461,11 +463,11 @@ def test_check_snapshot_failures(swh_storage):
         branches={
             b"alias": SnapshotBranch(
                 target=b"HEAD",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"HEAD": SnapshotBranch(
                 target=REVISION.id,
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
             ),
         },
     )
@@ -491,11 +493,11 @@ def test_check_snapshot_failures(swh_storage):
         branches={
             b"alias": SnapshotBranch(
                 target=b"HEAD",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"HEAD": SnapshotBranch(
                 target=REVISION.id,
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
             ),
         },
     )
@@ -514,15 +516,15 @@ def test_check_snapshot_failures(swh_storage):
         branches={
             b"alias": SnapshotBranch(
                 target=b"HEAD",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"HEAD": SnapshotBranch(
                 target=REVISION.id,
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
             ),
             b"release/0.1.0": SnapshotBranch(
                 target=RELEASE.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )

@@ -19,7 +19,7 @@ from swh.model.model import (
     ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
@@ -117,15 +117,15 @@ def first_visit_snapshot(release_6_0, release_6_1):
         branches={
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.6.1",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"releases/0.6.0": SnapshotBranch(
                 target=release_6_0.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.6.1": SnapshotBranch(
                 target=release_6_1.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
@@ -337,11 +337,11 @@ def test_rpm_multiple_visits(
             **first_visit_snapshot.branches,
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.6.2",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"releases/0.6.2": SnapshotBranch(
                 target=release_6_2.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )

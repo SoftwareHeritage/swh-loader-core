@@ -22,7 +22,7 @@ from swh.model.model import (
     ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
@@ -126,15 +126,15 @@ def test_cpan_loader_load_multiple_version(
         branches={
             b"releases/0.01": SnapshotBranch(
                 target=hash_to_bytes("e73aced4cc3d56b32a328d3248b25b052f029df4"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.05": SnapshotBranch(
                 target=hash_to_bytes(expected_head_release),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.05",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -222,7 +222,7 @@ def test_cpan_loader_load_multiple_version(
     release_swhids = {
         CoreSWHID(object_type=ObjectType.RELEASE, object_id=branch.target)
         for branch in expected_snapshot.branches.values()
-        if branch.target_type == TargetType.RELEASE
+        if branch.target_type == SnapshotTargetType.RELEASE
     }
 
     assert {extid.target for extid in extids} == release_swhids

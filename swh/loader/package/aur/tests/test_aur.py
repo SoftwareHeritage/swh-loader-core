@@ -11,7 +11,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -153,11 +153,11 @@ def test_aur_loader_load_one_version(datadir, requests_mock_datadir, swh_storage
         branches={
             b"releases/10.5.2-1/hg-evolve.tar.gz": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/10.5.2-1/hg-evolve.tar.gz",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )

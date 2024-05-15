@@ -33,7 +33,7 @@ from swh.model.model import (
     Sha1Git,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.model.swhids import CoreSWHID, ObjectType
@@ -284,13 +284,13 @@ def test_load_extids() -> None:
     last_snapshot = Snapshot(
         branches={
             b"v1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel1_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel1_swhid.object_id
             ),
             b"v2.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel2_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel2_swhid.object_id
             ),
             b"v3.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel3_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel3_swhid.object_id
             ),
         }
     )
@@ -359,16 +359,16 @@ def test_load_extids() -> None:
     snapshot = Snapshot(
         branches={
             b"branch-v1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel1_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel1_swhid.object_id
             ),
             b"branch-v2.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel4_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel4_swhid.object_id
             ),
             b"branch-v3.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel4_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel4_swhid.object_id
             ),
             b"branch-v4.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel4_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel4_swhid.object_id
             ),
         }
     )
@@ -452,10 +452,10 @@ def test_load_upgrade_from_revision_extids(caplog):
     last_snapshot = Snapshot(
         branches={
             b"v1.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev1_swhid.object_id
+                target_type=SnapshotTargetType.REVISION, target=rev1_swhid.object_id
             ),
             b"v2.0": SnapshotBranch(
-                target_type=TargetType.REVISION, target=rev2_swhid.object_id
+                target_type=SnapshotTargetType.REVISION, target=rev2_swhid.object_id
             ),
         }
     )
@@ -525,13 +525,13 @@ def test_load_upgrade_from_revision_extids(caplog):
     snapshot = Snapshot(
         branches={
             b"branch-v1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel1_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel1_swhid.object_id
             ),
             b"branch-v2.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel2_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel2_swhid.object_id
             ),
             b"branch-v3.0": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=rel2_swhid.object_id
+                target_type=SnapshotTargetType.RELEASE, target=rel2_swhid.object_id
             ),
         }
     )

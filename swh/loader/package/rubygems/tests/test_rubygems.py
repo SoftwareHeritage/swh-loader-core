@@ -23,7 +23,7 @@ from swh.model.model import (
     ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
@@ -196,15 +196,15 @@ def test_rubygems_loader(
         branches={
             b"releases/0.0.1": SnapshotBranch(
                 target=release_0_0_1.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.0.2": SnapshotBranch(
                 target=release_0_0_2.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.0.2",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )

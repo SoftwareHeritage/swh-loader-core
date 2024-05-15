@@ -13,7 +13,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -171,11 +171,11 @@ def test_crates_loader_load_one_version(datadir, requests_mock_datadir, swh_stor
         branches={
             b"releases/0.0.1/hg-core-0.0.1.crate": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.0.1/hg-core-0.0.1.crate",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -227,39 +227,39 @@ def test_crates_loader_load_n_versions(datadir, requests_mock_datadir, swh_stora
         branches={
             b"releases/0.4.0/micro-timer-0.4.0.crate": SnapshotBranch(
                 target=hash_to_bytes("b038a927244c852fb3794aecbebdc70f68ddf067"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.3.1/micro-timer-0.3.1.crate": SnapshotBranch(
                 target=hash_to_bytes("ea331a2ce755e6f0cd9d05c9be52accde68536c4"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.3.0/micro-timer-0.3.0.crate": SnapshotBranch(
                 target=hash_to_bytes("7ea45f915ace083ed361bb12593625bf4cf1f5f2"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.2.1/micro-timer-0.2.1.crate": SnapshotBranch(
                 target=hash_to_bytes("074f27605be8b759e5d7c638f026aac3709f58e5"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.2.0/micro-timer-0.2.0.crate": SnapshotBranch(
                 target=hash_to_bytes("a1d642aaa54c5361f67e57adbd86e01f3a3276f8"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.1.2/micro-timer-0.1.2.crate": SnapshotBranch(
                 target=hash_to_bytes("60f18ae067ce235bc60243bf5cdaaae474b11978"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.1.1/micro-timer-0.1.1.crate": SnapshotBranch(
                 target=hash_to_bytes("fd6c55dfd016d58647a2d44b29a3fd4e3afa7671"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/0.1.0/micro-timer-0.1.0.crate": SnapshotBranch(
                 target=hash_to_bytes("3e07559a4b366a397b1ca154e72753ce27223ca1"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.4.0/micro-timer-0.4.0.crate",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )

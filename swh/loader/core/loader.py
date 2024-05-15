@@ -50,7 +50,7 @@ from swh.model.model import (
     Sha1Git,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
 )
 from swh.storage import get_storage
 from swh.storage.algos.snapshot import snapshot_get_latest
@@ -952,7 +952,7 @@ class ContentLoader(NodeLoader):
             branches={
                 b"HEAD": SnapshotBranch(
                     target=self.content.sha1_git,
-                    target_type=TargetType.CONTENT,
+                    target_type=SnapshotTargetType.CONTENT,
                 ),
             }
         )
@@ -1077,7 +1077,7 @@ class BaseDirectoryLoader(NodeLoader):
             branches={
                 b"HEAD": SnapshotBranch(
                     target=self.directory.hash,
-                    target_type=TargetType.DIRECTORY,
+                    target_type=SnapshotTargetType.DIRECTORY,
                 ),
             }
         )

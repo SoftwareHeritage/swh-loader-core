@@ -15,7 +15,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -142,11 +142,11 @@ def test_pubdev_loader_load_one_version(datadir, requests_mock_datadir, swh_stor
         branches={
             b"releases/0.1.1": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.1.1",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -210,15 +210,15 @@ def test_pubdev_loader_load_multiple_versions(
         branches={
             b"releases/1.0.0": SnapshotBranch(
                 target=hash_to_bytes("6f6eecd1ced321778d6a4bc60af4fb0e93178307"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/3.8.2": SnapshotBranch(
                 target=hash_to_bytes("012bac381e2b9cda7de2da0391bc2969bf80ff97"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/3.8.2",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -265,11 +265,11 @@ def test_pubdev_loader_multiple_authors(datadir, requests_mock_datadir, swh_stor
         branches={
             b"releases/1.1.5": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/1.1.5",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -304,11 +304,11 @@ def test_pubdev_loader_empty_author(datadir, requests_mock_datadir, swh_storage)
         branches={
             b"releases/0.0.1": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/0.0.1",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -342,15 +342,15 @@ def test_pubdev_loader_dash_in_package_version(requests_mock_datadir, swh_storag
         branches={
             b"HEAD": SnapshotBranch(
                 target=hash_to_bytes("72656c65617365732f332e362e31"),
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
             b"releases/2.0.0-nullsafety.1": SnapshotBranch(
                 target=hash_to_bytes("12156dabe4eb0aaf95810b2e779a61b42c057119"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/3.6.1": SnapshotBranch(
                 target=hash_to_bytes("3af5c2b85f0d3ab16577ec2f0886367b12d41aab"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
         },
         id=hash_to_bytes(expected_snapshot_id),

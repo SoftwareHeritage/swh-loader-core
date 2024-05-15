@@ -33,7 +33,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -139,7 +139,7 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=release_id,
             )
         },
@@ -213,7 +213,7 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("de96ae3d3e136f5c1709117059e2a2c05b8ee5ae"),
             )
         },
@@ -514,11 +514,11 @@ def _check_debian_loading(swh_storage, packages):
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("de96ae3d3e136f5c1709117059e2a2c05b8ee5ae"),
             ),
             b"releases/buster/contrib/0.7.2-4": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("11824484c585319302ea4fde4917faf78dfb1973"),
             ),
         },

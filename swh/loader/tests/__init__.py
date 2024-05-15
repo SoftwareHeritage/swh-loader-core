@@ -12,7 +12,7 @@ from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from swh.loader.core.nar import Nar
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import ExtID, OriginVisitStatus, Snapshot, TargetType
+from swh.model.model import ExtID, OriginVisitStatus, Snapshot, SnapshotTargetType
 from swh.model.swhids import ObjectType
 from swh.storage.algos.origin import origin_get_latest_visit_status
 from swh.storage.algos.snapshot import snapshot_get_all_branches
@@ -120,7 +120,7 @@ class InexistentObjectsError(AssertionError):
 def check_snapshot(
     expected_snapshot: Snapshot,
     storage: StorageInterface,
-    allowed_empty: Iterable[Tuple[TargetType, bytes]] = [],
+    allowed_empty: Iterable[Tuple[SnapshotTargetType, bytes]] = [],
 ) -> Snapshot:
     """Check that:
     - snapshot exists in the storage and match
@@ -161,7 +161,7 @@ def check_snapshot(
         object_to_branch[target.target] = branch
 
     # check that alias references target something that exists, otherwise raise
-    aliases: List[bytes] = objects_by_target_type.get(TargetType.ALIAS, [])
+    aliases: List[bytes] = objects_by_target_type.get(SnapshotTargetType.ALIAS, [])
     for alias in aliases:
         if alias not in expected_snapshot.branches:
             raise InconsistentAliasBranchError(
@@ -169,7 +169,7 @@ def check_snapshot(
                 f"should be in {list(expected_snapshot.branches)}"
             )
 
-    revs = objects_by_target_type.get(TargetType.REVISION)
+    revs = objects_by_target_type.get(SnapshotTargetType.REVISION)
     if revs:
         revisions = storage.revision_get(revs)
         not_found = [rev_id for rev_id, rev in zip(revs, revisions) if rev is None]
@@ -183,10 +183,12 @@ def check_snapshot(
         # retrieve information from revision
         for revision in revisions:
             assert revision is not None
-            objects_by_target_type[TargetType.DIRECTORY].append(revision.directory)
+            objects_by_target_type[SnapshotTargetType.DIRECTORY].append(
+                revision.directory
+            )
             object_to_branch[revision.directory] = revision.id
 
-    rels = objects_by_target_type.get(TargetType.RELEASE)
+    rels = objects_by_target_type.get(SnapshotTargetType.RELEASE)
     if rels:
         not_found = list(storage.release_missing(rels))
         if not_found:
@@ -198,7 +200,7 @@ def check_snapshot(
             )
 
     # first level dirs exist?
-    dirs = objects_by_target_type.get(TargetType.DIRECTORY)
+    dirs = objects_by_target_type.get(SnapshotTargetType.DIRECTORY)
     if dirs:
         not_found = list(storage.directory_missing(dirs))
         if not_found:
@@ -213,15 +215,15 @@ def check_snapshot(
             paths = storage.directory_ls(dir_, recursive=True)
             for path in paths:
                 if path["type"] == "dir":
-                    target_type = TargetType.DIRECTORY
+                    target_type = SnapshotTargetType.DIRECTORY
                 else:
-                    target_type = TargetType.CONTENT
+                    target_type = SnapshotTargetType.CONTENT
                 target = path["target"]
                 objects_by_target_type[target_type].append(target)
                 object_to_branch[target] = dir_
 
     # check nested directories
-    dirs = objects_by_target_type.get(TargetType.DIRECTORY)
+    dirs = objects_by_target_type.get(SnapshotTargetType.DIRECTORY)
     if dirs:
         not_found = list(storage.directory_missing(dirs))
         if not_found:
@@ -234,7 +236,7 @@ def check_snapshot(
             )
 
     # check contents directories
-    cnts = objects_by_target_type.get(TargetType.CONTENT)
+    cnts = objects_by_target_type.get(SnapshotTargetType.CONTENT)
     if cnts:
         not_found = list(storage.content_missing_per_sha1_git(cnts))
         if not_found:

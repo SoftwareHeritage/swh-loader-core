@@ -28,7 +28,7 @@ from swh.model.model import (
     ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
@@ -149,15 +149,15 @@ def expected_snapshot(expected_releases):
     return Snapshot(
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
                 target=b"releases/0.1.1",
             ),
             b"releases/0.1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=expected_releases[0].id,
             ),
             b"releases/0.1.1": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=expected_releases[1].id,
             ),
         },

@@ -12,7 +12,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -101,15 +101,15 @@ def test_conda_loader_load_multiple_version(
         branches={
             b"releases/linux-64/0.11.1-py36h9f0ad1d_1": SnapshotBranch(
                 target=first_release.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/linux-64/0.11.1-py36hc560c46_1": SnapshotBranch(
                 target=second_release.id,
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/linux-64/0.11.1-py36hc560c46_1",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )

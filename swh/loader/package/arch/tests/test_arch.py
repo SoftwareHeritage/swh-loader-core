@@ -16,7 +16,7 @@ from swh.model.model import (
     Release,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 
@@ -137,11 +137,11 @@ def test_arch_loader_load_one_version(datadir, requests_mock_datadir, swh_storag
         branches={
             b"releases/1.12-1/gzip-1.12-1-aarch64.pkg.tar.xz": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/1.12-1/gzip-1.12-1-aarch64.pkg.tar.xz",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )
@@ -203,16 +203,16 @@ def test_arch_loader_load_n_versions(datadir, requests_mock_datadir, swh_storage
             b"releases/1:1.3_20190211-1/"
             b"dialog-1:1.3_20190211-1-x86_64.pkg.tar.xz": SnapshotBranch(
                 target=hash_to_bytes("37efb727ff8bb8fbf92518aa8fe5fff2ad427d06"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/1:1.3_20220414-1/"
             b"dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst": SnapshotBranch(
                 target=hash_to_bytes("020d3f5627df7474f257fd04f1ede4415296e265"),
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
                 target=b"releases/1:1.3_20220414-1/dialog-1:1.3_20220414-1-x86_64.pkg.tar.zst",
-                target_type=TargetType.ALIAS,
+                target_type=SnapshotTargetType.ALIAS,
             ),
         },
     )

@@ -39,7 +39,7 @@ from swh.model.model import (
     RawExtrinsicMetadata,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
 )
 
 from .conftest import compute_hashes, compute_nar_hashes
@@ -403,7 +403,7 @@ class DummyLoaderWithPartialSnapshot(DummyBaseLoader):
             branches={
                 b"alias": SnapshotBranch(
                     target=hash_to_bytes(b"0" * 20),
-                    target_type=TargetType.DIRECTORY,
+                    target_type=SnapshotTargetType.DIRECTORY,
                 )
             }
         )

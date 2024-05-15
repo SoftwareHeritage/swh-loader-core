@@ -27,7 +27,7 @@ from swh.model.model import (
     ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
@@ -373,13 +373,13 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         id=expected_snapshot_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target=b"releases/0.0.4", target_type=TargetType.ALIAS
+                target=b"releases/0.0.4", target_type=SnapshotTargetType.ALIAS
             ),
             **{
                 b"releases/"
                 + version_name.encode(): SnapshotBranch(
                     target=hash_to_bytes(version_id),
-                    target_type=TargetType.RELEASE,
+                    target_type=SnapshotTargetType.RELEASE,
                 )
                 for (version_name, version_id) in versions
             },
@@ -551,14 +551,14 @@ def test_npm_loader_version_divergence(swh_storage):
         id=expected_snapshot_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS, target=b"releases/0.1.0"
+                target_type=SnapshotTargetType.ALIAS, target=b"releases/0.1.0"
             ),
             b"releases/0.1.0": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("0c486b50b407f847ef7581f595c2b6c2062f1089"),
             ),
             b"releases/0.1.1-alpha.14": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("79d80c87c0a8d104a216cc539baad962a454802a"),
             ),
         },
@@ -607,13 +607,13 @@ def test_npm_loader_duplicate_shasum(swh_storage, requests_mock_datadir):
         id=expected_snapshot_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target=b"releases/0.0.3", target_type=TargetType.ALIAS
+                target=b"releases/0.0.3", target_type=SnapshotTargetType.ALIAS
             ),
             **{
                 b"releases/"
                 + version_name.encode(): SnapshotBranch(
                     target=hash_to_bytes(version_id),
-                    target_type=TargetType.RELEASE,
+                    target_type=SnapshotTargetType.RELEASE,
                 )
                 for (version_name, version_id) in versions
             },
@@ -735,10 +735,10 @@ def test_npm_artifact_use_mtime_if_no_time(swh_storage, requests_mock_datadir):
         id=expected_snapshot_id,
         branches={
             b"HEAD": SnapshotBranch(
-                target_type=TargetType.ALIAS, target=b"releases/0.0.1"
+                target_type=SnapshotTargetType.ALIAS, target=b"releases/0.0.1"
             ),
             b"releases/0.0.1": SnapshotBranch(
-                target_type=TargetType.RELEASE,
+                target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("3e3b800570869fa9b3dbc302500553e62400cc06"),
             ),
         },

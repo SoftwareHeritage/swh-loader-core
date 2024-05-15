@@ -318,11 +318,11 @@ are used in this test::
            branches={
                b"releases/1.1.0/nexter-1.1.0.zip": SnapshotBranch(
                    target=hash_to_bytes("f7d43faeb65b64d3faa67e4f46559db57d26b9a4"),
-                   target_type=TargetType.RELEASE,
+                   target_type=SnapshotTargetType.RELEASE,
                ),
                b"releases/1.1.0/nexter-1.1.0.tar.gz": SnapshotBranch(
                    target=hash_to_bytes("732bb9dc087e6015884daaebb8b82559be729b5a"),
-                   target_type=TargetType.RELEASE,
+                   target_type=SnapshotTargetType.RELEASE,
                ),
            },
        )
