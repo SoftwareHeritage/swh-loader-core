@@ -15,16 +15,16 @@ from swh.loader.package.cpan.loader import CpanLoader, CpanPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
+    MetadataFetcher,
     Person,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     TargetType,
     TimestampWithTimezone,
 )
-from swh.model.model import MetadataFetcher
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 ORIGIN_URL = "https://metacpan.org/dist/Internals-CountObjects"
@@ -161,7 +161,7 @@ def test_cpan_loader_load_multiple_version(
         name=b"0.05",
         message=b"Synthetic release for Perl source package Internals-CountObjects version 0.05\n",
         target=hash_to_bytes("af3f6a43eaf4b26dbcadb1101e8d81db6d6151e0"),
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(
             fullname=b"Josh Jore <jjore@cpan.org>",

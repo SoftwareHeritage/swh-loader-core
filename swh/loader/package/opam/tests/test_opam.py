@@ -15,15 +15,17 @@ from swh.loader.package.opam.loader import OpamLoader, OpamPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    MetadataFetcher,
     Person,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     TargetType,
 )
-from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.interface import PagedResult
 
@@ -178,7 +180,7 @@ def test_opam_loader_one_version(
         name=b"0.1",
         message=b"Synthetic release for OPAM source package agrid version 0.1\n",
         target=hash_to_bytes("00412ee5bc601deb462e55addd1004715116785e"),
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person.from_fullname(b"OCamlPro <contact@ocamlpro.com>"),
         date=None,

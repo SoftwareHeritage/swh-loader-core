@@ -21,11 +21,13 @@ from swh.loader.core.loader import (
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.loader.package.utils import EMPTY_AUTHOR
 from swh.model.model import (
+    ExtID,
     Origin,
     OriginVisit,
     OriginVisitStatus,
     Person,
     Release,
+    ReleaseTargetType,
     Revision,
     RevisionType,
     Sha1Git,
@@ -34,8 +36,6 @@ from swh.model.model import (
     TargetType,
     TimestampWithTimezone,
 )
-from swh.model.model import ExtID
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ObjectType
 from swh.storage import get_storage
 from swh.storage.algos.snapshot import snapshot_get_latest
@@ -101,7 +101,7 @@ class StubPackageLoader(PackageLoader[StubPackageInfo]):
             message=msg.encode(),
             date=None,
             author=EMPTY_AUTHOR,
-            target_type=ModelObjectType.DIRECTORY,
+            target_type=ReleaseTargetType.DIRECTORY,
             target=directory,
             synthetic=True,
         )
@@ -150,14 +150,14 @@ def test_resolve_object_from_extids() -> None:
         name=b"aaaa",
         message=b"aaaa",
         target=target,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=False,
     )
     rel2 = Release(
         name=b"bbbb",
         message=b"bbbb",
         target=target,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=False,
     )
     storage.release_add([rel1, rel2])
@@ -207,7 +207,7 @@ def test_resolve_object_from_extids_missing_target() -> None:
         name=b"aaaa",
         message=b"aaaa",
         target=target,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=False,
     )
 
@@ -261,7 +261,7 @@ def test_load_extids() -> None:
             name=f"v{i}.0".encode(),
             message=b"blah\n",
             target=dir_swhid.object_id,
-            target_type=ModelObjectType.DIRECTORY,
+            target_type=ReleaseTargetType.DIRECTORY,
             synthetic=True,
         )
         for i in (1, 2, 3, 4)
@@ -432,7 +432,7 @@ def test_load_upgrade_from_revision_extids(caplog):
         author=person,
         date=date,
         target=dir1_swhid.object_id,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
     )
 

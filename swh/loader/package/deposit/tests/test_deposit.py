@@ -15,17 +15,19 @@ from swh.loader.package.loader import now
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    MetadataFetcher,
     Origin,
     Person,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     TargetType,
     TimestampWithTimezone,
 )
-from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 DEPOSIT_URL = "https://deposit.softwareheritage.org/1/private"
@@ -209,7 +211,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         message=b"hal: Deposit 666 in collection hal\n",
         author=person,
         date=date,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         target=b"\xfd-\xf1-\xc5SL\x1d\xa1\xe9\x18\x0b\x91Q\x02\xfbo`\x1d\x19",
         synthetic=True,
         metadata=None,
@@ -241,7 +243,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     assert orig_meta0.fetcher == fetcher
 
     # Check directory metadata
-    assert release.target_type == ModelObjectType.DIRECTORY
+    assert release.target_type == ReleaseTargetType.DIRECTORY
     directory_swhid = CoreSWHID(
         object_type=ObjectType.DIRECTORY, object_id=release.target
     )
@@ -408,7 +410,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     assert sorted(origin_extrinsic_metadata.results) == sorted(expected_metadata)
 
     # Check the release metadata swh side
-    assert release.target_type == ModelObjectType.DIRECTORY
+    assert release.target_type == ReleaseTargetType.DIRECTORY
     directory_swhid = ExtendedSWHID(
         object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
     )
@@ -558,7 +560,7 @@ def test_deposit_loading_ok_release_notes(
         ),
         author=person,
         date=date,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         target=b"\xfd-\xf1-\xc5SL\x1d\xa1\xe9\x18\x0b\x91Q\x02\xfbo`\x1d\x19",
         synthetic=True,
         metadata=None,

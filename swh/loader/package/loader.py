@@ -41,18 +41,16 @@ from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
     MetadataFetcher,
-)
-from swh.model.model import (
     Origin,
     OriginVisit,
     OriginVisitStatus,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Revision,
     Sha1Git,
     Snapshot,
 )
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.algos import discovery as storage_discovery
 from swh.storage.algos.snapshot import snapshot_get_latest
@@ -887,7 +885,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         metadata = [metadata for (filepath, metadata) in dl_artifacts]
 
         assert release.target is not None, release
-        assert release.target_type == ModelObjectType.DIRECTORY, release
+        assert release.target_type == ReleaseTargetType.DIRECTORY, release
         metadata_target = ExtendedSWHID(
             object_type=ExtendedObjectType.DIRECTORY, object_id=release.target
         )
@@ -1133,7 +1131,7 @@ def rev2rel(rev: Revision, version: str) -> Release:
         name=version.encode(),
         message=message,
         target=rev.directory,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=rev.synthetic,
         author=rev.author,
         date=rev.date,

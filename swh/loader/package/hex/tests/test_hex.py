@@ -12,16 +12,16 @@ from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stat
 from swh.model import from_disk
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
 from swh.model.model import (
+    MetadataFetcher,
     Person,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     TargetType,
     TimestampWithTimezone,
 )
-from swh.model.model import MetadataFetcher
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 ORIGIN = "https://hex.pm/packages/gpio"
@@ -69,7 +69,7 @@ def release_6_0(release_6_0_dir):
         date=TimestampWithTimezone.from_iso8601("2023-01-12T10:39:50.179787Z"),
         message=(b"Synthetic release for Hex source package gpio version 0.6.0\n"),
         target=release_6_0_dir.hash,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
     )
 
@@ -87,7 +87,7 @@ def release_6_1(release_6_1_dir):
         date=TimestampWithTimezone.from_iso8601("2023-01-13T09:39:49.280041Z"),
         message=(b"Synthetic release for Hex source package gpio version 0.6.1\n"),
         target=release_6_1_dir.hash,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
     )
 
@@ -106,7 +106,7 @@ def release_6_2(release_6_2_dir):
         date=TimestampWithTimezone.from_iso8601("2023-02-05T09:55:20.253248Z"),
         message=(b"Synthetic release for Hex source package gpio version 0.6.2\n"),
         target=release_6_2_dir.hash,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
     )
 

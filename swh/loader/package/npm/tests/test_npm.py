@@ -18,16 +18,18 @@ from swh.loader.package.npm.loader import (
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    MetadataFetcher,
     Person,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     TargetType,
     TimestampWithTimezone,
 )
-from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.interface import PagedResult
 
@@ -389,7 +391,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
         name=b"0.0.2",
         message=b"Synthetic release for NPM source package org version 0.0.2\n",
         target=hash_to_bytes("42753c0c2ab00c4501b552ac4671c68f3cf5aece"),
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(
             fullname=b"mooz <stillpedant@gmail.com>",
@@ -419,7 +421,7 @@ def test_npm_loader_first_visit(swh_storage, requests_mock_datadir, org_api_info
 
     for version_name, release_id in versions:
         release = swh_storage.release_get([hash_to_bytes(release_id)])[0]
-        assert release.target_type == ModelObjectType.DIRECTORY
+        assert release.target_type == ReleaseTargetType.DIRECTORY
         directory_id = release.target
         directory_swhid = ExtendedSWHID(
             object_type=ExtendedObjectType.DIRECTORY,
@@ -626,7 +628,7 @@ def test_npm_loader_duplicate_shasum(swh_storage, requests_mock_datadir):
             b"version 0.0.3-beta\n"
         ),
         target=hash_to_bytes("3370d20d6f96dc1c9e50f083e2134881db110f4f"),
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person.from_fullname(b"Masafumi Oyamada <stillpedant@gmail.com>"),
         date=TimestampWithTimezone.from_datetime(
@@ -642,7 +644,7 @@ def test_npm_loader_duplicate_shasum(swh_storage, requests_mock_datadir):
             b"version 0.0.3\n"
         ),
         target=hash_to_bytes("3370d20d6f96dc1c9e50f083e2134881db110f4f"),
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person.from_fullname(b"Masafumi Oyamada <stillpedant@gmail.com>"),
         date=TimestampWithTimezone.from_datetime(

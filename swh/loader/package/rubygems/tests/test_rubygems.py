@@ -16,16 +16,16 @@ from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stat
 from swh.model import from_disk
 from swh.model.hashutil import hash_to_hex
 from swh.model.model import (
+    MetadataFetcher,
     Person,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     TargetType,
     TimestampWithTimezone,
 )
-from swh.model.model import MetadataFetcher
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
 ORIGIN = {
@@ -126,7 +126,7 @@ def release_0_0_1(release_0_0_1_dir):
         name=b"0.0.1",
         message=b"Synthetic release for RubyGems source package haar_joke version 0.0.1\n",
         target=release_0_0_1_dir.hash,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(
             fullname=b"Gemma Gotch",
@@ -143,7 +143,7 @@ def release_0_0_2(release_0_0_2_dir):
         name=b"0.0.2",
         message=b"Synthetic release for RubyGems source package haar_joke version 0.0.2\n",
         target=release_0_0_2_dir.hash,
-        target_type=ModelObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(
             fullname=b"Gemma Gotch",

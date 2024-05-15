@@ -20,15 +20,17 @@ from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stat
 from swh.model.from_disk import Directory, iter_directory
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    MetadataFetcher,
     RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     TargetType,
     TimestampWithTimezone,
 )
-from swh.model.model import MetadataAuthority, MetadataAuthorityType, MetadataFetcher
-from swh.model.model import ObjectType as ModelObjectType
 from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 
@@ -124,7 +126,7 @@ def expected_releases(jar_dirs):
             message=REL_MSGS[0],
             author=EMPTY_AUTHOR,
             date=REL_DATES[0],
-            target_type=ModelObjectType.DIRECTORY,
+            target_type=ReleaseTargetType.DIRECTORY,
             target=jar_dirs[0].hash,
             synthetic=True,
             metadata=None,
@@ -134,7 +136,7 @@ def expected_releases(jar_dirs):
             message=REL_MSGS[1],
             author=EMPTY_AUTHOR,
             date=REL_DATES[1],
-            target_type=ModelObjectType.DIRECTORY,
+            target_type=ReleaseTargetType.DIRECTORY,
             target=jar_dirs[1].hash,
             synthetic=True,
             metadata=None,
