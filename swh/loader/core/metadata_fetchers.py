@@ -4,9 +4,9 @@
 # See top-level LICENSE file for more information
 
 import functools
+from importlib.metadata import entry_points
 from typing import Dict, List, Optional, Set, Type
 
-import pkg_resources
 from typing_extensions import Protocol, runtime_checkable
 
 from swh.model.model import Origin, RawExtrinsicMetadata
@@ -41,7 +41,7 @@ class MetadataFetcherProtocol(Protocol):
 @functools.lru_cache()
 def _fetchers() -> List[Type[MetadataFetcherProtocol]]:
     classes = []
-    for entry_point in pkg_resources.iter_entry_points("swh.loader.metadata"):
+    for entry_point in entry_points(group="swh.loader.metadata"):
         classes.append(entry_point.load())
 
     return classes

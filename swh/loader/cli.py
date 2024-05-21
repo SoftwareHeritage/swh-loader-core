@@ -3,13 +3,14 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from importlib.metadata import entry_points
+
 # WARNING: do not import unnecessary things here to keep cli startup time under
 # control
 import logging
 from typing import Any
 
 import click
-import pkg_resources
 
 from swh.core.cli import CONTEXT_SETTINGS
 from swh.core.cli import swh as swh_cli_group
@@ -19,10 +20,9 @@ logger = logging.getLogger(__name__)
 
 LOADERS = {
     entry_point.name.split(".", 1)[1]: entry_point
-    for entry_point in pkg_resources.iter_entry_points("swh.workers")
+    for entry_point in entry_points(group="swh.workers")
     if entry_point.name.split(".", 1)[0] == "loader"
 }
-
 
 SUPPORTED_LOADERS = sorted(list(LOADERS))
 
