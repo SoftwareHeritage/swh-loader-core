@@ -13,13 +13,18 @@ def test_golang_loader_first_visit(swh_storage, requests_mock_datadir):
     assert loader.load()["status"] == "eventful"
 
 
-def test_golang_loader_package_name_with_uppercase_characters(
+def test_golang_loader_package_or_version_name_with_uppercase_characters(
     swh_storage, requests_mock_datadir
 ):
     url = "https://pkg.go.dev/github.com/adam-hanna/arrayOperations"
     loader = GolangLoader(swh_storage, url)
 
     assert loader.load()["status"] == "eventful"
+    assert set(loader.last_snapshot().branches) == {
+        b"releases/v1.0.1",
+        b"releases/v1.0.1-RC1",
+        b"HEAD",
+    }
 
 
 def test_golang_loader_package_with_dev_version_only(

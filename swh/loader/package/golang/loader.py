@@ -82,7 +82,7 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
         filename = f"{encoded_name}-{version}.zip"
         timestamp = TimestampWithTimezone.from_iso8601(self._raw_info(version)["Time"])
         p_info = GolangPackageInfo(
-            url=f"{self.url}/@v/{version}.zip",
+            url=f"{self.url}/@v/{_uppercase_encode(version)}.zip",
             filename=filename,
             version=version,
             timestamp=timestamp,
