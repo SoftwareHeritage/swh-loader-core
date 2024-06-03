@@ -301,7 +301,7 @@ def test_load_extids() -> None:
     date = datetime.datetime.now(tz=datetime.timezone.utc)
     storage.origin_add([Origin(url=origin)])
     storage.origin_visit_add(
-        [OriginVisit(origin=origin, visit=1, date=date, type="tar")]
+        [OriginVisit(origin=origin, visit=1, date=date, type="stub")]
     )
     storage.origin_visit_status_add(
         [
@@ -466,7 +466,7 @@ def test_load_upgrade_from_revision_extids(caplog):
     date = datetime.datetime.now(tz=datetime.timezone.utc)
     storage.origin_add([Origin(url=origin)])
     storage.origin_visit_add(
-        [OriginVisit(origin=origin, visit=1, date=date, type="tar")]
+        [OriginVisit(origin=origin, visit=1, date=date, type="stub")]
     )
     storage.origin_visit_status_add(
         [

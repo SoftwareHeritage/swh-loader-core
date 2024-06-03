@@ -707,13 +707,17 @@ class NodeLoader(BaseLoader, ABC):
         self.log.debug("Loader checksums computation: %s", self.checksum_layout)
 
     def prepare(self) -> None:
-        self.last_snapshot = snapshot_get_latest(self.storage, self.origin.url)
+        self.last_snapshot = snapshot_get_latest(
+            self.storage,
+            self.origin.url,
+            visit_type=self.visit_type,
+        )
 
     def load_status(self) -> Dict[str, Any]:
         return {
-            "status": "uneventful"
-            if self.last_snapshot == self.snapshot
-            else "eventful"
+            "status": (
+                "uneventful" if self.last_snapshot == self.snapshot else "eventful"
+            )
         }
 
     def cleanup(self) -> None:

@@ -228,7 +228,11 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
     def last_snapshot(self) -> Optional[Snapshot]:
         """Retrieve the last snapshot out of the last visit."""
-        return snapshot_get_latest(self.storage, self.origin.url)
+        return snapshot_get_latest(
+            self.storage,
+            self.origin.url,
+            visit_type=self.visit_type,
+        )
 
     def new_packageinfo_to_extid(self, p_info: TPackageInfo) -> Optional[PartialExtID]:
         return p_info.extid()

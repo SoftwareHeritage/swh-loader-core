@@ -4,7 +4,7 @@ requests_mock >= 1.11.0
 urllib3
 swh-core[testing]
 swh.scheduler[testing] >= 2.3.0
-swh-storage[testing] >= 2.0.0
+swh-storage[testing] >= 2.4.1
 swh-vault >= 1.12.2
 types-click
 types-python-dateutil
