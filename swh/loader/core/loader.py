@@ -24,7 +24,6 @@ from typing import (
     Union,
 )
 from urllib.parse import urlparse
-import warnings
 
 from requests.exceptions import HTTPError
 import sentry_sdk
@@ -998,9 +997,6 @@ class BaseDirectoryLoader(NodeLoader):
         path_filter: Callable[
             [bytes, bytes, Optional[Iterable[bytes]]], bool
         ] = from_disk.accept_all_paths,
-        dir_filter: Union[
-            None, str, Callable[[bytes, bytes, Iterable[bytes]], bool]
-        ] = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -1011,35 +1007,11 @@ class BaseDirectoryLoader(NodeLoader):
         self.cnts: Optional[List[model.Content]] = None
         self.skipped_cnts: Optional[List[model.SkippedContent]] = None
         self.dirs: Optional[List[model.Directory]] = None
-
-        if dir_filter is not None:
-            warnings.warn(
-                "`dir_filter` is deprecated, use `path_filter` instead.",
-                DeprecationWarning,
-            )
-
-        # Configure directory filter which is a callable for the
-        # from_disk.Directory.from_disk method call in the process_artifact method.
-        if isinstance(dir_filter, str):
-            if dir_filter not in ["accept_all_directories", "ignore_empty_directories"]:
-                raise Exception(
-                    f"Expected dir_filter to be 'accept_all_directories' or "
-                    f"'ignore_empty_directories', got {dir_filter!r}"
-                )
-            self.dir_filter: Optional[
-                Callable[[bytes, bytes, Iterable[bytes]], bool]
-            ] = getattr(from_disk, dir_filter)
-        else:
-            self.dir_filter = dir_filter
-
         self._path_filter = path_filter
 
     def path_filter(
         self, path: bytes, name: bytes, entries: Optional[Iterable[bytes]]
     ) -> bool:
-        if entries is not None and self.dir_filter is not None:
-            return self.dir_filter(path, name, entries)
-
         return self._path_filter(path, name, entries)
 
     def process_artifact(self, artifact_path: Path) -> None:
