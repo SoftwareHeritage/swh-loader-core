@@ -9,9 +9,13 @@ from typing import Any, Dict
 import pytest
 import yaml
 
-from swh.loader.core.utils import download, get_url_body
 from swh.scheduler.model import ListedOrigin, Lister
 from swh.scheduler.utils import create_origin_task
+
+
+@pytest.fixture(autouse=True)
+def mock_sleep(mocker):
+    return mocker.patch("time.sleep")
 
 
 @pytest.fixture
@@ -64,7 +68,12 @@ def loading_task_creation_for_listed_origin_test(
     swh_scheduler_celery_app,
     swh_scheduler_celery_worker,
     swh_config,
+    mock_sleep,
 ):
+    # unset mocking of time.sleep as celery task execution takes
+    # too many time otherwise
+    mocker.stop(mock_sleep)
+
     def test_implementation(
         loader_class_name: str,
         task_function_name: str,
@@ -73,7 +82,6 @@ def loading_task_creation_for_listed_origin_test(
     ):
         mock_load = mocker.patch(f"{loader_class_name}.load")
         mock_load.return_value = {"status": "eventful"}
-
         task = create_origin_task(listed_origin, lister)
 
         res = swh_scheduler_celery_app.send_task(
@@ -81,15 +89,10 @@ def loading_task_creation_for_listed_origin_test(
             kwargs=task.arguments.kwargs,
         )
         assert res
+
         res.wait()
         assert res.successful()
         assert mock_load.called
         assert res.result == {"status": "eventful"}
 
     return test_implementation
-
-
-@pytest.fixture(autouse=True)
-def mock_retry_sleep(mocker):
-    mocker.patch.object(download.retry, "sleep")
-    mocker.patch.object(get_url_body.retry, "sleep")

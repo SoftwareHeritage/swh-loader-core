@@ -21,7 +21,6 @@ from swh.loader.core.loader import (
     BaseLoader,
     ContentLoader,
     TarballDirectoryLoader,
-    download_orig,
 )
 from swh.loader.core.metadata_fetchers import MetadataFetcherProtocol
 from swh.loader.core.tests.dummy_loader import (
@@ -625,15 +624,19 @@ def test_directory_loader_404_with_fallback(
 
 
 def test_directory_loader_500_with_fallback(
-    caplog, swh_storage, requests_mock_datadir, tarball_path, requests_mock, mocker
+    caplog,
+    swh_storage,
+    requests_mock_datadir,
+    tarball_path,
+    requests_mock,
+    mocker,
+    mock_sleep,
 ):
     """It should not ingest origin when there is no tarball to be found"""
     unknown_origin = Origin(f"{DIRECTORY_MIRROR}/archives/unknown.tbz2")
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/elsewhere-unknown2.tbz2"
     requests_mock.get(unknown_origin.url, status_code=500)
     requests_mock.get(fallback_url_ko, status_code=500)
-
-    mock_sleep = mocker.patch.object(download_orig.retry, "sleep")
 
     loader = TarballDirectoryLoader(
         swh_storage,
