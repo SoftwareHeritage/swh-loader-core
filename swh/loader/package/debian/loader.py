@@ -263,7 +263,7 @@ def uid_to_person(uid: str) -> Dict[str, str]:
     """Convert an uid to a person suitable for insertion.
 
     Args:
-        uid: an uid of the form "Name <email@ddress>"
+        uid: an uid of the form "Name <email@address>"
 
     Returns:
         a dictionary with the following keys:
