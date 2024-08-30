@@ -183,7 +183,7 @@ def test_base_loader_post_load_raise(swh_storage, mocker):
     post_load.side_effect = post_load_method
 
     result = loader.load()
-    assert result == {"status": "failed"}
+    assert result == {"status": "failed", "error": "Error in post_load"}
 
     # ensure post_load has been called twice, once with success to True and
     # once with success to False as the first post_load call raised exception
@@ -553,7 +553,27 @@ def test_content_loader_hash_mismatch(
     )
     result = loader.load()
 
-    assert result == {"status": "failed"}
+    if checksum_layout == "standard":
+        exc = (
+            "Failure when fetching "
+            "https://common-lisp.net/project/asdf/archives/asdf-3.3.5.lisp. "
+            "Checksum mismatched: "
+            "77bfe7d03eeb048f68de87d630e6436640ebfe7d5543202e24c553d5ff32e0e2 != "
+            "77bfa7d03eab048f68da87d630a6436640abfe7d5543202e24c553d5ff32e0a2"
+        )
+
+    else:
+        exc = (
+            "Checksum mismatched on "
+            "<https://common-lisp.net/project/asdf/archives/asdf-3.3.5.lisp>: {'sha1': "
+            "'f6e6f876535907eb1f1f9c8ff8df4ab24381cc96', 'sha256': "
+            "'0b555a4d13e530460425d1dc20332294f151067fb64a7e49c7de501f05b0a41a', "
+            "'sha512': 'f6e6f876535907eb1f1f9c8ff8df4ab24381cc96'} != {'sha1': "
+            "'f6e6f876535907eb1f1f9c8ff8df4eb24381cc96', 'sha256': "
+            "'0b555e4d13e530460425d1dc20332294f151067fb64e7e49c7de501f05b0e41e', "
+            "'sha512': 'f6e6f876535907eb1f1f9c8ff8df4eb24381cc96'}"
+        )
+    assert result == {"status": "failed", "error": exc}
 
     assert_last_visit_matches(swh_storage, origin.url, status="failed", type="content")
 
@@ -684,7 +704,24 @@ def test_directory_loader_hash_mismatch(
     )
     result = loader.load()
 
-    assert result == {"status": "failed"}
+    if checksum_layout == "standard":
+        exc = (
+            "Failure when fetching https://example.org/archives/dummy-hello.tar.gz. "
+            "Checksum mismatched: 553eecd03c0edf9e23d831269017f0f460864efb != "
+            "553eecd03c0edf9a23d831269017f0f460864efb"
+        )
+    else:
+        exc = (
+            "Checksum mismatched on <https://example.org/archives/dummy-hello.tar.gz>: "
+            "{'sha1': '475dd3c13f0bc021ff7d9b19c4bdc0bf996dac54', "
+            "'sha256': '45db8a27ccfae60b5233003c54c2d6b5ed6f0a1299dd9bbebc8f06cf649bc9c0', "
+            "'sha512': '475dd3c13f0bc021ff7d9b19c4bdc0bf996dac54'} != {'sha1': "
+            "'475dd3c13f0bc021ff7d9b19c4bdc0bf996dec54', 'sha256': "
+            "'45db8e27ccfee60b5233003c54c2d6b5ed6f0e1299dd9bbebc8f06cf649bc9c0', "
+            "'sha512': '475dd3c13f0bc021ff7d9b19c4bdc0bf996dec54'}"
+        )
+
+    assert result == {"status": "failed", "error": exc}
 
     _check_load_failure(
         caplog,

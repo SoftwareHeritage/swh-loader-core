@@ -540,7 +540,11 @@ class BaseLoader:
                 # e derives from BaseException but not Exception; this is most likely
                 # SystemExit or KeyboardInterrupt, so we should re-raise it.
                 raise
-            return {"status": task_status}
+            retval = {"status": task_status}
+            if task_status == "failed":
+                retval["error"] = str(e)
+            return retval
+
         finally:
             with self.statsd_timed(
                 "flush", tags={"success": success, "status": status}
