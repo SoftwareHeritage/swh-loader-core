@@ -103,9 +103,9 @@ class Nar:
     ):
         self.hash_names = hash_names
         self.updater = {
-            hash_name: hashlib.sha256()
-            if hash_name.lower() == "sha256"
-            else hashlib.sha1()
+            hash_name: (
+                hashlib.sha256() if hash_name.lower() == "sha256" else hashlib.sha1()
+            )
             for hash_name in hash_names
         }
         format_output = format_output.lower()
