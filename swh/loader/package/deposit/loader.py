@@ -177,14 +177,6 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             r["software_version"] for r in self.client.releases_get(self.deposit_id)
         ]
 
-    def get_default_version(self) -> str:
-        """The default version is the latest release.
-
-        Returns:
-            A version number
-        """
-        return self.get_versions()[-1]
-
     def generate_branch_name(self, version: str) -> str:
         """Generate a unique branch name from a version number.
 

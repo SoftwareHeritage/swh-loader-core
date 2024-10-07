@@ -174,10 +174,6 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         self._opam_init()
         return self._compute_versions()
 
-    def get_default_version(self) -> str:
-        """Return the most recent version of the package as default."""
-        return self._compute_versions()[-1]
-
     def _opam_show_args(self, version: Optional[str]):
         package = self.get_package_name(version) if version else self.opam_package
 

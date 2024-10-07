@@ -6,7 +6,6 @@ import json
 from typing import Dict, Iterator, Optional, Sequence, Tuple
 
 import attr
-from packaging.version import parse as parse_version
 
 from swh.loader.core.utils import (
     EMPTY_AUTHOR,
@@ -73,24 +72,7 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.info()["versions"].keys())
-        versions.sort(
-            key=lambda version: parse_version(version.split("-", maxsplit=1)[0])
-        )
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of a PubDev package
-
-        Returns:
-            A string representing a version
-
-            Example::
-
-                "0.1.2"
-        """
-        latest = self.info()["latest"]
-        return latest["version"]
+        return list(self.info()["versions"])
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, PubDevPackageInfo]]:
         """Get release name and package information from version

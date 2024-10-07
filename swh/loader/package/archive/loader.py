@@ -121,10 +121,6 @@ class ArchiveLoader(PackageLoader[ArchivePackageInfo]):
                 versions.append(v)
         return versions
 
-    def get_default_version(self) -> str:
-        # It's the most recent, so for this loader, it's the last one
-        return self.artifacts[-1]["version"]
-
     def get_package_info(
         self, version: str
     ) -> Iterator[Tuple[str, ArchivePackageInfo]]:

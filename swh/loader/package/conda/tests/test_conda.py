@@ -45,11 +45,11 @@ ORIGINS = [
 ]
 
 
-def test_get_versions(requests_mock_datadir, swh_storage):
+def test_get_sorted_versions(requests_mock_datadir, swh_storage):
     loader = CondaLoader(
         swh_storage, url=ORIGINS[0]["url"], artifacts=ORIGINS[0]["artifacts"]
     )
-    assert loader.get_versions() == [
+    assert loader.get_sorted_versions() == [
         "linux-64/0.11.1-py36h9f0ad1d_1",
         "linux-64/0.11.1-py36hc560c46_1",
     ]

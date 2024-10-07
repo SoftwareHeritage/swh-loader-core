@@ -114,16 +114,19 @@ def test_loader_origin_visit_success(swh_storage, requests_mock_datadir):
     loader = StubPackageLoader(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {
-        "snapshot_id": "dcb9ecef64af73f2cdac7f5463cb6dece6b1db61",
+        "snapshot_id": "ecf2e51174b5d754c76f0c9e42b8d0440f380a16",
         "status": "eventful",
     }
 
     assert loader.load_status() == {"status": "eventful"}
     assert loader.visit_status() == "full"
 
-    assert set(loader.last_snapshot().branches.keys()) == {
+    snapshot_branches = {
         f"branch-{version}".encode() for version in loader.get_versions()
     }
+    snapshot_branches.add(b"HEAD")
+
+    assert set(loader.last_snapshot().branches.keys()) == snapshot_branches
 
 
 def test_loader_origin_visit_failure(swh_storage):
@@ -295,6 +298,9 @@ def test_load_extids() -> None:
             b"v3.0": SnapshotBranch(
                 target_type=SnapshotTargetType.RELEASE, target=rel3_swhid.object_id
             ),
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS, target=b"v3.0"
+            ),
         }
     )
     storage.snapshot_add([last_snapshot])
@@ -372,6 +378,9 @@ def test_load_extids() -> None:
             ),
             b"branch-v4.0": SnapshotBranch(
                 target_type=SnapshotTargetType.RELEASE, target=rel4_swhid.object_id
+            ),
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS, target=b"branch-v4.0"
             ),
         }
     )
@@ -460,6 +469,9 @@ def test_load_upgrade_from_revision_extids(caplog):
             b"v2.0": SnapshotBranch(
                 target_type=SnapshotTargetType.REVISION, target=rev2_swhid.object_id
             ),
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS, target=b"v2.0"
+            ),
         }
     )
     storage.snapshot_add([last_snapshot])
@@ -535,6 +547,9 @@ def test_load_upgrade_from_revision_extids(caplog):
             ),
             b"branch-v3.0": SnapshotBranch(
                 target_type=SnapshotTargetType.RELEASE, target=rel2_swhid.object_id
+            ),
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS, target=b"branch-v3.0"
             ),
         }
     )
@@ -627,16 +642,17 @@ def test_loader_origin_with_package_info_failure(swh_storage, requests_mock_data
     loader = StubPackageLoaderWithPackageInfoFailure(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {
-        "snapshot_id": "b4cce7081d661fb7f4d7a1db96e8044b752eb0b0",
+        "snapshot_id": "24e471673dea04310c5e276b9acb6b0a03fa8642",
         "status": "eventful",
     }
 
     assert loader.load_status() == {"status": "eventful"}
     assert loader.visit_status() == "partial"
 
-    assert set(loader.last_snapshot().branches.keys()) == {
-        f"branch-v{i}.0".encode() for i in (1, 3, 4)
-    }
+    snapshot_branches = {f"branch-v{i}.0".encode() for i in (1, 3, 4)}
+    snapshot_branches.add(b"HEAD")
+
+    assert set(loader.last_snapshot().branches.keys()) == snapshot_branches
 
 
 def test_loader_with_dangling_branch_in_last_snapshot(
@@ -645,7 +661,7 @@ def test_loader_with_dangling_branch_in_last_snapshot(
     loader = StubPackageLoader(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {
-        "snapshot_id": "dcb9ecef64af73f2cdac7f5463cb6dece6b1db61",
+        "snapshot_id": "ecf2e51174b5d754c76f0c9e42b8d0440f380a16",
         "status": "eventful",
     }
 
@@ -660,7 +676,7 @@ def test_loader_with_dangling_branch_in_last_snapshot(
     loader = StubPackageLoaderWithDanglingBranchInLastSnapshot(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {
-        "snapshot_id": "dcb9ecef64af73f2cdac7f5463cb6dece6b1db61",
+        "snapshot_id": "ecf2e51174b5d754c76f0c9e42b8d0440f380a16",
         "status": "eventful",
     }
 
@@ -705,21 +721,22 @@ def test_loader_with_duplicated_releases(swh_storage, requests_mock_datadir, moc
 
     assert loader.load() == {
         "status": "eventful",
-        "snapshot_id": "a01fb6280bedbfc3609d3b6ae06e70bf2b4186fa",
+        "snapshot_id": "ee040891f6d714a9b07090bf5804f7376a0438ee",
     }
 
     # versions v{i}.0 and v{i} target the same release so load_release
     # should have been called once per unique release
     assert len(load_release.mock_calls) == len(loader.get_versions()) / 2
 
-    snasphot = loader.last_snapshot()
+    snapshot = loader.last_snapshot()
 
-    # all referenced versions should be found in the snapshot
-    assert len(snasphot.branches) == len(loader.get_versions())
+    # all referenced versions should be found in the snapshot plus a HEAD alias branch
+    assert len(snapshot.branches) == len(loader.get_versions()) + 1
 
     # check branch-v{i}.0 and branch-v{i} target the same release
     for i in range(1, 5):
         assert (
-            snasphot.branches[f"branch-v{i}.0".encode()]
-            == snasphot.branches[f"branch-v{i}".encode()]
+            snapshot.branches[f"branch-v{i}.0".encode()]
+            == snapshot.branches[f"branch-v{i}".encode()]
         )
+    assert b"HEAD" in snapshot.branches

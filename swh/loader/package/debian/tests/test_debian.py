@@ -119,7 +119,7 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "f9e4d0d200433dc998ad2ca40ee1244785fe6ed1"
+    expected_snapshot_id = "9033c04b5f77a19e44031a61c175e9c2f760c75a"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -138,10 +138,14 @@ def test_debian_first_visit(swh_storage, requests_mock_datadir):
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS,
+                target=b"releases/stretch/contrib/0.7.2-3",
+            ),
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
                 target_type=SnapshotTargetType.RELEASE,
                 target=release_id,
-            )
+            ),
         },
     )  # different than the previous loader as no release is done
 
@@ -195,7 +199,7 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
 
     actual_load_status = loader.load()
 
-    expected_snapshot_id = "f9e4d0d200433dc998ad2ca40ee1244785fe6ed1"
+    expected_snapshot_id = "9033c04b5f77a19e44031a61c175e9c2f760c75a"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -212,10 +216,14 @@ def test_debian_first_visit_then_another_visit(swh_storage, requests_mock_datadi
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS,
+                target=b"releases/stretch/contrib/0.7.2-3",
+            ),
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
                 target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("de96ae3d3e136f5c1709117059e2a2c05b8ee5ae"),
-            )
+            ),
         },
     )  # different than the previous loader as no release is done
 
@@ -496,7 +504,7 @@ def _check_debian_loading(swh_storage, packages):
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "474c0e3d5796d15363031c333533527d659c559e"
+    expected_snapshot_id = "d0d31657ce1bb5f042c714925be9556ce69a5a15"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -513,6 +521,10 @@ def _check_debian_loading(swh_storage, packages):
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS,
+                target=b"releases/buster/contrib/0.7.2-4",
+            ),
             b"releases/stretch/contrib/0.7.2-3": SnapshotBranch(
                 target_type=SnapshotTargetType.RELEASE,
                 target=hash_to_bytes("de96ae3d3e136f5c1709117059e2a2c05b8ee5ae"),

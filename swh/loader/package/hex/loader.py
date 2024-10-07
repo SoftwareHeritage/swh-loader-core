@@ -13,7 +13,6 @@ from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
 import attr
-from packaging.version import parse as parse_version
 
 from swh.loader.core.utils import EMPTY_AUTHOR, get_url_body, release_name
 from swh.loader.package.loader import (
@@ -83,10 +82,7 @@ class HexLoader(PackageLoader[HexPackageInfo]):
         self.releases = releases
 
     def get_versions(self) -> Sequence[str]:
-        return list(sorted(self.releases, key=parse_version))
-
-    def get_default_version(self) -> str:
-        return self.get_versions()[-1]
+        return list(self.releases)
 
     def get_metadata_authority(self):
         parsed_url = urlparse(self.url)

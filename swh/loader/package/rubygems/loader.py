@@ -9,7 +9,6 @@ import string
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 import attr
-from packaging.version import parse as parse_version
 
 from swh.loader.core.utils import get_url_body, release_name
 from swh.loader.package.loader import (
@@ -85,13 +84,7 @@ class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
 
     def get_versions(self) -> Sequence[str]:
         """Return all versions sorted for the gem being loaded"""
-        versions = list(self.artifacts.keys())
-        versions.sort(key=parse_version)
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of a gem"""
-        return self.get_versions()[-1]
+        return list(self.artifacts)
 
     def get_metadata_authority(self):
         return MetadataAuthority(

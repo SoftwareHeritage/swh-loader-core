@@ -99,7 +99,7 @@ class PyPILoader(PackageLoader[PyPIPackageInfo]):
         return json.loads(self._raw_info())
 
     def get_versions(self) -> Sequence[str]:
-        return self.info()["releases"].keys()
+        return list(self.info()["releases"])
 
     def get_default_version(self) -> str:
         return self.info()["info"]["version"]

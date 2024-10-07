@@ -13,6 +13,7 @@ import attr
 from dateutil.parser import parse as parse_date
 from debian.changelog import Changelog
 from debian.deb822 import Dsc
+from looseversion import LooseVersion2
 
 from swh.loader.core.utils import download, release_name
 from swh.loader.package.loader import BasePackageInfo, PackageLoader, PartialExtID
@@ -182,12 +183,16 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         super().__init__(storage=storage, url=url, **kwargs)
         self.packages = packages
 
-    def get_versions(self) -> Sequence[str]:
+    def get_sorted_versions(self) -> Sequence[str]:
         """Returns the keys of the packages input (e.g.
         stretch/contrib/0.7.2-3, etc...)
 
         """
-        return list(self.packages.keys())
+        return list(
+            sorted(
+                self.packages, key=lambda p: LooseVersion2(self.packages[p]["version"])
+            )
+        )
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, DebianPackageInfo]]:
         meta = self.packages[version]

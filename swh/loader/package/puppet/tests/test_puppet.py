@@ -42,11 +42,11 @@ ORIGINS = {
 }
 
 
-def test_get_versions(requests_mock_datadir, swh_storage):
+def test_get_sorted_versions(requests_mock_datadir, swh_storage):
     loader = PuppetLoader(
         swh_storage, url=ORIGINS["url"], artifacts=ORIGINS["artifacts"]
     )
-    assert loader.get_versions() == ["1.0.0", "8.1.0"]
+    assert loader.get_sorted_versions() == ["1.0.0", "8.1.0"]
 
 
 def test_get_default_version(requests_mock_datadir, swh_storage):

@@ -10,7 +10,6 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
 import iso8601
-from packaging.version import parse as parse_version
 
 from swh.loader.core.utils import Person, release_name
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
@@ -77,21 +76,7 @@ class PuppetLoader(PackageLoader[PuppetPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.artifacts.keys())
-        versions.sort(key=parse_version)
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of a Puppet module
-
-        Returns:
-            A string representing a version
-
-            Example::
-
-                "0.10.2"
-        """
-        return self.get_versions()[-1]
+        return list(self.artifacts)
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, PuppetPackageInfo]]:
         """Get release name and package information from version

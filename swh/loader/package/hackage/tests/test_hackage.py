@@ -86,12 +86,12 @@ def head_callback(request, context, datadir):
     return None
 
 
-def test_get_versions(requests_mock_datadir, swh_storage):
+def test_get_sorted_versions(requests_mock_datadir, swh_storage):
     loader = HackageLoader(
         swh_storage,
         url=EXPECTED_PACKAGES[1]["url"],
     )
-    assert loader.get_versions() == [
+    assert loader.get_sorted_versions() == [
         "0.1",
         "0.3.0.2",
     ]

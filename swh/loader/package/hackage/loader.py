@@ -11,7 +11,6 @@ import re
 from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
 
 import attr
-from packaging.version import parse as parse_version
 import requests
 from requests.structures import CaseInsensitiveDict
 
@@ -123,21 +122,7 @@ class HackageLoader(PackageLoader[HackagePackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.info_versions().keys())
-        versions.sort(key=parse_version)
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of an Haskell package
-
-        Returns:
-            A string representing a version
-
-            Example::
-
-                "0.10.2"
-        """
-        return self.get_versions()[-1]
+        return list(self.info_versions())
 
     def get_package_info(
         self, version: str

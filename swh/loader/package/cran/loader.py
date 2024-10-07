@@ -66,13 +66,7 @@ class CRANLoader(PackageLoader[CRANPackageInfo]):
         self.artifacts = artifacts
 
     def get_versions(self) -> List[str]:
-        versions = []
-        for artifact in self.artifacts:
-            versions.append(artifact["version"])
-        return versions
-
-    def get_default_version(self) -> str:
-        return self.artifacts[-1]["version"]
+        return [artifact["version"] for artifact in self.artifacts]
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, CRANPackageInfo]]:
         for a_metadata in self.artifacts:

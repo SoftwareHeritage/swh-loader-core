@@ -10,7 +10,6 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
 import iso8601
-from packaging.version import parse as parse_version
 from requests import HTTPError
 
 from swh.loader.core.utils import EMPTY_AUTHOR, Person, get_url_body, release_name
@@ -98,21 +97,7 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.artifacts.keys())
-        versions.sort(key=parse_version)
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of a Perl package
-
-        Returns:
-            A string representing a version
-
-            Example::
-
-                "0.10.2"
-        """
-        return self.get_versions()[-1]
+        return list(self.artifacts)
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, CpanPackageInfo]]:
         """Get release name and package information from version

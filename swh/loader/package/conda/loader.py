@@ -10,7 +10,6 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
 import iso8601
-from packaging.version import parse as parse_version
 import yaml
 
 from swh.loader.core.utils import EMPTY_AUTHOR, Person, get_url_body, release_name
@@ -103,25 +102,7 @@ class CondaLoader(PackageLoader[CondaPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.artifacts.keys())
-        versions.sort(
-            key=lambda version_key: parse_version(
-                version_key.split("/", 1)[1].split("-", 1)[0]
-            )
-        )
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of a Conda package
-
-        Returns:
-            A string representing a version
-
-            Example::
-
-                "0.10.2"
-        """
-        return self.get_versions()[-1]
+        return list(self.artifacts)
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, CondaPackageInfo]]:
         """Get release name and package information from version

@@ -92,7 +92,7 @@ EXPECTED_PACKAGES = [
 ]
 
 
-def test_get_versions(swh_storage):
+def test_get_sorted_versions(swh_storage):
     loader = ArchLoader(
         swh_storage,
         url=EXPECTED_PACKAGES[0]["url"],
@@ -100,7 +100,7 @@ def test_get_versions(swh_storage):
         arch_metadata=EXPECTED_PACKAGES[0]["arch_metadata"],
     )
 
-    assert loader.get_versions() == [
+    assert loader.get_sorted_versions() == [
         "1:1.3_20190211-1",
         "1:1.3_20220414-1",
     ]

@@ -11,7 +11,6 @@ import string
 from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
 
 import attr
-from packaging.version import parse as parse_version
 
 from swh.loader.core.utils import cached_method, release_name
 from swh.loader.package.cran.loader import extract_intrinsic_metadata, parse_date
@@ -95,15 +94,7 @@ class BioconductorLoader(PackageLoader[BioconductorPackageInfo]):
     @cached_method
     def get_versions(self) -> Sequence[str]:
         """Sort package versions in ascending order and return them."""
-        return list(
-            sorted(
-                self.packages, key=lambda p: parse_version(self.packages[p]["version"])
-            )
-        )
-
-    def get_default_version(self) -> str:
-        """Get the latest release version of a bioconductor package"""
-        return self.get_versions()[-1]
+        return list(self.packages)
 
     def get_package_info(
         self, version: str

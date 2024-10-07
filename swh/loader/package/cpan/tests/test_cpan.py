@@ -99,8 +99,8 @@ def cpan_loader(requests_mock_datadir, swh_storage):
     )
 
 
-def test_get_versions(cpan_loader):
-    assert cpan_loader.get_versions() == ["0.01", "0.05"]
+def test_get_sorted_versions(cpan_loader):
+    assert cpan_loader.get_sorted_versions() == ["0.01", "0.05"]
 
 
 def test_get_default_version(cpan_loader):

@@ -3,7 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from distutils.version import LooseVersion
+
 from pathlib import Path
 import re
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
@@ -79,21 +79,7 @@ class ArchLoader(PackageLoader[ArchPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.artifacts.keys())
-        versions.sort(key=LooseVersion)
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of an Arch Linux package
-
-        Returns:
-            A string representing a version
-
-            Example::
-
-                "0.1.2"
-        """
-        return self.get_versions()[-1]
+        return list(self.artifacts)
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, ArchPackageInfo]]:
         """Get release name and package information from version.

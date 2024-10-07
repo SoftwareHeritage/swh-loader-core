@@ -12,4 +12,3 @@ python-dateutil
 tenacity >= 8.4.2
 typing-extensions
 toml
-packaging

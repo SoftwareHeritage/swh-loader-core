@@ -44,12 +44,12 @@ EXPECTED_PACKAGES = [
 ]
 
 
-def test_get_versions(requests_mock_datadir, swh_storage):
+def test_get_sorted_versions(requests_mock_datadir, swh_storage):
     loader = PubDevLoader(
         swh_storage,
         url=EXPECTED_PACKAGES[1]["url"],
     )
-    assert loader.get_versions() == [
+    assert loader.get_sorted_versions() == [
         "1.0.0",
         "3.8.2",
     ]
@@ -61,7 +61,7 @@ def test_sort_loose_versions(requests_mock_datadir, swh_storage):
         swh_storage,
         url=EXPECTED_PACKAGES[4]["url"],
     )
-    assert loader.get_versions() == ["0.1.2+4", "0.1.2+5", "0.1.2+6"]
+    assert loader.get_sorted_versions() == ["0.1.2+4", "0.1.2+5", "0.1.2+6"]
 
 
 def test_sort_loose_versions_1(requests_mock_datadir, swh_storage):
@@ -70,7 +70,7 @@ def test_sort_loose_versions_1(requests_mock_datadir, swh_storage):
         swh_storage,
         url=EXPECTED_PACKAGES[5]["url"],
     )
-    assert loader.get_versions() == [
+    assert loader.get_sorted_versions() == [
         "0.0.1",
         "0.0.2",
         "0.1.1",
@@ -79,9 +79,9 @@ def test_sort_loose_versions_1(requests_mock_datadir, swh_storage):
         "0.1.4",
         "0.1.5",
         "0.2.1",
+        "0.2.1+3",
         "0.2.1+hotfix.1",
         "0.2.1+hotfix.2",
-        "0.2.1+3",
         "0.3.1",
         "0.3.1+1",
         "0.5.1",

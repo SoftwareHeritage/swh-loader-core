@@ -125,7 +125,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         return json.loads(self._raw_info())
 
     def get_versions(self) -> Sequence[str]:
-        return sorted(list(self.info()["versions"].keys()))
+        return self.info()["versions"]
 
     def get_default_version(self) -> str:
         return self.info()["dist-tags"].get("latest", "")

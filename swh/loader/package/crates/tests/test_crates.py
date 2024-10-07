@@ -36,13 +36,13 @@ def expected(datadir):
     return json.loads(fp.read_bytes())
 
 
-def test_get_versions(requests_mock_datadir, swh_storage, expected):
+def test_get_sorted_versions(requests_mock_datadir, swh_storage, expected):
     loader = CratesLoader(
         swh_storage,
         url=expected[1]["url"],
         artifacts=expected[1]["artifacts"],
     )
-    assert loader.get_versions() == [
+    assert loader.get_sorted_versions() == [
         "0.1.0",
         "0.1.1",
         "0.1.2",

@@ -76,14 +76,14 @@ def head_release_extrinsic_metadata(datadir):
     ).read_bytes()
 
 
-def test_get_versions(requests_mock_datadir, swh_storage):
+def test_get_sorted_versions(requests_mock_datadir, swh_storage):
     loader = RubyGemsLoader(
         swh_storage,
         url=ORIGIN["url"],
         artifacts=ORIGIN["artifacts"],
         rubygem_metadata=ORIGIN["rubygem_metadata"],
     )
-    assert loader.get_versions() == ["0.0.1", "0.0.2"]
+    assert loader.get_sorted_versions() == ["0.0.1", "0.0.2"]
 
 
 def test_get_default_version(requests_mock_datadir, swh_storage):

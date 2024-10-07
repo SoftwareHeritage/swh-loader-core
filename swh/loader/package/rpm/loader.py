@@ -96,10 +96,6 @@ class RpmLoader(PackageLoader[RpmPackageInfo]):
         """Returns the package versions sorted by build time"""
         return list(sorted(self.packages, key=lambda p: self.packages[p]["build_time"]))
 
-    def get_default_version(self) -> str:
-        """Get the latest release version of a rpm package"""
-        return self.get_versions()[-1]
-
     def get_package_info(self, version: str) -> Iterator[Tuple[str, RpmPackageInfo]]:
         yield (
             release_name(version),

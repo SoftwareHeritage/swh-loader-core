@@ -29,7 +29,7 @@ from swh.model.model import (
 from swh.model.swhids import CoreSWHID, ExtendedSWHID
 
 EMPTY_SNAPSHOT_ID = "1a8893e6a86f444e8be8e7bda6cb34fb1735a00e"
-FULL_SNAPSHOT_ID = "4ac5730a9393f5099b63a35a17b6c33d36d70c3a"
+FULL_SNAPSHOT_ID = "e5d828e36866ad36e06db53bfb41b02c6150b6f7"
 
 AUTHORITY = MetadataAuthority(
     type=MetadataAuthorityType.FORGE,

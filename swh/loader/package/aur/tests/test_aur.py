@@ -110,7 +110,7 @@ EXPECTED_PACKAGES = [
 ]
 
 
-def test_get_versions(swh_storage):
+def test_get_sorted_versions(swh_storage):
     loader = AurLoader(
         swh_storage,
         url=EXPECTED_PACKAGES[0]["url"],
@@ -118,7 +118,7 @@ def test_get_versions(swh_storage):
         aur_metadata=EXPECTED_PACKAGES[0]["aur_metadata"],
     )
 
-    assert loader.get_versions() == [
+    assert loader.get_sorted_versions() == [
         "10.5.2-1",
     ]
 

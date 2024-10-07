@@ -12,7 +12,6 @@ from urllib.parse import urlparse
 
 import attr
 import iso8601
-from looseversion import LooseVersion2
 import toml
 
 from swh.loader.core.utils import (
@@ -142,21 +141,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
 
                 ["0.1.1", "0.10.2"]
         """
-        versions = list(self.artifacts.keys())
-        versions.sort(key=LooseVersion2)
-        return versions
-
-    def get_default_version(self) -> str:
-        """Get the newest release version of a crate
-
-        Returns:
-            A string representing a version
-
-            Example::
-
-                "0.1.2"
-        """
-        return self.get_versions()[-1]
+        return list(self.artifacts)
 
     def get_metadata_authority(self):
         p_url = urlparse(self.url)

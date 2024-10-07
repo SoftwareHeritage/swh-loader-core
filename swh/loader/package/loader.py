@@ -27,6 +27,7 @@ from typing import (
 )
 
 import attr
+from looseversion import LooseVersion2
 from requests.exceptions import ContentDecodingError
 import sentry_sdk
 
@@ -182,6 +183,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
     def get_versions(self) -> Sequence[str]:
         """Return the list of all published package versions.
 
+        There is no need to sort that list, it is handled by :meth:`get_sorted_versions`.
+
         Raises:
            class:`swh.loader.exception.NotFound` error when failing to read the
             published package versions.
@@ -191,6 +194,34 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         """
         return []
+
+    def get_sorted_versions(self) -> Sequence[str]:
+        """Return the list of all published package versions sorted by version numbers.
+
+        Default implementation uses the `looseversion <https://pypi.org/project/looseversion/>`_
+        package enabling to interact with heterogeneous version schemes.
+
+        Raises:
+           class:`swh.loader.exception.NotFound` error when failing to read the
+            published package versions.
+
+        Returns:
+            Sequence of sorted published versions
+
+        """
+        return list(sorted(self.get_versions(), key=LooseVersion2))
+
+    def get_default_version(self) -> str:
+        """Retrieve the latest release version if any.
+
+        Default implementation returns the last element from the list returned
+        by :meth:`get_sorted_versions`.
+
+        Returns:
+            Latest version
+
+        """
+        return self.get_sorted_versions()[-1]
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, TPackageInfo]]:
         """Given a release version of a package, retrieve the associated
@@ -216,15 +247,6 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             uncompressed_path: Artifact uncompressed path on disk
         """
         raise NotImplementedError("build_release")
-
-    def get_default_version(self) -> str:
-        """Retrieve the latest release version if any.
-
-        Returns:
-            Latest version
-
-        """
-        return ""
 
     def last_snapshot(self) -> Optional[Snapshot]:
         """Retrieve the last snapshot out of the last visit."""
@@ -605,7 +627,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         # Get the list of all version names
         try:
-            versions = self.get_versions()
+            versions = self.get_sorted_versions()
         except NotFound as e:
             return self.finalize_visit(
                 snapshot=snapshot,
