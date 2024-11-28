@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2024 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,7 +10,11 @@ import re
 import pytest
 
 from swh.core.pytest_plugin import requests_mock_datadir_factory
-from swh.loader.package.deposit.loader import ApiClient, DepositLoader, branch_name
+from swh.loader.package.deposit.loader import (
+    ApiClient,
+    DepositLoader,
+    build_branch_name,
+)
 from swh.loader.package.loader import now
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
@@ -614,11 +618,6 @@ def test_deposit_loading_ok_release_notes(
 
 
 def test_deposit_get_versions(swh_storage, deposit_client, requests_mock_datadir):
-    """Deposit loading can happen on tarball artifacts as well
-
-    The latest deposit changes introduce the internal change.
-
-    """
     external_id = "hal-123456"
     url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
     deposit_id = 888
@@ -636,6 +635,32 @@ def test_deposit_get_versions(swh_storage, deposit_client, requests_mock_datadir
     assert loader.get_default_version() == "version 2"
 
 
+def test_deposit_deduplicate_branch_names(
+    swh_storage, deposit_client, requests_mock_datadir
+):
+    external_id = "hal-123456"
+    url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
+    deposit_id = 888
+
+    releases = [
+        {"id": deposit_id, "software_version": "ABC", "origin_url": url},
+        {"id": deposit_id, "software_version": "abc", "origin_url": url},
+        {"id": deposit_id, "software_version": "a$B$c$", "origin_url": url},
+    ]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
+
+    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+
+    status = loader.load()
+
+    snapshot = loader.storage.snapshot_get(hash_to_bytes(status["snapshot_id"]))
+    assert len(snapshot["branches"]) == 4
+    assert snapshot["branches"][b"deposit/abc"]
+    assert snapshot["branches"][b"deposit/abc-1"]
+    assert snapshot["branches"][b"deposit/abc-2"]
+    assert snapshot["branches"][b"HEAD"]["target"] == b"deposit/abc-2"
+
+
 @pytest.mark.parametrize(
     "version,expected",
     [
@@ -645,5 +670,26 @@ def test_deposit_get_versions(swh_storage, deposit_client, requests_mock_datadir
         ("1.2.3", "deposit/1.2.3"),
     ],
 )
-def test_branch_name(version, expected):
-    assert branch_name(version) == expected
+def test_build_branch_name(version, expected):
+    assert build_branch_name(version) == expected
+
+
+@pytest.mark.parametrize(
+    "version,expected",
+    [
+        ("0", "deposit/0"),
+        ("Weird version Number", "deposit/weird-version-number"),
+        ("trailing-", "deposit/trailing"),
+        ("1.2.3", "deposit/1.2.3"),
+    ],
+)
+def test_generate_branch_name(swh_storage, deposit_client, version, expected):
+    loader = DepositLoader(swh_storage, "test", 1, deposit_client)
+    assert loader.generate_branch_name(version) == expected
+
+
+def test_generate_branch_name_uniqueness(swh_storage, deposit_client):
+    loader = DepositLoader(swh_storage, "test", 1, deposit_client)
+    assert loader.generate_branch_name("A") == "deposit/a"
+    assert loader.generate_branch_name("a") == "deposit/a-1"
+    assert loader.generate_branch_name("a$") == "deposit/a-2"

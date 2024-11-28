@@ -23,7 +23,7 @@ from swh.loader.package.loader import (
     PackageLoader,
     RawExtrinsicMetadataCore,
 )
-from swh.model.hashutil import hash_to_bytes, hash_to_hex
+from swh.model.hashutil import hash_to_hex
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -32,9 +32,9 @@ from swh.model.model import (
     Person,
     Release,
     Sha1Git,
+    Snapshot,
     TimestampWithTimezone,
 )
-from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -47,11 +47,14 @@ def now() -> datetime.datetime:
     return datetime.datetime.now(tz=timezone.utc)
 
 
-def branch_name(version: str) -> str:
+def build_branch_name(version: str) -> str:
     """Build a branch name from a version number.
 
     There is no "branch name" concept in a deposit, so we artificially create a name
     by prefixing the slugified version number of the repository with `deposit/`.
+    This could lead to duplicate branch names, if you need a unique branch name use
+    the ``generate_branch_name`` method of the loader as it keeps track of the branches
+    names previously issued.
 
     Args:
         version: a version number
@@ -146,6 +149,8 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self.deposit_id = deposit_id
         self.client = deposit_client
         self.default_filename = default_filename
+        # Keeps track of the list of branch names to avoid collisions
+        self._branches_names: set[str] = set()
 
     @classmethod
     def from_configfile(cls, **kwargs: Any):
@@ -169,9 +174,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             A list of versions
         """
         return [
-            r["software_version"]
-            for r in self.client.releases_get(self.deposit_id)
-            if r.get("software_version")
+            r["software_version"] for r in self.client.releases_get(self.deposit_id)
         ]
 
     def get_default_version(self) -> str:
@@ -181,6 +184,47 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             A branch name
         """
         return self.get_versions()[-1]
+
+    def generate_branch_name(self, version: str) -> str:
+        """Generate a unique branch name from a version number.
+
+        Previously generated branch names are stored in the ``_branch_names`` property.
+        If ``version`` leads to a non unique branch name for this deposit we add a `-n`
+        suffix to the branch name, where `n` is a number between 1 and the number of
+        branches.
+
+        Example:
+            loader.generate_branch_name("ABC")
+            # returns "deposit/abc"
+            loader.generate_branch_name("abc")
+            # returns "deposit/abc-1"
+            loader.generate_branch_name("a$b$c")
+            # returns "deposit/abc-2"
+            loader.generate_branch_name("def")
+            # returns "deposit/def"
+
+        Args:
+            version: a version number
+
+        Returns:
+            A unique branch name
+
+        Raises:
+            ValueError: could not generate a unique branch name
+        """
+        branch_name = build_branch_name(version)
+        if branch_name in self._branches_names:
+            for index in range(1, len(self._branches_names) + 1):
+                unique_branch_name = branch_name + f"-{index}"
+                if unique_branch_name not in self._branches_names:
+                    branch_name = unique_branch_name
+                    break
+            else:
+                raise ValueError(
+                    "Could not generate a unique branch name for {version}"
+                )
+        self._branches_names.add(branch_name)
+        return branch_name
 
     def get_metadata_authority(self) -> MetadataAuthority:
         provider = self.client.metadata_get(self.deposit_id)["provider"]
@@ -230,7 +274,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             version=deposit["software_version"],
         )
 
-        yield branch_name(version), p_info
+        yield self.generate_branch_name(version), p_info
 
     def download_package(
         self, p_info: DepositPackageInfo, tmpdir: str
@@ -316,8 +360,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
                 )
                 return r
 
-            snapshot_id = hash_to_bytes(r["snapshot_id"])
-            snapshot = snapshot_get_all_branches(self.storage, snapshot_id)
+            snapshot: Optional[Snapshot] = kwargs.get("snapshot")
             if not snapshot:
                 return r
             branches = snapshot.branches
@@ -325,13 +368,16 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             if not branches:
                 return r
 
-            # Resolve HEAD alias to get the release
-            branch_by_name = self.storage.snapshot_branch_get_by_name(
-                snapshot_id, b"HEAD"
-            )
+            default_branch_name = build_branch_name(self.get_default_version())
+            branch_by_name = branches[default_branch_name.encode()]
             if not branch_by_name or not branch_by_name.target:
+                logger.error(
+                    "Unable to get branch %s for deposit %d",
+                    default_branch_name,
+                    self.deposit_id,
+                )
                 return r
-            rel_id = branch_by_name.target.target
+            rel_id = branch_by_name.target
             release = self.storage.release_get([rel_id])[0]
 
             if not release:
