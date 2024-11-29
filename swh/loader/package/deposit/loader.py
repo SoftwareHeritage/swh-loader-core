@@ -345,10 +345,13 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
     def finalize_visit(
         self,
         status_visit: str,
+        snapshot: Optional[Snapshot],
         errors: Optional[List[str]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
-        r = super().finalize_visit(status_visit=status_visit, **kwargs)
+        r = super().finalize_visit(
+            status_visit=status_visit, snapshot=snapshot, **kwargs
+        )
         success = status_visit == "full"
 
         # Update deposit status
@@ -361,8 +364,11 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
                 )
                 return r
 
-            snapshot: Optional[Snapshot] = kwargs.get("snapshot")
             if not snapshot:
+                logger.error(
+                    "No snapshot provided while finalizing deposit %d",
+                    self.deposit_id,
+                )
                 return r
 
             branches = snapshot.branches
