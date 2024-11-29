@@ -193,9 +193,6 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
-    release_id_head_hex = "6465706f7369742f31"
-    release_id_head = hash_to_bytes(release_id_head_hex)
-
     release_id_1_hex = "c98c19f43ef10a4262345d8e85ca283cea99c7b3"
     release_id_1 = hash_to_bytes(release_id_1_hex)
 
@@ -203,7 +200,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"HEAD": SnapshotBranch(
-                target=release_id_head,
+                target=b"deposit/1",
                 target_type=SnapshotTargetType.ALIAS,
             ),
             b"deposit/1": SnapshotBranch(
@@ -571,9 +568,6 @@ def test_deposit_loading_ok_release_notes(
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
-    release_id_head_hex = "6465706f7369742f31"
-    release_id_head = hash_to_bytes(release_id_head_hex)
-
     release_id_1_hex = "a7cae4b6aaaf70f30178d86496aefb7dead0eb77"
     release_id_1 = hash_to_bytes(release_id_1_hex)
 
@@ -581,7 +575,7 @@ def test_deposit_loading_ok_release_notes(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"HEAD": SnapshotBranch(
-                target=release_id_head,
+                target=b"deposit/1",
                 target_type=SnapshotTargetType.ALIAS,
             ),
             b"deposit/1": SnapshotBranch(
