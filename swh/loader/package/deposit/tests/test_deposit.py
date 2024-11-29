@@ -646,13 +646,28 @@ def test_deposit_deduplicate_branch_names(
     loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
 
     status = loader.load()
-
+    # unique branches names for each versions
     snapshot = loader.storage.snapshot_get(hash_to_bytes(status["snapshot_id"]))
     assert len(snapshot["branches"]) == 4
     assert snapshot["branches"][b"deposit/abc"]
-    assert snapshot["branches"][b"deposit/abc-1"]
-    assert snapshot["branches"][b"deposit/abc-2"]
-    assert snapshot["branches"][b"HEAD"]["target"] == b"deposit/abc-2"
+    assert snapshot["branches"][b"deposit/abc/1"]
+    assert snapshot["branches"][b"deposit/abc/2"]
+    assert snapshot["branches"][b"HEAD"]["target"] == b"deposit/abc/2"
+
+    # the deposit will be updated with the right release_id
+    release = loader.storage.release_get(
+        [snapshot["branches"][b"deposit/abc/2"]["target"]]
+    )[0]
+
+    urls = [
+        m
+        for m in requests_mock_datadir.request_history
+        if m.url == f"{DEPOSIT_URL}/{deposit_id}/update/"
+    ]
+    assert len(urls) == 1
+    update_query = urls[0]
+
+    assert update_query.json()["release_id"] == hash_to_hex(release.id)
 
 
 @pytest.mark.parametrize(
@@ -685,5 +700,5 @@ def test_generate_branch_name(swh_storage, deposit_client, version, expected):
 def test_generate_branch_name_uniqueness(swh_storage, deposit_client):
     loader = DepositLoader(swh_storage, "test", 1, deposit_client)
     assert loader.generate_branch_name("A") == "deposit/a"
-    assert loader.generate_branch_name("a") == "deposit/a-1"
-    assert loader.generate_branch_name("a$") == "deposit/a-2"
+    assert loader.generate_branch_name("a") == "deposit/a/1"
+    assert loader.generate_branch_name("a$") == "deposit/a/2"

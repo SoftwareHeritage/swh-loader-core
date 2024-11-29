@@ -149,8 +149,8 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self.deposit_id = deposit_id
         self.client = deposit_client
         self.default_filename = default_filename
-        # Keeps track of the list of branch names to avoid collisions
-        self._branches_names: set[str] = set()
+        # Keeps track of the branch names {version: branch_name} to avoid collisions
+        self._branches_names: dict[str, str] = dict()
 
     @classmethod
     def from_configfile(cls, **kwargs: Any):
@@ -181,7 +181,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         """The default version is the latest release.
 
         Returns:
-            A branch name
+            A version number
         """
         return self.get_versions()[-1]
 
@@ -189,17 +189,16 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         """Generate a unique branch name from a version number.
 
         Previously generated branch names are stored in the ``_branch_names`` property.
-        If ``version`` leads to a non unique branch name for this deposit we add a `-n`
-        suffix to the branch name, where `n` is a number between 1 and the number of
-        branches.
+        If ``version`` leads to a non unique branch name for this deposit we add a `/n`
+        suffix to the branch name, where `n` is a number.
 
         Example:
             loader.generate_branch_name("ABC")
             # returns "deposit/abc"
             loader.generate_branch_name("abc")
-            # returns "deposit/abc-1"
+            # returns "deposit/abc/1"
             loader.generate_branch_name("a$b$c")
-            # returns "deposit/abc-2"
+            # returns "deposit/abc/2"
             loader.generate_branch_name("def")
             # returns "deposit/def"
 
@@ -208,23 +207,22 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
 
         Returns:
             A unique branch name
-
-        Raises:
-            ValueError: could not generate a unique branch name
         """
-        branch_name = build_branch_name(version)
-        if branch_name in self._branches_names:
-            for index in range(1, len(self._branches_names) + 1):
-                unique_branch_name = branch_name + f"-{index}"
-                if unique_branch_name not in self._branches_names:
-                    branch_name = unique_branch_name
-                    break
-            else:
-                raise ValueError(
-                    "Could not generate a unique branch name for {version}"
-                )
-        self._branches_names.add(branch_name)
-        return branch_name
+        initial_branch_name = unique_branch_name = build_branch_name(version)
+        counter = 0
+        while unique_branch_name in self._branches_names.values():
+            counter += 1
+            unique_branch_name = f"{initial_branch_name}/{counter}"
+        self._branches_names[version] = unique_branch_name
+        return unique_branch_name
+
+    def get_default_branch_name(self) -> str:
+        """The branch name of the default version.
+
+        Returns:
+            A branch name
+        """
+        return self._branches_names[self.get_default_version()]
 
     def get_metadata_authority(self) -> MetadataAuthority:
         provider = self.client.metadata_get(self.deposit_id)["provider"]
@@ -345,7 +343,10 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         return super().load()
 
     def finalize_visit(
-        self, status_visit: str, errors: Optional[List[str]] = None, **kwargs
+        self,
+        status_visit: str,
+        errors: Optional[List[str]] = None,
+        **kwargs,
     ) -> Dict[str, Any]:
         r = super().finalize_visit(status_visit=status_visit, **kwargs)
         success = status_visit == "full"
@@ -363,12 +364,13 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             snapshot: Optional[Snapshot] = kwargs.get("snapshot")
             if not snapshot:
                 return r
+
             branches = snapshot.branches
             logger.debug("branches: %s", branches)
             if not branches:
                 return r
 
-            default_branch_name = build_branch_name(self.get_default_version())
+            default_branch_name = self.get_default_branch_name()
             branch_by_name = branches[default_branch_name.encode()]
             if not branch_by_name or not branch_by_name.target:
                 logger.error(
