@@ -5,8 +5,10 @@
 
 import datetime
 from datetime import timezone
+from functools import lru_cache
 import json
 import logging
+import re
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
 import attr
@@ -15,13 +17,13 @@ import sentry_sdk
 
 from swh.core.config import load_from_envvar
 from swh.loader.core.loader import DEFAULT_CONFIG
-from swh.loader.core.utils import cached_method, download
+from swh.loader.core.utils import download
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
     RawExtrinsicMetadataCore,
 )
-from swh.model.hashutil import hash_to_bytes, hash_to_hex
+from swh.model.hashutil import hash_to_hex
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -30,16 +32,39 @@ from swh.model.model import (
     Person,
     Release,
     Sha1Git,
+    Snapshot,
     TimestampWithTimezone,
 )
-from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
 
 
+DepositId = Union[int, str]
+
+
 def now() -> datetime.datetime:
     return datetime.datetime.now(tz=timezone.utc)
+
+
+def build_branch_name(version: str) -> str:
+    """Build a branch name from a version number.
+
+    There is no "branch name" concept in a deposit, so we artificially create a name
+    by prefixing the slugified version number of the repository with `deposit/`.
+    This could lead to duplicate branch names, if you need a unique branch name use
+    the ``generate_branch_name`` method of the loader as it keeps track of the branches
+    names previously issued.
+
+    Args:
+        version: a version number
+
+    Returns:
+        A branch name
+    """
+    version = re.sub(r"[^\w\s\.-]", "", version.lower())
+    version = re.sub(r"[-\s]+", "-", version).strip("-_.")
+    return f"deposit/{version}"
 
 
 @attr.s
@@ -124,6 +149,8 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self.deposit_id = deposit_id
         self.client = deposit_client
         self.default_filename = default_filename
+        # Keeps track of the branch names {version: branch_name} to avoid collisions
+        self._branches_names: dict[str, str] = dict()
 
     @classmethod
     def from_configfile(cls, **kwargs: Any):
@@ -141,12 +168,64 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         return cls.from_config(deposit_client=deposit_client, **config)
 
     def get_versions(self) -> Sequence[str]:
-        # only 1 branch 'HEAD' with no alias since we only have 1 snapshot
-        # branch
-        return ["HEAD"]
+        """A list of versions from the list of releases.
+
+        Returns:
+            A list of versions
+        """
+        return [
+            r["software_version"] for r in self.client.releases_get(self.deposit_id)
+        ]
+
+    def get_default_version(self) -> str:
+        """The default version is the latest release.
+
+        Returns:
+            A version number
+        """
+        return self.get_versions()[-1]
+
+    def generate_branch_name(self, version: str) -> str:
+        """Generate a unique branch name from a version number.
+
+        Previously generated branch names are stored in the ``_branch_names`` property.
+        If ``version`` leads to a non unique branch name for this deposit we add a `/n`
+        suffix to the branch name, where `n` is a number.
+
+        Example:
+            loader.generate_branch_name("ABC")
+            # returns "deposit/abc"
+            loader.generate_branch_name("abc")
+            # returns "deposit/abc/1"
+            loader.generate_branch_name("a$b$c")
+            # returns "deposit/abc/2"
+            loader.generate_branch_name("def")
+            # returns "deposit/def"
+
+        Args:
+            version: a version number
+
+        Returns:
+            A unique branch name
+        """
+        initial_branch_name = unique_branch_name = build_branch_name(version)
+        counter = 0
+        while unique_branch_name in self._branches_names.values():
+            counter += 1
+            unique_branch_name = f"{initial_branch_name}/{counter}"
+        self._branches_names[version] = unique_branch_name
+        return unique_branch_name
+
+    def get_default_branch_name(self) -> str:
+        """The branch name of the default version.
+
+        Returns:
+            A branch name
+        """
+        return self._branches_names[self.get_default_version()]
 
     def get_metadata_authority(self) -> MetadataAuthority:
-        provider = self.metadata()["provider"]
+        provider = self.client.metadata_get(self.deposit_id)["provider"]
         assert provider["provider_type"] == MetadataAuthorityType.DEPOSIT_CLIENT.value
         return MetadataAuthority(
             type=MetadataAuthorityType.DEPOSIT_CLIENT,
@@ -158,7 +237,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         )
 
     def get_metadata_fetcher(self) -> MetadataFetcher:
-        tool = self.metadata()["tool"]
+        tool = self.client.metadata_get(self.deposit_id)["tool"]
         return MetadataFetcher(
             name=tool["name"],
             version=tool["version"],
@@ -168,19 +247,38 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
     def get_package_info(
         self, version: str
     ) -> Iterator[Tuple[str, DepositPackageInfo]]:
-        p_info = DepositPackageInfo.from_metadata(
-            self.metadata(),
-            url=self.origin.url,
-            filename=self.default_filename,
-            version=version,
+        """Get package info
+
+        First we look for the version matching the branch name, then we fetch metadata
+        from the deposit server and build DepositPackageInfo with it.
+
+        Args:
+            version: a branch name.
+
+        Yields:
+            Package infos.
+        """
+
+        deposit = next(
+            d
+            for d in self.client.releases_get(self.deposit_id)
+            if d["software_version"] == version
         )
-        yield "HEAD", p_info
+
+        p_info = DepositPackageInfo.from_metadata(
+            self.client.metadata_get(deposit["id"]),
+            url=deposit["origin_url"],
+            filename=self.default_filename,
+            version=deposit["software_version"],
+        )
+
+        yield self.generate_branch_name(version), p_info
 
     def download_package(
         self, p_info: DepositPackageInfo, tmpdir: str
     ) -> List[Tuple[str, Mapping]]:
         """Override to allow use of the dedicated deposit client"""
-        return [self.client.archive_get(self.deposit_id, tmpdir, p_info.filename)]
+        return [self.client.archive_get(p_info.id, tmpdir, p_info.filename)]
 
     def build_release(
         self,
@@ -209,7 +307,7 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         )
 
     def get_extrinsic_origin_metadata(self) -> List[RawExtrinsicMetadataCore]:
-        metadata = self.metadata()
+        metadata = self.client.metadata_get(self.deposit_id)
         raw_metadata: str = metadata["raw_metadata"]
         origin_metadata = json.dumps(
             {
@@ -231,16 +329,11 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
             ),
         ]
 
-    @cached_method
-    def metadata(self):
-        """Returns metadata from the deposit server"""
-        return self.client.metadata_get(self.deposit_id)
-
     def load(self) -> Dict:
         # First making sure the deposit is known on the deposit's RPC server
         # prior to trigger a loading
         try:
-            self.metadata()
+            self.client.metadata_get(self.deposit_id)
         except ValueError:
             logger.exception(f"Unknown deposit {self.deposit_id}")
             sentry_sdk.capture_exception()
@@ -250,9 +343,15 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         return super().load()
 
     def finalize_visit(
-        self, status_visit: str, errors: Optional[List[str]] = None, **kwargs
+        self,
+        status_visit: str,
+        snapshot: Optional[Snapshot],
+        errors: Optional[List[str]] = None,
+        **kwargs,
     ) -> Dict[str, Any]:
-        r = super().finalize_visit(status_visit=status_visit, **kwargs)
+        r = super().finalize_visit(
+            status_visit=status_visit, snapshot=snapshot, **kwargs
+        )
         success = status_visit == "full"
 
         # Update deposit status
@@ -265,17 +364,30 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
                 )
                 return r
 
-            snapshot_id = hash_to_bytes(r["snapshot_id"])
-            snapshot = snapshot_get_all_branches(self.storage, snapshot_id)
             if not snapshot:
+                logger.error(
+                    "No snapshot provided while finalizing deposit %d",
+                    self.deposit_id,
+                )
                 return r
+
             branches = snapshot.branches
             logger.debug("branches: %s", branches)
             if not branches:
                 return r
-            rel_id = branches[b"HEAD"].target
 
+            default_branch_name = self.get_default_branch_name()
+            branch_by_name = branches[default_branch_name.encode()]
+            if not branch_by_name or not branch_by_name.target:
+                logger.error(
+                    "Unable to get branch %s for deposit %d",
+                    default_branch_name,
+                    self.deposit_id,
+                )
+                return r
+            rel_id = branch_by_name.target
             release = self.storage.release_get([rel_id])[0]
+
             if not release:
                 return r
 
@@ -329,28 +441,59 @@ class ApiClient:
         return method_fn(url, *args, **kwargs)
 
     def archive_get(
-        self, deposit_id: Union[int, str], tmpdir: str, filename: str
+        self, deposit_id: DepositId, tmpdir: str, filename: str
     ) -> Tuple[str, Dict]:
         """Retrieve deposit's archive artifact locally"""
         url = f"{self.base_url}/{deposit_id}/raw/"
         return download(url, dest=tmpdir, filename=filename, auth=self.auth)
 
-    def metadata_url(self, deposit_id: Union[int, str]) -> str:
-        return f"{self.base_url}/{deposit_id}/meta/"
+    @lru_cache
+    def metadata_get(self, deposit_id: DepositId) -> Dict[str, Any]:
+        """Retrieve deposit's metadata artifact as json
 
-    def metadata_get(self, deposit_id: Union[int, str]) -> Dict[str, Any]:
-        """Retrieve deposit's metadata artifact as json"""
-        url = self.metadata_url(deposit_id)
-        r = self.do("get", url)
-        if r.ok:
-            return r.json()
+        The result of this API call is cached.
 
-        msg = f"Problem when retrieving deposit metadata at {url}"
-        raise ValueError(msg)
+        Args:
+            deposit_id: a deposit id
+
+        Returns:
+            A dict of metadata
+
+        Raises:
+            ValueError: something when wrong with the metadata API.
+        """
+        response = self.do("get", f"{self.base_url}/{deposit_id}/meta/")
+        if not response.ok:
+            raise ValueError(
+                f"Problem when retrieving deposit metadata at {response.url}"
+            )
+        return response.json()
+
+    @lru_cache
+    def releases_get(self, deposit_id: DepositId) -> List[Dict[str, Any]]:
+        """Retrieve the list of releases related to this deposit.
+
+        The result of this API call is cached.
+
+        Args:
+            deposit_id: a deposit id
+
+        Returns:
+            A list of deposits
+
+        Raises:
+            ValueError: something when wrong with the releases API.
+        """
+        response = self.do("get", f"{self.base_url}/{deposit_id}/releases/")
+        if not response.ok:
+            raise ValueError(
+                f"Problem when retrieving deposit releases at {response.url}"
+            )
+        return response.json()
 
     def status_update(
         self,
-        deposit_id: Union[int, str],
+        deposit_id: DepositId,
         status: str,
         errors: Optional[List[str]] = None,
         release_id: Optional[str] = None,

@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2024 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,7 +10,11 @@ import re
 import pytest
 
 from swh.core.pytest_plugin import requests_mock_datadir_factory
-from swh.loader.package.deposit.loader import ApiClient, DepositLoader
+from swh.loader.package.deposit.loader import (
+    ApiClient,
+    DepositLoader,
+    build_branch_name,
+)
 from swh.loader.package.loader import now
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes, hash_to_hex
@@ -107,13 +111,18 @@ requests_mock_datadir_missing_one = requests_mock_datadir_factory(
 
 
 def test_deposit_loading_failure_to_retrieve_1_artifact(
-    swh_storage, deposit_client, requests_mock_datadir_missing_one
+    swh_storage, deposit_client, requests_mock_datadir_missing_one, requests_mock
 ):
     """Deposit with missing artifact ends up with an uneventful/partial visit"""
     # private api url form: 'https://deposit.s.o/1/private/hal/666/raw/'
     url = "some-url-2"
     deposit_id = 666
     requests_mock_datadir_missing_one.put(re.compile("https"))
+    releases = [{"id": deposit_id, "software_version": "1", "origin_url": url}]
+
+    requests_mock_datadir_missing_one.get(
+        f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases
+    )
     loader = DepositLoader(
         swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
     )
@@ -151,7 +160,7 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
         "status": "failed",
         "status_detail": {
             "loading": [
-                "Failed to load branch HEAD for some-url-2: 404 Client Error: None "
+                "Failed to load branch deposit/1 for some-url-2: 404 Client Error: None "
                 "for url: https://deposit.softwareheritage.org/1/private/666/raw/"
             ]
         },
@@ -163,12 +172,14 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
 def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     url = "https://hal-test.archives-ouvertes.fr/some-external-id"
     deposit_id = 666
+    releases = [{"id": deposit_id, "software_version": "1", "origin_url": url}]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
     loader = DepositLoader(
         swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "338b45d87e02fb5cbf324694bc4a898623d6a30f"
+    expected_snapshot_id = "28d6c5f69c4022a359203de8e2e81bda103b148e"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -182,21 +193,27 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
-    release_id_hex = "2566a64a27bc00362e265be9666d7606750530a1"
-    release_id = hash_to_bytes(release_id_hex)
+    release_id_1_hex = "c98c19f43ef10a4262345d8e85ca283cea99c7b3"
+    release_id_1 = hash_to_bytes(release_id_1_hex)
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"HEAD": SnapshotBranch(
-                target=release_id,
+                target=b"deposit/1",
+                target_type=SnapshotTargetType.ALIAS,
+            ),
+            b"deposit/1": SnapshotBranch(
+                target=release_id_1,
                 target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
+
     check_snapshot(expected_snapshot, storage=loader.storage)
 
-    release = loader.storage.release_get([release_id])[0]
+    release = loader.storage.release_get([release_id_1])[0]
+
     date = TimestampWithTimezone.from_datetime(
         datetime.datetime(2017, 10, 7, 15, 17, 8, tzinfo=datetime.timezone.utc)
     )
@@ -205,9 +222,10 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
         name=b"Software Heritage",
         email=b"robot@softwareheritage.org",
     )
+
     assert release == Release(
-        id=release_id,
-        name=b"HEAD",
+        id=release_id_1,
+        name=b"1",
         message=b"hal: Deposit 666 in collection hal\n",
         author=person,
         date=date,
@@ -270,7 +288,7 @@ def test_deposit_loading_ok(swh_storage, deposit_client, requests_mock_datadir):
     body = update_query.json()
     expected_body = {
         "status": "done",
-        "release_id": release_id_hex,
+        "release_id": release_id_1_hex,
         "directory_id": hash_to_hex(release.target),
         "snapshot_id": expected_snapshot_id,
         "origin_url": url,
@@ -296,12 +314,16 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     external_id = "some-external-id"
     url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
     deposit_id = 777
+
+    releases = [{"id": deposit_id, "software_version": "1", "origin_url": url}]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
+
     loader = DepositLoader(
         swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "3449b8ff31abeacefd33cca60e3074c1649dc3a1"
+    expected_snapshot_id = "ee5789e4f8f5ebde20b1b9e6a7338781d4f65c9b"
 
     assert actual_load_status == {
         "status": "eventful",
@@ -315,13 +337,23 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
-    release_id = "ba6c9a59ae3256e765d32b211cc183dc2380aed7"
+    release_id_head_hex = "6465706f7369742f31"
+    release_id_head = hash_to_bytes(release_id_head_hex)
+
+    release_id_1_hex = "3b7f58c924063e1dc4976e8fb8e5503592fddedd"
+    release_id_1 = hash_to_bytes(release_id_1_hex)
+
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"HEAD": SnapshotBranch(
-                target=hash_to_bytes(release_id), target_type=SnapshotTargetType.RELEASE
-            )
+                target=release_id_head,
+                target_type=SnapshotTargetType.ALIAS,
+            ),
+            b"deposit/1": SnapshotBranch(
+                target=release_id_1,
+                target_type=SnapshotTargetType.RELEASE,
+            ),
         },
     )
 
@@ -331,7 +363,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     # Ensure the date fields are set appropriately in the release
 
     # Retrieve the release
-    release = loader.storage.release_get([hash_to_bytes(release_id)])[0]
+    release = loader.storage.release_get([hash_to_bytes(release_id_1)])[0]
     assert release
     # swh-deposit uses the numeric 'offset_minutes' instead of the bytes offset
     # attribute, because its dates are always well-formed, and it can only send
@@ -422,7 +454,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     assert len(actual_directory_metadata.results) == 1
 
     release_swhid = CoreSWHID(
-        object_type=ObjectType.RELEASE, object_id=hash_to_bytes(release_id)
+        object_type=ObjectType.RELEASE, object_id=hash_to_bytes(release_id_1)
     )
     dir_metadata_template = RawExtrinsicMetadata(
         target=directory_swhid,
@@ -469,7 +501,7 @@ def test_deposit_loading_ok_2(swh_storage, deposit_client, requests_mock_datadir
     body = update_query.json()
     expected_body = {
         "status": "done",
-        "release_id": release_id,
+        "release_id": release_id_1_hex,
         "directory_id": hash_to_hex(release.target),
         "snapshot_id": expected_snapshot_id,
         "origin_url": url,
@@ -487,10 +519,14 @@ def test_deposit_loading_ok_3(swh_storage, deposit_client, requests_mock_datadir
     external_id = "hal-123456"
     url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
     deposit_id = 888
+
+    releases = [{"id": deposit_id, "software_version": "1", "origin_url": url}]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
+
     loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "4677843de89e398f1d6bfedc9ca9b89c451c55c8"
+    expected_snapshot_id = "2f95506d6194e6c4e71ba87e3b118c65a767fe9d"
 
     assert actual_load_status == {
         "status": "eventful",
@@ -510,12 +546,15 @@ def test_deposit_loading_ok_release_notes(
 ):
     url = "https://hal-test.archives-ouvertes.fr/some-external-id"
     deposit_id = 999
+    releases = [{"id": deposit_id, "software_version": "1", "origin_url": url}]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
+
     loader = DepositLoader(
         swh_storage, url, deposit_id, deposit_client, default_filename="archive.zip"
     )
 
     actual_load_status = loader.load()
-    expected_snapshot_id = "a307acffb7c29bebb3daf1bcb680bb3f452890a8"
+    expected_snapshot_id = "41cd91cb190ffa82fee8ec5d91dedc5d57fb3b1f"
     assert actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id,
@@ -529,21 +568,26 @@ def test_deposit_loading_ok_release_notes(
         snapshot=hash_to_bytes(expected_snapshot_id),
     )
 
-    release_id_hex = "f5e8ec02ede57edbe061afa7fc2a07bb7d14a700"
-    release_id = hash_to_bytes(release_id_hex)
+    release_id_1_hex = "a7cae4b6aaaf70f30178d86496aefb7dead0eb77"
+    release_id_1 = hash_to_bytes(release_id_1_hex)
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
             b"HEAD": SnapshotBranch(
-                target=release_id,
+                target=b"deposit/1",
+                target_type=SnapshotTargetType.ALIAS,
+            ),
+            b"deposit/1": SnapshotBranch(
+                target=release_id_1,
                 target_type=SnapshotTargetType.RELEASE,
             ),
         },
     )
+
     check_snapshot(expected_snapshot, storage=loader.storage)
 
-    release = loader.storage.release_get([release_id])[0]
+    release = loader.storage.release_get([release_id_1])[0]
     date = TimestampWithTimezone.from_datetime(
         datetime.datetime(2017, 10, 7, 15, 17, 8, tzinfo=datetime.timezone.utc)
     )
@@ -553,8 +597,8 @@ def test_deposit_loading_ok_release_notes(
         email=b"robot@softwareheritage.org",
     )
     assert release == Release(
-        id=release_id,
-        name=b"HEAD",
+        id=release_id_1,
+        name=b"1",
         message=(
             b"hal: Deposit 999 in collection hal\n\nThis release adds this and that.\n"
         ),
@@ -565,3 +609,96 @@ def test_deposit_loading_ok_release_notes(
         synthetic=True,
         metadata=None,
     )
+
+
+def test_deposit_get_versions(swh_storage, deposit_client, requests_mock_datadir):
+    external_id = "hal-123456"
+    url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
+    deposit_id = 888
+
+    releases = [
+        {"id": deposit_id, "software_version": "version 1", "origin_url": url},
+        {"id": deposit_id, "software_version": "version 2", "origin_url": url},
+    ]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
+
+    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+
+    loader.load()
+    assert loader.get_versions() == ["version 1", "version 2"]
+    assert loader.get_default_version() == "version 2"
+
+
+def test_deposit_deduplicate_branch_names(
+    swh_storage, deposit_client, requests_mock_datadir
+):
+    external_id = "hal-123456"
+    url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
+    deposit_id = 888
+
+    releases = [
+        {"id": deposit_id, "software_version": "ABC", "origin_url": url},
+        {"id": deposit_id, "software_version": "abc", "origin_url": url},
+        {"id": deposit_id, "software_version": "a$B$c$", "origin_url": url},
+    ]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
+
+    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+
+    status = loader.load()
+    # unique branches names for each versions
+    snapshot = loader.storage.snapshot_get(hash_to_bytes(status["snapshot_id"]))
+    assert len(snapshot["branches"]) == 4
+    assert snapshot["branches"][b"deposit/abc"]
+    assert snapshot["branches"][b"deposit/abc/1"]
+    assert snapshot["branches"][b"deposit/abc/2"]
+    assert snapshot["branches"][b"HEAD"]["target"] == b"deposit/abc/2"
+
+    # the deposit will be updated with the right release_id
+    release = loader.storage.release_get(
+        [snapshot["branches"][b"deposit/abc/2"]["target"]]
+    )[0]
+
+    urls = [
+        m
+        for m in requests_mock_datadir.request_history
+        if m.url == f"{DEPOSIT_URL}/{deposit_id}/update/"
+    ]
+    assert len(urls) == 1
+    update_query = urls[0]
+
+    assert update_query.json()["release_id"] == hash_to_hex(release.id)
+
+
+@pytest.mark.parametrize(
+    "version,expected",
+    [
+        ("0", "deposit/0"),
+        ("Weird version Number", "deposit/weird-version-number"),
+        ("trailing-", "deposit/trailing"),
+        ("1.2.3", "deposit/1.2.3"),
+    ],
+)
+def test_build_branch_name(version, expected):
+    assert build_branch_name(version) == expected
+
+
+@pytest.mark.parametrize(
+    "version,expected",
+    [
+        ("0", "deposit/0"),
+        ("Weird version Number", "deposit/weird-version-number"),
+        ("trailing-", "deposit/trailing"),
+        ("1.2.3", "deposit/1.2.3"),
+    ],
+)
+def test_generate_branch_name(swh_storage, deposit_client, version, expected):
+    loader = DepositLoader(swh_storage, "test", 1, deposit_client)
+    assert loader.generate_branch_name(version) == expected
+
+
+def test_generate_branch_name_uniqueness(swh_storage, deposit_client):
+    loader = DepositLoader(swh_storage, "test", 1, deposit_client)
+    assert loader.generate_branch_name("A") == "deposit/a"
+    assert loader.generate_branch_name("a") == "deposit/a/1"
+    assert loader.generate_branch_name("a$") == "deposit/a/2"
