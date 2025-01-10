@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -632,7 +632,7 @@ def test_loader_sentry_tags_on_error(swh_storage, sentry_events):
 
 class StubPackageLoaderWithPackageInfoFailure(StubPackageLoader):
     def get_package_info(self, version):
-        if version == "v2.0":
+        if version == "v4.0":
             raise Exception("Error when getting package info")
         else:
             return super().get_package_info(version)
@@ -642,17 +642,19 @@ def test_loader_origin_with_package_info_failure(swh_storage, requests_mock_data
     loader = StubPackageLoaderWithPackageInfoFailure(swh_storage, ORIGIN_URL)
 
     assert loader.load() == {
-        "snapshot_id": "24e471673dea04310c5e276b9acb6b0a03fa8642",
+        "snapshot_id": "eec06c0cb03a0c19d513ad0e9a2b08f547ae7bd2",
         "status": "eventful",
     }
 
     assert loader.load_status() == {"status": "eventful"}
     assert loader.visit_status() == "partial"
 
-    snapshot_branches = {f"branch-v{i}.0".encode() for i in (1, 3, 4)}
+    snapshot_branches = {f"branch-v{i}.0".encode() for i in (1, 2, 3)}
     snapshot_branches.add(b"HEAD")
 
     assert set(loader.last_snapshot().branches.keys()) == snapshot_branches
+
+    assert loader.last_snapshot().branches[b"HEAD"].target == b"branch-v3.0"
 
 
 def test_loader_with_dangling_branch_in_last_snapshot(

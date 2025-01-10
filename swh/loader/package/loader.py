@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -794,6 +794,13 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         try:
             # Retrieve the default release version (the "latest" one)
             default_version = self.get_default_version()
+            if not tmp_releases.get(default_version, []):
+                fetched_versions = [
+                    version for version, releases in tmp_releases.items() if releases
+                ]
+                default_version = max(
+                    fetched_versions, key=LooseVersion2, default=default_version
+                )
             logger.debug("default version: %s", default_version)
             # Retrieve extra branches
             extra_branches = self.extra_branches()
