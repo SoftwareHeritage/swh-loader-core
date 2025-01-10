@@ -34,3 +34,21 @@ def test_golang_loader_package_with_dev_version_only(
     loader = GolangLoader(swh_storage, url)
 
     assert loader.load()["status"] == "eventful"
+
+
+def test_golang_latest_version_not_found(
+    swh_storage, requests_mock_datadir, requests_mock
+):
+    url = "https://pkg.go.dev/github.com/adam-hanna/arrayOperations"
+    requests_mock.get(
+        "https://proxy.golang.org/github.com/adam-hanna/array!operations/@latest",
+        status_code=404,
+    )
+    loader = GolangLoader(swh_storage, url)
+
+    assert loader.load()["status"] == "eventful"
+    assert set(loader.last_snapshot().branches) == {
+        b"releases/v1.0.1",
+        b"releases/v1.0.1-RC1",
+        b"HEAD",
+    }

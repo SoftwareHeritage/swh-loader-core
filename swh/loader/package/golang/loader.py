@@ -6,9 +6,11 @@
 import json
 import logging
 import re
-from typing import Iterator, Optional, Sequence, Tuple
+from typing import Iterator, List, Optional, Sequence, Tuple
 
 import attr
+from looseversion import LooseVersion2
+from requests import HTTPError
 
 from swh.loader.core.utils import (
     EMPTY_AUTHOR,
@@ -16,6 +18,7 @@ from swh.loader.core.utils import (
     get_url_body,
     release_name,
 )
+from swh.loader.exception import NotFound
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
 from swh.storage.interface import StorageInterface
@@ -58,8 +61,12 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
         self.url = url.replace(self.GOLANG_PKG_DEV_URL, self.GOLANG_PROXY_URL)
         self.url = _uppercase_encode(self.url)
 
+    @cached_method
+    def _get_versions(self) -> List[str]:
+        return get_url_body(f"{self.url}/@v/list").decode().splitlines()
+
     def get_versions(self) -> Sequence[str]:
-        versions = get_url_body(f"{self.url}/@v/list").decode().splitlines()
+        versions = self._get_versions()
         # some go packages only have a development version not listed by the endpoint above,
         # so ensure to return it or it will be missed by the golang loader
         default_version = self.get_default_version()
@@ -69,8 +76,11 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
 
     @cached_method
     def get_default_version(self) -> str:
-        latest = get_url_body(f"{self.url}/@latest")
-        return json.loads(latest)["Version"]
+        try:
+            latest = get_url_body(f"{self.url}/@latest")
+            return json.loads(latest)["Version"]
+        except (NotFound, HTTPError, json.JSONDecodeError):
+            return max(self._get_versions(), key=LooseVersion2)
 
     def _raw_info(self, version: str) -> dict:
         url = f"{self.url}/@v/{_uppercase_encode(version)}.info"
