@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2024 The Software Heritage developers
+# Copyright (C) 2018-2025 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -253,6 +253,7 @@ def download(
     filename: Optional[str] = None,
     auth: Optional[Tuple[str, str]] = None,
     extra_request_headers: Optional[Dict[str, str]] = None,
+    timeout: int = 120,
 ) -> Tuple[str, Dict]:
     """Download a remote file from url, and compute swh hashes on it.
 
@@ -264,6 +265,10 @@ def download(
             algorithms are defined in the :data:`swh.model.hashutil.ALGORITHMS` set.
         auth: Optional tuple of login/password (for http authentication
             service, e.g. deposit)
+        extra_request_headers: Optional dict holding extra HTTP headers to be
+            sent with the request
+        timeout: Value in seconds so the connection does not hang indefinitely
+            (read/connection timeout)
 
     Raises:
         ValueError in case of any error when fetching/computing (length,
@@ -278,8 +283,6 @@ def download(
         params["auth"] = auth
     if extra_request_headers is not None:
         params["headers"].update(extra_request_headers)
-    # so the connection does not hang indefinitely (read/connection timeout)
-    timeout = params.get("timeout", 60)
 
     parsed_url = urlparse(url)
     if parsed_url.scheme == "ftp":
