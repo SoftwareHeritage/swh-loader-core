@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -8,22 +8,26 @@ from datetime import timezone
 from functools import lru_cache
 import json
 import logging
+import os
 import re
+import shutil
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
+from urllib.parse import urlparse
 
 import attr
 import requests
 import sentry_sdk
 
+from swh.core import tarball
 from swh.core.config import load_from_envvar
 from swh.loader.core.loader import DEFAULT_CONFIG
-from swh.loader.core.utils import download
+from swh.loader.core.utils import DOWNLOAD_HASHES, download
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
     RawExtrinsicMetadataCore,
 )
-from swh.model.hashutil import hash_to_hex
+from swh.model.hashutil import MultiHash, hash_to_hex
 from swh.model.model import (
     MetadataAuthority,
     MetadataAuthorityType,
@@ -65,6 +69,63 @@ def build_branch_name(version: str) -> str:
     version = re.sub(r"[^\w\s\.-]", "", version.lower())
     version = re.sub(r"[-\s]+", "-", version).strip("-_.")
     return f"deposit/{version}"
+
+
+def aggregate_tarballs(
+    tmpdir: str, archive_urls: List[str], filename: str
+) -> Tuple[str, Mapping]:
+    """Aggregate multiple tarballs into one and returns this new archive's
+       path.
+
+    Args:
+        extraction_dir: Path to use for the tarballs computation
+        archive_paths: Deposit's archive paths
+
+    Returns:
+        Aggregated archive path (aggregated or not))
+
+    """
+    download_tarball_rootdir = os.path.join(tmpdir, "download")
+    os.makedirs(download_tarball_rootdir, exist_ok=True)
+    if len(archive_urls) > 1:
+        # root folder to build an aggregated tarball
+        aggregated_tarball_rootdir = os.path.join(tmpdir, "aggregate")
+        download_tarball_rootdir = os.path.join(tmpdir, "download")
+        os.makedirs(aggregated_tarball_rootdir, exist_ok=True)
+        os.makedirs(download_tarball_rootdir, exist_ok=True)
+
+        # uncompress in a temporary location all client's deposit archives
+        for archive_url in archive_urls:
+            parsed_archive_url = urlparse(archive_url)
+            archive_name = os.path.basename(parsed_archive_url.path)
+            archive_path = os.path.join(download_tarball_rootdir, archive_name)
+            download(archive_url, download_tarball_rootdir)
+            tarball.uncompress(archive_path, aggregated_tarball_rootdir)
+
+        # Aggregate into one big tarball the multiple smaller ones
+        temp_tarpath = shutil.make_archive(
+            aggregated_tarball_rootdir, "tar", aggregated_tarball_rootdir
+        )
+        # can already clean up temporary directory
+        shutil.rmtree(aggregated_tarball_rootdir)
+        h = MultiHash(hash_names=DOWNLOAD_HASHES)
+        with open(temp_tarpath, "rb") as f:
+            h.update(f.read())
+
+        computed_hashes = h.hexdigest()
+        length = computed_hashes.pop("length")
+        extrinsic_metadata = {
+            "length": length,
+            "filename": filename,
+            "checksums": computed_hashes,
+            "url": ",".join(archive_urls),
+        }
+    else:
+        temp_tarpath, extrinsic_metadata = download(
+            archive_urls[0], download_tarball_rootdir
+        )
+
+    return temp_tarpath, extrinsic_metadata
 
 
 @attr.s
@@ -270,7 +331,9 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         self, p_info: DepositPackageInfo, tmpdir: str
     ) -> List[Tuple[str, Mapping]]:
         """Override to allow use of the dedicated deposit client"""
-        return [self.client.archive_get(p_info.id, tmpdir, p_info.filename)]
+        upload_urls = self.client.upload_urls_get(p_info.id)
+        assert upload_urls, f"No tarballs were uploaded for deposit {p_info.id}"
+        return [aggregate_tarballs(tmpdir, upload_urls, p_info.filename)]
 
     def build_release(
         self,
@@ -432,12 +495,24 @@ class ApiClient:
             kwargs["auth"] = self.auth
         return method_fn(url, *args, **kwargs)
 
-    def archive_get(
-        self, deposit_id: DepositId, tmpdir: str, filename: str
-    ) -> Tuple[str, Dict]:
-        """Retrieve deposit's archive artifact locally"""
-        url = f"{self.base_url}/{deposit_id}/raw/"
-        return download(url, dest=tmpdir, filename=filename, auth=self.auth)
+    def upload_urls_get(
+        self,
+        deposit_id: DepositId,
+    ) -> List[str]:
+        """Return URLs for downloading tarballs uploaded with a deposit request.
+
+        Args:
+            deposit_id: a deposit id
+
+        Returns:
+            A list of URLs
+        """
+        response = self.do("get", f"{self.base_url}/{deposit_id}/upload-urls/")
+        if not response.ok:
+            raise ValueError(
+                f"Problem when retrieving deposit upload URLs at {response.url}"
+            )
+        return response.json()
 
     @lru_cache
     def metadata_get(self, deposit_id: DepositId) -> Dict[str, Any]:

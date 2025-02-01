@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024 The Software Heritage developers
+# Copyright (C) 2019-2025 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -75,7 +75,6 @@ def test_deposit_loading_unknown_deposit(
 
     no origin, no visit, no snapshot
     """
-    # private api url form: 'https://deposit.s.o/1/private/hal/666/raw/'
     url = "some-url"
     unknown_deposit_id = 667
     loader = DepositLoader(
@@ -103,10 +102,10 @@ def test_deposit_loading_unknown_deposit(
     } == stats
 
 
+NOT_FOUND_UPLOAD_URL = "https://deposit.softwareheritage.org/uploads/hello-2.10.zip"
+
 requests_mock_datadir_missing_one = requests_mock_datadir_factory(
-    ignore_urls=[
-        f"{DEPOSIT_URL}/666/raw/",
-    ]
+    ignore_urls=[NOT_FOUND_UPLOAD_URL]
 )
 
 
@@ -114,7 +113,7 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
     swh_storage, deposit_client, requests_mock_datadir_missing_one, requests_mock
 ):
     """Deposit with missing artifact ends up with an uneventful/partial visit"""
-    # private api url form: 'https://deposit.s.o/1/private/hal/666/raw/'
+
     url = "some-url-2"
     deposit_id = 666
     requests_mock_datadir_missing_one.put(re.compile("https"))
@@ -161,7 +160,7 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
         "status_detail": {
             "loading": [
                 "Failed to load branch deposit/1 for some-url-2: 404 Client Error: None "
-                "for url: https://deposit.softwareheritage.org/1/private/666/raw/"
+                f"for url: {NOT_FOUND_UPLOAD_URL}"
             ]
         },
     }
@@ -702,3 +701,34 @@ def test_generate_branch_name_uniqueness(swh_storage, deposit_client):
     assert loader.generate_branch_name("A") == "deposit/a"
     assert loader.generate_branch_name("a") == "deposit/a/1"
     assert loader.generate_branch_name("a$") == "deposit/a/2"
+
+
+def test_deposit_loading_ok_aggregate_tarballs(
+    swh_storage, deposit_client, requests_mock_datadir
+):
+    """Check that multiple tarballs uploaded with a deposit request are
+    aggregated into a single one by the loader.
+    """
+    external_id = "hal-123456"
+    url = f"https://hal-test.archives-ouvertes.fr/{external_id}"
+    deposit_id = 555
+
+    releases = [{"id": deposit_id, "software_version": "1", "origin_url": url}]
+    requests_mock_datadir.get(f"{DEPOSIT_URL}/{deposit_id}/releases/", json=releases)
+
+    loader = DepositLoader(swh_storage, url, deposit_id, deposit_client)
+
+    actual_load_status = loader.load()
+    expected_snapshot_id = "498ba94959ea0591690821c3bf74b7bed745e6eb"
+
+    assert actual_load_status == {
+        "status": "eventful",
+        "snapshot_id": expected_snapshot_id,
+    }
+    assert_last_visit_matches(
+        loader.storage,
+        url,
+        status="full",
+        type="deposit",
+        snapshot=hash_to_bytes(expected_snapshot_id),
+    )
