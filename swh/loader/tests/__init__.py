@@ -342,7 +342,7 @@ def assert_task_and_visit_type_match(tasks_module_name: str) -> None:
         visit_type = loader_cls.visit_type
         task_function_name = f"load_{visit_type.replace('-', '_')}"
         assert task_function_name in task_names, (
-            f"task function {task_function_name} for visit type {visit_type } "
+            f"task function {task_function_name} for visit type {visit_type} "
             f"is missing in {tasks_module_name}"
         )
 
