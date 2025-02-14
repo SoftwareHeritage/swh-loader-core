@@ -100,7 +100,7 @@ Here is an overview of the fields (+ internal version name + branch name) used b
         - Synthetic release for Crate source package {p_info.name} version {p_info.version}
         - true
         - from intrinsic metadata
-        - from extrinsinc metadata
+        - from extrinsic metadata
         - ""
       * - debian
         - =``version``
