@@ -130,7 +130,6 @@ def test_cran_parse_date():
             assert actual_tstz == expected_tstz, date
 
 
-@pytest.mark.fs
 def test_cran_extract_intrinsic_metadata(tmp_path, datadir):
     """Parsing existing archive's PKG-INFO should yield results"""
     uncompressed_archive_path = str(tmp_path)
@@ -161,7 +160,6 @@ def test_cran_extract_intrinsic_metadata(tmp_path, datadir):
     assert actual_metadata == expected_metadata
 
 
-@pytest.mark.fs
 def test_cran_extract_intrinsic_metadata_failures(tmp_path):
     """Parsing inexistent path/archive/PKG-INFO yield None"""
     # inexistent first level path

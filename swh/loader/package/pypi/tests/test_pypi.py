@@ -161,7 +161,6 @@ def test_pypi_api_url_with_slash():
     assert url == "https://pypi.org/pypi/requests/json"
 
 
-@pytest.mark.fs
 def test_pypi_extract_intrinsic_metadata(tmp_path, datadir):
     """Parsing existing archive's PKG-INFO should yield results"""
     uncompressed_archive_path = str(tmp_path)
@@ -185,7 +184,6 @@ def test_pypi_extract_intrinsic_metadata(tmp_path, datadir):
     assert actual_metadata == expected_metadata
 
 
-@pytest.mark.fs
 def test_pypi_extract_intrinsic_metadata_failures(tmp_path):
     """Parsing inexistent path/archive/PKG-INFO yield None"""
     tmp_path = str(tmp_path)  # py3.5 work around (PosixPath issue)

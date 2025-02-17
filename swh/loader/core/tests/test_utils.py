@@ -224,7 +224,6 @@ def test_version_generation():
     ), "Make sure swh.loader.core is installed (e.g. pip install -e .)"
 
 
-@pytest.mark.fs
 def test_download_fail_to_download(tmp_path, requests_mock):
     url = "https://pypi.org/pypi/arrow/json"
     status_code = 404
@@ -251,7 +250,6 @@ def _check_download_ok(url, dest, filename=_filename, hashes=_hashes):
     assert actual_filename == filename
 
 
-@pytest.mark.fs
 def test_download_ok(tmp_path, requests_mock):
     """Download without issue should provide filename and hashes"""
     url = f"https://pypi.org/pypi/requests/{_filename}"
@@ -259,7 +257,6 @@ def test_download_ok(tmp_path, requests_mock):
     _check_download_ok(url, dest=str(tmp_path))
 
 
-@pytest.mark.fs
 def test_download_ok_no_header(tmp_path, requests_mock):
     """Download without issue should provide filename and hashes"""
     url = f"https://pypi.org/pypi/requests/{_filename}"
@@ -267,7 +264,6 @@ def test_download_ok_no_header(tmp_path, requests_mock):
     _check_download_ok(url, dest=str(tmp_path))
 
 
-@pytest.mark.fs
 def test_download_ok_with_hashes(tmp_path, requests_mock):
     """Download without issue should provide filename and hashes"""
     url = f"https://pypi.org/pypi/requests/{_filename}"
@@ -282,7 +278,6 @@ def test_download_ok_with_hashes(tmp_path, requests_mock):
     _check_download_ok(url, dest=str(tmp_path), hashes=good)
 
 
-@pytest.mark.fs
 def test_download_fail_hashes_mismatch(tmp_path, requests_mock):
     """Mismatch hash after download should raise"""
     url = f"https://pypi.org/pypi/requests/{_filename}"
@@ -309,7 +304,6 @@ def test_download_fail_hashes_mismatch(tmp_path, requests_mock):
             download(url, dest=str(tmp_path), hashes=expected_hashes)
 
 
-@pytest.mark.fs
 def test_ftp_download_ok(tmp_path, mocker):
     """Download without issue should provide filename and hashes"""
     url = f"ftp://pypi.org/pypi/requests/{_filename}"
@@ -323,7 +317,6 @@ def test_ftp_download_ok(tmp_path, mocker):
     _check_download_ok(url, dest=str(tmp_path))
 
 
-@pytest.mark.fs
 def test_ftp_download_ko(tmp_path, mocker):
     """Download without issue should provide filename and hashes"""
     filename = "requests-0.0.1.tar.gz"
@@ -335,7 +328,6 @@ def test_ftp_download_ko(tmp_path, mocker):
         download(url, dest=str(tmp_path))
 
 
-@pytest.mark.fs
 def test_download_with_redirection(tmp_path, requests_mock):
     """Download with redirection should use the targeted URL to extract filename"""
     url = "https://example.org/project/requests/download"
@@ -360,7 +352,6 @@ def test_download_extracting_filename_from_url(tmp_path, requests_mock):
     _check_download_ok(url, dest=str(tmp_path))
 
 
-@pytest.mark.fs
 @pytest.mark.parametrize(
     "filename", [f'"{_filename}"', _filename, '"filename with spaces.tar.gz"']
 )
@@ -381,7 +372,6 @@ def test_download_filename_from_content_disposition(tmp_path, requests_mock, fil
     _check_download_ok(url, dest=str(tmp_path), filename=filename.strip('"'))
 
 
-@pytest.mark.fs
 @pytest.mark.parametrize("filename", ['"archive école.tar.gz"', "archive_école.tgz"])
 def test_download_utf8_filename_from_content_disposition(
     tmp_path, requests_mock, filename
