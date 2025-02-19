@@ -142,8 +142,8 @@ def test_download_and_extract_rpm_package(requests_mock_datadir):
         assert os.path.exists(f"{tmpdir}/extracted/nginx-1.18.0.tar.gz")
 
         with open(f"{tmpdir}/extract.log", "r") as f:
-            logs = f.read()
-            assert logs.startswith("404.html")
+            logs = f.readlines()
+            assert logs[0].strip() in ("404.html", "./404.html")
 
 
 def test_extract_non_rpm_package(requests_mock_datadir):
