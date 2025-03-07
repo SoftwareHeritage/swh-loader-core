@@ -587,7 +587,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         origin = Origin(url=self.origin.url)
         try:
             self.storage.origin_add([origin])
-            visit = list(
+            self.visit = list(
                 self.storage.origin_visit_add(
                     [
                         OriginVisit(
@@ -616,7 +616,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             sentry_sdk.capture_exception(e)
             return self.finalize_visit(
                 snapshot=snapshot,
-                visit=visit,
+                visit=self.visit,
                 failed_branches=failed_branches,
                 status_visit="failed",
                 status_load="failed",
@@ -631,7 +631,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         except NotFound as e:
             return self.finalize_visit(
                 snapshot=snapshot,
-                visit=visit,
+                visit=self.visit,
                 failed_branches=failed_branches,
                 status_visit="not_found",
                 status_load="failed",
@@ -642,7 +642,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             sentry_sdk.capture_exception(e)
             return self.finalize_visit(
                 snapshot=snapshot,
-                visit=visit,
+                visit=self.visit,
                 failed_branches=failed_branches,
                 status_visit="failed",
                 status_load="failed",
@@ -784,7 +784,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             logger.error("Failed to load any release for %s", self.origin.url)
             return self.finalize_visit(
                 snapshot=snapshot,
-                visit=visit,
+                visit=self.visit,
                 failed_branches=failed_branches,
                 status_visit="failed",
                 status_load="failed",
@@ -848,7 +848,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         return self.finalize_visit(
             snapshot=snapshot,
-            visit=visit,
+            visit=self.visit,
             failed_branches=failed_branches,
             status_visit=self.status_visit,
             status_load=self.status_load,
