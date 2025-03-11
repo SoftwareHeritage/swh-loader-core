@@ -20,8 +20,8 @@ It can be either a subdirectory of ``swh-loader-core/swh/loader/package/`` like
 the other package loaders, or it can be in its own package.
 
 If you choose the latter, you should also create the base file of any Python
-package (such as ``setup.py``), you should import them from the `swh-py-template`_
-repository.
+package (such as ``pyproject.toml``), you should bootstrap your project using
+`copier`_ and the `swh-py-template`_ repository.
 
 In the rest of this tutorial, we will assume you chose the former and
 your loader is named "New Loader", so your package loader is in
@@ -33,17 +33,15 @@ copy them from an existing package, such as
 ``swh-loader-core/swh/loader/package/pypi/``, and replace the names in those
 with your loader's.
 
-Finally, create an `entrypoint`_ in :file:`setup.py`, so your loader can be discovered
-by the SWH Celery workers::
+Finally, create an `entrypoint`_ in :file:`pyproject.toml`, so your loader can
+be discovered by the SWH Celery workers::
 
-    entry_points="""
-        [swh.workers]
-        loader.newloader=swh.loader.package.newloader:register
-    """,
+    [project.entry-points."swh.workers"]
+    "loader.newloader" = "swh.loader.package.newloader:register"
 
-.. _swh-py-template: https://forge.softwareheritage.org/source/swh-py-template/
+.. _swh-py-template: https://gitlab.softwareheritage.org/swh/devel/swh-py-template/
 .. _entrypoint: https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
-
+.. _copier: https://copier.readthedocs.io/
 
 Writing a minimal loader
 ------------------------
@@ -116,7 +114,7 @@ interactions with the package repository.
 
 
 Building a release
-+++++++++++++++++++
+++++++++++++++++++
 
 The final step for your minimal loader to work, is to implement ``build_release``.
 This is a very important part, as it will create a release object that will be
@@ -185,7 +183,7 @@ With Docker
 We recommend you use our `Docker environment`_ to test your loader.
 
 In short, install Docker, ``cd`` to ``swh-environment/docker/``,
-then `edit docker-compose.override.yml`_ to insert your new loader in the Docker
+then `edit compose.override.yml`_ to insert your new loader in the Docker
 environment, something like this will do::
 
    version: '2'
@@ -197,24 +195,24 @@ environment, something like this will do::
 
 Then start the Docker environment::
 
-   docker-compose start
+   docker compose start
 
 Then, you can run your loader::
 
-   docker-compose exec swh-loader swh loader run newloader "https://example.org/~jdoe/project/"
+   docker compose exec swh-loader swh loader run newloader "https://example.org/~jdoe/project/"
 
-where ``newloader`` is the name you registered as an entrypoint in ``setup.py`` and
+where ``newloader`` is the name you registered as an entrypoint in ``pyproject.toml`` and
 ``https://example.org/~jdoe/project/`` is the origin URL, that will be set as the
 ``self.url`` attribute of your loader.
 
 
 For example, to run the PyPI loader, the command would be::
 
-   docker-compose exec swh-loader swh loader run pypi "https://pypi.org/project/requests/"
+   docker compose exec swh-loader swh loader run pypi "https://pypi.org/project/requests/"
 
 
 If you get this error, make sure you properly configured
-``docker-compose.override.yml``::
+``compose.override.yml``::
 
    Error: Invalid value for '[...]': invalid choice: newloader
 
@@ -256,9 +254,23 @@ For example, with PyPI::
 
    swh loader -C loader.yml run pypi "https://pypi.org/project/requests/"
 
+For loaders that require complex arguments, you can pass them encoded as a yaml string::
 
-.. _Docker environment: https://forge.softwareheritage.org/source/swh-environment/browse/master/docker/
-.. _edit docker-compose.override.yml: https://forge.softwareheritage.org/source/swh-environment/browse/master/docker/#install-a-swh-package-from
+  swh loader -C swh_inmemory.yml run conda \
+      https://anaconda.org/conda-forge/lifetimes \
+      artifacts='[{
+        "url": "https://conda.anaconda.org/conda-forge/linux-64/lifetimes-0.11.1-py36h9f0ad1d_1.tar.bz2",  # noqa: B950
+        "date": "2020-07-06T12:19:36.425000+00:00",
+        "version": "linux-64/0.11.1-py36h9f0ad1d_1",
+        "filename": "lifetimes-0.11.1-py36h9f0ad1d_1.tar.bz2",
+        "checksums": {
+            "md5": "faa398f7ba0d60ce44aa6eeded490cee",
+            "sha256": "f82a352dfae8abceeeaa538b220fd9c5e4aa4e59092a6a6cea70b9ec0581ea03",
+        },
+      }]'
+
+.. _Docker environment: https://gitlab.softwareheritage.org/swh/devel
+.. _edit compose.override.yml: https://docs.softwareheritage.org/devel/getting-started/using-docker.html#install-a-swh-package-from-sources-in-a-container
 
 
 Testing your loader
