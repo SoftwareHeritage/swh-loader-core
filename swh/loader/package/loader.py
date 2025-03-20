@@ -659,9 +659,10 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     packages_info.append((branch_name, p_info))
             except Exception as e:
                 load_exceptions.append(e)
-                sentry_sdk.capture_exception(e)
                 error = f"Failed to get package info for version {version} of {self.origin.url}"
-                logger.exception(error)
+                if not isinstance(e, NotFound):
+                    sentry_sdk.capture_exception(e)
+                    logger.exception(error)
                 errors.append(f"{error}: {e}")
 
         # Compute the ExtID of each of these packages

@@ -19,6 +19,7 @@ from swh.loader.core.loader import (
     SENTRY_VISIT_TYPE_TAG_NAME,
 )
 from swh.loader.core.utils import EMPTY_AUTHOR
+from swh.loader.exception import NotFound
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
 from swh.model.model import (
     ExtID,
@@ -742,3 +743,28 @@ def test_loader_with_duplicated_releases(swh_storage, requests_mock_datadir, moc
             == snapshot.branches[f"branch-v{i}".encode()]
         )
     assert b"HEAD" in snapshot.branches
+
+
+class StubPackageLoaderWithPackageInfoNotFound(StubPackageLoader):
+    def get_package_info(self, version):
+        if version == "v4.0":
+            raise NotFound("Package info not found")
+        else:
+            return super().get_package_info(version)
+
+
+def test_loader_origin_with_package_info_not_found(
+    swh_storage, sentry_events, requests_mock_datadir
+):
+    """NotFound exception for get_package_info should not be sent to sentry."""
+    loader = StubPackageLoaderWithPackageInfoNotFound(swh_storage, ORIGIN_URL)
+
+    assert loader.load() == {
+        "snapshot_id": "eec06c0cb03a0c19d513ad0e9a2b08f547ae7bd2",
+        "status": "eventful",
+    }
+
+    assert loader.load_status() == {"status": "eventful"}
+    assert loader.visit_status() == "partial"
+
+    assert not sentry_events
