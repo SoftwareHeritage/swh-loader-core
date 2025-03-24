@@ -240,15 +240,15 @@ def test_archive_visit_with_skipped_content(swh_storage, requests_mock_datadir):
         ),
     )
 
-    expected_contents = map(
-        hash_to_bytes, _expected_new_non_skipped_contents_first_visit
-    )
+    expected_contents = [
+        hash_to_bytes(h) for h in _expected_new_non_skipped_contents_first_visit
+    ]
     assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
 
-    expected_dirs = map(hash_to_bytes, _expected_new_directories_first_visit)
+    expected_dirs = [hash_to_bytes(h) for h in _expected_new_directories_first_visit]
     assert list(swh_storage.directory_missing(expected_dirs)) == []
 
-    expected_rels = map(hash_to_bytes, _expected_new_releases_first_visit)
+    expected_rels = [hash_to_bytes(h) for h in _expected_new_releases_first_visit]
     assert list(swh_storage.release_missing(expected_rels)) == []
 
 
@@ -315,13 +315,13 @@ def test_archive_visit_with_release_artifact_no_prior_visit(
         ),
     )
 
-    expected_contents = map(hash_to_bytes, _expected_new_contents_first_visit)
+    expected_contents = [hash_to_bytes(h) for h in _expected_new_contents_first_visit]
     assert list(swh_storage.content_missing_per_sha1(expected_contents)) == []
 
-    expected_dirs = map(hash_to_bytes, _expected_new_directories_first_visit)
+    expected_dirs = [hash_to_bytes(h) for h in _expected_new_directories_first_visit]
     assert list(swh_storage.directory_missing(expected_dirs)) == []
 
-    expected_rels = map(hash_to_bytes, _expected_new_releases_first_visit)
+    expected_rels = [hash_to_bytes(h) for h in _expected_new_releases_first_visit]
     assert list(swh_storage.release_missing(expected_rels)) == []
 
 
