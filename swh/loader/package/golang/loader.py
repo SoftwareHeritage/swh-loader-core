@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024  The Software Heritage developers
+# Copyright (C) 2022-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -20,7 +20,13 @@ from swh.loader.core.utils import (
 )
 from swh.loader.exception import NotFound
 from swh.loader.package.loader import BasePackageInfo, PackageLoader
-from swh.model.model import ObjectType, Release, Sha1Git, TimestampWithTimezone
+from swh.model.model import (
+    ObjectType,
+    Release,
+    Sha1Git,
+    TimestampOverflowException,
+    TimestampWithTimezone,
+)
 from swh.storage.interface import StorageInterface
 
 logger = logging.getLogger(__name__)
@@ -90,7 +96,13 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
         # Encode the name because creating nested folders can become problematic
         encoded_name = self.name.replace("/", "__")
         filename = f"{encoded_name}-{version}.zip"
-        timestamp = TimestampWithTimezone.from_iso8601(self._raw_info(version)["Time"])
+        timestamp = None
+        try:
+            timestamp = TimestampWithTimezone.from_iso8601(
+                self._raw_info(version)["Time"]
+            )
+        except TimestampOverflowException:
+            pass
         p_info = GolangPackageInfo(
             url=f"{self.url}/@v/{_uppercase_encode(version)}.zip",
             filename=filename,
