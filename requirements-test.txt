@@ -12,3 +12,4 @@ types-python-dateutil
 types-psutil
 types-pyyaml
 types-requests
+types-toml
