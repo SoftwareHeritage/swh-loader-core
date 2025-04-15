@@ -26,7 +26,7 @@
       {
         "version": "0.1.1",
         "checksums": {
-          "sha256": "bfb0e972e961d6bfd8d344ccf05c29ae39b7d817ced30568204495aee4bab519"
+          "sha256": "b258723566cfb43304645338b9f5bd193b8f47258a7517698bcc8efb21bba499"
         },
         "filename": "micro-timer-0.1.1.crate",
         "url": "https://static.crates.io/crates/micro-timer/micro-timer-0.1.1.crate"

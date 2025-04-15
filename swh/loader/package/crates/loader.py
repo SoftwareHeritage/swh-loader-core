@@ -5,6 +5,7 @@
 
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import string
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
@@ -69,7 +70,13 @@ def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
     Returns:
         A dict mapping from toml parser
     """
-    return toml.load(dir_path / "Cargo.toml")
+    filenames = next(os.walk(dir_path), (None, None, []))[2]
+    if "Cargo.toml" in filenames:
+        return toml.load(dir_path / "Cargo.toml")
+    for filename in filenames:
+        if filename.lower() == "cargo.toml":
+            return toml.load(dir_path / filename)
+    return {}
 
 
 class CratesLoader(PackageLoader[CratesPackageInfo]):

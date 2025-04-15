@@ -158,7 +158,7 @@ def test_crates_loader_load_n_versions(
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "2a8991c525c963f33820118ae9aa8875ad002ac4"
+    expected_snapshot_id = "ab068487d16c6ead88960e29990505caad17ed5e"
 
     assert expected_snapshot_id == actual_load_status["snapshot_id"]
 
@@ -170,7 +170,7 @@ def test_crates_loader_load_n_versions(
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.1.1": SnapshotBranch(
-                target=hash_to_bytes("a54bb00b38ae049ac4d7548a722bcd891811dbf6"),
+                target=hash_to_bytes("298a08059fef2ecc8298bc9371e9608f4f9d5e6e"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.1.2": SnapshotBranch(
@@ -372,7 +372,7 @@ def test_crates_loader_load_multiple_version_incremental(
     visit2_stats = get_stats(swh_storage)
 
     assert visit2_actual_load_status["status"] == "eventful", visit2_actual_load_status
-    expected_snapshot_id2 = hash_to_bytes("7f5aa20941f879e113e17c16c0e8cd3072ae9ff8")
+    expected_snapshot_id2 = hash_to_bytes("1f7bbf678eeedeef31297bc4273118fde8fe1858")
     assert visit2_actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id2.hex(),
@@ -385,7 +385,7 @@ def test_crates_loader_load_multiple_version_incremental(
         id=expected_snapshot_id2,
         branches={
             b"releases/0.1.1": SnapshotBranch(
-                target=hash_to_bytes("a54bb00b38ae049ac4d7548a722bcd891811dbf6"),
+                target=hash_to_bytes("298a08059fef2ecc8298bc9371e9608f4f9d5e6e"),
                 target_type=TargetType.RELEASE,
             ),
             b"releases/0.1.0": SnapshotBranch(
