@@ -1,0 +1,118 @@
+{
+  "crate": {
+    "id": "clippy",
+    "name": "clippy",
+    "updated_at": "2018-10-05T19:39:15.372568Z",
+    "versions": [
+      42100
+    ],
+    "keywords": [
+      "plugin",
+      "lint",
+      "clippy"
+    ],
+    "categories": [
+      "development-tools::cargo-plugins",
+      "development-tools"
+    ],
+    "badges": [],
+    "created_at": "2015-05-09T09:52:36.818972Z",
+    "downloads": 1655741,
+    "recent_downloads": 87382,
+    "default_version": "0.0.302",
+    "num_versions": 210,
+    "yanked": false,
+    "max_version": "0.0.302",
+    "newest_version": "0.0.302",
+    "max_stable_version": "0.0.302",
+    "description": "A bunch of helpful lints to avoid common pitfalls in Rust.",
+    "homepage": null,
+    "documentation": null,
+    "repository": "https://github.com/rust-lang-nursery/rust-clippy",
+    "links": {
+      "version_downloads": "/api/v1/crates/clippy/downloads",
+      "versions": null,
+      "owners": "/api/v1/crates/clippy/owners",
+      "owner_team": "/api/v1/crates/clippy/owner_team",
+      "owner_user": "/api/v1/crates/clippy/owner_user",
+      "reverse_dependencies": "/api/v1/crates/clippy/reverse_dependencies"
+    },
+    "exact_match": false
+  },
+  "versions": [
+    {
+      "id": 42100,
+      "crate": "clippy",
+      "num": "0.0.107",
+      "dl_path": "/api/v1/crates/clippy/0.0.107/download",
+      "readme_path": "/api/v1/crates/clippy/0.0.107/readme",
+      "updated_at": "2017-11-30T03:43:47.182359Z",
+      "created_at": "2017-01-11T14:24:09.821978Z",
+      "downloads": 4722,
+      "features": {
+        "debugging": []
+      },
+      "yanked": false,
+      "yank_message": null,
+      "lib_links": null,
+      "license": "MPL-2.0",
+      "links": {
+        "dependencies": "/api/v1/crates/clippy/0.0.107/dependencies",
+        "version_downloads": "/api/v1/crates/clippy/0.0.107/downloads",
+        "authors": "/api/v1/crates/clippy/0.0.107/authors"
+      },
+      "crate_size": 87791,
+      "published_by": null,
+      "audit_actions": [],
+      "checksum": "99ec3049475544d2330fe515c213fb669b7fa97b1f472443d3798e4ab719071c",
+      "rust_version": null,
+      "has_lib": true,
+      "bin_names": [
+        "cargo-clippy"
+      ],
+      "edition": null,
+      "description": "A bunch of helpful lints to avoid common pitfalls in Rust",
+      "homepage": null,
+      "documentation": null,
+      "repository": "https://github.com/Manishearth/rust-clippy"
+    }
+  ],
+  "keywords": [
+    {
+      "id": "plugin",
+      "keyword": "plugin",
+      "created_at": "2014-11-11T07:06:31.139014Z",
+      "crates_cnt": 399
+    },
+    {
+      "id": "lint",
+      "keyword": "lint",
+      "created_at": "2014-11-14T10:01:23.369404Z",
+      "crates_cnt": 61
+    },
+    {
+      "id": "clippy",
+      "keyword": "clippy",
+      "created_at": "2015-05-09T09:52:36.844345Z",
+      "crates_cnt": 23
+    }
+  ],
+  "categories": [
+    {
+      "id": "development-tools::cargo-plugins",
+      "category": "Cargo plugins",
+      "slug": "development-tools::cargo-plugins",
+      "description": "Subcommands that extend the capabilities of Cargo.",
+      "created_at": "2017-01-17T19:13:05.112025Z",
+      "crates_cnt": 497
+    },
+    {
+      "id": "development-tools",
+      "category": "Development tools",
+      "slug": "development-tools",
+      "description": "Crates that provide developer-facing features such as testing, debugging, linting, performance profiling, autocompletion, formatting, and more.",
+      "created_at": "2016-12-30T23:42:37.777395Z",
+      "crates_cnt": 4913
+    }
+  ]
+}

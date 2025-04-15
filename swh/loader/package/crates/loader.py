@@ -205,17 +205,19 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
         dir_path = Path(uncompressed_path, f"{p_info.name}-{p_info.version}")
         i_metadata = extract_intrinsic_metadata(dir_path)
 
-        author = EMPTY_AUTHOR
-        authors = i_metadata.get("package", {}).get("authors")
-        if authors and isinstance(authors, list):
-            # TODO: here we have a list of author
-            # see https://gitlab.softwareheritage.org/swh/meta/-/issues/3887
-            author = Person.from_fullname(authors[0].encode())
-
         message = (
             f"Synthetic release for Crate source package {p_info.name} "
             f"version {p_info.version}\n"
         )
+
+        author = EMPTY_AUTHOR
+        authors = i_metadata.get("package", {}).get("authors")
+        if authors and isinstance(authors, list):
+            author = Person.from_fullname(authors[0].encode())
+            if len(authors) > 1:
+                message += "\n"
+                for co_author in authors[1:]:
+                    message += f"Co-authored-by: {co_author}\n"
 
         return Release(
             name=p_info.version.encode(),

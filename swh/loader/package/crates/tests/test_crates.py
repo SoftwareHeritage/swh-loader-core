@@ -557,3 +557,44 @@ def test_crates_loader_toml_decode_error(
         date=TimestampWithTimezone.from_iso8601("2019-04-16T18:48:11.404457+00:00"),
         id=hash_to_bytes(expected_release_id),
     )
+
+
+def test_crates_loader_release_with_multiple_authors(
+    datadir, requests_mock_datadir, swh_storage
+):
+    loader = CratesLoader(
+        swh_storage,
+        url="https://crates.io/api/v1/crates/clippy",
+        artifacts=[
+            {
+                "version": "0.0.107",
+                "checksums": {
+                    "sha256": (
+                        "99ec3049475544d2330fe515c213fb66"
+                        "9b7fa97b1f472443d3798e4ab719071c"
+                    ),
+                },
+                "filename": "clippy-0.0.107.crate",
+                "url": ("https://static.crates.io/crates/clippy/clippy-0.0.107.crate"),
+            }
+        ],
+    )
+    actual_load_status = loader.load()
+    assert actual_load_status["status"] == "eventful"
+    assert actual_load_status["snapshot_id"] is not None
+
+    snapshot = loader.last_snapshot()
+    release_id = snapshot.branches[b"releases/0.0.107"].target
+    release = swh_storage.release_get([release_id])[0]
+    assert release.author == Person(
+        fullname=b"Manish Goregaokar <manishsmail@gmail.com>",
+        name=b"Manish Goregaokar",
+        email=b"manishsmail@gmail.com",
+    )
+    assert release.message == (
+        b"Synthetic release for Crate source package clippy version 0.0.107\n\n"
+        b"Co-authored-by: Andre Bogus <bogusandre@gmail.com>\n"
+        b"Co-authored-by: Georg Brandl <georg@python.org>\n"
+        b"Co-authored-by: Martin Carton <cartonmartin@gmail.com>\n"
+        b"Co-authored-by: Oliver Schneider <clippy-iethah7aipeen8neex1a@oli-obk.de>\n"
+    )
