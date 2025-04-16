@@ -72,10 +72,16 @@ def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
     """
     filenames = next(os.walk(dir_path), (None, None, []))[2]
     if "Cargo.toml" in filenames:
-        return toml.load(dir_path / "Cargo.toml")
+        try:
+            return toml.load(dir_path / "Cargo.toml")
+        except toml.decoder.TomlDecodeError:
+            return {}
     for filename in filenames:
         if filename.lower() == "cargo.toml":
-            return toml.load(dir_path / filename)
+            try:
+                return toml.load(dir_path / filename)
+            except toml.decoder.TomlDecodeError:
+                pass
     return {}
 
 

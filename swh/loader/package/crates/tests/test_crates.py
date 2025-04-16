@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from toml.decoder import TomlDecodeError
 
 from swh.loader.core import __version__
 from swh.loader.package.crates.loader import CratesLoader
@@ -498,4 +499,61 @@ def test_crates_loader_raw_extrinsic_metadata(
     ) == PagedResult(
         next_page_token=None,
         results=expected_metadata,
+    )
+
+
+def test_crates_loader_toml_decode_error(
+    datadir, requests_mock_datadir, swh_storage, expected, mocker
+):
+    mocker.patch("toml.load").side_effect = TomlDecodeError(msg="foo", doc="bar", pos=0)
+    loader = CratesLoader(
+        swh_storage,
+        url=expected[0]["url"],
+        artifacts=expected[0]["artifacts"],
+    )
+    actual_load_status = loader.load()
+    assert actual_load_status["status"] == "eventful"
+    assert actual_load_status["snapshot_id"] is not None
+
+    expected_snapshot_id = "1270e5b1cd701a7a74746d98d041f8597a837aae"
+    expected_release_id = "e7fed75c18d47011c1809178502d723dd26c73c9"
+
+    assert expected_snapshot_id == actual_load_status["snapshot_id"]
+
+    expected_snapshot = Snapshot(
+        id=hash_to_bytes(actual_load_status["snapshot_id"]),
+        branches={
+            b"releases/0.0.1": SnapshotBranch(
+                target=hash_to_bytes(expected_release_id),
+                target_type=SnapshotTargetType.RELEASE,
+            ),
+            b"HEAD": SnapshotBranch(
+                target=b"releases/0.0.1",
+                target_type=SnapshotTargetType.ALIAS,
+            ),
+        },
+    )
+    check_snapshot(expected_snapshot, swh_storage)
+
+    stats = get_stats(swh_storage)
+    assert {
+        "content": 1,
+        "directory": 2,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 1,
+        "revision": 0,
+        "skipped_content": 0,
+        "snapshot": 1,
+    } == stats
+
+    assert swh_storage.release_get([hash_to_bytes(expected_release_id)])[0] == Release(
+        name=b"0.0.1",
+        message=b"Synthetic release for Crate source package hg-core version 0.0.1\n",
+        target=hash_to_bytes("674c3b0b54628d55b93a79dc7adf304efc01b371"),
+        target_type=ObjectType.DIRECTORY,
+        synthetic=True,
+        author=Person.from_fullname(b""),
+        date=TimestampWithTimezone.from_iso8601("2019-04-16T18:48:11.404457+00:00"),
+        id=hash_to_bytes(expected_release_id),
     )
