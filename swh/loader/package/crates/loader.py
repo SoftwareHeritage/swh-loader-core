@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024  The Software Heritage developers
+# Copyright (C) 2022-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -183,7 +183,7 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
                 ),
             ],
         )
-        yield release_name(version, filename), p_info
+        yield release_name(version), p_info
 
     def build_release(
         self, p_info: CratesPackageInfo, uncompressed_path: str, directory: Sha1Git

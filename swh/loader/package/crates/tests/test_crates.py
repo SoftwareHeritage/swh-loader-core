@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024  The Software Heritage developers
+# Copyright (C) 2022-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -99,7 +99,7 @@ def test_crates_loader_load_one_version(
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "779fa94645a772fb9992c2bf80bf5e2ecfdb1b5c"
+    expected_snapshot_id = "c8f50743fa4fbeef1c94cc5ca3e32155a4dfa12d"
     expected_release_id = "bb6f9b125867a8b4fa0b2febf890a317744e0140"
 
     assert expected_snapshot_id == actual_load_status["snapshot_id"]
@@ -107,12 +107,12 @@ def test_crates_loader_load_one_version(
     expected_snapshot = Snapshot(
         id=hash_to_bytes(actual_load_status["snapshot_id"]),
         branches={
-            b"releases/0.0.1/hg-core-0.0.1.crate": SnapshotBranch(
+            b"releases/0.0.1": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
                 target_type=SnapshotTargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/0.0.1/hg-core-0.0.1.crate",
+                target=b"releases/0.0.1",
                 target_type=SnapshotTargetType.ALIAS,
             ),
         },
@@ -158,47 +158,47 @@ def test_crates_loader_load_n_versions(
     assert actual_load_status["status"] == "eventful"
     assert actual_load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "d53bf516948733e422eaceb95dd1ef317e6f5df9"
+    expected_snapshot_id = "2a8991c525c963f33820118ae9aa8875ad002ac4"
 
     assert expected_snapshot_id == actual_load_status["snapshot_id"]
 
     expected_snapshot = Snapshot(
         id=hash_to_bytes(expected_snapshot_id),
         branches={
-            b"releases/0.1.0/micro-timer-0.1.0.crate": SnapshotBranch(
+            b"releases/0.1.0": SnapshotBranch(
                 target=hash_to_bytes("bd8d093b4ad56ca7e49aa0f709d945483b831915"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.1.1/micro-timer-0.1.1.crate": SnapshotBranch(
+            b"releases/0.1.1": SnapshotBranch(
                 target=hash_to_bytes("a54bb00b38ae049ac4d7548a722bcd891811dbf6"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.1.2/micro-timer-0.1.2.crate": SnapshotBranch(
+            b"releases/0.1.2": SnapshotBranch(
                 target=hash_to_bytes("e234efbaef1999866d3b5c9a5676c42a5c4d1d3f"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.2.0/micro-timer-0.2.0.crate": SnapshotBranch(
+            b"releases/0.2.0": SnapshotBranch(
                 target=hash_to_bytes("519bfdb898f91011eeb618d7d7aaa93097e57ab4"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.2.1/micro-timer-0.2.1.crate": SnapshotBranch(
+            b"releases/0.2.1": SnapshotBranch(
                 target=hash_to_bytes("c1bdd5a5a0769c4fd10af92a43e66ce7a2394e8c"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.3.0/micro-timer-0.3.0.crate": SnapshotBranch(
+            b"releases/0.3.0": SnapshotBranch(
                 target=hash_to_bytes("d68b74713017c0b32a553f107d179be386bafdbc"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.3.1/micro-timer-0.3.1.crate": SnapshotBranch(
+            b"releases/0.3.1": SnapshotBranch(
                 target=hash_to_bytes("ee11442a44d32562aedf731932ae4a8a9cf23feb"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.4.0/micro-timer-0.4.0.crate": SnapshotBranch(
+            b"releases/0.4.0": SnapshotBranch(
                 target=hash_to_bytes("0018b25f87d0838f6bef3e94b3000043bc9c938d"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/0.4.0/micro-timer-0.4.0.crate",
+                target=b"releases/0.4.0",
                 target_type=SnapshotTargetType.ALIAS,
             ),
         },
@@ -241,7 +241,7 @@ def test_crates_loader_load_multiple_visits_no_changes(
     assert visit_1_actual_load_status["status"] == "eventful"
     assert visit_1_actual_load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "779fa94645a772fb9992c2bf80bf5e2ecfdb1b5c"
+    expected_snapshot_id = "c8f50743fa4fbeef1c94cc5ca3e32155a4dfa12d"
     expected_release_id = "bb6f9b125867a8b4fa0b2febf890a317744e0140"
 
     assert expected_snapshot_id == visit_1_actual_load_status["snapshot_id"]
@@ -249,12 +249,12 @@ def test_crates_loader_load_multiple_visits_no_changes(
     expected_snapshot = Snapshot(
         id=hash_to_bytes(visit_1_actual_load_status["snapshot_id"]),
         branches={
-            b"releases/0.0.1/hg-core-0.0.1.crate": SnapshotBranch(
+            b"releases/0.0.1": SnapshotBranch(
                 target=hash_to_bytes(expected_release_id),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/0.0.1/hg-core-0.0.1.crate",
+                target=b"releases/0.0.1",
                 target_type=TargetType.ALIAS,
             ),
         },
@@ -339,7 +339,7 @@ def test_crates_loader_load_multiple_version_incremental(
 
     visit1_actual_load_status = loader.load()
     visit1_stats = get_stats(swh_storage)
-    expected_snapshot_id = hash_to_bytes("729d99ab2e68cde99c425251ac5725c478d686df")
+    expected_snapshot_id = hash_to_bytes("e7986b6e255d55bd0ef37bd098d0d4a4c8aefa35")
 
     assert visit1_actual_load_status == {
         "status": "eventful",
@@ -372,7 +372,7 @@ def test_crates_loader_load_multiple_version_incremental(
     visit2_stats = get_stats(swh_storage)
 
     assert visit2_actual_load_status["status"] == "eventful", visit2_actual_load_status
-    expected_snapshot_id2 = hash_to_bytes("eff31762ab65175192d6e1f0570d8b2e4176ff0d")
+    expected_snapshot_id2 = hash_to_bytes("7f5aa20941f879e113e17c16c0e8cd3072ae9ff8")
     assert visit2_actual_load_status == {
         "status": "eventful",
         "snapshot_id": expected_snapshot_id2.hex(),
@@ -384,16 +384,16 @@ def test_crates_loader_load_multiple_version_incremental(
     expected_snapshot = Snapshot(
         id=expected_snapshot_id2,
         branches={
-            b"releases/0.1.1/micro-timer-0.1.1.crate": SnapshotBranch(
+            b"releases/0.1.1": SnapshotBranch(
                 target=hash_to_bytes("a54bb00b38ae049ac4d7548a722bcd891811dbf6"),
                 target_type=TargetType.RELEASE,
             ),
-            b"releases/0.1.0/micro-timer-0.1.0.crate": SnapshotBranch(
+            b"releases/0.1.0": SnapshotBranch(
                 target=hash_to_bytes("bd8d093b4ad56ca7e49aa0f709d945483b831915"),
                 target_type=TargetType.RELEASE,
             ),
             b"HEAD": SnapshotBranch(
-                target=b"releases/0.1.1/micro-timer-0.1.1.crate",
+                target=b"releases/0.1.1",
                 target_type=TargetType.ALIAS,
             ),
         },
