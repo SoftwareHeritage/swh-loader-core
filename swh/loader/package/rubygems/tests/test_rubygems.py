@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import gzip
 import hashlib
 import os
 from pathlib import Path
@@ -53,27 +54,16 @@ ORIGIN = {
     "rubygem_metadata": [
         {
             "date": "2016-11-05T00:00:00+00:00",
-            "authors": "Gemma Gotch",
             "version": "0.0.2",
             "extrinsic_metadata_url": "https://rubygems.org/api/v2/rubygems/haar_joke/versions/0.0.2.json",  # noqa: B950
         },
         {
             "date": "2016-07-23T00:00:00+00:00",
-            "authors": "Gemma Gotch",
             "version": "0.0.1",
             "extrinsic_metadata_url": "https://rubygems.org/api/v2/rubygems/haar_joke/versions/0.0.1.json",  # noqa: B950
         },
     ],
 }
-
-
-@pytest.fixture
-def head_release_extrinsic_metadata(datadir):
-    return Path(
-        datadir,
-        "https_rubygems.org",
-        "api_v2_rubygems_haar_joke_versions_0.0.2.json",
-    ).read_bytes()
 
 
 def test_get_sorted_versions(requests_mock_datadir, swh_storage):
@@ -104,21 +94,26 @@ def uncompress_gem_package(datadir, tmp_path, package_filename):
     uncompress(tarball_path, uncompress_path)
     contents_uncompressed_path = os.path.join(uncompress_path, "data")
     contents_tarball_path = os.path.join(uncompress_path, "data.tar.gz")
+    metadata_path = os.path.join(uncompress_path, "metadata.gz")
+    with gzip.open(metadata_path) as metadata_stream:
+        metadata_bytes = metadata_stream.read()
     uncompress(contents_tarball_path, contents_uncompressed_path)
-    return from_disk.Directory.from_disk(
-        path=contents_uncompressed_path.encode("utf-8"),
-        max_content_length=None,
+    return (
+        from_disk.Directory.from_disk(
+            path=contents_uncompressed_path.encode("utf-8"), max_content_length=None
+        ),
+        metadata_bytes,
     )
 
 
 @pytest.fixture
 def release_0_0_1_dir(datadir, tmp_path):
-    return uncompress_gem_package(datadir, tmp_path, "downloads_haar_joke-0.0.1.gem")
+    return uncompress_gem_package(datadir, tmp_path, "downloads_haar_joke-0.0.1.gem")[0]
 
 
 @pytest.fixture
 def release_0_0_2_dir(datadir, tmp_path):
-    return uncompress_gem_package(datadir, tmp_path, "downloads_haar_joke-0.0.2.gem")
+    return uncompress_gem_package(datadir, tmp_path, "downloads_haar_joke-0.0.2.gem")[0]
 
 
 @pytest.fixture
@@ -130,9 +125,9 @@ def release_0_0_1(release_0_0_1_dir):
         target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(
-            fullname=b"Gemma Gotch",
-            name=b"",
-            email=None,
+            fullname=b"Gemma Gotch <pveggie@hotmail.com>",
+            name=b"Gemma Gotch",
+            email=b"pveggie@hotmail.com",
         ),
         date=TimestampWithTimezone.from_iso8601("2016-07-23T00:00:00+00:00"),
     )
@@ -147,12 +142,26 @@ def release_0_0_2(release_0_0_2_dir):
         target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(
-            fullname=b"Gemma Gotch",
-            name=b"",
-            email=None,
+            fullname=b"Gemma Gotch <pveggie@hotmail.com>",
+            name=b"Gemma Gotch",
+            email=b"pveggie@hotmail.com",
         ),
         date=TimestampWithTimezone.from_iso8601("2016-11-05T00:00:00+00:00"),
     )
+
+
+@pytest.fixture
+def head_release_extrinsic_metadata_json(datadir):
+    return Path(
+        datadir,
+        "https_rubygems.org",
+        "api_v2_rubygems_haar_joke_versions_0.0.2.json",
+    ).read_bytes()
+
+
+@pytest.fixture
+def head_release_extrinsic_metadata_yaml(datadir, tmp_path):
+    return uncompress_gem_package(datadir, tmp_path, "downloads_haar_joke-0.0.2.gem")[1]
 
 
 @pytest.fixture
@@ -178,7 +187,8 @@ def expected_stats(release_0_0_1_dir, release_0_0_2_dir) -> dict:
 def test_rubygems_loader(
     swh_storage,
     requests_mock_datadir,
-    head_release_extrinsic_metadata,
+    head_release_extrinsic_metadata_json,
+    head_release_extrinsic_metadata_yaml,
     release_0_0_1,
     release_0_0_2,
     expected_stats,
@@ -241,7 +251,20 @@ def test_rubygems_loader(
             ),
             discovery_date=loader.visit_date,
             format="rubygem-release-json",
-            metadata=head_release_extrinsic_metadata,
+            metadata=head_release_extrinsic_metadata_json,
+            origin=ORIGIN["url"],
+            release=release_swhid,
+        ),
+        RawExtrinsicMetadata(
+            target=directory_swhid,
+            authority=loader.get_metadata_authority(),
+            fetcher=MetadataFetcher(
+                name="swh.loader.package.rubygems.loader.RubyGemsLoader",
+                version=__version__,
+            ),
+            discovery_date=loader.visit_date,
+            format="rubygem-release-yaml",
+            metadata=head_release_extrinsic_metadata_yaml,
             origin=ORIGIN["url"],
             release=release_swhid,
         ),
@@ -253,4 +276,53 @@ def test_rubygems_loader(
             loader.get_metadata_authority(),
         ).results
         == expected_metadata
+    )
+
+
+def test_rubygems_loader_authors_extraction_from_metadata(
+    swh_storage,
+    requests_mock_datadir,
+):
+    loader = RubyGemsLoader(
+        swh_storage,
+        url="https://rubygems.org/gems/flurin-ticgit",
+        artifacts=[
+            {
+                "url": "https://rubygems.org/downloads/flurin-ticgit-0.3.7.gem",
+                "length": 14336,
+                "version": "0.3.7",
+                "filename": "flurin-ticgit-0.3.7.gem",
+                "checksums": {
+                    "sha256": "031ee86f4954e4d421bd3334dfdd128a377ea41d042c24f5f9226d57c006032b"
+                },
+            }
+        ],
+        rubygem_metadata=[
+            {
+                "date": "2016-07-23T00:00:00+00:00",
+                "version": "0.3.7",
+                "extrinsic_metadata_url": "https://rubygems.org/api/v2/rubygems/flurin-ticgit/versions/0.3.7.json",  # noqa: B950
+            }
+        ],
+    )
+    load_status = loader.load()
+    assert load_status["status"] == "eventful"
+    assert load_status["snapshot_id"] is not None
+
+    snapshot = loader.last_snapshot()
+    release_id = snapshot.branches[b"releases/0.3.7"].target
+    release = swh_storage.release_get([release_id])[0]
+    assert release.author == Person(
+        fullname=b"Scott Chacon <schacon@gmail.com>",
+        name=b"Scott Chacon",
+        email=b"schacon@gmail.com",
+    )
+
+    assert (
+        release.message
+        == (
+            "Synthetic release for RubyGems source package flurin-ticgit version 0.3.7\n\n"
+            "Co-authored-by: Mislav Marohnić\n"
+            "Co-authored-by: Flurin Egger\n"
+        ).encode()
     )

@@ -1,0 +1,52 @@
+{
+    "name": "flurin-ticgit",
+    "downloads": 6284,
+    "version": "0.3.7",
+    "version_created_at": "2014-08-11T04:46:33.478Z",
+    "version_downloads": 2654,
+    "platform": "ruby",
+    "authors": "Scott Chacon, Mislav MarohniÄ‡, Flurin Egger",
+    "info": "A distributed ticketing system for Git projects.",
+    "licenses": [],
+    "metadata": {},
+    "yanked": false,
+    "sha": "031ee86f4954e4d421bd3334dfdd128a377ea41d042c24f5f9226d57c006032b",
+    "spec_sha": "6e91d7130579307a0047a27e0d0abbf3de1d7ff6aa133e3d9d19a322d91f4e9a",
+    "project_uri": "https://rubygems.org/gems/flurin-ticgit",
+    "gem_uri": "https://rubygems.org/gems/flurin-ticgit-0.3.7.gem",
+    "homepage_uri": "http://github.com/schacon/ticgit/wikis",
+    "wiki_uri": null,
+    "documentation_uri": "https://www.rubydoc.info/gems/flurin-ticgit/0.3.7",
+    "mailing_list_uri": null,
+    "source_code_uri": null,
+    "bug_tracker_uri": null,
+    "changelog_uri": null,
+    "funding_uri": null,
+    "dependencies": {
+        "development": [],
+        "runtime": [
+            {
+                "name": "schacon-git",
+                "requirements": "~> 1.0.5"
+            },
+            {
+                "name": "sinatra",
+                "requirements": "~> 0.3.1"
+            },
+            {
+                "name": "wycats-thor",
+                "requirements": "~> 0.9.5"
+            }
+        ]
+    },
+    "built_at": "2008-09-11T00:00:00.000Z",
+    "created_at": "2014-08-11T04:46:33.478Z",
+    "description": "",
+    "downloads_count": 2654,
+    "number": "0.3.7",
+    "summary": "A distributed ticketing system for Git projects.",
+    "rubygems_version": ">= 0",
+    "ruby_version": ">= 0",
+    "prerelease": false,
+    "requirements": []
+}
