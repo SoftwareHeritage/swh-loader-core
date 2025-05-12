@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -37,7 +37,7 @@ from swh.storage.interface import PagedResult
 @pytest.fixture
 def org_api_info(datadir) -> bytes:
     with open(
-        os.path.join(datadir, "https_replicate.npmjs.com", "org"),
+        os.path.join(datadir, "https_registry.npmjs.org", "org"),
         "rb",
     ) as f:
         return f.read()
@@ -109,7 +109,7 @@ def test_npm_author_str():
 
 def test_npm_extract_npm_package_author(datadir):
     package_metadata_filepath = os.path.join(
-        datadir, "https_replicate.npmjs.com", "org_visit1"
+        datadir, "https_registry.npmjs.org", "org_visit1"
     )
 
     with open(package_metadata_filepath) as json_file:
@@ -526,7 +526,7 @@ def test_npm_loader_incremental_visit(swh_storage, requests_mock_datadir_visits)
     urls = [
         m.url
         for m in requests_mock_datadir_visits.request_history
-        if m.url.startswith("https://registry.npmjs.org")
+        if m.url.startswith("https://registry.npmjs.org/org/-/")
     ]
     assert len(urls) == len(set(urls))  # we visited each artifact once across
 

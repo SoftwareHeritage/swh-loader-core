@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -111,7 +111,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         super().__init__(storage=storage, url=url, **kwargs)
         self.package_name = url.split("https://www.npmjs.com/package/")[1]
         safe_name = quote(self.package_name, safe="")
-        self.provider_url = f"https://replicate.npmjs.com/{safe_name}/"
+        self.provider_url = f"https://registry.npmjs.org/{safe_name}/"
         self._info: Dict[str, Any] = {}
         self._versions = None
 
