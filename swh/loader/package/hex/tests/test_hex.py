@@ -1,3 +1,8 @@
+# Copyright (C) 2022-2025  The Software Heritage developers
+# See the AUTHORS file at the top-level directory of this distribution
+# License: GNU General Public License version 3, or any later version
+# See top-level LICENSE file for more information
+
 import hashlib
 import os
 from pathlib import Path
@@ -52,7 +57,7 @@ def uncompress_hex_package(datadir, tmp_path, package_filename):
     contents_tarball_path = os.path.join(uncompress_path, "contents.tar.gz")
     uncompress(contents_tarball_path, contents_uncompressed_path)
     return from_disk.Directory.from_disk(
-        path=contents_uncompressed_path.encode("utf-8")
+        path=contents_uncompressed_path.encode("utf-8"), max_content_length=None
     )
 
 

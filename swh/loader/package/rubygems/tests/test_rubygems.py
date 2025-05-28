@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024  The Software Heritage developers
+# Copyright (C) 2022-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -106,7 +106,8 @@ def uncompress_gem_package(datadir, tmp_path, package_filename):
     contents_tarball_path = os.path.join(uncompress_path, "data.tar.gz")
     uncompress(contents_tarball_path, contents_uncompressed_path)
     return from_disk.Directory.from_disk(
-        path=contents_uncompressed_path.encode("utf-8")
+        path=contents_uncompressed_path.encode("utf-8"),
+        max_content_length=None,
     )
 
 

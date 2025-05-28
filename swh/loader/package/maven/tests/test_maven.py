@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024 The Software Heritage developers
+# Copyright (C) 2019-2025 The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -101,8 +101,12 @@ def jar_dirs(tmp_path):
     uncompress(jar_1_path, jar_1_extract_path)
     uncompress(jar_2_path, jar_2_extract_path)
 
-    jar_1_dir = Directory.from_disk(path=jar_1_extract_path.encode())
-    jar_2_dir = Directory.from_disk(path=jar_2_extract_path.encode())
+    jar_1_dir = Directory.from_disk(
+        path=jar_1_extract_path.encode(), max_content_length=None
+    )
+    jar_2_dir = Directory.from_disk(
+        path=jar_2_extract_path.encode(), max_content_length=None
+    )
 
     return [jar_1_dir, jar_2_dir]
 
