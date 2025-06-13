@@ -7,12 +7,14 @@ import datetime
 from functools import partial
 import hashlib
 import logging
+import os
 import time
 from typing import Any, Dict
 from unittest.mock import MagicMock, call
 
 import pytest
 
+from swh.core import tests as core_tests
 from swh.core.api.classes import stream_results
 from swh.core.nar import compute_nar_hashes
 from swh.core.tests.test_retry import assert_sleep_calls
@@ -977,3 +979,160 @@ def test_nar_vcs_type_for_svn_dir_loader(swh_storage, tarball_path, mocker):
 
     _, kwargs = nar_obj.call_args
     assert kwargs == {"exclude_vcs": True, "vcs_type": "svn"}
+
+
+@pytest.fixture()
+def tarball_nar_archive_url():
+    archive_path = os.path.join(
+        os.path.dirname(core_tests.__file__),
+        "data",
+        "archives",
+        "nar",
+        "archive.nar.xz",
+    )
+    return f"file://{archive_path}"
+
+
+@pytest.fixture()
+def content_nar_archive_url():
+    archive_path = os.path.join(
+        os.path.dirname(core_tests.__file__),
+        "data",
+        "archives",
+        "nar",
+        "archive.nar.bz2",
+    )
+    return f"file://{archive_path}"
+
+
+@pytest.mark.parametrize(
+    "checksum_layout, sha256_checksum",
+    [
+        ("nar", ""),
+        (
+            "nar",
+            "4deb38d07185f6f05e788f8b2395599f085ba593f71314181f7bede8255570b5",
+        ),
+    ],
+)
+def test_tarball_loader_nar_archive_recursive_hash(
+    swh_storage, tarball_nar_archive_url, checksum_layout, sha256_checksum
+):
+    """Test a NAR archive containing files and directories can be loaded
+    as a directory."""
+    checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        tarball_nar_archive_url,
+        checksum_layout=checksum_layout,
+        checksums=checksums,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    stats = get_stats(swh_storage)
+
+    assert stats == {
+        "content": 56,
+        "directory": 8,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 0,
+        "skipped_content": 0,
+        "snapshot": 1,
+    }
+
+    extids = fetch_extids_from_checksums(
+        swh_storage, checksum_layout, checksums, extid_version=loader.extid_version
+    )
+    assert len(extids) == len(checksums)
+
+
+@pytest.mark.parametrize(
+    "checksum_layout, sha256_checksum",
+    [
+        ("standard", ""),
+        (
+            "standard",
+            "83293737e803b43112830443fb5208ec5208a2e6ea512ed54ef8e4dd2b880827",
+        ),
+    ],
+)
+def test_tarball_loader_nar_archive_flat_hash(
+    swh_storage, requests_mock_datadir, checksum_layout, sha256_checksum
+):
+    """Test a NAR archive containing a tarball can be loaded as a directory."""
+    checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        "https://example.org/tarball.nar.xz",
+        checksum_layout=checksum_layout,
+        checksums=checksums,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    stats = get_stats(swh_storage)
+
+    assert stats == {
+        "content": 7,
+        "directory": 5,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 0,
+        "skipped_content": 0,
+        "snapshot": 1,
+    }
+
+    extids = fetch_extids_from_checksums(
+        swh_storage, checksum_layout, checksums, extid_version=loader.extid_version
+    )
+    assert len(extids) == len(checksums)
+
+
+@pytest.mark.parametrize(
+    "checksum_layout, sha256_checksum",
+    [
+        ("standard", ""),
+        (
+            "standard",
+            "58f613b00b414a86aa776b76fcd899bb415e4ee4edc2184c8a7c4ed1004dbbf3",
+        ),
+    ],
+)
+def test_content_loader_nar_archive_flat_hash(
+    swh_storage, content_nar_archive_url, checksum_layout, sha256_checksum
+):
+    """Test a NAR archive containing a file can be loaded as a content."""
+    checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
+    loader = ContentLoader(
+        swh_storage,
+        content_nar_archive_url,
+        checksum_layout=checksum_layout,
+        checksums=checksums,
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    stats = get_stats(swh_storage)
+
+    assert stats == {
+        "content": 1,
+        "directory": 0,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 0,
+        "skipped_content": 0,
+        "snapshot": 1,
+    }
+
+    extids = fetch_extids_from_checksums(
+        swh_storage, checksum_layout, checksums, extid_version=loader.extid_version
+    )
+    assert len(extids) == len(checksums)

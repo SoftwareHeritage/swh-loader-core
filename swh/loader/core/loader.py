@@ -24,6 +24,7 @@ from typing import (
     Union,
 )
 from urllib.parse import urlparse
+import uuid
 
 from requests.exceptions import HTTPError
 import sentry_sdk
@@ -920,9 +921,26 @@ class ContentLoader(NodeLoader):
             )
             try:
                 with tempfile.TemporaryDirectory() as tmpdir:
-                    file_path, _ = _download(
-                        url, dest=tmpdir, hashes=self.standard_hashes
+                    hashes = self.standard_hashes
+                    nar_archive = self.origin.url.endswith(
+                        (".nar", ".nar.xz", ".nar.bz2")
                     )
+                    if nar_archive:
+                        # NixOS package special case, we do not check hashes directly
+                        # after download as the content to check is packed in a NAR archive
+                        hashes = {}
+                    file_path, _ = _download(url, dest=tmpdir, hashes=hashes)
+                    if nar_archive:
+                        # NixOS package special case, the content is in a NAR archive
+                        # and must be unpacked
+                        uncompressed_file_path = os.path.join(tmpdir, str(uuid.uuid4()))
+                        uncompress(file_path, uncompressed_file_path)
+                        file_path, _ = _download(
+                            f"file://{uncompressed_file_path}",
+                            dest=tmpdir,
+                            filename=str(uuid.uuid4()),
+                            hashes=self.standard_hashes,
+                        )
                     found_file_path = True
                     yield Path(file_path)
             except ValueError as e:
@@ -1137,12 +1155,36 @@ class TarballDirectoryLoader(BaseDirectoryLoader):
             )
             with tempfile.TemporaryDirectory() as tmpdir:
                 try:
+                    hashes = self.standard_hashes
+                    nar_archive = self.origin.url.endswith(
+                        (".nar", ".nar.xz", ".nar.bz2")
+                    )
+                    if nar_archive and self.checksum_layout == "standard":
+                        # NixOS package special case, we do not check hashes directly
+                        # after download as the tarball to check is packed in a NAR archive
+                        hashes = {}
                     tarball_path, _ = _download(
                         url,
                         tmpdir,
-                        hashes=self.standard_hashes,
+                        hashes=hashes,
                         extra_request_headers={"Accept-Encoding": "identity"},
                     )
+                    if nar_archive and self.checksum_layout == "standard":
+                        # NixOS package special case, the tarball is in a NAR archive
+                        # and must be unpacked
+                        filename = self.origin.url.split("/")[-1].split(".", 1)[0]
+                        uncompressed_dir = os.path.join(tmpdir, str(uuid.uuid4()))
+                        os.makedirs(uncompressed_dir)
+                        uncompressed_tarball_path = os.path.join(
+                            uncompressed_dir, filename
+                        )
+                        uncompress(tarball_path, uncompressed_tarball_path)
+
+                        tarball_path, _ = _download(
+                            f"file://{uncompressed_tarball_path}",
+                            dest=tmpdir,
+                            hashes=self.standard_hashes,
+                        )
                 except ValueError as e:
                     errors.append(e)
                     self.log.debug(
