@@ -29,7 +29,6 @@ testing = {file = ["requirements-test.txt"]}
 
 [project.entry-points."swh.cli.subcommands"]
 "swh.loader.core" = "swh.loader.cli"
-"swh.loader.core.nar" = "swh.loader.core.nar"
 
 [project.entry-points."swh.workers"]
 "loader.content" = "swh.loader.core:register_content"

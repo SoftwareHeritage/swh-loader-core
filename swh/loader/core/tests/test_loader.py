@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2024  The Software Heritage developers
+# Copyright (C) 2018-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from swh.core.api.classes import stream_results
+from swh.core.nar import compute_nar_hashes
 from swh.core.tests.test_retry import assert_sleep_calls
 from swh.loader.core.loader import (
     SENTRY_ORIGIN_URL_TAG_NAME,
@@ -35,7 +36,7 @@ from swh.loader.core.tests.dummy_loader import (
     DummyMetadataFetcherWithFork,
     FooLoader,
 )
-from swh.loader.core.utils import compute_hashes, compute_nar_hashes
+from swh.loader.core.utils import compute_hashes
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
 from swh.loader.tests import (
     assert_last_visit_matches,
@@ -961,7 +962,7 @@ def test_nar_vcs_type_for_svn_dir_loader(swh_storage, tarball_path, mocker):
 
     checksums = compute_nar_hashes(tarball_path, ["sha1", "sha256", "sha512"])
 
-    from swh.loader.core.nar import Nar
+    from swh.core.nar import Nar
 
     nar_obj = mocker.spy(Nar, "__init__")
 

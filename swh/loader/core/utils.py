@@ -11,11 +11,9 @@ import io
 import itertools
 import logging
 import os
-from pathlib import Path
 import re
 import shutil
 import signal
-import tempfile
 import time
 import traceback
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
@@ -29,9 +27,7 @@ import requests
 from tenacity.before_sleep import before_sleep_log
 
 from swh.core.retry import http_retry
-from swh.core.tarball import uncompress
 from swh.loader.core import __version__
-from swh.loader.core.nar import Nar
 from swh.loader.exception import NotFound
 from swh.model.hashutil import HASH_BLOCK_SIZE, MultiHash
 from swh.model.model import Person
@@ -158,50 +154,6 @@ def parse_visit_date(visit_date: Optional[Union[datetime, str]]) -> Optional[dat
 def compute_hashes(filepath: str, hash_names: List[str] = ["sha256"]) -> Dict[str, str]:
     """Compute checksums dict out of a filepath"""
     return MultiHash.from_path(filepath, hash_names=hash_names).hexdigest()
-
-
-def compute_nar_hashes(
-    filepath: Path,
-    hash_names: List[str] = ["sha256"],
-    is_tarball=True,
-    top_level=True,
-) -> Dict[str, str]:
-    """Compute nar checksums dict out of a filepath (tarball or plain file).
-
-    If it's a tarball, this uncompresses the tarball in a temporary directory to compute
-    the nar hashes (and then cleans it up).
-
-    Args:
-        filepath: The tarball (if is_tarball is True) or a filepath
-        hash_names: The list of checksums to compute
-        is_tarball: Whether filepath represents a tarball or not
-        top_level: Whether we want to compute the top-level directory (of the tarball)
-            hashes. This is only useful when used with 'is_tarball' at True.
-
-    Returns:
-        The dict of checksums values whose keys are present in hash_names.
-
-    """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        if is_tarball:
-            directory_path = Path(tmpdir)
-            directory_path.mkdir(parents=True, exist_ok=True)
-            uncompress(str(filepath), dest=str(directory_path))
-
-            if top_level:
-                # Default behavior, pass the extracted tarball path root directory
-                path_on_disk = directory_path
-            else:
-                # Pass along the first directory of the tarball
-                path_on_disk = next(iter(directory_path.iterdir()))
-        else:
-            path_on_disk = filepath
-
-        nar = Nar(hash_names)
-        nar.serialize(path_on_disk)
-        hashes = nar.hexdigest()
-
-    return hashes
 
 
 @http_retry(
