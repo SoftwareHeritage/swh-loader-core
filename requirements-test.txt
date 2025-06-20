@@ -7,7 +7,6 @@ swh-core[testing]
 swh.scheduler[pytest] >= 3.1.0
 swh.storage[pytest] >= 3.1.0
 swh-vault >= 1.12.2
-types-click
 types-python-dateutil
 types-psutil
 types-pyyaml
