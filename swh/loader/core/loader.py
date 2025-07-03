@@ -6,6 +6,7 @@
 from abc import ABC, abstractmethod
 import datetime
 import hashlib
+import json
 import logging
 import os
 from pathlib import Path
@@ -34,6 +35,7 @@ from swh.core.config import load_from_envvar
 from swh.core.nar import Nar
 from swh.core.statsd import Statsd
 from swh.core.tarball import uncompress
+from swh.loader.core import __version__
 from swh.loader.core.metadata_fetchers import CredentialsType, get_fetchers_for_lister
 from swh.loader.core.utils import download as download_orig
 from swh.loader.exception import NotFound, UnsupportedChecksumLayout
@@ -43,6 +45,9 @@ from swh.model.model import (
     Content,
     Directory,
     ExtID,
+    MetadataAuthority,
+    MetadataAuthorityType,
+    MetadataFetcher,
     Origin,
     OriginVisit,
     OriginVisitStatus,
@@ -670,6 +675,7 @@ class NodeLoader(BaseLoader, ABC):
         checksums_computation: Optional[str] = None,
         checksum_layout: Optional[str] = None,
         fallback_urls: Optional[List[str]] = None,
+        extrinsic_metadata: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         super().__init__(storage, url, **kwargs)
@@ -680,6 +686,8 @@ class NodeLoader(BaseLoader, ABC):
         self.checksums = checksums
         # The path to an artifact retrieved locally (e.g. file or directory)
         self.artifact_path: Optional[Path] = None
+
+        self.extrinsic_metadata = extrinsic_metadata
 
         # Keep compatibility with the previous name 'checksums_computations'
         if checksum_layout is not None:
@@ -863,6 +871,46 @@ class NodeLoader(BaseLoader, ABC):
         if node is not None:
             extids = self._extids(node)
             self._load_extids(extids)
+
+    def build_extrinsic_origin_metadata(self) -> List[RawExtrinsicMetadata]:
+        metadata = super().build_extrinsic_origin_metadata()
+        if self.extrinsic_metadata:
+            metadata_authority = None
+            assert self.lister_instance_name is not None
+            if self.lister_instance_name.startswith("guix"):
+                metadata_authority = MetadataAuthority(
+                    type=MetadataAuthorityType.FORGE, url="https://guix.gnu.org"
+                )
+                format = "guix-package-source-info-json"
+            elif self.lister_instance_name.startswith("nix"):
+                metadata_authority = MetadataAuthority(
+                    type=MetadataAuthorityType.FORGE, url="https://nixos.org"
+                )
+                format = "nix-package-source-info-json"
+            if metadata_authority:
+                fetcher = None
+                if hasattr(self, "content"):
+                    fetcher = MetadataFetcher(
+                        name="swh.loader.core.loader.ContentLoader",
+                        version=__version__,
+                    )
+                elif hasattr(self, "directory"):
+                    fetcher = MetadataFetcher(
+                        name="swh.loader.core.loader.TarballDirectoryLoader",
+                        version=__version__,
+                    )
+                if fetcher:
+                    metadata.append(
+                        RawExtrinsicMetadata(
+                            target=self.origin.swhid(),
+                            discovery_date=self.visit_date,
+                            authority=metadata_authority,
+                            fetcher=fetcher,
+                            format=format,
+                            metadata=json.dumps(self.extrinsic_metadata).encode(),
+                        )
+                    )
+        return metadata
 
 
 class ContentLoader(NodeLoader):

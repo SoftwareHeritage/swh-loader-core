@@ -6,6 +6,7 @@
 import datetime
 from functools import partial
 import hashlib
+import json
 import logging
 import os
 import time
@@ -46,7 +47,14 @@ from swh.loader.tests import (
     get_stats,
 )
 from swh.model.hashutil import hash_to_bytes
-from swh.model.model import Origin, Snapshot, SnapshotBranch, SnapshotTargetType
+from swh.model.model import (
+    MetadataAuthority,
+    MetadataAuthorityType,
+    Origin,
+    Snapshot,
+    SnapshotBranch,
+    SnapshotTargetType,
+)
 
 
 def test_types():
@@ -1021,11 +1029,15 @@ def test_tarball_loader_nar_archive_recursive_hash(
     """Test a NAR archive containing files and directories can be loaded
     as a directory."""
     checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
+    extrinsic_metadata = {"narinfo": {"StorePath": "/nix/store/hash-source"}}
     loader = TarballDirectoryLoader(
         swh_storage,
         tarball_nar_archive_url,
         checksum_layout=checksum_layout,
         checksums=checksums,
+        extrinsic_metadata=extrinsic_metadata,
+        lister_name="nixguix",
+        lister_instance_name="nixos.org",
     )
     result = loader.load()
 
@@ -1049,6 +1061,14 @@ def test_tarball_loader_nar_archive_recursive_hash(
     )
     assert len(extids) == len(checksums)
 
+    metadata = loader.storage.raw_extrinsic_metadata_get(
+        Origin(tarball_nar_archive_url).swhid(),
+        MetadataAuthority(type=MetadataAuthorityType.FORGE, url="https://nixos.org"),
+    ).results[0]
+
+    assert metadata.format == "nix-package-source-info-json"
+    assert json.loads(metadata.metadata) == extrinsic_metadata
+
 
 @pytest.mark.parametrize(
     "checksum_layout, sha256_checksum",
@@ -1065,11 +1085,16 @@ def test_tarball_loader_nar_archive_flat_hash(
 ):
     """Test a NAR archive containing a tarball can be loaded as a directory."""
     checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
+    origin_url = "https://example.org/tarball.nar.xz"
+    extrinsic_metadata = {"narinfo": {"StorePath": "/nix/store/hash-archive.tar.gz"}}
     loader = TarballDirectoryLoader(
         swh_storage,
-        "https://example.org/tarball.nar.xz",
+        origin_url,
         checksum_layout=checksum_layout,
         checksums=checksums,
+        extrinsic_metadata=extrinsic_metadata,
+        lister_name="nixguix",
+        lister_instance_name="nixos.org",
     )
     result = loader.load()
 
@@ -1093,6 +1118,14 @@ def test_tarball_loader_nar_archive_flat_hash(
     )
     assert len(extids) == len(checksums)
 
+    metadata = loader.storage.raw_extrinsic_metadata_get(
+        Origin(origin_url).swhid(),
+        MetadataAuthority(type=MetadataAuthorityType.FORGE, url="https://nixos.org"),
+    ).results[0]
+
+    assert metadata.format == "nix-package-source-info-json"
+    assert json.loads(metadata.metadata) == extrinsic_metadata
+
 
 @pytest.mark.parametrize(
     "checksum_layout, sha256_checksum",
@@ -1109,11 +1142,15 @@ def test_content_loader_nar_archive_flat_hash(
 ):
     """Test a NAR archive containing a file can be loaded as a content."""
     checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
+    extrinsic_metadata = {"narinfo": {"StorePath": "/nix/store/hash-source"}}
     loader = ContentLoader(
         swh_storage,
         content_nar_archive_url,
         checksum_layout=checksum_layout,
         checksums=checksums,
+        extrinsic_metadata=extrinsic_metadata,
+        lister_name="nixguix",
+        lister_instance_name="nixos.org",
     )
     result = loader.load()
 
@@ -1136,3 +1173,11 @@ def test_content_loader_nar_archive_flat_hash(
         swh_storage, checksum_layout, checksums, extid_version=loader.extid_version
     )
     assert len(extids) == len(checksums)
+
+    metadata = loader.storage.raw_extrinsic_metadata_get(
+        Origin(content_nar_archive_url).swhid(),
+        MetadataAuthority(type=MetadataAuthorityType.FORGE, url="https://nixos.org"),
+    ).results[0]
+
+    assert metadata.format == "nix-package-source-info-json"
+    assert json.loads(metadata.metadata) == extrinsic_metadata
