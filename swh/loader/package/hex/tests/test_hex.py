@@ -267,7 +267,7 @@ def test_hex_first_visit(
     assert_metadata_stored(loader, release_6_1, metadata_6_1)
 
 
-def test_rpm_multiple_visits(
+def test_hex_multiple_visits(
     swh_storage,
     datadir,
     requests_mock_datadir,

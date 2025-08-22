@@ -1,4 +1,4 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -39,7 +39,7 @@ def hex_listed_origin(hex_lister):
     )
 
 
-def test_rpm_loader_task_for_listed_origin(
+def test_hex_loader_task_for_listed_origin(
     loading_task_creation_for_listed_origin_test,
     hex_lister,
     hex_listed_origin,
