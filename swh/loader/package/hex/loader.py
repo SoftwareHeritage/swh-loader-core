@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024  The Software Heritage developers
+# Copyright (C) 2023-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -171,7 +171,7 @@ class HexLoader(PackageLoader[HexPackageInfo]):
             name=p_info.version.encode(),
             message=msg.encode(),
             author=p_info.author,
-            date=TimestampWithTimezone.from_iso8601(p_info.updated_at),
+            date=TimestampWithTimezone.from_iso8601(p_info.inserted_at),
             target=directory,
             target_type=ObjectType.DIRECTORY,
             synthetic=True,
