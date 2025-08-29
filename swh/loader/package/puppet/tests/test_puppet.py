@@ -1,22 +1,31 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import json
+import os
+
+import pytest
+
+from swh.loader.core import __version__
 from swh.loader.package.puppet.loader import PuppetLoader
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
-    ObjectType,
+    MetadataFetcher,
     Person,
+    RawExtrinsicMetadata,
     Release,
+    ReleaseTargetType,
     Snapshot,
     SnapshotBranch,
     SnapshotTargetType,
     TimestampWithTimezone,
 )
+from swh.model.swhids import CoreSWHID, ExtendedObjectType, ExtendedSWHID, ObjectType
 
-ORIGINS = {
+ORIGIN = {
     "url": "https://forge.puppet.com/modules/saz/memcached",
     "artifacts": [
         {
@@ -42,26 +51,32 @@ ORIGINS = {
 }
 
 
+@pytest.fixture
+def puppet_module_extrinsic_metadata(datadir):
+    with open(
+        os.path.join(
+            datadir,
+            "https_forgeapi.puppet.com",
+            "v3_releases,module=saz-memcached",
+        )
+    ) as metadata:
+        return json.load(metadata)["results"]
+
+
 def test_get_sorted_versions(requests_mock_datadir, swh_storage):
-    loader = PuppetLoader(
-        swh_storage, url=ORIGINS["url"], artifacts=ORIGINS["artifacts"]
-    )
+    loader = PuppetLoader(swh_storage, url=ORIGIN["url"], artifacts=ORIGIN["artifacts"])
     assert loader.get_sorted_versions() == ["1.0.0", "8.1.0"]
 
 
 def test_get_default_version(requests_mock_datadir, swh_storage):
-    loader = PuppetLoader(
-        swh_storage, url=ORIGINS["url"], artifacts=ORIGINS["artifacts"]
-    )
+    loader = PuppetLoader(swh_storage, url=ORIGIN["url"], artifacts=ORIGIN["artifacts"])
     assert loader.get_default_version() == "8.1.0"
 
 
 def test_puppet_loader_load_multiple_version(
-    datadir, requests_mock_datadir, swh_storage
+    datadir, requests_mock_datadir, swh_storage, puppet_module_extrinsic_metadata
 ):
-    loader = PuppetLoader(
-        swh_storage, url=ORIGINS["url"], artifacts=ORIGINS["artifacts"]
-    )
+    loader = PuppetLoader(swh_storage, url=ORIGIN["url"], artifacts=ORIGIN["artifacts"])
     load_status = loader.load()
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
@@ -102,23 +117,53 @@ def test_puppet_loader_load_multiple_version(
         "snapshot": 1,
     } == stats
 
-    assert swh_storage.release_get(
-        [hash_to_bytes("90592c01fe7f96f32a88bc611193b305cb77cc03")]
-    )[0] == Release(
+    expected_release = Release(
         name=b"8.1.0",
         message=b"Synthetic release for Puppet source package saz-memcached version 8.1.0\n",
         target=hash_to_bytes("1b9a2dbc80f954e1ba4b2f1c6344d1ce4e84ab7c"),
-        target_type=ObjectType.DIRECTORY,
+        target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(fullname=b"saz", name=b"saz", email=None),
         date=TimestampWithTimezone.from_iso8601("2022-07-11T03:34:55-07:00"),
-        id=hash_to_bytes("90592c01fe7f96f32a88bc611193b305cb77cc03"),
     )
+
+    assert swh_storage.release_get([expected_release.id])[0] == expected_release
 
     assert_last_visit_matches(
         swh_storage,
-        url=ORIGINS["url"],
+        url=ORIGIN["url"],
         status="full",
         type="puppet",
         snapshot=expected_snapshot.id,
+    )
+
+    directory_swhid = ExtendedSWHID(
+        object_type=ExtendedObjectType.DIRECTORY,
+        object_id=expected_release.target,
+    )
+
+    expected_metadata = [
+        RawExtrinsicMetadata(
+            target=directory_swhid,
+            authority=loader.get_metadata_authority(),
+            fetcher=MetadataFetcher(
+                name="swh.loader.package.puppet.loader.PuppetLoader",
+                version=__version__,
+            ),
+            discovery_date=loader.visit_date,
+            format="puppet-module-json",
+            metadata=json.dumps(puppet_module_extrinsic_metadata[0]).encode(),
+            origin=ORIGIN["url"],
+            release=CoreSWHID(
+                object_type=ObjectType.RELEASE, object_id=expected_release.id
+            ),
+        ),
+    ]
+
+    assert (
+        loader.storage.raw_extrinsic_metadata_get(
+            directory_swhid,
+            loader.get_metadata_authority(),
+        ).results
+        == expected_metadata
     )

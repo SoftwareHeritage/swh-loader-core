@@ -1,0 +1,230 @@
+{
+  "pagination": {
+    "limit": 20,
+    "offset": 40,
+    "first": "/v3/releases?module=saz-memcached&offset=0&limit=20",
+    "previous": "/v3/releases?module=saz-memcached&offset=20&limit=20",
+    "current": "/v3/releases?module=saz-memcached&offset=40&limit=20",
+    "next": null,
+    "total": 41
+  },
+  "results": [
+    {
+      "uri": "/v3/releases/saz-memcached-8.1.0",
+      "slug": "saz-memcached-8.1.0",
+      "module": {
+        "uri": "/v3/modules/saz-memcached",
+        "slug": "saz-memcached",
+        "name": "memcached",
+        "deprecated_at": null,
+        "owner": {
+          "uri": "/v3/users/saz",
+          "slug": "saz",
+          "username": "saz",
+          "gravatar_id": "d24714d241768d79a194d73fc1bdf1ef"
+        }
+      },
+      "version": "8.1.0",
+      "metadata": {
+        "name": "saz-memcached",
+        "version": "8.1.0",
+        "author": "saz",
+        "summary": "Manage memcached via Puppet",
+        "license": "Apache-2.0",
+        "source": "git://github.com/saz/puppet-memcached.git",
+        "project_page": "https://github.com/saz/puppet-memcached",
+        "issues_url": "https://github.com/saz/puppet-memcached/issues",
+        "description": "Manage memcached via Puppet",
+        "requirements": [
+          {
+            "name": "puppet",
+            "version_requirement": ">= 6.1.0 < 8.0.0"
+          }
+        ],
+        "dependencies": [
+          {
+            "name": "puppetlabs/stdlib",
+            "version_requirement": ">= 4.13.1 < 9.0.0"
+          },
+          {
+            "name": "puppetlabs/firewall",
+            "version_requirement": ">= 0.1.0 < 4.0.0"
+          },
+          {
+            "name": "puppet/systemd",
+            "version_requirement": ">= 2.10.0 < 4.0.0"
+          },
+          {
+            "name": "puppet/selinux",
+            "version_requirement": ">= 3.2.0 < 4.0.0"
+          }
+        ],
+        "operatingsystem_support": [
+          {
+            "operatingsystem": "RedHat",
+            "operatingsystemrelease": [
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          {
+            "operatingsystem": "CentOS",
+            "operatingsystemrelease": [
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          {
+            "operatingsystem": "OracleLinux",
+            "operatingsystemrelease": [
+              "7"
+            ]
+          },
+          {
+            "operatingsystem": "Scientific",
+            "operatingsystemrelease": [
+              "7"
+            ]
+          },
+          {
+            "operatingsystem": "Debian",
+            "operatingsystemrelease": [
+              "9",
+              "10",
+              "11"
+            ]
+          },
+          {
+            "operatingsystem": "Ubuntu",
+            "operatingsystemrelease": [
+              "18.04",
+              "20.04",
+              "22.04"
+            ]
+          },
+          {
+            "operatingsystem": "Windows"
+          },
+          {
+            "operatingsystem": "FreeBSD"
+          }
+        ]
+      },
+      "tags": [
+        "debian",
+        "ubuntu",
+        "redhat",
+        "amazon",
+        "fedora",
+        "memcached",
+        "linux",
+        "centos"
+      ],
+      "supported": false,
+      "pdk": false,
+      "validation_score": 100,
+      "file_uri": "/v3/files/saz-memcached-8.1.0.tar.gz",
+      "file_size": 10996,
+      "file_md5": "5313e8fff0af08d63681daf955e7a604",
+      "file_sha256": "0dbb1470c64435700767e9887d0cf70203b1ae59445c401d5d200f2dabb3226e",
+      "downloads": 8461,
+      "readme": "# memached module for Puppet\n\n[![Build Status](https://github.com/saz/puppet-memcached/workflows/CI/badge.svg)](https://github.com/saz/puppet-memcached/actions?query=workflow%3ACI)\n\nManage memcached via Puppet\n\n## Show some love\nIf you find this module useful, send some bitcoins to 1Na3YFUmdxKxJLiuRXQYJU2kiNqA3KY2j9\n\n### Supported Puppet versions\n* Puppet >= 5\n* Last version supporting Puppet 3: v3.0.2\n\n## How to use\n\n```\nStarting with version 3.0.0, memcached will be listening on 127.0.0.1 only.\nThis should make setups more secure (e.g. if there are no firewall rules in place).\n\nTo change this behavior, you need to set listen_ip to '0.0.0.0'.\n```\n\n### Use roughly 90% of memory\n\n```ruby\n    class { 'memcached': }\n```\n\n### Set a fixed memory limit in MB\n\n```ruby\n    class { 'memcached':\n      max_memory => 2048\n    }\n```\n\n### Use 12% of available memory\n\n```ruby\n    class { 'memcached':\n      max_memory => '12%'\n    }\n```\n\n### Install multiple memcached instances\n\nthe multiinstance support uses a systemd instance unit file. This will be placed\nat `/etc/systemd/system/memcached@.service`. It allows us to manage multiple\ninstances via the same unit file. To start a simple instance, you only need to\nknow the desired TCP port:\n\n```puppet\nmemcached::instance{'11222':}\n```\n\nthat's it! It will bind to localhost and listen to TCP port 11222. You might\nwant to tune the systemd limits, for example the number of file descriptors\n(LimitNOFILE) or the number of processes (LimitNPROC):\n\n```puppet\nmemcached::instance{'11222':\n  limits => {\n    'LimitNOFILE' => 8192,\n    'LimitNPROC'  => 16384,\n  }\n}\n```\n\nAll systemd limits are documented in the [systemd documentation](https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Process%20Properties).\n\nAnother usecase. Let's assume your name is Eric and you want to change the\nactual memcached parameters, for example to bind it to every interface:\n\n```puppet\nmemcached::instance{'11222':\n  override_content => \"[Service]\\nEnvironment='LISTEN=-l 0.0.0.0'\",\n}\n```\n\nMaybe Eric also wants to override the cache size (the unit is MB):\n\n```puppet\nmemcached::instance{'11222':\n  override_content => \"[Service]\\nEnvironment=CACHESIZE=4096\\n\",\n}\n```\n\nlast but not least, Eric might also want to override the maximum amount\nof connections (the default is 1024):\n\n```puppet\nmemcached::instance{'11222':\n  override_content => \"[Service]\\nEnvironment=MAXCONN=4096\\n\",\n}\n```\n\nNow Eric wants to use all those three settings at the same time:\n\n```puppet\nmemcached::instance{'11222':\n  override_content => \"[Service]\\nEnvironment=MAXCONN=4096\\nEnvironment=CACHESIZE=4096\\nEnvironment='LISTEN=-l 0.0.0.0'\\n\",\n}\n```\n\nInstead of passing a long string with multiple `\\n`, Eric can also put the\ncontent in a file and provide that:\n\n```puppet\nmemcached::instance{'11222':\n  override_source => \"${module_name}/memcached_11222_override.conf\\n\",\n}\n```\n\n### Other class parameters\n\n* $package_ensure = 'present'\n* $logfile = '/var/log/memcached.log'\n* $logstdout = false (Set this to true to disable logging to a file/syslog entirely, useful when memcached runs in containers)\n* $pidfile = '/var/run/memcached.pid' (Debian family only, set to false to disable pidfile)\n* $max_memory = false\n* $max_item_size = false\n* $min_item_size = false\n* $factor = false\n* $lock_memory = false (WARNING: good if used intelligently, google for -k key)\n* $listen = '127.0.0.1' (if TLS/SSL is enabled, 'notls' prefix can be used to disable for specific listeners \"notls:<ip>:<port>\")\n* $listen_ip = '127.0.0.1' (deprecated, listen will take precedence over this)\n* $tcp_port = 11211\n* $udp_port = 0\n* $manage_firewall = false\n* $user = '' (OS specific setting, see params.pp)\n* $max_connections = 8192\n* $verbosity = undef\n* $unix_socket = undef\n* $install_dev = false (TRUE if 'libmemcached-dev' package should be installed)\n* $processorcount = $::processorcount\n* $service_restart = true (restart service after configuration changes, false to prevent restarts)\n* $use_sasl = false (start memcached with SASL support)\n* $use_tls = false (start memcached with TLS support)\n* $tls_cert_chain = undef\n* $tls_key = undef\n* $tls_ca_cert = undef\n* $tls_verify_mode = 1 (0: None, 1: Request, 2: Require, 3: Once)\n* $large_mem_pages = false (try to use large memory pages)\n",
+      "changelog": "# Changelog\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n## [8.1.0]\n### Added\n- Support for RedHat 9 and CentOS 9\n\n## [8.0.0]\n### Changed\n- BREAKING CHANGE: switch from camptocamp/systemd to puppet/systemd\n- Improved tests\n- Load modern facts first (#138)\n- Make sure memcached logfile exists (#140)\n- Allow stdlib < 9.0.0\n### Fixed\n- Fix duplicate systemd daemon-reload execs (#137)\n### Added\n- Added support for Debian 11 and Ubuntu 22.04\n\n## [7.0.0]\n### Changed\n- BREAKING CHANGE: Testing for Puppet 5 has been dropped\n- Switched from Travis to Github Actions\n- Dependencies updated to support the newest releases\n\n## [6.0.0]\n### Added\n- Add listen parameter as successor for listen_ip (#127)\n### Deprecated\n- listen_ip parameter is deprecated in favor of new listen parameter (#127)\n### Changed\n- Use camptocamp/systemd v2.12.0 for tests, as newer versions might drop support for puppet 5\n### Removed\n- Dropped notls_listener_addr and notls_listener_port parameter in favor of listen_ip (#128)\n\n## [5.0.0]\n### Added\n- Add sasl support on RHEL derivatives (#122)\n- Add notls_listener_addr and notls_listener_port parameters (#124)\n### Changed\n- BREAKING CHANGE: Disable UDP by default (#125)\n  If you need UDP enabled, set `memcached::udp_port` to a non-zero value, e.g. 11211\n\n## [4.0.0]\n### Added\n- Support management of multiple memcached instances (systemd required!) #120\n- Add FreeBSD to list of supported operatingsystems\n### Removed\n- Drop support for Puppet 4 (EOL) #116\n\n## [3.7.0]\n### Added\n- Add support to set TLS parameters in /etc/sysconfig/memcached (#113)\n### Fixed\n- Make ssl_ca_cert optional (#112)\n\n## [3.6.0]\n### Added\n- Add TLS support (#109)\n\n## [3.5.0]\n### Fixed\n- allow FreeBSD to set max memory (#104)\n### Changed\n- Dependencies updated (#107)\n- Better FreeBSD tests\n\n## [3.4.0]\n### Fixed\n- factor should be a string or number, not boolean\n### Added\n- Add Puppet 6 to travis checks\n### Changed\n- Update Puppet version requirement to include version 6 (< 7.0.0)\n- Unpin firewall module in fixtures\n- Require puppetlabs_spec_helper >= 2.11.0\n### Removed\n- Drop Ruby 2.1 from travis checks\n",
+      "license": "   Copyright 2011-2016 Steffen Zieger\n   Copyright 2014-2016 Garrett Honeycutt <code@garretthoneycutt.com>\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\n",
+      "reference": null,
+      "malware_scan": null,
+      "tasks": [
+
+      ],
+      "plans": [
+
+      ],
+      "created_at": "2022-07-11 03:34:55 -0700",
+      "updated_at": "2022-07-11 03:35:51 -0700",
+      "deleted_at": null,
+      "deleted_for": null
+    },
+    {
+      "uri": "/v3/releases/saz-memcached-1.0.0",
+      "slug": "saz-memcached-1.0.0",
+      "module": {
+        "uri": "/v3/modules/saz-memcached",
+        "slug": "saz-memcached",
+        "name": "memcached",
+        "deprecated_at": null,
+        "owner": {
+          "uri": "/v3/users/saz",
+          "slug": "saz",
+          "username": "saz",
+          "gravatar_id": "d24714d241768d79a194d73fc1bdf1ef"
+        }
+      },
+      "version": "1.0.0",
+      "metadata": {
+        "summary": "UNKNOWN",
+        "author": "saz",
+        "source": "UNKNOWN",
+        "dependencies": [
+
+        ],
+        "types": [
+
+        ],
+        "license": "Apache License, Version 2.0",
+        "project_page": "https://github.com/saz/puppet-memcached",
+        "version": "1.0.0",
+        "name": "saz-memcached",
+        "checksums": {
+          "spec/spec_helper.rb": "ca19ec4f451ebc7fdb035b52eae6e909",
+          "manifests/params.pp": "0b8904086e7fa6f0d1f667d547a17d96",
+          "README.md": "fa0b9f6d97f2763e565d8a330fb3930b",
+          "manifests/config.pp": "706f7c5001fb6014575909a335a52def",
+          "templates/memcached.conf.erb": "8151e00d922bb9ebb1a24a05ac0969d7",
+          "manifests/service.pp": "a528751401189c299a38cab12d52431f",
+          "tests/init.pp": "e798f4999ba392f3c0fce0d5290c263f",
+          "manifests/install.pp": "11a9e9a99a7bc1c7b2511ce7e79c9fb4",
+          "spec/spec.opts": "a600ded995d948e393fbe2320ba8e51c",
+          "metadata.json": "d34d0b70aba36510fbc2df4e667479ef",
+          "manifests/init.pp": "c5166a8a88b544ded705efac21494bc1",
+          "Modulefile": "7f512991a7d2ad99ffb28ac6e7419f9e"
+        },
+        "description": "Manage memcached via Puppet"
+      },
+      "tags": [
+        "debian",
+        "ubuntu",
+        "redhat",
+        "amazon",
+        "fedora",
+        "memcached",
+        "linux",
+        "centos"
+      ],
+      "supported": false,
+      "pdk": false,
+      "validation_score": 30,
+      "file_uri": "/v3/files/saz-memcached-1.0.0.tar.gz",
+      "file_size": 2472,
+      "file_md5": "a263162520f73f47bc6d6c9f1bf88cd7",
+      "file_sha256": "d91ffea3478dff448977c86a6a16c3127f640a2b353a71dc60fe0b6101a20f7e",
+      "downloads": 402,
+      "readme": "# puppet-memcached\n\nManage memcached via Puppet\n\n## How to use\n\n### Use roughly 90% of memory\n\n```\n    include memcached\n```\n\n### Set a fixed memory limit in MB\n\n```\n    $memcached_max_memory = 2048\n    include memcached\n```\n\n### Other variables\n\n* $memcached_logfile = '/var/log/memcached.log'\n* $memcached_listen_ip = '0.0.0.0'\n* $memcached_tcp_port = 11211\n* $memcached_udp_port = 11211\n* $memcached_user = 'nobody'\n* $memcached_max_connections = 8192\n",
+      "changelog": null,
+      "license": null,
+      "reference": null,
+      "malware_scan": null,
+      "tasks": [
+
+      ],
+      "plans": [
+
+      ],
+      "created_at": "2011-11-20 13:40:30 -0800",
+      "updated_at": "2019-07-03 16:09:59 -0700",
+      "deleted_at": null,
+      "deleted_for": null
+    }
+  ]
+}
