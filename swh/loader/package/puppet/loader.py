@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 import json
 from pathlib import Path
+import string
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import attr
@@ -44,6 +45,11 @@ class PuppetPackageInfo(BasePackageInfo):
     last_modified = attr.ib(type=datetime)
     """Module last update date as release date"""
 
+    sha256_checksum = attr.ib(type=str)
+
+    EXTID_TYPE = "puppet-module-sha256"
+    MANIFEST_FORMAT = string.Template("$name $version $filename $sha256_checksum")
+
     @classmethod
     def from_metadata(
         cls,
@@ -63,6 +69,7 @@ class PuppetPackageInfo(BasePackageInfo):
             filename=filename,
             version=version,
             last_modified=last_modified,
+            sha256_checksum=metadata["file_sha256"],
             directory_extrinsic_metadata=[
                 RawExtrinsicMetadataCore(
                     format="puppet-module-json",

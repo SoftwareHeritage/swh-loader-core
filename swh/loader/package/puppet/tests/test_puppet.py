@@ -9,7 +9,7 @@ import os
 import pytest
 
 from swh.loader.core import __version__
-from swh.loader.package.puppet.loader import PuppetLoader
+from swh.loader.package.puppet.loader import PuppetLoader, PuppetPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
@@ -141,6 +141,9 @@ def test_puppet_loader_load_multiple_version(
         object_type=ExtendedObjectType.DIRECTORY,
         object_id=expected_release.target,
     )
+    release_swhid = CoreSWHID(
+        object_type=ObjectType.RELEASE, object_id=expected_release.id
+    )
 
     expected_metadata = [
         RawExtrinsicMetadata(
@@ -154,9 +157,7 @@ def test_puppet_loader_load_multiple_version(
             format="puppet-module-json",
             metadata=json.dumps(puppet_module_extrinsic_metadata[0]).encode(),
             origin=ORIGIN["url"],
-            release=CoreSWHID(
-                object_type=ObjectType.RELEASE, object_id=expected_release.id
-            ),
+            release=release_swhid,
         ),
     ]
 
@@ -167,3 +168,18 @@ def test_puppet_loader_load_multiple_version(
         ).results
         == expected_metadata
     )
+
+    package_extids = [
+        package_info.extid()
+        for version in loader.get_versions()
+        for _, package_info in loader.get_package_info(version)
+    ]
+
+    extids = loader.storage.extid_get_from_extid(
+        id_type=PuppetPackageInfo.EXTID_TYPE,
+        ids=[extid for (_, _, extid) in package_extids],
+        version=PuppetPackageInfo.EXTID_VERSION,
+    )
+    assert len(extids) == 2
+
+    assert release_swhid in {extid.target for extid in extids}
