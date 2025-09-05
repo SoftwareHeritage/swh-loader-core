@@ -110,13 +110,6 @@ REVISION = Revision(
     parents=(),
     type=RevisionType.GIT,
     directory=DIRECTORY.id,
-    metadata={
-        "checksums": {
-            "sha1": "tarball-sha1",
-            "sha256": "tarball-sha256",
-        },
-        "signed-off-by": "some-dude",
-    },
     extra_headers=(
         (b"gpgsig", b"test123"),
         (b"mergetag", b"foo\\bar"),
