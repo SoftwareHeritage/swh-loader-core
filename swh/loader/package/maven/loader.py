@@ -90,7 +90,9 @@ class MavenPackageInfo(BasePackageInfo):
         checksums = {}
         for algo in ("sha1", "md5"):
             try:
-                checksums[algo] = get_url_body(url + f".{algo}").decode()
+                checksums[algo] = (
+                    get_url_body(url + f".{algo}").decode().split(" ")[0].rstrip()
+                )
                 break
             except (requests.HTTPError, NotFound):
                 pass
