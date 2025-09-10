@@ -2,11 +2,13 @@
 # should match https://pypi.python.org/pypi names. For the full spec or
 # dependency lines, see https://pip.readthedocs.org/en/1.1/requirements.html
 
+beautifulsoup4
 chardet
 psutil
 requests
 iso8601
 looseversion
+lxml
 pkginfo
 python-debian
 python-dateutil

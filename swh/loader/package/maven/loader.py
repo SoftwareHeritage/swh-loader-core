@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2024  The Software Heritage developers
+# Copyright (C) 2021-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,9 +10,10 @@ import json
 import logging
 from os import path
 import string
-from typing import Any, Iterator, List, Optional, Sequence, Tuple
+from typing import Any, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 import attr
+from bs4 import BeautifulSoup
 import iso8601
 import requests
 from typing_extensions import TypedDict
@@ -211,3 +212,48 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
             target_type=ObjectType.DIRECTORY,
             synthetic=True,
         )
+
+    def download_package(
+        self, p_info: MavenPackageInfo, tmpdir: str
+    ) -> List[Tuple[str, Mapping]]:
+        try:
+            return super().download_package(p_info, tmpdir)
+        except requests.HTTPError as exc:
+            if exc.response.status_code == 404 and "-SNAPSHOT" in exc.response.url:
+                # some snapshot version of a maven package can have a jar filename
+                # different from the one provided by the maven lister, compute that
+                # filename by parsing maven-metadata.xml file if available
+                package_file = path.basename(exc.response.url)
+                package_base_url = path.dirname(exc.response.url)
+                metadata_url = package_base_url + "/maven-metadata.xml"
+                try:
+                    metadata = get_url_body(metadata_url)
+                except Exception:
+                    pass
+                else:
+                    bs = BeautifulSoup(metadata, "xml")
+                    real_version = bs.select_one(
+                        'classifier:-soup-contains("sources") ~ value'
+                    )
+                    if real_version:
+                        package_version = path.basename(package_base_url)
+                        a_metadata = self.version_artifact[package_version]
+                        updated_filename = package_file.replace(
+                            package_version, real_version.text
+                        )
+                        updated_package_url = package_base_url + "/" + updated_filename
+                        a_metadata["filename"] = updated_filename
+                        a_metadata["url"] = updated_package_url
+                        a_metadata["version"] = real_version.text
+                        self.version_artifact[package_version] = a_metadata
+                        info = MavenPackageInfo.from_metadata(a_metadata)
+                        p_info.url = info.url
+                        p_info.version = info.version
+                        p_info.checksums = info.checksums
+                        p_info.filename = info.filename
+                        p_info.directory_extrinsic_metadata = (
+                            info.directory_extrinsic_metadata
+                        )
+                        return super().download_package(p_info, tmpdir)
+
+            raise exc

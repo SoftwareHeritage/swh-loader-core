@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from collections import defaultdict
 import datetime
 import hashlib
 from itertools import islice
@@ -679,9 +680,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
 
         new_extids: Set[ExtID] = set()
         extid_to_swhid: Dict[Optional[PartialExtID], CoreSWHID] = {}
-        tmp_releases: Dict[str, List[Tuple[str, Sha1Git]]] = {
-            version: [] for version in versions
-        }
+        tmp_releases: Dict[str, List[Tuple[str, Sha1Git]]] = defaultdict(list)
+        tmp_releases.update({version: [] for version in versions})
 
         for branch_name, p_info in packages_info:
             logger.debug("package_info: %s", p_info)

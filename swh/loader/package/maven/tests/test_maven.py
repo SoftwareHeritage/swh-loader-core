@@ -465,3 +465,57 @@ def test_maven_loader_jar_extid():
         0,
         hashlib.sha256(expected_manifest).digest(),
     )
+
+
+def test_maven_loader_package_download_fallback(swh_storage, jar_dirs):
+    artifacts = [
+        {
+            "time": "2021-07-12 19:37:05.534000",
+            "gid": "al.aldi",
+            "aid": "sprova4j",
+            "filename": "sprova4j-0.1.1-SNAPSHOT-sources.jar",
+            "version": "0.1.1-SNAPSHOT",
+            "base_url": REPO_BASE_URL,
+            "url": (
+                f"{REPO_BASE_URL}al/aldi/sprova4j/0.1.1-SNAPSHOT/"
+                "sprova4j-0.1.1-SNAPSHOT-sources.jar"
+            ),
+        }
+    ]
+
+    loader = MavenLoader(swh_storage, MVN_ORIGIN_URL, artifacts=artifacts)
+
+    actual_load_status = loader.load()
+    assert actual_load_status["status"] == "eventful"
+
+    actual_snapshot = snapshot_get_all_branches(
+        swh_storage, hash_to_bytes(actual_load_status["snapshot_id"])
+    )
+
+    expected_release = Release(
+        name=b"0.1.1-20220715.131600-4",
+        message=(
+            b"Synthetic release for archive at "
+            b"https://repo1.maven.org/maven2/al/aldi/sprova4j/"
+            b"0.1.1-SNAPSHOT/sprova4j-0.1.1-20220715.131600-4-sources.jar\n"
+        ),
+        author=EMPTY_AUTHOR,
+        date=REL_DATES[1],
+        target_type=ReleaseTargetType.DIRECTORY,
+        target=jar_dirs[1].hash,
+        synthetic=True,
+        metadata=None,
+    )
+
+    assert actual_snapshot == Snapshot(
+        branches={
+            b"HEAD": SnapshotBranch(
+                target_type=SnapshotTargetType.ALIAS,
+                target=b"releases/0.1.1-SNAPSHOT",
+            ),
+            b"releases/0.1.1-SNAPSHOT": SnapshotBranch(
+                target_type=SnapshotTargetType.RELEASE,
+                target=expected_release.id,
+            ),
+        }
+    )
