@@ -1024,7 +1024,7 @@ def content_nar_archive_url():
     ],
 )
 def test_tarball_loader_nar_archive_recursive_hash(
-    swh_storage, tarball_nar_archive_url, checksum_layout, sha256_checksum
+    swh_storage, tarball_nar_archive_url, checksum_layout, sha256_checksum, mocker
 ):
     """Test a NAR archive containing files and directories can be loaded
     as a directory."""
@@ -1069,6 +1069,33 @@ def test_tarball_loader_nar_archive_recursive_hash(
     assert metadata.format == "nix-package-source-info-json"
     assert json.loads(metadata.metadata) == extrinsic_metadata
 
+    # second load should be uneventful
+
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        tarball_nar_archive_url,
+        checksum_layout=checksum_layout,
+        checksums=checksums,
+        extrinsic_metadata=extrinsic_metadata,
+        lister_name="nixguix",
+        lister_instance_name="nixos.org",
+    )
+
+    fetch_artifact = mocker.spy(loader, "fetch_artifact")
+    process_artifact = mocker.spy(loader, "process_artifact")
+
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+    if sha256_checksum:
+        # directory fetched from extid
+        fetch_artifact.assert_not_called()
+        process_artifact.assert_not_called()
+    else:
+        # directory fetched from upstream
+        fetch_artifact.assert_called()
+        process_artifact.assert_called()
+
 
 @pytest.mark.parametrize(
     "checksum_layout, sha256_checksum",
@@ -1081,7 +1108,7 @@ def test_tarball_loader_nar_archive_recursive_hash(
     ],
 )
 def test_tarball_loader_nar_archive_flat_hash(
-    swh_storage, requests_mock_datadir, checksum_layout, sha256_checksum
+    swh_storage, requests_mock_datadir, checksum_layout, sha256_checksum, mocker
 ):
     """Test a NAR archive containing a tarball can be loaded as a directory."""
     checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
@@ -1126,6 +1153,32 @@ def test_tarball_loader_nar_archive_flat_hash(
     assert metadata.format == "nix-package-source-info-json"
     assert json.loads(metadata.metadata) == extrinsic_metadata
 
+    # second load should be uneventful
+
+    loader = TarballDirectoryLoader(
+        swh_storage,
+        origin_url,
+        checksum_layout=checksum_layout,
+        checksums=checksums,
+        extrinsic_metadata=extrinsic_metadata,
+        lister_name="nixguix",
+        lister_instance_name="nixos.org",
+    )
+    fetch_artifact = mocker.spy(loader, "fetch_artifact")
+    process_artifact = mocker.spy(loader, "process_artifact")
+
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+    if sha256_checksum:
+        # directory fetched from extid
+        fetch_artifact.assert_not_called()
+        process_artifact.assert_not_called()
+    else:
+        # directory fetched from upstream
+        fetch_artifact.assert_called()
+        process_artifact.assert_called()
+
 
 @pytest.mark.parametrize(
     "checksum_layout, sha256_checksum",
@@ -1138,7 +1191,7 @@ def test_tarball_loader_nar_archive_flat_hash(
     ],
 )
 def test_content_loader_nar_archive_flat_hash(
-    swh_storage, content_nar_archive_url, checksum_layout, sha256_checksum
+    swh_storage, content_nar_archive_url, checksum_layout, sha256_checksum, mocker
 ):
     """Test a NAR archive containing a file can be loaded as a content."""
     checksums = {"sha256": sha256_checksum} if sha256_checksum else {}
@@ -1181,3 +1234,30 @@ def test_content_loader_nar_archive_flat_hash(
 
     assert metadata.format == "nix-package-source-info-json"
     assert json.loads(metadata.metadata) == extrinsic_metadata
+
+    # second load should be uneventful
+
+    loader = ContentLoader(
+        swh_storage,
+        content_nar_archive_url,
+        checksum_layout=checksum_layout,
+        checksums=checksums,
+        extrinsic_metadata=extrinsic_metadata,
+        lister_name="nixguix",
+        lister_instance_name="nixos.org",
+    )
+
+    fetch_artifact = mocker.spy(loader, "fetch_artifact")
+    process_artifact = mocker.spy(loader, "process_artifact")
+
+    result = loader.load()
+
+    assert result == {"status": "uneventful"}
+    if sha256_checksum:
+        # content fetched from extid
+        fetch_artifact.assert_not_called()
+        process_artifact.assert_not_called()
+    else:
+        # content fetched from upstream
+        fetch_artifact.assert_called()
+        process_artifact.assert_called()

@@ -57,7 +57,9 @@ from swh.model.model import (
     SnapshotBranch,
     SnapshotTargetType,
 )
+from swh.model.swhids import ObjectType
 from swh.storage import get_storage
+from swh.storage.algos.directory import directory_get
 from swh.storage.algos.snapshot import snapshot_get_latest
 from swh.storage.interface import StorageInterface
 from swh.storage.utils import now
@@ -747,6 +749,14 @@ class NodeLoader(BaseLoader, ABC):
             # No big deal, it just means the next visit will load the same versions
             # again.
 
+    def _extid_type_template(self) -> Optional[str]:
+        extid_type = None
+        if self.checksum_layout == "nar":
+            extid_type = "nar-%s"
+        elif self.checksum_layout == "standard":
+            extid_type = "checksum-%s"
+        return extid_type
+
     def _extids(self, node: Union[Content, Directory]) -> Set[ExtID]:
         """Compute the set of ExtIDs for the :term:`node` (e.g. Content of Directory).
 
@@ -754,20 +764,16 @@ class NodeLoader(BaseLoader, ABC):
         dict.
         """
         extids: Set[ExtID] = set()
-        extid_type: Optional[str] = None
-        if self.checksum_layout == "nar":
-            extid_type = "nar-%s"
-        elif self.checksum_layout == "standard":
-            extid_type = "checksum-%s"
+        extid_type_template = self._extid_type_template()
 
-        if extid_type:
+        if extid_type_template:
             checksums = {
                 hash_algo: hash_to_bytes(hsh)
                 for hash_algo, hsh in self.checksums.items()
             }
             extids = {
                 ExtID(
-                    extid_type=extid_type % hash_algo,
+                    extid_type=extid_type_template % hash_algo,
                     extid=extid,
                     target=node.swhid(),
                     extid_version=self.extid_version,
@@ -811,6 +817,37 @@ class NodeLoader(BaseLoader, ABC):
             ValueError in case of mismatched checksums
 
         """
+
+        extid_type_template = self._extid_type_template()
+
+        if extid_type_template:
+            checksums = {
+                hash_algo: hash_to_bytes(hsh)
+                for hash_algo, hsh in self.checksums.items()
+            }
+            for hash_algo, extid_bytes in checksums.items():
+                for extid in self.storage.extid_get_from_extid(
+                    extid_type_template % hash_algo,
+                    [extid_bytes],
+                    version=self.extid_version,
+                ):
+                    if extid.target.object_type == ObjectType.DIRECTORY:
+                        self.directory = directory_get(
+                            self.storage, extid.target.object_id
+                        )
+                    elif extid.target.object_type == ObjectType.CONTENT:
+                        self.content = self.storage.content_get(
+                            [extid.target.object_id], algo="sha1_git"
+                        )[0]
+
+                    if (
+                        getattr(self, "directory", None) is not None
+                        or getattr(self, "content", None) is not None
+                    ):
+                        # content or directory already archived, skip
+                        # download and processing
+                        return False
+
         errors = []
         for artifact_path in self.fetch_artifact():
             if self.checksum_layout == "nar":
@@ -1070,7 +1107,7 @@ class BaseDirectoryLoader(NodeLoader):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.directory: Optional[from_disk.Directory] = None
+        self.directory: Optional[Directory] = None
         # We need to use qualified imports here otherwise
         # Sphinx gets lost when handling subclasses. See:
         # https://github.com/sphinx-doc/sphinx/issues/10124
@@ -1091,15 +1128,14 @@ class BaseDirectoryLoader(NodeLoader):
         This needs to happen in this method because it's within a context manager block.
 
         """
-        self.directory = from_disk.Directory.from_disk(
+        directory = from_disk.Directory.from_disk(
             path=bytes(artifact_path),
             max_content_length=self.max_content_size,
             path_filter=self.path_filter,
         )
+        self.directory = directory.to_model()
         # Compute the merkle dag from the top-level directory
-        self.cnts, self.skipped_cnts, self.dirs = from_disk.iter_directory(
-            self.directory
-        )
+        self.cnts, self.skipped_cnts, self.dirs = from_disk.iter_directory(directory)
 
     def build_snapshot(self) -> Snapshot:
         """Build and return the snapshot to store in the archive.
@@ -1122,7 +1158,7 @@ class BaseDirectoryLoader(NodeLoader):
         return Snapshot(
             branches={
                 b"HEAD": SnapshotBranch(
-                    target=self.directory.hash,
+                    target=self.directory.id,
                     target_type=SnapshotTargetType.DIRECTORY,
                 ),
             }
@@ -1130,17 +1166,17 @@ class BaseDirectoryLoader(NodeLoader):
 
     def store_data(self) -> None:
         """Store newly retrieved Content and Snapshot."""
-        assert self.skipped_cnts is not None
-        self.log.debug("Number of skipped contents: %s", len(self.skipped_cnts))
-        self.storage.skipped_content_add(self.skipped_cnts)
-        assert self.cnts is not None
-        self.log.debug("Number of contents: %s", len(self.cnts))
-        self.storage.content_add(self.cnts)
-        assert self.dirs is not None
-        self.log.debug("Number of directories: %s", len(self.dirs))
-        self.storage.directory_add(self.dirs)
+        if self.skipped_cnts:
+            self.log.debug("Number of skipped contents: %s", len(self.skipped_cnts))
+            self.storage.skipped_content_add(self.skipped_cnts)
+        if self.cnts:
+            self.log.debug("Number of contents: %s", len(self.cnts))
+            self.storage.content_add(self.cnts)
+        if self.dirs:
+            self.log.debug("Number of directories: %s", len(self.dirs))
+            self.storage.directory_add(self.dirs)
         assert self.directory is not None
-        self.store_extids(self.directory.to_model())
+        self.store_extids(self.directory)
         self.snapshot = self.build_snapshot()
         self.storage.snapshot_add([self.snapshot])
         self.loaded_snapshot_id = self.snapshot.id
