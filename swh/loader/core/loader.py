@@ -53,6 +53,7 @@ from swh.model.model import (
     OriginVisitStatus,
     RawExtrinsicMetadata,
     Sha1Git,
+    SkippedContent,
     Snapshot,
     SnapshotBranch,
     SnapshotTargetType,
@@ -757,7 +758,7 @@ class NodeLoader(BaseLoader, ABC):
             extid_type = "checksum-%s"
         return extid_type
 
-    def _extids(self, node: Union[Content, Directory]) -> Set[ExtID]:
+    def _extids(self, node: Union[Content, Directory, SkippedContent]) -> Set[ExtID]:
         """Compute the set of ExtIDs for the :term:`node` (e.g. Content of Directory).
 
         This creates as much ExtID types as there are keys in :data:`self.checksums`
@@ -765,8 +766,9 @@ class NodeLoader(BaseLoader, ABC):
         """
         extids: Set[ExtID] = set()
         extid_type_template = self._extid_type_template()
+        node_swhid = node.swhid()
 
-        if extid_type_template:
+        if extid_type_template and node_swhid:
             checksums = {
                 hash_algo: hash_to_bytes(hsh)
                 for hash_algo, hsh in self.checksums.items()
@@ -775,7 +777,7 @@ class NodeLoader(BaseLoader, ABC):
                 ExtID(
                     extid_type=extid_type_template % hash_algo,
                     extid=extid,
-                    target=node.swhid(),
+                    target=node_swhid,
                     extid_version=self.extid_version,
                 )
                 for hash_algo, extid in checksums.items()
@@ -898,7 +900,7 @@ class NodeLoader(BaseLoader, ABC):
         # not found
         raise NotFound(f"Unknown origin {self.origin.url}.")
 
-    def store_extids(self, node: Union[Content, Directory]) -> None:
+    def store_extids(self, node: Union[Content, Directory, SkippedContent]) -> None:
         """Store the checksums provided as extids for :data:`node`.
 
         This stores as much ExtID types as there are keys in the provided
@@ -982,7 +984,7 @@ class ContentLoader(NodeLoader):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.content: Optional[Content] = None
+        self.content: Optional[Content | SkippedContent] = None
 
     def fetch_artifact(self) -> Iterator[Path]:
         """Iterates over the mirror urls to find a content.
@@ -1052,12 +1054,19 @@ class ContentLoader(NodeLoader):
         This needs to happen in this method because it's within a context manager block.
 
         """
-        with open(artifact_path, "rb") as content_file:
-            self.content = Content.from_data(content_file.read())
+        content = from_disk.Content.from_file(
+            path=str(artifact_path), max_content_length=self.max_content_size
+        )
+        self.content = content.to_model()
+        if self.content and isinstance(self.content, Content):
+            # content data must be fetched here as its path no longer exists
+            # when store_data method is called
+            self.content = self.content.with_data()
 
     def process_data(self) -> bool:
         """Build Snapshot out of the artifact retrieved."""
         assert self.content is not None
+        assert self.content.sha1_git
         self.snapshot = Snapshot(
             branches={
                 b"HEAD": SnapshotBranch(
@@ -1072,7 +1081,10 @@ class ContentLoader(NodeLoader):
     def store_data(self) -> None:
         """Store newly retrieved Content and Snapshot."""
         assert self.content is not None
-        self.storage.content_add([self.content])
+        if isinstance(self.content, Content):
+            self.storage.content_add([self.content])
+        elif isinstance(self.content, SkippedContent):
+            self.storage.skipped_content_add([self.content])
         self.store_extids(self.content)
 
         assert self.snapshot is not None

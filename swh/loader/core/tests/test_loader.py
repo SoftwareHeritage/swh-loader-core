@@ -589,6 +589,54 @@ def test_content_loader_hash_mismatch(
     assert_last_visit_matches(swh_storage, origin.url, status="failed", type="content")
 
 
+@pytest.mark.parametrize("checksum_layout", ["standard", "nar"])
+def test_content_loader_skip_too_large_content(
+    swh_storage, requests_mock_datadir, content_path, checksum_layout
+):
+    """Too large file should be archived as a skipped content"""
+    compute_hashes_fn = (
+        compute_content_nar_hashes if checksum_layout == "nar" else compute_hashes
+    )
+
+    checksums = compute_hashes_fn(content_path, ["sha1", "sha256", "sha512"])
+    origin = Origin(CONTENT_URL)
+    loader = ContentLoader(
+        swh_storage,
+        origin.url,
+        checksums=checksums,
+        checksum_layout=checksum_layout,
+        max_content_size=1,  # skip content whose size is greater that one byte
+    )
+    result = loader.load()
+
+    assert result == {"status": "eventful"}
+
+    assert get_stats(swh_storage) == {
+        "content": 0,
+        "directory": 0,
+        "origin": 1,
+        "origin_visit": 1,
+        "release": 0,
+        "revision": 0,
+        "skipped_content": 1,
+        "snapshot": 1,
+    }
+
+    extids = fetch_extids_from_checksums(
+        loader.storage, checksum_layout, checksums, extid_version=loader.extid_version
+    )
+    assert len(extids) == len(checksums)
+
+    visit_status = assert_last_visit_matches(
+        swh_storage, origin.url, status="full", type="content"
+    )
+    assert visit_status.snapshot is not None
+
+    result2 = loader.load()
+
+    assert result2 == {"status": "uneventful"}
+
+
 DIRECTORY_MIRROR = "https://example.org"
 DIRECTORY_URL = f"{DIRECTORY_MIRROR}/archives/dummy-hello.tar.gz"
 

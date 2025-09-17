@@ -11,7 +11,7 @@ import tempfile
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from swh.core.nar import Nar
-from swh.model.hashutil import hash_to_bytes
+from swh.model.hashutil import HashDict, hash_to_bytes
 from swh.model.model import ExtID, OriginVisitStatus, Snapshot, SnapshotTargetType
 from swh.model.swhids import ObjectType
 from swh.storage.algos.origin import origin_get_latest_visit_status
@@ -304,16 +304,16 @@ def fetch_extids_from_checksums(
                         dir_builder.build()
                         path_to_hash = tmp_dir
                     else:
-                        path_to_hash = os.path.join(tmp_dir, "content")
-                        content_bytes = storage.content_get_data(
-                            {"sha1_git": target_swhid.object_id}
-                        )
-                        assert content_bytes is not None
-                        with open(path_to_hash, "wb") as content:
-                            content.write(content_bytes)
-
-                    nar.serialize(PosixPath(path_to_hash))
-                    assert nar.hexdigest() == checksums
+                        hash_dict: HashDict = {"sha1_git": target_swhid.object_id}
+                        skipped_content = storage.skipped_content_find(hash_dict)
+                        if not skipped_content:
+                            content_bytes = storage.content_get_data(hash_dict)
+                            assert content_bytes is not None
+                            path_to_hash = os.path.join(tmp_dir, "content")
+                            with open(path_to_hash, "wb") as content:
+                                content.write(content_bytes)
+                            nar.serialize(PosixPath(path_to_hash))
+                            assert nar.hexdigest() == checksums
 
     return extids
 
