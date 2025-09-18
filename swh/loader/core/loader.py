@@ -32,7 +32,7 @@ import sentry_sdk
 from tenacity.stop import stop_after_attempt
 
 from swh.core.config import load_from_envvar
-from swh.core.nar import Nar
+from swh.core.nar import Nar, NarHashAlgo
 from swh.core.statsd import Statsd
 from swh.core.tarball import uncompress
 from swh.loader.core import __version__
@@ -674,7 +674,7 @@ class NodeLoader(BaseLoader, ABC):
         self,
         storage: StorageInterface,
         url: str,
-        checksums: Dict[str, str],
+        checksums: Dict[NarHashAlgo, str],
         checksums_computation: Optional[str] = None,
         checksum_layout: Optional[str] = None,
         fallback_urls: Optional[List[str]] = None,

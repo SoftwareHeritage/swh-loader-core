@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-from swh.core.nar import Nar
+from swh.core.nar import Nar, NarHashAlgo
 from swh.model.hashutil import HashDict, hash_to_bytes
 from swh.model.model import ExtID, OriginVisitStatus, Snapshot, SnapshotTargetType
 from swh.model.swhids import ObjectType
@@ -272,7 +272,7 @@ def get_stats(storage) -> Dict:
 def fetch_extids_from_checksums(
     storage: StorageInterface,
     checksum_layout: str,
-    checksums: Dict[str, str],
+    checksums: Dict[NarHashAlgo, str],
     extid_version: int = 0,
 ) -> List[ExtID]:
     extids = []
