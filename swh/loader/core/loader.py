@@ -838,9 +838,11 @@ class NodeLoader(BaseLoader, ABC):
                             self.storage, extid.target.object_id
                         )
                     elif extid.target.object_type == ObjectType.CONTENT:
-                        self.content = self.storage.content_get(
-                            [extid.target.object_id], algo="sha1_git"
-                        )[0]
+                        self.content: Optional[Content | SkippedContent] = (
+                            self.storage.content_get(
+                                [extid.target.object_id], algo="sha1_git"
+                            )[0]
+                        )
 
                     if (
                         getattr(self, "directory", None) is not None

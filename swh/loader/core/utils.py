@@ -16,7 +16,7 @@ import shutil
 import signal
 import time
 import traceback
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
 from urllib.parse import unquote, urlparse, urlsplit
 from urllib.request import urlopen
 
@@ -237,6 +237,7 @@ def download(
         params["headers"].update(extra_request_headers)
 
     parsed_url = urlparse(url)
+    chunks: Iterator[bytes]
     if parsed_url.scheme == "ftp":
         response = urlopen(url, timeout=timeout)
         chunks = (response.read(HASH_BLOCK_SIZE) for _ in itertools.count())
