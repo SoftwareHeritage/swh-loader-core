@@ -125,10 +125,10 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
         return json.loads(self._raw_info())
 
     def get_versions(self) -> Sequence[str]:
-        return self.info()["versions"]
+        return self.info().get("versions", [])
 
     def get_default_version(self) -> str:
-        return self.info()["dist-tags"].get("latest", "")
+        return self.info().get("dist-tags", {}).get("latest", "")
 
     def get_metadata_authority(self):
         return MetadataAuthority(

@@ -773,3 +773,14 @@ def test_npm_origin_not_found(swh_storage, requests_mock_datadir):
     assert_last_visit_matches(
         swh_storage, url, status="not_found", type="npm", snapshot=None
     )
+
+
+def test_npm_origin_no_versions(swh_storage, requests_mock_datadir):
+    url = package_url("rabbitmq-service")
+    loader = NpmLoader(swh_storage, url)
+
+    assert loader.load() == {"status": "failed"}
+
+    assert_last_visit_matches(
+        swh_storage, url, status="failed", type="npm", snapshot=None
+    )
