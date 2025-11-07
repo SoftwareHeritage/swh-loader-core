@@ -70,10 +70,10 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         self,
         storage: StorageInterface,
         url: str,
-        opam_root: str,
-        opam_instance: str,
-        opam_url: str,
-        opam_package: str,
+        opam_root: str = "/tmp/opam/",
+        opam_instance: str = "opam.ocaml.org",
+        opam_url: str = "https://opam.ocaml.org",
+        opam_package: Optional[str] = None,
         **kwargs: Any,
     ):
         super().__init__(storage=storage, url=url, **kwargs)
@@ -82,6 +82,8 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         self.opam_instance = opam_instance
         self.opam_url = opam_url
         self.opam_package = opam_package
+        if not self.opam_package:
+            self.opam_package = url.rstrip("/").split("/")[-1]
 
     def get_package_dir(self) -> str:
         return (
