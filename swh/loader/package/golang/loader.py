@@ -90,7 +90,7 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
             latest = get_url_body(f"{self.url}/@latest", session=self.session)
             return json.loads(latest)["Version"]
         except (NotFound, HTTPError, json.JSONDecodeError):
-            return max(self._get_versions(), key=LooseVersion2)
+            return max(self._get_versions(), key=LooseVersion2, default="")
 
     def _raw_info(self, version: str) -> dict:
         url = f"{self.url}/@v/{_uppercase_encode(version)}.info"

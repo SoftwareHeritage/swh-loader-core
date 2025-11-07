@@ -55,6 +55,22 @@ def test_golang_latest_version_not_found(
     }
 
 
+def test_golang_no_version_found(swh_storage, requests_mock_datadir, requests_mock):
+    url = "https://pkg.go.dev/github.com/adam-hanna/arrayOperations"
+    requests_mock.get(
+        "https://proxy.golang.org/github.com/adam-hanna/array!operations/@latest",
+        status_code=404,
+    )
+    requests_mock.get(
+        "https://proxy.golang.org/github.com/adam-hanna/array!operations/@v/list",
+        text="",
+    )
+    loader = GolangLoader(swh_storage, url)
+
+    assert loader.load()["status"] == "uneventful"
+    assert loader.last_snapshot().branches == {}
+
+
 def test_golang_release_date_timestamp_overflow(
     swh_storage, requests_mock_datadir, requests_mock, mocker
 ):
