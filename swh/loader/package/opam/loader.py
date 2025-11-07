@@ -5,11 +5,13 @@
 
 import logging
 import os
+import re
 import shutil
 from subprocess import PIPE, run
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import attr
+import requests
 
 from swh.loader.core.utils import cached_method
 from swh.loader.exception import NotFound
@@ -234,6 +236,22 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
                 f"can't get field url.src: for version {version} of package"
                 f" {self.opam_package} (at url {self.origin.url}) from `opam show`"
             )
+
+        match = re.match(r"^git\+https://github.com/(.+)\.git#(.+)$", url)
+        if match:
+            # compute github release tarball URL from git URL
+            url = (
+                f"https://github.com/{match.group(1)}/"
+                f"archive/refs/tags/{match.group(2)}.tar.gz"
+            )
+            # check if ref is a tag
+            head_response = requests.head(url, allow_redirects=True)
+            if head_response.status_code != 200:
+                # ref is a branch then
+                url = (
+                    f"https://github.com/{match.group(1)}/"
+                    f"archive/refs/heads/{match.group(2)}.tar.gz"
+                )
 
         checksums_str = fields.get("url.checksum:")
         checksums = {}
