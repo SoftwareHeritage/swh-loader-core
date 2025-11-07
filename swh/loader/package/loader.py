@@ -29,6 +29,7 @@ from typing import (
 
 import attr
 from looseversion import LooseVersion2
+import requests
 from requests.exceptions import ContentDecodingError
 import sentry_sdk
 
@@ -170,6 +171,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         super().__init__(storage=storage, origin_url=url, **kwargs)
         self.status_load = ""
         self.status_visit = ""
+
+        self.session = requests.Session()
 
     def load_status(self) -> Dict[str, str]:
         """Detailed loading status."""
@@ -446,6 +449,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     dest=tmpdir,
                     filename=p_info.filename,
                     hashes=p_info.checksums,
+                    session=self.session,
                 )
             ]
         except ContentDecodingError:
@@ -459,6 +463,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                     filename=p_info.filename,
                     hashes=p_info.checksums,
                     extra_request_headers={"Accept-Encoding": "identity"},
+                    session=self.session,
                 )
             ]
 

@@ -90,7 +90,7 @@ class HackageLoader(PackageLoader[HackagePackageInfo]):
         return response.headers
 
     def _raw_info(self, url: str, **extra_params) -> bytes:
-        return get_url_body(url=url, **extra_params)
+        return get_url_body(url=url, session=self.session, **extra_params)
 
     def info_versions(self) -> Dict:
         """Return the package versions (fetched from

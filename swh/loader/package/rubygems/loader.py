@@ -120,7 +120,7 @@ class RubyGemsLoader(PackageLoader[RubyGemsPackageInfo]):
 
         # Get extrinsic metadata
         extrinsic_metadata_url = rubygem_metadata["extrinsic_metadata_url"]
-        extrinsic_metadata = get_url_body(extrinsic_metadata_url)
+        extrinsic_metadata = get_url_body(extrinsic_metadata_url, session=self.session)
 
         p_info = RubyGemsPackageInfo(
             url=artifact["url"],

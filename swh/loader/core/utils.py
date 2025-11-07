@@ -159,7 +159,9 @@ def compute_hashes(filepath: str, hash_names: List[str] = ["sha256"]) -> Dict[st
 @http_retry(
     before_sleep=before_sleep_log(logger, logging.WARNING),
 )
-def get_url_body(url: str, **extra_params) -> bytes:
+def get_url_body(
+    url: str, session: Optional[requests.Session] = None, **extra_params
+) -> bytes:
     """Basic HTTP client to retrieve information on software package,
     typically JSON metadata from a REST API.
 
@@ -174,7 +176,10 @@ def get_url_body(url: str, **extra_params) -> bytes:
 
     """
     logger.debug("Fetching %s", url)
-    response = requests.get(url, **{**DEFAULT_PARAMS, **extra_params})
+    if session:
+        response = session.get(url, **{**DEFAULT_PARAMS, **extra_params})
+    else:
+        response = requests.get(url, **{**DEFAULT_PARAMS, **extra_params})
     if response.status_code == 404:
         raise NotFound(f"Fail to query '{url}'. Reason: {response.status_code}")
     response.raise_for_status()
@@ -206,6 +211,7 @@ def download(
     auth: Optional[Tuple[str, str]] = None,
     extra_request_headers: Optional[Dict[str, str]] = None,
     timeout: int = 120,
+    session: Optional[requests.Session] = None,
 ) -> Tuple[str, Dict]:
     """Download a remote file from url, and compute swh hashes on it.
 
@@ -248,7 +254,10 @@ def download(
         # request artifact raw bytes without extra compression as requests set
         # Accept-Encoding header to "gzip, deflate" by default
         params["headers"]["Accept-Encoding"] = "identity"
-        response = requests.get(url, **params, timeout=timeout, stream=True)
+        if session:
+            response = session.get(url, **params, timeout=timeout, stream=True)
+        else:
+            response = requests.get(url, **params, timeout=timeout, stream=True)
         response.raise_for_status()
         # update URL to response one as requests follow redirection by default
         # on GET requests

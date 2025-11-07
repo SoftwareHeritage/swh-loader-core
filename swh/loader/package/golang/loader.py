@@ -69,7 +69,11 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
 
     @cached_method
     def _get_versions(self) -> List[str]:
-        return get_url_body(f"{self.url}/@v/list").decode().splitlines()
+        return (
+            get_url_body(f"{self.url}/@v/list", session=self.session)
+            .decode()
+            .splitlines()
+        )
 
     def get_versions(self) -> Sequence[str]:
         versions = self._get_versions()
@@ -83,14 +87,14 @@ class GolangLoader(PackageLoader[GolangPackageInfo]):
     @cached_method
     def get_default_version(self) -> str:
         try:
-            latest = get_url_body(f"{self.url}/@latest")
+            latest = get_url_body(f"{self.url}/@latest", session=self.session)
             return json.loads(latest)["Version"]
         except (NotFound, HTTPError, json.JSONDecodeError):
             return max(self._get_versions(), key=LooseVersion2)
 
     def _raw_info(self, version: str) -> dict:
         url = f"{self.url}/@v/{_uppercase_encode(version)}.info"
-        return json.loads(get_url_body(url))
+        return json.loads(get_url_body(url, session=self.session))
 
     def get_package_info(self, version: str) -> Iterator[Tuple[str, GolangPackageInfo]]:
         # Encode the name because creating nested folders can become problematic

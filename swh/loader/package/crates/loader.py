@@ -136,7 +136,8 @@ class CratesLoader(PackageLoader[CratesPackageInfo]):
     @cached_method
     def crate_extrinsic_medata(self) -> Dict[str, Dict[str, Any]]:
         crate_metadata_json = get_url_body(
-            self.CRATE_API_URL_PATTERN.format(crate=self.crate_name)
+            self.CRATE_API_URL_PATTERN.format(crate=self.crate_name),
+            session=self.session,
         )
         crate_metadata = json.loads(crate_metadata_json)
         return {

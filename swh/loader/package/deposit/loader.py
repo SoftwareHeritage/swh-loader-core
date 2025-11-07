@@ -72,7 +72,7 @@ def build_branch_name(version: str) -> str:
 
 
 def aggregate_tarballs(
-    tmpdir: str, archive_urls: List[str], filename: str
+    tmpdir: str, archive_urls: List[str], filename: str, session: requests.Session
 ) -> Tuple[str, Mapping]:
     """Aggregate multiple tarballs into one and returns this new archive's
        path.
@@ -99,7 +99,7 @@ def aggregate_tarballs(
             parsed_archive_url = urlparse(archive_url)
             archive_name = os.path.basename(parsed_archive_url.path)
             archive_path = os.path.join(download_tarball_rootdir, archive_name)
-            download(archive_url, download_tarball_rootdir)
+            download(archive_url, download_tarball_rootdir, session=session)
             tarball.uncompress(archive_path, aggregated_tarball_rootdir)
 
         # Aggregate into one big tarball the multiple smaller ones
@@ -122,7 +122,7 @@ def aggregate_tarballs(
         }
     else:
         temp_tarpath, extrinsic_metadata = download(
-            archive_urls[0], download_tarball_rootdir
+            archive_urls[0], download_tarball_rootdir, session=session
         )
 
     return temp_tarpath, extrinsic_metadata
@@ -333,7 +333,11 @@ class DepositLoader(PackageLoader[DepositPackageInfo]):
         """Override to allow use of the dedicated deposit client"""
         upload_urls = self.client.upload_urls_get(p_info.id)
         assert upload_urls, f"No tarballs were uploaded for deposit {p_info.id}"
-        return [aggregate_tarballs(tmpdir, upload_urls, p_info.filename)]
+        return [
+            aggregate_tarballs(
+                tmpdir, upload_urls, p_info.filename, session=self.session
+            )
+        ]
 
     def build_release(
         self,

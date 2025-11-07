@@ -124,7 +124,9 @@ class CpanLoader(PackageLoader[CpanPackageInfo]):
                 author=metadata["cpan_author"],
                 release_name=metadata["release_name"],
             )
-            version_extrinsic_metadata = get_url_body(extrinsic_metadata_url)
+            version_extrinsic_metadata = get_url_body(
+                extrinsic_metadata_url, session=self.session
+            )
         except HTTPError:
             logger.warning(
                 "Could not fetch extrinsic_metadata for module %s version %s",

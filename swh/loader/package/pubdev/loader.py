@@ -56,7 +56,9 @@ class PubDevLoader(PackageLoader[PubDevPackageInfo]):
     def info(self) -> Dict:
         """Return the project metadata information (fetched from pub.dev registry)"""
         # Use strict=False in order to correctly manage case where \n is present in a string
-        info = json.loads(get_url_body(self.package_info_url), strict=False)
+        info = json.loads(
+            get_url_body(self.package_info_url, session=self.session), strict=False
+        )
         # Arrange versions list as a new dict with `version` as key
         versions = {v["version"]: v for v in info["versions"]}
         info["versions"] = versions

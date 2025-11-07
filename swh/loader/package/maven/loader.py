@@ -85,14 +85,19 @@ class MavenPackageInfo(BasePackageInfo):
     EXTID_VERSION = 0
 
     @classmethod
-    def from_metadata(cls, a_metadata: ArtifactDict) -> MavenPackageInfo:
+    def from_metadata(
+        cls, a_metadata: ArtifactDict, session: requests.Session
+    ) -> MavenPackageInfo:
         time = iso8601.parse_date(a_metadata["time"]).astimezone(tz=timezone.utc)
         url = a_metadata["url"]
         checksums = {}
         for algo in ("sha1", "md5"):
             try:
                 checksums[algo] = (
-                    get_url_body(url + f".{algo}").decode().split(" ")[0].rstrip()
+                    get_url_body(url + f".{algo}", session=session)
+                    .decode()
+                    .split(" ")[0]
+                    .rstrip()
                 )
                 break
             except (requests.HTTPError, NotFound):
@@ -196,7 +201,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
     def get_package_info(self, version: str) -> Iterator[Tuple[str, MavenPackageInfo]]:
         a_metadata = self.version_artifact[version]
         rel_name = release_name(a_metadata["version"])
-        yield rel_name, MavenPackageInfo.from_metadata(a_metadata)
+        yield rel_name, MavenPackageInfo.from_metadata(a_metadata, session=self.session)
 
     def build_release(
         self, p_info: MavenPackageInfo, uncompressed_path: str, directory: Sha1Git
@@ -227,7 +232,7 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
                 package_base_url = path.dirname(exc.response.url)
                 metadata_url = package_base_url + "/maven-metadata.xml"
                 try:
-                    metadata = get_url_body(metadata_url)
+                    metadata = get_url_body(metadata_url, session=self.session)
                 except Exception:
                     pass
                 else:
@@ -246,7 +251,9 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
                         a_metadata["url"] = updated_package_url
                         a_metadata["version"] = real_version.text
                         self.version_artifact[package_version] = a_metadata
-                        info = MavenPackageInfo.from_metadata(a_metadata)
+                        info = MavenPackageInfo.from_metadata(
+                            a_metadata, session=self.session
+                        )
                         p_info.url = info.url
                         p_info.version = info.version
                         p_info.checksums = info.checksums

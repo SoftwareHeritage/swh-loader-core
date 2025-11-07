@@ -117,7 +117,7 @@ class NpmLoader(PackageLoader[NpmPackageInfo]):
 
     @cached_method
     def _raw_info(self) -> bytes:
-        return get_url_body(self.provider_url)
+        return get_url_body(self.provider_url, session=self.session)
 
     @cached_method
     def info(self) -> Dict:

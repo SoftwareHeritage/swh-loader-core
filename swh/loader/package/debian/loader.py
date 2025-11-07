@@ -14,6 +14,7 @@ from dateutil.parser import parse as parse_date
 from debian.changelog import Changelog
 from debian.deb822 import Dsc
 from looseversion import LooseVersion2
+import requests
 
 from swh.loader.core.utils import download, release_name
 from swh.loader.package.loader import BasePackageInfo, PackageLoader, PartialExtID
@@ -213,7 +214,7 @@ class DebianLoader(PackageLoader[DebianPackageInfo]):
         This is delegated to the `download_package` function.
 
         """
-        all_hashes = download_package(p_info, tmpdir)
+        all_hashes = download_package(p_info, tmpdir, session=self.session)
         logger.debug("all_hashes: %s", all_hashes)
         res = []
         for hashes in all_hashes.values():
@@ -297,7 +298,9 @@ def prepare_person(person: Mapping[str, str]) -> Person:
     )
 
 
-def download_package(p_info: DebianPackageInfo, tmpdir: Any) -> Mapping[str, Any]:
+def download_package(
+    p_info: DebianPackageInfo, tmpdir: Any, session: Optional[requests.Session] = None
+) -> Mapping[str, Any]:
     """Fetch a source package in a temporary directory and check the checksums
     for all files.
 
@@ -322,7 +325,11 @@ def download_package(p_info: DebianPackageInfo, tmpdir: Any) -> Mapping[str, Any
             extrinsic_hashes["sha1"] = fileinfo.sha1
         logger.debug("extrinsic_hashes(%s): %s", filename, extrinsic_hashes)
         _, hashes = download(
-            uri, dest=tmpdir, filename=filename, hashes=extrinsic_hashes
+            uri,
+            dest=tmpdir,
+            filename=filename,
+            hashes=extrinsic_hashes,
+            session=session,
         )
         all_hashes[filename] = hashes
 

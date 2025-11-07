@@ -90,7 +90,7 @@ class CondaLoader(PackageLoader[CondaPackageInfo]):
         }
 
     def _raw_info(self, url: str, **extra_params) -> bytes:
-        return get_url_body(url=url, **extra_params)
+        return get_url_body(url=url, session=self.session, **extra_params)
 
     def get_versions(self) -> Sequence[str]:
         """Get all released versions of a Conda package

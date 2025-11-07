@@ -128,7 +128,7 @@ class PuppetLoader(PackageLoader[PuppetPackageInfo]):
         metadata = {}
         url: Optional[str] = self.METADATA_URL.format(module=self.module_name)
         while url:
-            page = json.loads(get_url_body(url))
+            page = json.loads(get_url_body(url, session=self.session))
             for release in page["results"]:
                 metadata[release["version"]] = release
             url = (

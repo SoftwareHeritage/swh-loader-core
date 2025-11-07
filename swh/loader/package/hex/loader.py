@@ -124,7 +124,7 @@ class HexLoader(PackageLoader[HexPackageInfo]):
 
         filename = tarball_url.split("/")[-1]
 
-        extrinsic_metadata = get_url_body(release_url)
+        extrinsic_metadata = get_url_body(release_url, session=self.session)
         extrinsic_metadata_json = json.loads(extrinsic_metadata)
 
         publisher = extrinsic_metadata_json.get("publisher")
