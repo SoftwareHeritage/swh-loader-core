@@ -12,6 +12,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 import attr
 
 from swh.loader.core.utils import cached_method
+from swh.loader.exception import NotFound
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
@@ -227,7 +228,7 @@ class OpamLoader(PackageLoader[OpamPackageInfo]):
         )
         url = fields.get("url.src:")
         if not url:
-            raise ValueError(
+            raise NotFound(
                 f"can't get field url.src: for version {version} of package"
                 f" {self.opam_package} (at url {self.origin.url}) from `opam show`"
             )
