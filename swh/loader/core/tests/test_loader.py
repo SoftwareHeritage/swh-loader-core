@@ -442,7 +442,7 @@ def test_content_loader_404(
         caplog,
         loader,
         NotFound,
-        "Unknown origin",
+        f"URL {unknown_origin.url} was not found",
         status="not_found",
         origin=unknown_origin,
     )
@@ -470,7 +470,7 @@ def test_content_loader_404_with_fallback(
         caplog,
         loader,
         NotFound,
-        "Unknown origin",
+        f"URL {unknown_origin.url} was not found",
         status="not_found",
         origin=unknown_origin,
     )
@@ -660,7 +660,7 @@ def test_directory_loader_404(
         caplog,
         loader,
         NotFound,
-        "Unknown origin",
+        f"URL {unknown_origin.url} was not found",
         status="not_found",
         origin=unknown_origin,
     )
@@ -689,7 +689,7 @@ def test_directory_loader_404_with_fallback(
         caplog,
         loader,
         NotFound,
-        "Unknown origin",
+        f"URL {unknown_origin.url} was not found",
         status="not_found",
         origin=unknown_origin,
     )

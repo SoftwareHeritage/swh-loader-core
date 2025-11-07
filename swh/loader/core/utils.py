@@ -229,11 +229,12 @@ def download(
             (read/connection timeout)
 
     Raises:
-        ValueError in case of any error when fetching/computing (length,
-        checksums mismatched...)
+        swh.loader.exception.NotFound: when HTTP response has status code 404
+        ValueError: in case of any error when fetching/computing (length,
+            checksums mismatched...)
 
     Returns:
-        Tuple of local (filepath, hashes of filepath)
+        Tuple of (downloaded file path, hashes of downloaded file path)
 
     """
     params = copy.deepcopy(DEFAULT_PARAMS)
@@ -258,6 +259,8 @@ def download(
             response = session.get(url, **params, timeout=timeout, stream=True)
         else:
             response = requests.get(url, **params, timeout=timeout, stream=True)
+        if response.status_code == 404:
+            raise NotFound(f"URL {url} was not found")
         response.raise_for_status()
         # update URL to response one as requests follow redirection by default
         # on GET requests

@@ -223,13 +223,13 @@ class MavenLoader(PackageLoader[MavenPackageInfo]):
     ) -> List[Tuple[str, Mapping]]:
         try:
             return super().download_package(p_info, tmpdir)
-        except requests.HTTPError as exc:
-            if exc.response.status_code == 404 and "-SNAPSHOT" in exc.response.url:
+        except NotFound as exc:
+            if "-SNAPSHOT" in p_info.url:
                 # some snapshot version of a maven package can have a jar filename
                 # different from the one provided by the maven lister, compute that
                 # filename by parsing maven-metadata.xml file if available
-                package_file = path.basename(exc.response.url)
-                package_base_url = path.dirname(exc.response.url)
+                package_file = path.basename(p_info.url)
+                package_base_url = path.dirname(p_info.url)
                 metadata_url = package_base_url + "/maven-metadata.xml"
                 try:
                     metadata = get_url_body(metadata_url, session=self.session)

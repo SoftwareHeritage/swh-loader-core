@@ -159,8 +159,8 @@ def test_deposit_loading_failure_to_retrieve_1_artifact(
         "status": "failed",
         "status_detail": {
             "loading": [
-                "Failed to load branch deposit/1 for some-url-2: 404 Client Error: None "
-                f"for url: {NOT_FOUND_UPLOAD_URL}"
+                "Failed to load branch deposit/1 for some-url-2: URL "
+                f"{NOT_FOUND_UPLOAD_URL} was not found"
             ]
         },
     }

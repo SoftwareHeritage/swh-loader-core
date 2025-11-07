@@ -30,6 +30,7 @@ from swh.loader.core.utils import (
     parse_visit_date,
     release_name,
 )
+from swh.loader.exception import NotFound
 from swh.model.hashutil import MultiHash
 
 
@@ -224,14 +225,11 @@ def test_version_generation():
     ), "Make sure swh.loader.core is installed (e.g. pip install -e .)"
 
 
-def test_download_fail_to_download(tmp_path, requests_mock):
+def test_download_not_found(tmp_path, requests_mock):
     url = "https://pypi.org/pypi/arrow/json"
-    status_code = 404
-    requests_mock.get(url, status_code=status_code)
+    requests_mock.get(url, status_code=404)
 
-    with pytest.raises(
-        HTTPError, match=f"{status_code} Client Error: None for url: {url}"
-    ):
+    with pytest.raises(NotFound, match=f"URL {url} was not found"):
         download(url, tmp_path)
 
 
