@@ -43,8 +43,8 @@ ORIGIN = {
             "filename": "saz-memcached-8.1.0.tar.gz",
             "last_update": "2022-07-11T03:34:55-07:00",
             "checksums": {
-                "md5": "5313e8fff0af08d63681daf955e7a604",
-                "sha256": "0dbb1470c64435700767e9887d0cf70203b1ae59445c401d5d200f2dabb3226e",  # noqa: B950
+                "md5": "dc0d6b7336ddcd21987f74af83a64f43",
+                "sha256": "094fd1bba5110a88875af0d3a687374baca6ac809607c9705a3bf50b76637832",  # noqa: B950
             },
         },
     ],
@@ -81,7 +81,7 @@ def test_puppet_loader_load_multiple_version(
     assert load_status["status"] == "eventful"
     assert load_status["snapshot_id"] is not None
 
-    expected_snapshot_id = "c3da002f1dc325be29004fa64312f71ba50b9fbc"
+    expected_snapshot_id = "bcfa7d70f0ceb83e45acaf20a57216b2df3ce311"
 
     assert expected_snapshot_id == load_status["snapshot_id"]
 
@@ -97,7 +97,7 @@ def test_puppet_loader_load_multiple_version(
                 target_type=SnapshotTargetType.RELEASE,
             ),
             b"releases/8.1.0": SnapshotBranch(
-                target=hash_to_bytes("90592c01fe7f96f32a88bc611193b305cb77cc03"),
+                target=hash_to_bytes("7a89a5b7060900ae8cdd340441cf0432f1b96d25"),
                 target_type=SnapshotTargetType.RELEASE,
             ),
         },
@@ -120,7 +120,7 @@ def test_puppet_loader_load_multiple_version(
     expected_release = Release(
         name=b"8.1.0",
         message=b"Synthetic release for Puppet source package saz-memcached version 8.1.0\n",
-        target=hash_to_bytes("1b9a2dbc80f954e1ba4b2f1c6344d1ce4e84ab7c"),
+        target=hash_to_bytes("ff46ca938c6d42eac34753393d4596ccebc637a1"),
         target_type=ReleaseTargetType.DIRECTORY,
         synthetic=True,
         author=Person(fullname=b"saz", name=b"saz", email=None),

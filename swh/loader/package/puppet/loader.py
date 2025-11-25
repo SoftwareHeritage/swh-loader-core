@@ -88,17 +88,17 @@ def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
 
     Each Puppet module version has a metadata.json file at the root of the archive.
 
-    See ``https://puppet.com/docs/puppet/7/modules_metadata.html`` for metadata specifications.
+    See ``https://puppet.com/docs/puppet/7/modules_metadata.html`` for
+    metadata specifications.
 
     Args:
-        dir_path: A directory on disk where a metadata.json file must be present
+        dir_path: A directory on disk where a puppet package was unpacked
 
     Returns:
         A dict mapping from json parser
     """
-    meta_json_path = dir_path / "metadata.json"
-    metadata: Dict[str, Any] = json.loads(meta_json_path.read_text())
-    return metadata
+    meta_json_path = next(dir_path.glob("**/metadata.json"))
+    return json.loads(meta_json_path.read_text())
 
 
 class PuppetLoader(PackageLoader[PuppetPackageInfo]):
@@ -183,13 +183,8 @@ class PuppetLoader(PackageLoader[PuppetPackageInfo]):
     def build_release(
         self, p_info: PuppetPackageInfo, uncompressed_path: str, directory: Sha1Git
     ) -> Optional[Release]:
-        # compute extracted module directory name
-        dirname = p_info.filename.split(".tar.gz")[0]
-
         # Extract intrinsic metadata from uncompressed_path/{dirname}/metadata.json
-        intrinsic_metadata = extract_intrinsic_metadata(
-            Path(uncompressed_path) / f"{dirname}"
-        )
+        intrinsic_metadata = extract_intrinsic_metadata(Path(uncompressed_path))
 
         version: str = intrinsic_metadata["version"]
         assert version == p_info.version
