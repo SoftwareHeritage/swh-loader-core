@@ -61,7 +61,20 @@ class PuppetPackageInfo(BasePackageInfo):
         extrinsic_metadata: Dict[str, Any],
     ) -> PuppetPackageInfo:
 
-        metadata = extrinsic_metadata[version]
+        metadata = extrinsic_metadata.get(version, {})
+        dir_extrinsic_metadata = (
+            [
+                RawExtrinsicMetadataCore(
+                    format="puppet-module-json",
+                    metadata=json.dumps(metadata).encode(),
+                )
+            ]
+            if metadata
+            else []
+        )
+        checksums = {
+            k[5:]: metadata[k] for k in ("file_md5", "file_sha256") if k in metadata
+        }
 
         return cls(
             url=url,
@@ -69,17 +82,9 @@ class PuppetPackageInfo(BasePackageInfo):
             filename=filename,
             version=version,
             last_modified=last_modified,
-            sha256_checksum=metadata["file_sha256"],
-            directory_extrinsic_metadata=[
-                RawExtrinsicMetadataCore(
-                    format="puppet-module-json",
-                    metadata=json.dumps(metadata).encode(),
-                )
-            ],
-            checksums={
-                "md5": metadata["file_md5"],
-                "sha256": metadata["file_sha256"],
-            },
+            sha256_checksum=metadata.get("file_sha256", ""),
+            directory_extrinsic_metadata=dir_extrinsic_metadata,
+            checksums=checksums,
         )
 
 

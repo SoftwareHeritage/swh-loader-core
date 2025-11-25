@@ -183,3 +183,21 @@ def test_puppet_loader_load_multiple_version(
     assert len(extids) == 2
 
     assert release_swhid in {extid.target for extid in extids}
+
+
+def test_puppet_loader_load_missing_extrinsic_metadata(
+    requests_mock_datadir,
+    swh_storage,
+    puppet_module_extrinsic_metadata,
+    mocker,
+):
+    loader = PuppetLoader(swh_storage, url=ORIGIN["url"], artifacts=ORIGIN["artifacts"])
+    # one release is missing extrinsic metadata
+    mocker.patch.object(loader, "extrinsic_metadata").return_value = {
+        "1.0.0": puppet_module_extrinsic_metadata[1]
+    }
+    loader.load()
+
+    # both releases should have been loaded regardless if extrinsic metadata
+    # are available or not
+    assert get_stats(swh_storage)["release"] == len(ORIGIN["artifacts"])
