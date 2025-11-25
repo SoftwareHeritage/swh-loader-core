@@ -3,12 +3,15 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import copy
 import json
 import os
 
+import iso8601
 import pytest
 
 from swh.loader.core import __version__
+from swh.loader.core.utils import EMPTY_AUTHOR
 from swh.loader.package.puppet.loader import PuppetLoader, PuppetPackageInfo
 from swh.loader.tests import assert_last_visit_matches, check_snapshot, get_stats
 from swh.model.hashutil import hash_to_bytes
@@ -201,3 +204,83 @@ def test_puppet_loader_load_missing_extrinsic_metadata(
     # both releases should have been loaded regardless if extrinsic metadata
     # are available or not
     assert get_stats(swh_storage)["release"] == len(ORIGIN["artifacts"])
+
+
+@pytest.fixture
+def puppet_module_intrinsic_metadata():
+    return copy.copy(
+        {
+            "summary": "UNKNOWN",
+            "author": "saz",
+            "source": "UNKNOWN",
+            "dependencies": [],
+            "types": [],
+            "license": "Apache License, Version 2.0",
+            "project_page": "https://github.com/saz/puppet-memcached",
+            "version": "1.0.0",
+            "name": "saz-memcached",
+            "description": "Manage memcached via Puppet",
+        }
+    )
+
+
+@pytest.fixture
+def puppet_package_info(puppet_module_extrinsic_metadata):
+    return PuppetPackageInfo.from_metadata(
+        url="https://forgeapi.puppet.com/v3/files/saz-memcached-1.0.0.tar.gz",
+        module_name="saz-memcached",
+        filename="saz-memcached-1.0.0.tar.gz",
+        version="1.0.0",
+        last_modified=iso8601.parse_date("2011-11-20T13:40:30-08:00"),
+        extrinsic_metadata={"1.0.0": puppet_module_extrinsic_metadata[1]},
+    )
+
+
+def test_puppet_package_build_release_missing_author(
+    swh_storage,
+    puppet_package_info,
+    puppet_module_intrinsic_metadata,
+    mocker,
+):
+    puppet_module_intrinsic_metadata["author"] = None
+
+    loader = PuppetLoader(swh_storage, url=ORIGIN["url"], artifacts=ORIGIN["artifacts"])
+
+    mocker.patch(
+        "swh.loader.package.puppet.loader.extract_intrinsic_metadata"
+    ).return_value = puppet_module_intrinsic_metadata
+
+    release = loader.build_release(
+        puppet_package_info,
+        uncompressed_path="",
+        directory=hash_to_bytes("1b9a2dbc80f954e1ba4b2f1c6344d1ce4e84ab7c"),
+    )
+
+    assert release.author == EMPTY_AUTHOR
+
+
+def test_puppet_package_build_release_multi_authors(
+    swh_storage,
+    puppet_package_info,
+    puppet_module_intrinsic_metadata,
+    mocker,
+):
+    puppet_module_intrinsic_metadata["author"] = [
+        "John Doe <john.doe@example.org>",
+        "Jane Doe <jane.doe@example.org>",
+    ]
+
+    loader = PuppetLoader(swh_storage, url=ORIGIN["url"], artifacts=ORIGIN["artifacts"])
+
+    mocker.patch(
+        "swh.loader.package.puppet.loader.extract_intrinsic_metadata"
+    ).return_value = puppet_module_intrinsic_metadata
+
+    release = loader.build_release(
+        puppet_package_info,
+        uncompressed_path="",
+        directory=hash_to_bytes("1b9a2dbc80f954e1ba4b2f1c6344d1ce4e84ab7c"),
+    )
+
+    assert release.author == Person.from_fullname(b"John Doe <john.doe@example.org>")
+    assert b"Co-authored-by: Jane Doe <jane.doe@example.org>\n" in release.message

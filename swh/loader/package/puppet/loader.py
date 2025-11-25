@@ -14,7 +14,13 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 import attr
 import iso8601
 
-from swh.loader.core.utils import Person, cached_method, get_url_body, release_name
+from swh.loader.core.utils import (
+    EMPTY_AUTHOR,
+    Person,
+    cached_method,
+    get_url_body,
+    release_name,
+)
 from swh.loader.package.loader import (
     BasePackageInfo,
     PackageLoader,
@@ -194,12 +200,24 @@ class PuppetLoader(PackageLoader[PuppetPackageInfo]):
         version: str = intrinsic_metadata["version"]
         assert version == p_info.version
 
-        author = Person.from_fullname(intrinsic_metadata["author"].encode())
+        _author = intrinsic_metadata.get("author")
+        if isinstance(_author, list) and _author:
+            author_name = _author[0]
+        else:
+            author_name = _author
+        author = (
+            Person.from_fullname(author_name.encode()) if author_name else EMPTY_AUTHOR
+        )
 
         message = (
             f"Synthetic release for Puppet source package {p_info.name} "
             f"version {version}\n"
         )
+
+        if isinstance(_author, list) and len(_author) > 1:
+            message += "\n"
+            for person in _author[1:]:
+                message += f"Co-authored-by: {person}\n"
 
         return Release(
             name=version.encode(),
