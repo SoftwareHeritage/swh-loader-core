@@ -127,15 +127,21 @@ class HexLoader(PackageLoader[HexPackageInfo]):
         extrinsic_metadata = get_url_body(release_url, session=self.session)
         extrinsic_metadata_json = json.loads(extrinsic_metadata)
 
-        publisher = extrinsic_metadata_json.get("publisher")
+        publisher = extrinsic_metadata_json.get("publisher", {})
         author = (
             Person.from_dict(
                 {
-                    "name": publisher["username"].encode(),
-                    "email": publisher["email"].encode(),
+                    "name": (
+                        publisher["username"].encode()
+                        if "username" in publisher
+                        else None
+                    ),
+                    "email": (
+                        publisher["email"].encode() if "email" in publisher else None
+                    ),
                 }
             )
-            if publisher is not None
+            if publisher
             else EMPTY_AUTHOR
         )
 

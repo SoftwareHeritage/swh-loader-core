@@ -88,7 +88,7 @@ def release_6_1_dir(datadir, tmp_path):
 def release_6_1(release_6_1_dir):
     return Release(
         name=b"0.6.1",
-        author=Person.from_fullname(b"asabil <ali.sabil@gmail.com>"),
+        author=Person.from_fullname(b"asabil"),
         date=TimestampWithTimezone.from_iso8601("2023-01-13T09:39:48.267532Z"),
         message=(b"Synthetic release for Hex source package gpio version 0.6.1\n"),
         target=release_6_1_dir.hash,
@@ -107,7 +107,7 @@ def release_6_2(release_6_2_dir):
     cnts, skipped_cnts, dirs = from_disk.iter_directory(release_6_2_dir)
     return Release(
         name=b"0.6.2",
-        author=Person.from_fullname(b"asabil <ali.sabil@gmail.com>"),
+        author=Person.from_fullname(b"<ali.sabil@gmail.com>"),
         date=TimestampWithTimezone.from_iso8601("2023-02-05T09:55:17.707695Z"),
         message=(b"Synthetic release for Hex source package gpio version 0.6.2\n"),
         target=release_6_2_dir.hash,
