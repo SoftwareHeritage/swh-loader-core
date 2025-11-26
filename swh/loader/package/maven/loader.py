@@ -98,6 +98,7 @@ class MavenPackageInfo(BasePackageInfo):
                     .decode()
                     .split(" ")[0]
                     .rstrip()
+                    .lower()
                 )
                 break
             except (requests.HTTPError, NotFound):
