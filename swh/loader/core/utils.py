@@ -17,6 +17,7 @@ import signal
 import time
 import traceback
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
+from urllib.error import URLError
 from urllib.parse import unquote, urlparse, urlsplit
 from urllib.request import urlopen
 
@@ -246,7 +247,12 @@ def download(
     parsed_url = urlparse(url)
     chunks: Iterator[bytes]
     if parsed_url.scheme == "ftp":
-        response = urlopen(url, timeout=timeout)
+        try:
+            response = urlopen(url, timeout=timeout)
+        except URLError as e:
+            if "urlopen error 550" in str(e):
+                raise NotFound(f"URL {url} was not found")
+            raise
         chunks = (response.read(HASH_BLOCK_SIZE) for _ in itertools.count())
     elif parsed_url.scheme == "file":
         response = open(parsed_url.path, "rb")

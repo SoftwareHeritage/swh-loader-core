@@ -326,6 +326,16 @@ def test_ftp_download_ko(tmp_path, mocker):
         download(url, dest=str(tmp_path))
 
 
+def test_ftp_download_not_found(tmp_path, mocker):
+    url = "ftp://example.org/dist/project.tar.gz"
+    mocker.patch("swh.loader.core.utils.urlopen").side_effect = URLError(
+        "urlopen error 550"
+    )
+
+    with pytest.raises(NotFound, match=f"URL {url} was not found"):
+        download(url, tmp_path)
+
+
 def test_download_with_redirection(tmp_path, requests_mock):
     """Download with redirection should use the targeted URL to extract filename"""
     url = "https://example.org/project/requests/download"
