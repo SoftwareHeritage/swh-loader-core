@@ -24,10 +24,11 @@ from typing import (
     Set,
     Union,
 )
+from urllib.error import URLError
 from urllib.parse import urlparse
 import uuid
 
-from requests.exceptions import HTTPError
+from requests.exceptions import ConnectionError, HTTPError
 import sentry_sdk
 from tenacity.stop import stop_after_attempt
 
@@ -900,7 +901,7 @@ class NodeLoader(BaseLoader, ABC):
 
         # if we reach here, we did not find any proper tarball, so consider the origin
         # not found
-        raise NotFound(f"Unknown origin {self.origin.url}.")
+        raise NotFound(f"URL {self.origin.url} was not found")
 
     def store_extids(self, node: Union[Content, Directory, SkippedContent]) -> None:
         """Store the checksums provided as extids for :data:`node`.
@@ -1032,6 +1033,9 @@ class ContentLoader(NodeLoader):
                         )
                     found_file_path = True
                     yield Path(file_path)
+            except NotFound as nfe:
+                self.log.debug("%s: continue on next mirror url if any", nfe)
+                continue
             except ValueError as e:
                 errors.append(e)
                 self.log.debug(
@@ -1039,11 +1043,8 @@ class ContentLoader(NodeLoader):
                     url,
                 )
                 continue
-            except HTTPError as http_error:
-                if http_error.response.status_code == 404:
-                    self.log.debug(
-                        "Not found '%s', continue on next mirror url if any", url
-                    )
+            except (ConnectionError, HTTPError, URLError) as error:
+                self.log.debug("%s : continue on next mirror url if any", error)
                 continue
 
         # To catch 'standard' hash mismatch issues raise by the 'download' method.
@@ -1283,6 +1284,9 @@ class TarballDirectoryLoader(BaseDirectoryLoader):
                             dest=tmpdir,
                             hashes=self.standard_hashes,
                         )
+                except NotFound as nfe:
+                    self.log.debug("%s: continue on next mirror url if any", nfe)
+                    continue
                 except ValueError as e:
                     errors.append(e)
                     self.log.debug(
@@ -1290,11 +1294,8 @@ class TarballDirectoryLoader(BaseDirectoryLoader):
                         url,
                     )
                     continue
-                except HTTPError as http_error:
-                    if http_error.response.status_code == 404:
-                        self.log.debug(
-                            "Not found <%s>: continue on next mirror url if any", url
-                        )
+                except (ConnectionError, HTTPError, URLError) as error:
+                    self.log.debug("%s : continue on next mirror url if any", error)
                     continue
 
                 assert tarball_path is not None

@@ -14,6 +14,7 @@ from typing import Any, Dict
 from unittest.mock import MagicMock, call
 
 import pytest
+from requests.exceptions import ConnectionError
 
 from swh.core import tests as core_tests
 from swh.core.api.classes import stream_results
@@ -724,7 +725,7 @@ def test_directory_loader_500_with_fallback(
         caplog,
         loader,
         NotFound,
-        "Unknown origin",
+        f"URL {unknown_origin.url} was not found",
         status="not_found",
         origin=unknown_origin,
     )
@@ -795,12 +796,12 @@ def test_directory_loader_ok_with_fallback(
     fallback_url_ok = DIRECTORY_URL
     fallback_url_ko = f"{DIRECTORY_MIRROR}/archives/unknown2.tgz"
     requests_mock.get(dead_origin.url, status_code=404)
-    requests_mock.get(fallback_url_ko, status_code=404)
+    requests_mock.get(fallback_url_ko, exc=ConnectionError())
 
     loader = TarballDirectoryLoader(
         swh_storage,
         dead_origin.url,
-        fallback_urls=[fallback_url_ok, fallback_url_ko],
+        fallback_urls=[fallback_url_ko, fallback_url_ok],
         checksums={checksum_algo: checksums[checksum_algo]},
     )
     result = loader.load()
