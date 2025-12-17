@@ -731,7 +731,8 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 except Exception as e:
                     self.storage.clear_buffers()
                     load_exceptions.append(e)
-                    sentry_sdk.capture_exception(e)
+                    if not isinstance(e, NotFound):
+                        sentry_sdk.capture_exception(e)
                     error = f"Failed to load branch {branch_name} for {self.origin.url}"
                     logger.exception(error)
                     failed_branches.append(branch_name)
