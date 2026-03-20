@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2025  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -136,7 +136,7 @@ def test_clone_with_timeout_no_error_no_timeout():
     def succeed():
         """This does nothing to simulate a successful clone"""
 
-    clone_with_timeout("foo", "bar", succeed, timeout=0.5)
+    clone_with_timeout("foo", "bar", succeed, timeout=1)
 
 
 def test_clone_with_timeout_no_error_timeout():
@@ -145,7 +145,7 @@ def test_clone_with_timeout_no_error_timeout():
         sleep(1)
 
     with pytest.raises(CloneTimeout):
-        clone_with_timeout("foo", "bar", slow, timeout=0.5)
+        clone_with_timeout("foo", "bar", slow, timeout=1)
 
 
 def test_clone_with_timeout_error():
@@ -153,14 +153,14 @@ def test_clone_with_timeout_error():
         raise RuntimeError("panic!")
 
     with pytest.raises(CloneFailure):
-        clone_with_timeout("foo", "bar", raise_something, timeout=0.5)
+        clone_with_timeout("foo", "bar", raise_something, timeout=1)
 
 
 def test_clone_with_timeout_sigkill():
     """This also tests that the traceback is useful"""
     src = "https://www.mercurial-scm.org/repo/hello"
     dest = "/dev/null"
-    timeout = 0.5
+    timeout = 1
     sleepy_time = 100 * timeout
     assert sleepy_time > timeout
 

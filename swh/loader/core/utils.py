@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2025  The Software Heritage developers
+# Copyright (C) 2018-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -21,7 +21,8 @@ from urllib.error import URLError
 from urllib.parse import unquote, urlparse, urlsplit
 from urllib.request import urlopen
 
-from billiard import Process, Queue  # type: ignore
+import billiard
+import billiard.queues
 from dateutil.parser import parse
 import psutil
 import requests
@@ -86,7 +87,7 @@ class CloneFailure(Exception):
     pass
 
 
-def _clone_task(clone_func: Callable[[], None], errors: Queue) -> None:
+def _clone_task(clone_func: Callable[[], None], errors: billiard.queues.Queue) -> None:
     try:
         clone_func()
     except Exception as e:
@@ -97,7 +98,7 @@ def _clone_task(clone_func: Callable[[], None], errors: Queue) -> None:
 
 
 def clone_with_timeout(
-    src: str, dest: str, clone_func: Callable[[], None], timeout: float
+    src: str, dest: str, clone_func: Callable[[], None], timeout: int | float
 ) -> None:
     """Clone a repository with timeout.
 
@@ -107,10 +108,10 @@ def clone_with_timeout(
         clone_func: callable that does the actual cloning
         timeout: timeout in seconds
     """
-    errors: Queue = Queue()
-    process = Process(target=_clone_task, args=(clone_func, errors))
+    errors = billiard.Queue()
+    process = billiard.Process(target=_clone_task, args=(clone_func, errors))
     process.start()
-    process.join(timeout)
+    process.join(int(timeout))
 
     if process.is_alive():
         process.terminate()
@@ -125,6 +126,7 @@ def clone_with_timeout(
                 break
         else:
             killed = True
+            assert process.pid
             os.kill(process.pid, signal.SIGKILL)
         raise CloneTimeout(src, timeout, killed)
 
