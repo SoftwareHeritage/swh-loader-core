@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2023  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -106,7 +106,7 @@ def run(ctx, type, url, options):
         )
         conf["storage"] = {"cls": "memory"}
 
-    (_, kw) = parse_options(options)
+    _, kw = parse_options(options)
     logger.debug(f"kw: {kw}")
     visit_date = kw.get("visit_date")
     if visit_date and isinstance(visit_date, str):

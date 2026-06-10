@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -750,16 +750,14 @@ def test_pypi_build_release_missing_version_in_pkg_info(swh_storage, tmp_path):
     package_path = tmp_path / "GermlineFilter-1.2"
     pkg_info_path = package_path / "PKG-INFO"
     package_path.mkdir()
-    pkg_info_path.write_text(
-        """Metadata-Version: 1.2
+    pkg_info_path.write_text("""Metadata-Version: 1.2
 Name: germline_filter
 Home-page:
 Author: Cristian Caloian (OICR)
 Author-email: cristian.caloian@oicr.on.ca
 License: UNKNOWN
 Description: UNKNOWN
-Platform: UNKNOWN"""
-    )
+Platform: UNKNOWN""")
     directory = hash_to_bytes("8b864d66f356afe35033d58f8e03b7c23a66751f")
 
     # attempt to build release

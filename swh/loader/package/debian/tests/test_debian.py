@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -445,17 +445,13 @@ def test_debian_get_intrinsic_package_metadata(
 
     with open(path.join(extracted_path, "debian/changelog"), "a") as changelog:
         # Add a changelog entry with an invalid version string
-        changelog.write(
-            textwrap.dedent(
-                """
+        changelog.write(textwrap.dedent("""
                 cicero (0.7-1_cvs) unstable; urgency=low
 
                     * Initial release
 
                     -- John Doe <john.doe@example.org>  Tue, 12 Sep 2006 10:20:09 +0200
-                """
-            )
-        )
+                """))
 
     actual_package_info = get_intrinsic_package_metadata(
         p_info, dsc_path, extracted_path

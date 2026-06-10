@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2025  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -274,7 +274,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         for p_info in packages_info:
             res = p_info.extid()
             if res is not None:
-                (extid_type, extid_version, extid_extid) = res
+                extid_type, extid_version, extid_extid = res
                 new_extids.setdefault((extid_type, extid_version), []).append(
                     extid_extid
                 )
@@ -720,7 +720,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
                 try:
                     res = self._load_release(p_info, origin)
                     if res:
-                        (release_id, directory_id) = res
+                        release_id, directory_id = res
                         assert release_id
                         assert directory_id
                         self._load_extrinsic_directory_metadata(
@@ -767,7 +767,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
             if add_extid:
                 partial_extid = p_info.extid()
                 if partial_extid is not None:
-                    (extid_type, extid_version, extid) = partial_extid
+                    extid_type, extid_version, extid = partial_extid
                     release_swhid = CoreSWHID(
                         object_type=ObjectType.RELEASE, object_id=release_id
                     )
@@ -912,7 +912,7 @@ class PackageLoader(BaseLoader, Generic[TPackageInfo]):
         with tempfile.TemporaryDirectory() as tmpdir:
             dl_artifacts = self.download_package(p_info, tmpdir)
 
-            (uncompressed_path, directory) = self._load_directory(dl_artifacts, tmpdir)
+            uncompressed_path, directory = self._load_directory(dl_artifacts, tmpdir)
 
             # FIXME: This should be release. cf. D409
             release = self.build_release(

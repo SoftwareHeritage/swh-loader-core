@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2025  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -127,8 +127,7 @@ def test_npm_extract_npm_package_author(datadir):
         email=b"stillpedant@gmail.com",
     )
 
-    package_json = json.loads(
-        """
+    package_json = json.loads("""
     {
         "name": "highlightjs-line-numbers.js",
         "version": "2.7.0",
@@ -151,8 +150,7 @@ def test_npm_extract_npm_package_author(datadir):
             "url": "https://github.com/wcoder/highlightjs-line-numbers.js/issues"
         },
         "homepage": "http://wcoder.github.io/highlightjs-line-numbers.js/"
-    }"""
-    )
+    }""")
 
     assert extract_npm_package_author(package_json) == Person(
         fullname=b"Yauheni Pakala <evgeniy.pakalo@gmail.com>",
@@ -160,8 +158,7 @@ def test_npm_extract_npm_package_author(datadir):
         email=b"evgeniy.pakalo@gmail.com",
     )
 
-    package_json = json.loads(
-        """
+    package_json = json.loads("""
     {
         "name": "3-way-diff",
         "version": "0.0.1",
@@ -191,15 +188,13 @@ def test_npm_extract_npm_package_author(datadir):
         "dependencies": {
             "lodash": "^4.15.0"
         }
-    }"""
-    )
+    }""")
 
     assert extract_npm_package_author(package_json) == Person(
         fullname=b"Shawn Walsh", name=b"Shawn Walsh", email=None
     )
 
-    package_json = json.loads(
-        """
+    package_json = json.loads("""
     {
         "name": "yfe-ynpm",
         "version": "1.0.0",
@@ -213,8 +208,7 @@ def test_npm_extract_npm_package_author(datadir):
             "xufuzi <xufuzi@ywwl.com> (https://7993.org)"
         ],
         "license": "MIT"
-    }"""
-    )
+    }""")
 
     assert extract_npm_package_author(package_json) == Person(
         fullname=b"fengmk2 <fengmk2@gmail.com> (https://fengmk2.com)",
@@ -222,8 +216,7 @@ def test_npm_extract_npm_package_author(datadir):
         email=b"fengmk2@gmail.com",
     )
 
-    package_json = json.loads(
-        """
+    package_json = json.loads("""
     {
         "name": "umi-plugin-whale",
         "version": "0.0.8",
@@ -238,8 +231,7 @@ def test_npm_extract_npm_package_author(datadir):
             "umi-tools": "*"
         },
         "license": "MIT"
-    }"""
-    )
+    }""")
 
     assert extract_npm_package_author(package_json) == Person(
         fullname=b"xiaohuoni <448627663@qq.com>",
@@ -247,12 +239,10 @@ def test_npm_extract_npm_package_author(datadir):
         email=b"448627663@qq.com",
     )
 
-    package_json_no_authors = json.loads(
-        """{
+    package_json_no_authors = json.loads("""{
         "authors": null,
         "license": "MIT"
-    }"""
-    )
+    }""")
 
     assert extract_npm_package_author(package_json_no_authors) == Person.from_fullname(
         b""
