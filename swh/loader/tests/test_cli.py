@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -9,7 +9,7 @@ from click.formatting import HelpFormatter
 from click.testing import CliRunner
 import pytest
 
-from swh.loader.cli import SUPPORTED_LOADERS, get_loader
+from swh.loader.cli import get_loader, get_loader_names
 from swh.loader.cli import loader as loader_cli
 from swh.loader.core.utils import compute_hashes
 from swh.loader.package.loader import PackageLoader
@@ -18,7 +18,7 @@ from swh.loader.package.loader import PackageLoader
 def test_get_loader_wrong_input(swh_config):
     """Unsupported loader should raise"""
     loader_type = "unknown"
-    assert loader_type not in SUPPORTED_LOADERS
+    assert loader_type not in get_loader_names()
     with pytest.raises(ValueError, match="Invalid loader"):
         get_loader(loader_type, url="db-url")
 
@@ -48,21 +48,6 @@ def _write_usage(command, args, max_width=80):
     hf = HelpFormatter(width=max_width)
     hf.write_usage(command, args)
     return hf.getvalue()[:-1]
-
-
-def test_run_help(swh_config):
-    """Usage message should contain list of available loaders"""
-    runner = CliRunner()
-
-    result = runner.invoke(loader_cli, ["run", "-h"])
-
-    assert result.exit_code == 0
-
-    # Syntax depends on dependencies' versions
-    supported_loaders = "|".join(SUPPORTED_LOADERS)
-    usage_prefix = _write_usage("loader run", "[OPTIONS] [%s]\n" % supported_loaders)
-    usage_prefix2 = _write_usage("loader run", "[OPTIONS] {%s}\n" % supported_loaders)
-    assert result.output.startswith((usage_prefix, usage_prefix2))
 
 
 def test_run_directory_loader_success(swh_config, datadir):
@@ -127,24 +112,6 @@ def test_run_with_visit_date(mocker, swh_config):
         visit_date=expected_parsed_date,
         metadata_fetcher_credentials=None,
     )
-
-
-def test_list_help(mocker, swh_config):
-    """Usage message should contain list of available loaders"""
-    runner = CliRunner()
-    result = runner.invoke(loader_cli, ["list", "--help"])
-    assert result.exit_code == 0
-    usage_prefix = _write_usage(
-        "loader list", f"[OPTIONS] [[{'|'.join(['all'] + SUPPORTED_LOADERS)}]]"
-    )
-    expected_help_msg = f"""{usage_prefix}
-
-  List supported loaders and optionally their arguments
-
-Options:
-  -h, --help  Show this message and exit.
-"""
-    assert result.output.startswith(expected_help_msg)
 
 
 def test_list_help_npm(mocker, swh_config):

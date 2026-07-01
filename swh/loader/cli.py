@@ -3,28 +3,32 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from importlib.metadata import entry_points
+from __future__ import annotations
 
 # WARNING: do not import unnecessary things here to keep cli startup time under
 # control
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, Dict
 
 import click
 
 from swh.core.cli import CONTEXT_SETTINGS
 from swh.core.cli import swh as swh_cli_group
 
+if TYPE_CHECKING:
+    from importlib.metadata import EntryPoint
+
 logger = logging.getLogger(__name__)
 
 
-LOADERS = {
-    entry_point.name.split(".", 1)[1]: entry_point
-    for entry_point in entry_points(group="swh.workers")
-    if entry_point.name.split(".", 1)[0] == "loader"
-}
+def get_loader_names() -> Dict[str, EntryPoint]:
+    from importlib.metadata import entry_points
 
-SUPPORTED_LOADERS = sorted(list(LOADERS))
+    return {
+        entry_point.name.split(".", 1)[1]: entry_point
+        for entry_point in entry_points(group="swh.workers")
+        if entry_point.name.split(".", 1)[0] == "loader"
+    }
 
 
 def get_loader(name: str, **kwargs) -> Any:
@@ -38,13 +42,14 @@ def get_loader(name: str, **kwargs) -> Any:
         An instantiated loader
 
     """
-    if name not in LOADERS:
+    loader_names = get_loader_names()
+    if name not in loader_names:
         raise ValueError(
             "Invalid loader %s: only supported loaders are %s"
-            % (name, SUPPORTED_LOADERS)
+            % (name, ", ".join(sorted(loader_names)))
         )
 
-    registry_entry = LOADERS[name].load()()
+    registry_entry = loader_names[name].load()()
     logger.debug(f"registry: {registry_entry}")
     loader_cls = registry_entry["loader"]
     logger.debug(f"loader class: {loader_cls}")
@@ -81,12 +86,16 @@ def loader(ctx, config_file):
 
 
 @loader.command(name="run", context_settings=CONTEXT_SETTINGS)
-@click.argument("type", type=click.Choice(SUPPORTED_LOADERS))
+@click.argument("type")
 @click.argument("url")
 @click.argument("options", nargs=-1)
 @click.pass_context
 def run(ctx, type, url, options):
-    """Ingest with loader <type> the origin located at <url>
+    """Ingest with loader TYPE the origin located at URL
+
+    To get the list of supported loaders, use the following command:
+
+        $ swh loader list
 
     Expected configuration:
 
@@ -134,17 +143,23 @@ def run(ctx, type, url, options):
 
 
 @loader.command(name="list", context_settings=CONTEXT_SETTINGS)
-@click.argument("type", default="all", type=click.Choice(["all"] + SUPPORTED_LOADERS))
+@click.argument("type", default="all")
 @click.pass_context
 def list(ctx, type):
-    """List supported loaders and optionally their arguments"""
+    """List supported loaders and optionally their arguments
+
+    Without TYPE argument, list all supported loaders.
+
+    With TYPE argument set to one of the supported loader, display
+    its description and optionally its arguments.
+    """
     import inspect
 
     if type == "all":
-        loaders = ", ".join(SUPPORTED_LOADERS)
-        click.echo(f"Supported loaders: {loaders}")
+        loader_names = "\n".join(sorted(get_loader_names()))
+        click.echo(f"Supported loaders:\n\n{loader_names}")
     else:
-        registry_entry = LOADERS[type].load()()
+        registry_entry = get_loader_names()[type].load()()
         loader_cls = registry_entry["loader"]
         doc = inspect.getdoc(loader_cls).strip()
 
