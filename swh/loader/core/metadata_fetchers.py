@@ -1,13 +1,11 @@
-# Copyright (C) 2022  The Software Heritage developers
+# Copyright (C) 2022-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import functools
 from importlib.metadata import entry_points
-from typing import Dict, List, Optional, Set, Type
-
-from typing_extensions import Protocol, runtime_checkable
+from typing import Dict, List, Optional, Protocol, Set, Type, runtime_checkable
 
 from swh.model.model import Origin, RawExtrinsicMetadata
 

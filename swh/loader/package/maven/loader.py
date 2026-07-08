@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2025  The Software Heritage developers
+# Copyright (C) 2021-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,13 +10,12 @@ import json
 import logging
 from os import path
 import string
-from typing import Any, Iterator, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Iterator, List, Mapping, Optional, Sequence, Tuple, TypedDict
 
 import attr
 from bs4 import BeautifulSoup
 import iso8601
 import requests
-from typing_extensions import TypedDict
 
 from swh.loader.core.utils import EMPTY_AUTHOR, get_url_body, release_name
 from swh.loader.exception import NotFound
