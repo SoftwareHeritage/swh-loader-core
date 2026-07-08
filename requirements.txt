@@ -13,4 +13,3 @@ pkginfo
 python-debian
 python-dateutil
 tenacity >= 8.4.2
-toml

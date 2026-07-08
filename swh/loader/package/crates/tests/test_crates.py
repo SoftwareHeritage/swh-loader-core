@@ -1,12 +1,12 @@
-# Copyright (C) 2022-2025  The Software Heritage developers
+# Copyright (C) 2022-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 import json
 from pathlib import Path
+from tomllib import TOMLDecodeError
 
 import pytest
-from toml.decoder import TomlDecodeError
 
 from swh.loader.core import __version__
 from swh.loader.package.crates.loader import CratesLoader
@@ -505,7 +505,7 @@ def test_crates_loader_raw_extrinsic_metadata(
 def test_crates_loader_toml_decode_error(
     datadir, requests_mock_datadir, swh_storage, expected, mocker
 ):
-    mocker.patch("toml.load").side_effect = TomlDecodeError(msg="foo", doc="bar", pos=0)
+    mocker.patch("tomllib.loads").side_effect = TOMLDecodeError("Error")
     loader = CratesLoader(
         swh_storage,
         url=expected[0]["url"],

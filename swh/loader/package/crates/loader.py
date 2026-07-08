@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025  The Software Heritage developers
+# Copyright (C) 2022-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -8,12 +8,12 @@ import json
 import os
 from pathlib import Path
 import string
+import tomllib
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
 import attr
 import iso8601
-import toml
 
 from swh.loader.core.utils import (
     EMPTY_AUTHOR,
@@ -73,14 +73,14 @@ def extract_intrinsic_metadata(dir_path: Path) -> Dict[str, Any]:
     filenames = next(os.walk(dir_path), (None, None, []))[2]
     if "Cargo.toml" in filenames:
         try:
-            return toml.load(dir_path / "Cargo.toml")
-        except toml.decoder.TomlDecodeError:
+            return tomllib.loads((dir_path / "Cargo.toml").read_text())
+        except tomllib.TOMLDecodeError:
             return {}
     for filename in filenames:
         if filename.lower() == "cargo.toml":
             try:
-                return toml.load(dir_path / filename)
-            except toml.decoder.TomlDecodeError:
+                return tomllib.loads((dir_path / filename).read_text())
+            except tomllib.TOMLDecodeError:
                 pass
     return {}
 
