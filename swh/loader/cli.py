@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 import click
 
-from swh.core.cli import CONTEXT_SETTINGS
+from swh.core.cli import CONTEXT_SETTINGS, setup_config
 from swh.core.cli import swh as swh_cli_group
 
 if TYPE_CHECKING:
@@ -65,24 +65,13 @@ def get_loader(name: str, **kwargs) -> Any:
         exists=True,
         dir_okay=False,
     ),
+    deprecated=True,
     help="Configuration file.",
 )
 @click.pass_context
 def loader(ctx, config_file):
     """Loader cli tools"""
-    from os import environ
-
-    from swh.core.config import read
-
-    ctx.ensure_object(dict)
-    logger.debug("ctx: %s", ctx)
-
-    if not config_file:
-        config_file = environ.get("SWH_CONFIG_FILENAME")
-
-    ctx.obj["config"] = read(config_file)
-    logger.debug("config_file: %s", config_file)
-    logger.debug("config: %s", ctx.obj["config"])
+    setup_config(ctx, config_file)
 
 
 @loader.command(name="run", context_settings=CONTEXT_SETTINGS)

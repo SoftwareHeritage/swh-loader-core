@@ -61,13 +61,12 @@ def test_run_directory_loader_success(swh_config, datadir):
     result = runner.invoke(
         loader_cli,
         [
-            "-C",
-            swh_config,
             "run",
             "directory",
             tarball_url,
             f"checksums={checksums}",
         ],
+        env={"SWH_CONFIG_FILENAME": swh_config},
     )
     assert result.exit_code == 0
 
@@ -81,13 +80,12 @@ def test_run_directory_loader_failure(swh_config):
     result = runner.invoke(
         loader_cli,
         [
-            "-C",
-            swh_config,
             "run",
             "directory",
             tarball_url,
             "checksums={}",
         ],
+        env={"SWH_CONFIG_FILENAME": swh_config},
     )
     assert result.exit_code == 1
 
