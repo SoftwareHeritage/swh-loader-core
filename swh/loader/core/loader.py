@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2025  The Software Heritage developers
+# Copyright (C) 2015-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -515,24 +515,36 @@ class BaseLoader:
             if isinstance(e, NotFound):
                 status = "not_found"
                 task_status = "uneventful"
+
+                self.log.warning(
+                    "Origin no longer exists",
+                    extra={
+                        "swh_task_args": [],
+                        "swh_task_kwargs": {
+                            "origin": self.origin.url,
+                            "lister_name": self.lister_name,
+                            "lister_instance_name": self.lister_instance_name,
+                        },
+                    },
+                )
             else:
                 status = "partial" if self.loaded_snapshot_id else "failed"
                 task_status = "failed"
 
-            self.log.exception(
-                "Loading failure, updating to `%s` status",
-                status,
-                extra={
-                    "swh_task_args": [],
-                    "swh_task_kwargs": {
-                        "origin": self.origin.url,
-                        "lister_name": self.lister_name,
-                        "lister_instance_name": self.lister_instance_name,
+                self.log.exception(
+                    "Loading failure, updating to `%s` status",
+                    status,
+                    extra={
+                        "swh_task_args": [],
+                        "swh_task_kwargs": {
+                            "origin": self.origin.url,
+                            "lister_name": self.lister_name,
+                            "lister_instance_name": self.lister_instance_name,
+                        },
                     },
-                },
-            )
-            if not isinstance(e, (SystemExit, KeyboardInterrupt, NotFound)):
-                sentry_sdk.capture_exception()
+                )
+                if not isinstance(e, (SystemExit, KeyboardInterrupt)):
+                    sentry_sdk.capture_exception()
             visit_status = OriginVisitStatus(
                 origin=self.origin.url,
                 visit=self.visit.visit,
